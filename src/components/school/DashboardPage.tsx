@@ -11,7 +11,13 @@ import {
   LogOut,
   RefreshCw,
   Loader2,
+  ScanLine,
+  FileText,
+  BarChart3,
+  TrendingUp,
+  School,
 } from 'lucide-react';
+import { useAppStore, type PageKey } from '@/lib/store';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -136,6 +142,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
+  const { setActivePage, auth } = useAppStore();
 
   const fetchData = useCallback(async () => {
     try {
@@ -246,11 +253,29 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header with refresh */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-800">لوحة التحكم</h2>
-          <p className="text-sm text-muted-foreground mt-1">نظرة عامة على حالة المدرسة اليوم</p>
+      {/* Welcome Header */}
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex items-center justify-between"
+      >
+        <div className="flex items-center gap-4">
+          <div
+            className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg shrink-0"
+            style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}
+          >
+            <School className="w-7 h-7 text-white" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-800">
+              مرحباً، {auth.user?.name || 'مستخدم'} 👋
+            </h2>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              {new Date().toLocaleDateString('ar-IQ', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              {' · '}
+              نظرة عامة على حالة المدرسة
+            </p>
+          </div>
         </div>
         <Button
           variant="outline"
@@ -266,7 +291,37 @@ export default function DashboardPage() {
           )}
           تحديث
         </Button>
-      </div>
+      </motion.div>
+
+      {/* Quick Actions */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="grid grid-cols-1 sm:grid-cols-3 gap-3"
+      >
+        {[
+          { title: 'مسح حضور QR', desc: 'تسجيل دخول أو خروج', icon: ScanLine, page: 'attendance' as PageKey, gradient: 'from-emerald-500 to-emerald-600' },
+          { title: 'إدخال الدرجات', desc: 'تسجيل درجات الطلاب', icon: FileText, page: 'grades' as PageKey, gradient: 'from-teal-500 to-teal-600' },
+          { title: 'التقارير', desc: 'عرض التقارير والإحصائيات', icon: BarChart3, page: 'reports' as PageKey, gradient: 'from-cyan-500 to-cyan-600' },
+        ].map((action, index) => (
+          <motion.button
+            key={action.title}
+            onClick={() => setActivePage(action.page)}
+            className="flex items-center gap-3 p-3 rounded-xl bg-white border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 text-right group"
+            whileHover={{ y: -2 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br ${action.gradient} text-white shrink-0 shadow-sm group-hover:shadow-md transition-shadow`}>
+              <action.icon className="w-5 h-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-gray-800">{action.title}</p>
+              <p className="text-[11px] text-muted-foreground">{action.desc}</p>
+            </div>
+          </motion.button>
+        ))}
+      </motion.div>
 
       {/* Statistics Cards */}
       <motion.div
@@ -571,6 +626,125 @@ export default function DashboardPage() {
               ) : (
                 <div className="flex items-center justify-center h-40 text-muted-foreground text-sm">
                   لا توجد بيانات درجات
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
+
+      {/* Third row: Students by Status + Class Attendance */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Students by Status */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7 }}
+        >
+          <Card className="border-0 shadow-sm h-full">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base font-bold text-gray-800 flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-teal-600" />
+                حالات الطلاب
+              </CardTitle>
+              <CardDescription>توزيع الطلاب حسب الحالة</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="space-y-3">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <Skeleton key={i} className="h-8 w-full" />
+                  ))}
+                </div>
+              ) : data?.studentsByStatus && data.studentsByStatus.length > 0 ? (
+                <div className="space-y-2">
+                  {data.studentsByStatus.map((item) => {
+                    const statusColors: Record<string, string> = {
+                      'مستمر': 'bg-emerald-500',
+                      'منقول': 'bg-amber-500',
+                      'تارك': 'bg-red-500',
+                      'مفصول': 'bg-red-700',
+                      'متخرج': 'bg-teal-600',
+                    };
+                    const total = data.studentsByStatus.reduce((s, i) => s + i.count, 0);
+                    const pct = total > 0 ? Math.round((item.count / total) * 100) : 0;
+                    return (
+                      <div key={item.status} className="flex items-center gap-3">
+                        <div className={`w-3 h-3 rounded-full shrink-0 ${statusColors[item.status] || 'bg-gray-400'}`} />
+                        <span className="text-sm text-gray-700 w-20 shrink-0">{item.status}</span>
+                        <div className="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${pct}%` }}
+                            transition={{ duration: 0.8, delay: 0.1 }}
+                            className={`h-full rounded-full ${statusColors[item.status] || 'bg-gray-400'}`}
+                          />
+                        </div>
+                        <span className="text-xs font-semibold text-gray-600 w-8 text-left">{item.count}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-40 text-muted-foreground text-sm">
+                  لا توجد بيانات
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Class Attendance Stats */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8 }}
+        >
+          <Card className="border-0 shadow-sm h-full">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base font-bold text-gray-800 flex items-center gap-2">
+                <GraduationCap className="w-4 h-4 text-teal-600" />
+                حضور الصفوف اليوم
+              </CardTitle>
+              <CardDescription>نسبة الحضور لكل صف</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="space-y-3">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <Skeleton key={i} className="h-8 w-full" />
+                  ))}
+                </div>
+              ) : data?.classAttendanceStats && data.classAttendanceStats.length > 0 ? (
+                <div className="space-y-2.5 max-h-72 overflow-y-auto custom-scrollbar">
+                  {data.classAttendanceStats.map((cls) => (
+                    <div key={cls.classId} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors">
+                      <span className="text-sm text-gray-700 min-w-0 flex-1 truncate">{cls.className}</span>
+                      <div className="w-24 bg-gray-100 rounded-full h-2 overflow-hidden shrink-0">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${cls.attendancePercentage}%` }}
+                          transition={{ duration: 0.8, delay: 0.1 }}
+                          className={`h-full rounded-full ${
+                            cls.attendancePercentage >= 90 ? 'bg-emerald-500' :
+                            cls.attendancePercentage >= 75 ? 'bg-amber-500' :
+                            'bg-red-500'
+                          }`}
+                        />
+                      </div>
+                      <span className={`text-xs font-bold min-w-[3rem] text-left ${
+                        cls.attendancePercentage >= 90 ? 'text-emerald-600' :
+                        cls.attendancePercentage >= 75 ? 'text-amber-600' :
+                        'text-red-600'
+                      }`}>
+                        {cls.attendancePercentage}%
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-40 text-muted-foreground text-sm">
+                  لا توجد بيانات حضور للصفوف
                 </div>
               )}
             </CardContent>
