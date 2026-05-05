@@ -250,14 +250,19 @@ export default function GradesPage() {
     )
   }
 
-  // Get pass status
-  const getPassStatus = (score: string): { status: string; color: string } => {
-    if (score === '') return { status: 'ناقصة', color: 'bg-gray-100 text-gray-800 border-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600' }
+  // Get pass status - uses percentage-based comparison
+  const getPassStatus = (score: string): { status: string; color: string; label: string } => {
+    if (score === '') return { status: 'ناقصة', color: 'bg-gray-100 text-gray-800 border-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600', label: 'ناقصة' }
     const numScore = parseFloat(score)
-    const passScore = selectedSubject?.passScore || 50
-    if (isNaN(numScore)) return { status: 'ناقصة', color: 'bg-gray-100 text-gray-800 border-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600' }
-    if (numScore >= passScore) return { status: 'ناجح', color: 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700' }
-    return { status: 'راسب', color: 'bg-red-100 text-red-800 border-red-300 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700' }
+    if (isNaN(numScore)) return { status: 'ناقصة', color: 'bg-gray-100 text-gray-800 border-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600', label: 'ناقصة' }
+    // Calculate percentage relative to exam max score
+    const examMaxScore = selectedExamType?.maxScore || 100
+    const subjectMaxScore = selectedSubject?.maxScore || 100
+    const passScorePercent = (selectedSubject?.passScore || 50) / subjectMaxScore * 100
+    const scorePercent = (numScore / examMaxScore) * 100
+    if (scorePercent >= 80) return { status: 'ناجح', color: 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700', label: 'ممتاز' }
+    if (scorePercent >= passScorePercent) return { status: 'ناجح', color: 'bg-teal-100 text-teal-800 border-teal-300 dark:bg-teal-900/30 dark:text-teal-300 dark:border-teal-700', label: 'ناجح' }
+    return { status: 'راسب', color: 'bg-red-100 text-red-800 border-red-300 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700', label: 'راسب' }
   }
 
   // Save grades
@@ -341,15 +346,17 @@ export default function GradesPage() {
     }
   }
 
-  // Calculate stats
+  // Calculate stats - uses percentage-based comparison
   const getGradesStats = () => {
     const validEntries = gradeEntries.filter(e => e.score !== '' && !isNaN(parseFloat(e.score)))
     if (validEntries.length === 0) return null
 
     const scores = validEntries.map(e => parseFloat(e.score))
-    const passScore = selectedSubject?.passScore || 50
-    const maxScore = selectedExamType?.maxScore || 100
-    const passCount = scores.filter(s => s >= passScore).length
+    const subjectMaxScore = selectedSubject?.maxScore || 100
+    const examMaxScore = selectedExamType?.maxScore || 100
+    const passScorePercent = (selectedSubject?.passScore || 50) / subjectMaxScore * 100
+    const maxScore = examMaxScore
+    const passCount = scores.filter(s => (s / examMaxScore) * 100 >= passScorePercent).length
 
     // Grade distribution for visual
     const excellent = scores.filter(s => (s / maxScore) * 100 >= 80).length
@@ -707,6 +714,9 @@ export default function GradesPage() {
                           const scoreNum = entry.score !== '' ? parseFloat(entry.score) : null
                           const scoreColor = scoreNum !== null ? getScoreColor(scoreNum, maxScore) : null
                           const scorePct = scoreNum !== null ? Math.round((scoreNum / maxScore) * 100) : 0
+                          const examMaxScore = selectedExamType?.maxScore || 100
+                          const subjectMaxScore = selectedSubject?.maxScore || 100
+                          const passScoreScaled = Math.round((selectedSubject?.passScore || 50) / subjectMaxScore * examMaxScore)
                           return (
                             <TableRow key={entry.studentId} className={`${isApproved ? 'bg-muted/30 dark:bg-muted/10' : ''} ${scoreNum !== null && scorePct < 50 ? 'bg-red-50/30 dark:bg-red-900/5' : ''}`}>
                               <TableCell className="text-muted-foreground">{index + 1}</TableCell>
@@ -757,7 +767,7 @@ export default function GradesPage() {
                                 <Badge className={`${passInfo.color} gap-1`}>
                                   {passInfo.status === 'ناجح' && <CheckCircle className="h-3 w-3" />}
                                   {passInfo.status === 'راسب' && <XCircle className="h-3 w-3" />}
-                                  {passInfo.status}
+                                  {passInfo.label}
                                 </Badge>
                               </TableCell>
                               <TableCell>
@@ -803,11 +813,25 @@ export default function GradesPage() {
                     <div className="flex gap-3">
                       <span className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded-full">
                         <CheckCircle className="h-3 w-3" />
-                        ناجح: {gradeEntries.filter(e => e.score !== '' && parseFloat(e.score) >= (selectedSubject?.passScore || 50)).length}
+                        ناجح: {gradeEntries.filter(e => {
+                        if (e.score === '') return false
+                        const num = parseFloat(e.score)
+                        const examMax = selectedExamType?.maxScore || 100
+                        const subMax = selectedSubject?.maxScore || 100
+                        const passPct = (selectedSubject?.passScore || 50) / subMax * 100
+                        return (num / examMax) * 100 >= passPct
+                      }).length}
                       </span>
                       <span className="text-xs text-red-600 dark:text-red-400 flex items-center gap-1 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded-full">
                         <XCircle className="h-3 w-3" />
-                        راسب: {gradeEntries.filter(e => e.score !== '' && parseFloat(e.score) < (selectedSubject?.passScore || 50)).length}
+                        راسب: {gradeEntries.filter(e => {
+                        if (e.score === '') return false
+                        const num = parseFloat(e.score)
+                        const examMax = selectedExamType?.maxScore || 100
+                        const subMax = selectedSubject?.maxScore || 100
+                        const passPct = (selectedSubject?.passScore || 50) / subMax * 100
+                        return (num / examMax) * 100 < passPct
+                      }).length}
                       </span>
                     </div>
                   </div>

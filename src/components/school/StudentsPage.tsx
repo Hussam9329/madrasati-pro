@@ -330,19 +330,22 @@ export default function StudentsPage() {
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-              <Users className="h-5 w-5 text-primary" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg shadow-lg" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
+              <Users className="h-5 w-5 text-white" />
             </div>
-            <h1 className="text-2xl font-bold">إدارة الطلاب</h1>
+            <div>
+              <h1 className="text-2xl font-bold dark:text-gray-200">إدارة الطلاب</h1>
+              <p className="text-sm text-muted-foreground">إدارة بيانات الطلاب والتسجيل</p>
+            </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button onClick={openAddForm} className="gap-2">
+            <Button onClick={openAddForm} className="gap-2" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
               <Plus className="h-4 w-4" />
               إضافة طالب
             </Button>
             <Button
               variant="outline"
-              className="gap-2 border-teal-300 text-teal-700 hover:bg-teal-50"
+              className="gap-2 border-teal-300 text-teal-700 hover:bg-teal-50 dark:border-teal-700 dark:text-teal-400 dark:hover:bg-teal-900/20"
               onClick={() => {
                 setTransferForm({ studentId: '', newClassId: '', newSectionId: '', reason: '' })
                 setTransferConfirm(false)
@@ -352,7 +355,7 @@ export default function StudentsPage() {
               <ArrowRightLeft className="h-4 w-4" />
               نقل طالب
             </Button>
-            <Button variant="secondary" className="gap-2">
+            <Button variant="outline" className="gap-2 border-teal-300 text-teal-700 hover:bg-teal-50 dark:border-teal-700 dark:text-teal-400 dark:hover:bg-teal-900/20">
               <Download className="h-4 w-4" />
               تصدير
             </Button>
@@ -367,7 +370,7 @@ export default function StudentsPage() {
               placeholder="البحث عن طالب..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1) }}
-              className="pr-9"
+              className="pr-9 dark:bg-gray-800 dark:border-gray-700"
             />
           </div>
           <Select value={filterClass} onValueChange={(v) => { setFilterClass(v); setPage(1) }}>
@@ -398,7 +401,7 @@ export default function StudentsPage() {
       </div>
 
       {/* Students Table */}
-      <Card>
+      <Card className="dark:bg-gray-900/50">
         <CardContent className="p-0">
           {loading ? (
             <div className="p-6 space-y-4">
@@ -441,7 +444,7 @@ export default function StudentsPage() {
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -10 }}
                           transition={{ delay: idx * 0.03 }}
-                          className="cursor-pointer hover:bg-muted/50 border-b transition-colors"
+                          className="cursor-pointer hover:bg-muted/50 dark:hover:bg-gray-800/50 border-b transition-colors"
                           onClick={() => openProfile(student.id)}
                         >
                           <TableCell className="text-center font-mono text-sm">
@@ -450,11 +453,11 @@ export default function StudentsPage() {
                           <TableCell>
                             <div className="flex items-center gap-3">
                               <Avatar className="h-8 w-8">
-                                <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                                <AvatarFallback className="bg-primary/10 text-primary text-xs dark:bg-teal-900/30 dark:text-teal-300">
                                   {student.fullName.charAt(0)}
                                 </AvatarFallback>
                               </Avatar>
-                              <span className="font-medium">{student.fullName}</span>
+                              <span className="font-medium dark:text-gray-200">{student.fullName}</span>
                             </div>
                           </TableCell>
                           <TableCell className="text-center text-sm">{student.class.name}</TableCell>
@@ -534,9 +537,9 @@ export default function StudentsPage() {
 
       {/* Add/Edit Student Dialog */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto dark:bg-gray-900">
           <DialogHeader>
-            <DialogTitle>{editingStudent ? 'تعديل بيانات الطالب' : 'إضافة طالب جديد'}</DialogTitle>
+            <DialogTitle className="dark:text-gray-200">{editingStudent ? 'تعديل بيانات الطالب' : 'إضافة طالب جديد'}</DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
             <div className="sm:col-span-2">
@@ -613,7 +616,7 @@ export default function StudentsPage() {
             </div>
             <Separator className="sm:col-span-2" />
             <div className="sm:col-span-2">
-              <h3 className="font-semibold text-sm mb-2">معلومات ولي الأمر</h3>
+              <h3 className="font-semibold text-sm mb-2 dark:text-gray-200">معلومات ولي الأمر</h3>
             </div>
             <div>
               <Label>اسم ولي الأمر</Label>
@@ -648,7 +651,7 @@ export default function StudentsPage() {
           </div>
           <div className="flex justify-end gap-2 pt-4 border-t">
             <Button variant="outline" onClick={() => setFormOpen(false)}>إلغاء</Button>
-            <Button onClick={handleSave} disabled={saving}>
+            <Button onClick={handleSave} disabled={saving} style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
               {saving ? 'جاري الحفظ...' : editingStudent ? 'تحديث' : 'إضافة'}
             </Button>
           </div>
@@ -657,11 +660,11 @@ export default function StudentsPage() {
 
       {/* Student Profile Dialog */}
       <Dialog open={profileOpen} onOpenChange={setProfileOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto dark:bg-gray-900">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
               <Avatar className="h-10 w-10">
-                <AvatarFallback className="bg-primary/10 text-primary">
+                <AvatarFallback className="bg-primary/10 text-primary dark:bg-teal-900/30 dark:text-teal-300">
                   {selectedStudent?.fullName?.charAt(0) || 'ط'}
                 </AvatarFallback>
               </Avatar>
@@ -689,7 +692,7 @@ export default function StudentsPage() {
                 >
                   <div className="sm:col-span-2 flex items-center gap-4 mb-2">
                     <Avatar className="h-20 w-20">
-                      <AvatarFallback className="bg-primary/10 text-primary text-2xl">
+                      <AvatarFallback className="bg-primary/10 text-primary text-2xl dark:bg-teal-900/30 dark:text-teal-300">
                         {selectedStudent.fullName.charAt(0)}
                       </AvatarFallback>
                     </Avatar>
@@ -803,7 +806,7 @@ export default function StudentsPage() {
                     animate={{ opacity: 1, scale: 1 }}
                     className="w-full max-w-md"
                   >
-                    <Card className="overflow-hidden border-2 border-primary/20">
+                    <Card className="overflow-hidden border-2 border-primary/20 dark:border-gray-700">
                       <CardHeader className="bg-primary p-4">
                         <CardTitle className="text-primary-foreground text-center text-lg">
                           مدرستي Pro
@@ -849,7 +852,7 @@ export default function StudentsPage() {
                     </Card>
                   </motion.div>
 
-                  <Button onClick={printCard} className="gap-2">
+                  <Button onClick={printCard} className="gap-2" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
                     <Printer className="h-4 w-4" />
                     طباعة البطاقة
                   </Button>
@@ -862,10 +865,10 @@ export default function StudentsPage() {
 
       {/* Transfer Student Dialog */}
       <Dialog open={transferOpen} onOpenChange={setTransferOpen}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto dark:bg-gray-900">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <ArrowRightLeft className="h-5 w-5 text-teal-600" />
+              <ArrowRightLeft className="h-5 w-5 text-teal-600 dark:text-teal-400" />
               نقل طالب
             </DialogTitle>
           </DialogHeader>
@@ -891,7 +894,7 @@ export default function StudentsPage() {
                 const selectedStu = students.find(s => s.id === transferForm.studentId)
                 if (!selectedStu) return null
                 return (
-                  <Card className="bg-muted/50 border-teal-200">
+                  <Card className="bg-muted/50 border-teal-200 dark:bg-gray-800/50 dark:border-teal-800">
                     <CardContent className="p-3">
                       <p className="text-sm font-medium">الموقع الحالي:</p>
                       <p className="text-sm text-muted-foreground">الصف: {selectedStu.class.name} | الشعبة: {selectedStu.section.name}</p>

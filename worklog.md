@@ -584,3 +584,98 @@ Unresolved Issues / Next Phase Priorities:
 - Add keyboard shortcuts for power users
 - Add more report chart types (histograms, scatter plots)
 - Consider adding multi-school support for SysAdmin role
+
+---
+Task ID: 3-a
+Agent: Fee Management Agent
+Task: Create Fee Management page (الرسوم المدرسية) and integrate into the app
+
+Work Log:
+- **New Component**: Created `FeeManagementPage.tsx` - Fee Management page (الرسوم المدرسية)
+  - Header with gradient Wallet icon, title "الرسوم المدرسية", subtitle "إدارة الرسوم والمدفوعات"
+  - 4 summary cards with gradient top strips: إجمالي الرسوم (teal), المدفوع (emerald), المتبقي (amber), نسبة التحصيل (cyan with progress bar)
+  - Fee Types section: 6 fee types in card grid (رسوم تسجيل, رسوم دراسية, رسوم نقل, رسوم زي, رسوم أنشطة, رسوم امتحانات) with amounts in IQD, frequency badges, and applicable classes
+  - Add/Edit fee type dialog with name, amount, frequency, applicable classes
+  - Student Payments Tabs (الرسوم / المدفوعات):
+    - Fees tab: table with 22 student fee records showing name, class, total fees, paid (with progress bar), remaining, status badge (مدفوع/جزئي/متأخر/معفي)
+    - Search filter + status filter + status summary pills
+    - Payments tab: table of 19 payment records with date, student, amount, method badge, receipt number, notes
+  - Add Payment Dialog: student selector, amount, payment method (نقدي/تحويل بنكي/شيك/بطاقة), receipt number, date (auto-filled), notes
+  - Payment Statistics Visual:
+    - BarChart: monthly collection vs target (7 months, Arabic month names, custom tooltip)
+    - PieChart: payment method distribution (نقدي 35%, تحويل بنكي 30%, شيك 15%, بطاقة 20%) with custom legend
+  - Teal/green color scheme (#0d9488, #059669), gradient top strips, framer-motion animations, dark mode support, RTL Arabic layout
+- **API Route**: Created `/src/app/api/fees/route.ts`
+  - GET: Returns fee types, student fee summaries, payments, and summary stats
+  - POST: Validates and adds new payment record
+- **Store Update**: Added 'fees' to PageKey type in `store.ts`
+- **Navigation Update**: Added 'الرسوم المدرسية' (Wallet icon) in AppLayout.tsx after 'exams' and before 'schedule'
+- **Page Renderer Update**: Added fees case with FeeManagementPage import in page.tsx
+- **Bug Fix**: Fixed pre-existing ExamsPage.tsx parsing error - missing flex-wrap wrapper div in CardContent
+- ESLint: All changed files pass lint (only pre-existing slides/ errors remain)
+- Dev server running without errors
+
+Stage Summary:
+- Fee Management page fully functional with summary cards, fee types grid, student payments tabs, add payment/fee type dialogs, bar chart and pie chart
+- API route created with GET/POST handlers
+- Navigation updated with new "الرسوم المدرسية" item using Wallet icon
+- Pre-existing ExamsPage parsing bug fixed
+- All code lint-clean, dev server running without errors
+- Total pages/modules now: 16
+
+---
+Task ID: 4
+Agent: Dark Mode & Shortcuts Enhancement Agent
+Task: Add dark mode classes to StudentsPage, ClassRankingPage, ExamsPage; enhance StudentsPage header; add keyboard shortcuts to AppLayout
+
+Work Log:
+- **StudentsPage.tsx - Dark Mode + Header Enhancement**:
+  - Replaced plain `bg-primary/10` icon wrapper with teal gradient icon (`linear-gradient(135deg, #0d9488, #059669)`)
+  - Added subtitle text "إدارة بيانات الطلاب والتسجيل"
+  - Made "إضافة طالب" button use teal gradient styling
+  - Made "تصدير" button use teal border styling (matching "نقل طالب" button with dark variants)
+  - Added `dark:bg-gray-900/50` to students table card
+  - Added `dark:text-gray-200` for headings and student names
+  - Added `dark:hover:bg-gray-800/50` for table rows
+  - Added `dark:bg-gray-800 dark:border-gray-700` on search input
+  - Added `dark:bg-gray-900` to all three dialogs (add/edit, profile, transfer)
+  - Added `dark:border-gray-700` to student card in profile
+  - Added `dark:bg-teal-900/30 dark:text-teal-300` to avatar fallbacks
+  - Added `dark:border-teal-700 dark:text-teal-400 dark:hover:bg-teal-900/20` to transfer button
+  - Added `dark:bg-gray-800/50 dark:border-teal-800` to transfer dialog card
+  - Changed save button to use teal gradient styling
+- **ClassRankingPage.tsx - Dark Mode**:
+  - Added `dark:bg-gray-900/50 dark:border-gray-700` to filter card
+  - Added `dark:bg-gray-900/50` to podium section and rankings table card
+  - Added `dark:text-gray-200` to page title and card titles
+  - Added `dark:hover:bg-gray-800/50` for table rows
+  - Added `dark:bg-gray-800 dark:text-gray-400` for rank > 3 circles
+  - Added `dark:bg-teal-900/30 dark:text-teal-300` for avatar fallbacks
+  - Added `dark:text-gray-200` for student names
+  - Added dark variants to podium badges (silver: `dark:bg-gray-800`, gold: `dark:bg-yellow-900/30`, bronze: `dark:bg-orange-900/30`)
+  - Added `dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800/50` to export button
+- **ExamsPage.tsx - Dark Mode**:
+  - Added `dark:bg-gray-900/50 dark:border-gray-700` to filter card, empty state card, grid view cards, list view card
+  - Added dark variants to all 5 exam type badge colors (شهر أول, شهر ثاني, نصف سنة, نهاية سنة, تقويم مستمر)
+  - Added `dark:hover:bg-gray-800/50` for table rows
+  - Added `dark:bg-gray-900` to add exam dialog
+  - Added `dark:text-gray-200` to dialog title and page header
+- **AppLayout.tsx - Keyboard Shortcuts**:
+  - Added `useCallback` import for memoized handler
+  - Added keyboard shortcut handler with `useEffect`:
+    - `Ctrl+1` through `Ctrl+9` → navigate to first 9 pages (maps to navItems array)
+    - `Ctrl+K` → toggle sidebar (uses `setSidebarOpen` with functional update)
+    - `Ctrl+D` → toggle dark mode (uses existing `setTheme` and `theme`)
+    - All shortcuts use `event.preventDefault()` only when matched
+    - Checks for `ctrlKey && !shiftKey && !altKey` to avoid conflicts
+  - Added keyboard shortcut tooltip in footer: "اختصارات: Ctrl+1-9 تنقل, Ctrl+K قائمة, Ctrl+D وضع داكن"
+    - Uses `hidden sm:inline` to show only on larger screens
+    - Uses `text-muted-foreground/50` for subtle appearance
+
+Stage Summary:
+- StudentsPage: gradient icon header, subtitle, teal buttons, comprehensive dark mode classes
+- ClassRankingPage: dark mode on cards, badges, table rows, podium badges
+- ExamsPage: dark mode on cards, exam type badges, table rows, dialog
+- AppLayout: keyboard shortcuts (Ctrl+1-9, Ctrl+K, Ctrl+D) with footer tooltip
+- All code lint-clean (only pre-existing slides/ errors)
+- Dev server running without errors

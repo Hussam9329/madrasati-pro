@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   LayoutDashboard,
   GraduationCap,
@@ -29,6 +29,7 @@ import {
   Heart,
   Trophy,
   ClipboardList,
+  Wallet,
 } from 'lucide-react';
 import { useAppStore, type PageKey } from '@/lib/store';
 import { Button } from '@/components/ui/button';
@@ -53,6 +54,7 @@ const navItems: { key: PageKey; label: string; icon: React.ElementType; badge?: 
   { key: 'grades', label: 'الدرجات', icon: FileText },
   { key: 'ranking', label: 'ترتيب الصفوف', icon: Trophy },
   { key: 'exams', label: 'الامتحانات', icon: ClipboardList },
+  { key: 'fees', label: 'الرسوم المدرسية', icon: Wallet },
   { key: 'schedule', label: 'جدول الحصص', icon: Calendar },
   { key: 'activity', label: 'سجل النشاط', icon: Activity },
   { key: 'reports', label: 'التقارير', icon: BarChart3 },
@@ -94,6 +96,37 @@ export default function AppLayout({ children }: AppLayoutProps) {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
     return () => clearInterval(timer);
   }, []);
+
+  // Keyboard shortcuts
+  const handleKeyDown = useCallback((event: KeyboardEvent) => {
+    // Ctrl+1 through Ctrl+9 → navigate to first 9 pages
+    if (event.ctrlKey && !event.shiftKey && !event.altKey) {
+      const num = parseInt(event.key, 10);
+      if (num >= 1 && num <= 9 && num <= navItems.length) {
+        event.preventDefault();
+        setActivePage(navItems[num - 1].key);
+        setSidebarOpen(false);
+        return;
+      }
+      // Ctrl+K → toggle sidebar
+      if (event.key === 'k' || event.key === 'K') {
+        event.preventDefault();
+        setSidebarOpen(prev => !prev);
+        return;
+      }
+      // Ctrl+D → toggle dark mode
+      if (event.key === 'd' || event.key === 'D') {
+        event.preventDefault();
+        setTheme(theme === 'dark' ? 'light' : 'dark');
+        return;
+      }
+    }
+  }, [theme, setTheme, setActivePage, setSidebarOpen]);
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleKeyDown]);
 
   const userName = auth.user?.name || 'مستخدم';
   const userRole = auth.user?.role || '';
@@ -491,9 +524,12 @@ export default function AppLayout({ children }: AppLayoutProps) {
             <p className="text-[11px] text-muted-foreground">
               مدرستي Pro © {new Date().getFullYear()} — من تطوير Vision
             </p>
-            <div className="flex items-center gap-1.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              <span className="text-[11px] text-muted-foreground">النظام يعمل</span>
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] text-muted-foreground/50 hidden sm:inline">اختصارات: Ctrl+1-9 تنقل, Ctrl+K قائمة, Ctrl+D وضع داكن</span>
+              <div className="flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <span className="text-[11px] text-muted-foreground">النظام يعمل</span>
+              </div>
             </div>
           </div>
         </footer>

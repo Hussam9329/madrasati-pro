@@ -251,11 +251,11 @@ export default function ClassRankingPage() {
             <Trophy className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">ترتيب الصفوف</h1>
+            <h1 className="text-2xl font-bold dark:text-gray-200">ترتيب الصفوف</h1>
             <p className="text-sm text-muted-foreground">لوحة المتصدرين - ترتيب الطلاب حسب المعدل</p>
           </div>
         </div>
-        <Button variant="outline" className="gap-2">
+        <Button variant="outline" className="gap-2 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800/50">
           <Download className="h-4 w-4" />
           تصدير الترتيب
         </Button>
@@ -303,7 +303,7 @@ export default function ClassRankingPage() {
 
       {/* Filters */}
       <motion.div variants={itemVariants}>
-        <Card>
+        <Card className="dark:bg-gray-900/50 dark:border-gray-700">
           <CardContent className="p-4">
             <div className="flex flex-wrap gap-4 items-end">
               <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
@@ -344,10 +344,10 @@ export default function ClassRankingPage() {
       {/* Top 3 Podium */}
       {top3.length >= 3 && (
         <motion.div variants={itemVariants}>
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden dark:bg-gray-900/50">
             <div className="absolute top-0 right-0 left-0 h-1" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg flex items-center gap-2">
+              <CardTitle className="text-lg flex items-center gap-2 dark:text-gray-200">
                 <Award className="h-5 w-5 text-yellow-500" />
                 منصة المتصدرين
               </CardTitle>
@@ -369,7 +369,7 @@ export default function ClassRankingPage() {
                     </Avatar>
                     <p className="text-sm font-bold text-center max-w-[100px] truncate">{top3[1].fullName}</p>
                     <p className="text-xs text-muted-foreground">{top3[1].className}</p>
-                    <Badge className="mt-1 bg-gray-100 text-gray-700 border-gray-300 text-xs">🥈 {top3[1].average}%</Badge>
+                    <Badge className="mt-1 bg-gray-100 text-gray-700 border-gray-300 text-xs dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600"> {top3[1].average}%</Badge>
                   </motion.div>
                   <div className="w-24 bg-gradient-to-t from-gray-200 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-t-lg mt-3 flex items-end justify-center pb-2" style={{ height: '100px' }}>
                     <span className="text-2xl font-bold text-gray-500">2</span>
@@ -394,7 +394,7 @@ export default function ClassRankingPage() {
                     </div>
                     <p className="text-sm font-bold text-center max-w-[110px] truncate">{top3[0].fullName}</p>
                     <p className="text-xs text-muted-foreground">{top3[0].className}</p>
-                    <Badge className="mt-1 bg-yellow-100 text-yellow-700 border-yellow-300 text-xs">🥇 {top3[0].average}%</Badge>
+                    <Badge className="mt-1 bg-yellow-100 text-yellow-700 border-yellow-300 text-xs dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-700"> {top3[0].average}%</Badge>
                   </motion.div>
                   <div className="w-24 bg-gradient-to-t from-yellow-300 to-yellow-100 dark:from-yellow-700 dark:to-yellow-600 rounded-t-lg mt-3 flex items-end justify-center pb-2" style={{ height: '140px' }}>
                     <span className="text-3xl font-bold text-yellow-600">1</span>
@@ -416,7 +416,7 @@ export default function ClassRankingPage() {
                     </Avatar>
                     <p className="text-sm font-bold text-center max-w-[100px] truncate">{top3[2].fullName}</p>
                     <p className="text-xs text-muted-foreground">{top3[2].className}</p>
-                    <Badge className="mt-1 bg-orange-100 text-orange-700 border-orange-300 text-xs">🥉 {top3[2].average}%</Badge>
+                    <Badge className="mt-1 bg-orange-100 text-orange-700 border-orange-300 text-xs dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-700"> {top3[2].average}%</Badge>
                   </motion.div>
                   <div className="w-24 bg-gradient-to-t from-orange-200 to-orange-100 dark:from-orange-700 dark:to-orange-600 rounded-t-lg mt-3 flex items-end justify-center pb-2" style={{ height: '70px' }}>
                     <span className="text-2xl font-bold text-orange-500">3</span>
@@ -430,10 +430,10 @@ export default function ClassRankingPage() {
 
       {/* Rankings Table */}
       <motion.div variants={itemVariants}>
-        <Card className="overflow-hidden">
+        <Card className="overflow-hidden dark:bg-gray-900/50">
           <div className="h-1" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
           <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2">
+            <CardTitle className="text-lg flex items-center gap-2 dark:text-gray-200">
               <Medal className="h-5 w-5 text-primary" />
               جدول الترتيب الكامل
             </CardTitle>
@@ -484,7 +484,7 @@ export default function ClassRankingPage() {
                             exit={{ opacity: 0, x: 10 }}
                             transition={{ delay: idx * 0.02 }}
                             className={cn(
-                              'cursor-pointer hover:bg-muted/50 border-b transition-colors',
+                              'cursor-pointer hover:bg-muted/50 dark:hover:bg-gray-800/50 border-b transition-colors',
                               rank <= 3 && rankStyle.bg
                             )}
                           >
@@ -494,7 +494,7 @@ export default function ClassRankingPage() {
                                 rank === 1 && 'bg-yellow-100 text-yellow-700 ring-2 ring-yellow-300',
                                 rank === 2 && 'bg-gray-100 text-gray-600 ring-2 ring-gray-300',
                                 rank === 3 && 'bg-orange-100 text-orange-600 ring-2 ring-orange-300',
-                                rank > 3 && 'bg-muted text-muted-foreground'
+                                rank > 3 && 'bg-muted text-muted-foreground dark:bg-gray-800 dark:text-gray-400'
                               )}>
                                 {rank <= 3 ? rankStyle.icon : rank}
                               </div>
@@ -507,13 +507,13 @@ export default function ClassRankingPage() {
                                     rank === 1 && 'bg-yellow-100 text-yellow-700',
                                     rank === 2 && 'bg-gray-100 text-gray-600',
                                     rank === 3 && 'bg-orange-100 text-orange-600',
-                                    rank > 3 && 'bg-primary/10 text-primary'
+                                    rank > 3 && 'bg-primary/10 text-primary dark:bg-teal-900/30 dark:text-teal-300'
                                   )}>
                                     {student.fullName.charAt(0)}
                                   </AvatarFallback>
                                 </Avatar>
                                 <div>
-                                  <span className={cn('font-medium', rank <= 3 && 'font-bold')}>{student.fullName}</span>
+                                  <span className={cn('font-medium dark:text-gray-200', rank <= 3 && 'font-bold')}>{student.fullName}</span>
                                   <p className="text-xs text-muted-foreground font-mono">{student.studentNumber}</p>
                                 </div>
                               </div>

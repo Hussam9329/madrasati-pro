@@ -88,11 +88,11 @@ const SUBJECT_COLORS: Record<string, { bg: string; dot: string; text: string }> 
 const DEFAULT_COLOR = { bg: 'bg-gray-50 border-gray-200', dot: 'bg-gray-400', text: 'text-gray-700' }
 
 const EXAM_TYPE_COLORS: Record<string, string> = {
-  'شهر أول': 'bg-blue-100 text-blue-700 border-blue-200',
-  'شهر ثاني': 'bg-cyan-100 text-cyan-700 border-cyan-200',
-  'نصف سنة': 'bg-amber-100 text-amber-700 border-amber-200',
-  'نهاية سنة': 'bg-red-100 text-red-700 border-red-200',
-  'تقويم مستمر': 'bg-teal-100 text-teal-700 border-teal-200',
+  'شهر أول': 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700',
+  'شهر ثاني': 'bg-cyan-100 text-cyan-700 border-cyan-200 dark:bg-cyan-900/30 dark:text-cyan-300 dark:border-cyan-700',
+  'نصف سنة': 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-700',
+  'نهاية سنة': 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700',
+  'تقويم مستمر': 'bg-teal-100 text-teal-700 border-teal-200 dark:bg-teal-900/30 dark:text-teal-300 dark:border-teal-700',
 }
 
 // Mock exam data
@@ -314,7 +314,7 @@ export default function ExamsPage() {
             <ClipboardList className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">الامتحانات</h1>
+            <h1 className="text-2xl font-bold dark:text-gray-200">الامتحانات</h1>
             <p className="text-sm text-muted-foreground">جدول الامتحانات والمواعيد</p>
           </div>
         </div>
@@ -370,7 +370,7 @@ export default function ExamsPage() {
 
       {/* Filters & View Toggle */}
       <motion.div variants={itemVariants}>
-        <Card>
+        <Card className="dark:bg-gray-900/50 dark:border-gray-700">
           <CardContent className="p-4">
             <div className="flex flex-wrap gap-4 items-end">
               <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
@@ -443,7 +443,7 @@ export default function ExamsPage() {
           ))}
         </div>
       ) : filteredExams.length === 0 ? (
-        <Card>
+        <Card className="dark:bg-gray-900/50 dark:border-gray-700">
           <CardContent className="flex flex-col items-center justify-center py-16 text-muted-foreground">
             <ClipboardList className="h-12 w-12 mb-4 opacity-30" />
             <p className="text-lg font-medium">لا توجد امتحانات</p>
@@ -459,7 +459,7 @@ export default function ExamsPage() {
 
             return (
               <Card key={date} className={cn(
-                'overflow-hidden',
+                'overflow-hidden dark:bg-gray-900/50',
                 isToday && 'border-teal-300 ring-1 ring-teal-200',
                 isPast && 'opacity-60'
               )}>
@@ -535,9 +535,9 @@ export default function ExamsPage() {
       ) : (
         /* List View - Table */
         <motion.div variants={itemVariants}>
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden dark:bg-gray-900/50">
             <div className="h-1" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
-            <CardContent className="p-0">
+            <CardContent className="p-0 dark:bg-gray-900/50">
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
@@ -563,8 +563,8 @@ export default function ExamsPage() {
                             initial={{ opacity: 0, y: 8 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: idx * 0.02 }}
-                            className={cn(
-                              'hover:bg-muted/50 border-b transition-colors',
+                          className={cn(
+                              'hover:bg-muted/50 dark:hover:bg-gray-800/50 border-b transition-colors',
                               isToday && 'bg-teal-50/50',
                               isPast && 'opacity-50'
                             )}
@@ -603,10 +603,9 @@ export default function ExamsPage() {
 
       {/* Add Exam Dialog */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto dark:bg-gray-900">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <ClipboardList className="h-5 w-5 text-primary" />
+            <DialogTitle className="flex items-center gap-2 dark:text-gray-200">
               إضافة امتحان جديد
             </DialogTitle>
           </DialogHeader>

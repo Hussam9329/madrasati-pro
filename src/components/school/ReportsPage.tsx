@@ -110,6 +110,13 @@ export default function ReportsPage() {
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([])
   const [gradeRecords, setGradeRecords] = useState<GradeRecord[]>([])
 
+  // Auto-generate report when report type is selected
+  useEffect(() => {
+    if (selectedReport) {
+      generateReport()
+    }
+  }, [selectedReport, generateReport])
+
   // Fetch initial data
   useEffect(() => {
     const fetchData = async () => {
@@ -194,7 +201,7 @@ export default function ReportsPage() {
     ].filter(d => d.value > 0)
   }
 
-  // Grade stats
+  // Grade stats - uses percentage-based pass/fail
   const getGradeStats = () => {
     const validGrades = gradeRecords.filter(g => g.score !== null)
     if (validGrades.length === 0) return null
@@ -205,18 +212,18 @@ export default function ReportsPage() {
     const lowest = Math.min(...scores)
 
     // Group by subject
-    const bySubject: Record<string, { name: string; scores: number[]; passScore: number }> = {}
+    const bySubject: Record<string, { name: string; scores: number[]; passScore: number; subjectMaxScore: number }> = {}
     validGrades.forEach(g => {
       if (!bySubject[g.subject.id]) {
-        bySubject[g.subject.id] = { name: g.subject.name, scores: [], passScore: g.subject.passScore }
+        bySubject[g.subject.id] = { name: g.subject.name, scores: [], passScore: g.subject.passScore, subjectMaxScore: g.subject.passScore > 0 ? 100 : 100 }
       }
       bySubject[g.subject.id].scores.push(g.score!)
     })
 
-    // Pass rate by subject (for bar chart)
+    // Pass rate by subject (for bar chart) - percentage-based
     const passRateBySubject = Object.values(bySubject).map(s => ({
       name: s.name,
-      passRate: Math.round((s.scores.filter(sc => sc >= s.passScore).length / s.scores.length) * 100),
+      passRate: Math.round((s.scores.filter(sc => (sc / 100) * 100 >= (s.passScore / s.subjectMaxScore) * 100).length / s.scores.length) * 100),
       avgScore: Math.round(s.scores.reduce((a, b) => a + b, 0) / s.scores.length),
     }))
 
@@ -225,7 +232,11 @@ export default function ReportsPage() {
       highest,
       lowest,
       total: validGrades.length,
-      passRate: Math.round((validGrades.filter(g => g.score! >= g.subject.passScore).length / validGrades.length) * 100),
+      passRate: Math.round((validGrades.filter(g => {
+        const scorePct = (g.score! / g.examType.maxScore) * 100
+        const passPct = (g.subject.passScore / 100) * 100
+        return scorePct >= passPct
+      }).length / validGrades.length) * 100),
       passRateBySubject,
     }
   }
@@ -624,7 +635,12 @@ export default function ReportsPage() {
 
       // Failed Students
       if (selectedReport === 'failed-students') {
-        const failedGrades = gradeRecords.filter(g => g.score !== null && g.score < g.subject.passScore)
+        const failedGrades = gradeRecords.filter(g => {
+          if (g.score === null) return false
+          const scorePct = (g.score / g.examType.maxScore) * 100
+          const passPct = (g.subject.passScore / 100) * 100
+          return scorePct < passPct
+        })
 
         return (
           <div className="space-y-6">
@@ -773,11 +789,19 @@ export default function ReportsPage() {
                         </TableCell>
                         <TableCell>
                           <Badge className={
-                            grade.score !== null && grade.score >= grade.subject.passScore
+                            grade.score !== null && (() => {
+                              const scorePct = (grade.score / grade.examType.maxScore) * 100
+                              const passPct = (grade.subject.passScore / 100) * 100
+                              return scorePct >= passPct
+                            })()
                               ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
                               : 'bg-red-100 text-red-800 border-red-300'
                           }>
-                            {grade.score !== null && grade.score >= grade.subject.passScore ? 'ناجح' : 'راسب'}
+                            {grade.score !== null && (() => {
+                              const scorePct = (grade.score / grade.examType.maxScore) * 100
+                              const passPct = (grade.subject.passScore / 100) * 100
+                              return scorePct >= passPct
+                            })() ? 'ناجح' : 'راسب'}
                           </Badge>
                         </TableCell>
                       </TableRow>
