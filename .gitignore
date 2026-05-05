@@ -52,3 +52,10 @@ prompt
 server.log
 # Skills directory
 /skills/
+# Database files
+db/custom.db
+db/custom.db-journal
+# Agent context
+agent-ctx/
+# Zscripts
+.zscripts/
