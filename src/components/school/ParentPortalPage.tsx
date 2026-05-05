@@ -324,25 +324,25 @@ export default function ParentPortalPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <Card className="border-0 shadow-sm h-full overflow-hidden">
+          <Card className="border-0 shadow-sm h-full overflow-hidden dark:bg-gray-900/50 dark:border dark:border-gray-700">
             <div className="h-2" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
             <CardHeader className="pb-3">
-              <CardTitle className="text-base font-bold text-gray-800 flex items-center gap-2">
-                <User className="w-4 h-4 text-teal-600" />
+              <CardTitle className="text-base font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+                <User className="w-4 h-4 text-teal-600 dark:text-teal-400" />
                 بيانات الطالب
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex flex-col items-center text-center mb-4">
-                <Avatar className="w-20 h-20 ring-4 ring-teal-100 shadow-lg mb-3">
+                <Avatar className="w-20 h-20 ring-4 ring-teal-100 dark:ring-teal-900/50 shadow-lg mb-3">
                   <AvatarFallback
-                    className="text-xl font-bold bg-gradient-to-br from-teal-100 to-emerald-100"
+                    className="text-xl font-bold bg-gradient-to-br from-teal-100 to-emerald-100 dark:from-teal-900/50 dark:to-emerald-900/50"
                     style={{ color: '#0d9488' }}
                   >
                     {selectedStudent.name.split(' ').map((w) => w[0]).join('').slice(0, 2)}
                   </AvatarFallback>
                 </Avatar>
-                <h3 className="text-lg font-bold text-gray-800">{selectedStudent.name}</h3>
+                <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200">{selectedStudent.name}</h3>
                 <Badge
                   className={`mt-1.5 text-xs ${
                     selectedStudent.status === 'مستمر'
@@ -402,14 +402,14 @@ export default function ParentPortalPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
-          <Card className="border-0 shadow-sm h-full overflow-hidden">
+          <Card className="border-0 shadow-sm h-full overflow-hidden dark:bg-gray-900/50 dark:border dark:border-gray-700">
             <div className="h-2" style={{ background: 'linear-gradient(90deg, #10b981, #059669)' }} />
             <CardHeader className="pb-3">
-              <CardTitle className="text-base font-bold text-gray-800 flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-emerald-600" />
+              <CardTitle className="text-base font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 ملخص الحضور — الشهر الحالي
               </CardTitle>
-              <CardDescription>إحصائيات الحضور والغياب</CardDescription>
+              <CardDescription className="dark:text-gray-400">إحصائيات الحضور والغياب</CardDescription>
             </CardHeader>
             <CardContent>
               {/* Attendance Rate Circle */}
@@ -482,14 +482,14 @@ export default function ParentPortalPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
         >
-          <Card className="border-0 shadow-sm h-full overflow-hidden">
+          <Card className="border-0 shadow-sm h-full overflow-hidden dark:bg-gray-900/50 dark:border dark:border-gray-700">
             <div className="h-2" style={{ background: 'linear-gradient(90deg, #0d9488, #0891b2)' }} />
             <CardHeader className="pb-3">
-              <CardTitle className="text-base font-bold text-gray-800 flex items-center gap-2">
-                <BookOpen className="w-4 h-4 text-teal-600" />
+              <CardTitle className="text-base font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+                <BookOpen className="w-4 h-4 text-teal-600 dark:text-teal-400" />
                 آخر الدرجات
               </CardTitle>
-              <CardDescription>نتائج الامتحانات الأخيرة</CardDescription>
+              <CardDescription className="dark:text-gray-400">نتائج الامتحانات الأخيرة</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3 max-h-80 overflow-y-auto custom-scrollbar">
@@ -540,14 +540,14 @@ export default function ParentPortalPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
         >
-          <Card className="border-0 shadow-sm h-full overflow-hidden">
+          <Card className="border-0 shadow-sm h-full overflow-hidden dark:bg-gray-900/50 dark:border dark:border-gray-700">
             <div className="h-2" style={{ background: 'linear-gradient(90deg, #f59e0b, #f97316)' }} />
             <CardHeader className="pb-3">
-              <CardTitle className="text-base font-bold text-gray-800 flex items-center gap-2">
-                <Bell className="w-4 h-4 text-amber-600" />
+              <CardTitle className="text-base font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+                <Bell className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                 إشعارات المدرسة
               </CardTitle>
-              <CardDescription>آخر الإعلانات والتنبيهات</CardDescription>
+              <CardDescription className="dark:text-gray-400">آخر الإعلانات والتنبيهات</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3 max-h-96 overflow-y-auto custom-scrollbar">
@@ -586,14 +586,14 @@ export default function ParentPortalPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
         >
-          <Card className="border-0 shadow-sm h-full overflow-hidden">
+          <Card className="border-0 shadow-sm h-full overflow-hidden dark:bg-gray-900/50 dark:border dark:border-gray-700">
             <div className="h-2" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
             <CardHeader className="pb-3">
-              <CardTitle className="text-base font-bold text-gray-800 flex items-center gap-2">
-                <CalendarDays className="w-4 h-4 text-teal-600" />
+              <CardTitle className="text-base font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+                <CalendarDays className="w-4 h-4 text-teal-600 dark:text-teal-400" />
                 الجدول الأسبوعي
               </CardTitle>
-              <CardDescription>جدول حصص الطالب للأسبوع الحالي</CardDescription>
+              <CardDescription className="dark:text-gray-400">جدول حصص الطالب للأسبوع الحالي</CardDescription>
             </CardHeader>
             <CardContent>
               <Tabs defaultValue="الأحد" dir="rtl">
@@ -648,14 +648,14 @@ export default function ParentPortalPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.7 }}
       >
-        <Card className="border-0 shadow-sm overflow-hidden">
+        <Card className="border-0 shadow-sm overflow-hidden dark:bg-gray-900/50 dark:border dark:border-gray-700">
           <div className="h-2" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
           <CardHeader className="pb-3">
-            <CardTitle className="text-base font-bold text-gray-800 flex items-center gap-2">
-              <BookOpen className="w-4 h-4 text-teal-600" />
+            <CardTitle className="text-base font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+              <BookOpen className="w-4 h-4 text-teal-600 dark:text-teal-400" />
               تفاصيل الدرجات
             </CardTitle>
-            <CardDescription>جميع نتائج الامتحانات مع حالة النجاح والرسوب</CardDescription>
+            <CardDescription className="dark:text-gray-400">جميع نتائج الامتحانات مع حالة النجاح والرسوب</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">

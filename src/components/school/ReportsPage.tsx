@@ -115,7 +115,7 @@ export default function ReportsPage() {
     if (selectedReport) {
       generateReport()
     }
-  }, [selectedReport, generateReport])
+  }, [selectedReport]) // generateReport uses state setters which are stable
 
   // Fetch initial data
   useEffect(() => {

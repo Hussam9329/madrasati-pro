@@ -9,6 +9,7 @@ import {
   ArrowUpRight, ArrowDownRight, Filter, Download
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { exportToCSV } from '@/lib/export-utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -234,6 +235,7 @@ export default function FeeManagementPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [saving, setSaving] = useState(false)
+  const [paymentSearchQuery, setPaymentSearchQuery] = useState('')
 
   // Payment form
   const [paymentForm, setPaymentForm] = useState({
@@ -267,6 +269,16 @@ export default function FeeManagementPage() {
       return true
     })
   }, [searchQuery, filterStatus])
+
+  // Filtered payment records
+  const filteredPaymentRecords = useMemo(() => {
+    if (!paymentSearchQuery) return paymentRecords
+    return paymentRecords.filter(p =>
+      p.studentName.includes(paymentSearchQuery) ||
+      p.receiptNumber.includes(paymentSearchQuery) ||
+      (p.notes && p.notes.includes(paymentSearchQuery))
+    )
+  }, [paymentRecords, paymentSearchQuery])
 
   // Summary cards data
   const summaryCards = [
@@ -355,6 +367,17 @@ export default function FeeManagementPage() {
             variant="outline"
             size="sm"
             className="gap-2 text-xs border-teal-200 dark:border-teal-800 hover:bg-teal-50 dark:hover:bg-teal-900/20"
+            onClick={() => {
+              const csvData = filteredRecords.map(r => ({
+                'الطالب': r.studentName,
+                'الصف': r.className,
+                'إجمالي الرسوم': r.totalFees,
+                'المدفوع': r.paid,
+                'المتبقي': r.remaining,
+                'الحالة': r.status,
+              }))
+              exportToCSV(csvData, 'الرسوم_المدرسية')
+            }}
           >
             <Download className="h-3.5 w-3.5" />
             تصدير التقرير
@@ -467,8 +490,8 @@ export default function FeeManagementPage() {
 
               {/* Fees Tab */}
               <TabsContent value="fees" className="p-4 pt-3">
-                {/* Filters */}
-                <div className="flex flex-wrap gap-3 mb-4">
+                {/* Filters + Export */}
+                <div className="flex flex-wrap gap-3 mb-4 items-center">
                   <div className="flex-1 min-w-[200px] relative">
                     <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -491,6 +514,25 @@ export default function FeeManagementPage() {
                       <SelectItem value="معفي">معفي</SelectItem>
                     </SelectContent>
                   </Select>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-1.5 text-xs border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-400"
+                    onClick={() => {
+                      const csvData = filteredRecords.map(r => ({
+                        'الطالب': r.studentName,
+                        'الصف': r.className,
+                        'إجمالي الرسوم': r.totalFees,
+                        'المدفوع': r.paid,
+                        'المتبقي': r.remaining,
+                        'الحالة': r.status,
+                      }))
+                      exportToCSV(csvData, 'رسوم_الطلاب')
+                    }}
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    تصدير
+                  </Button>
                 </div>
 
                 {/* Status summary row */}
@@ -581,6 +623,37 @@ export default function FeeManagementPage() {
 
               {/* Payments Tab */}
               <TabsContent value="payments" className="p-4 pt-3">
+                {/* Search + Export */}
+                <div className="flex flex-wrap gap-3 mb-4 items-center">
+                  <div className="flex-1 min-w-[200px] relative">
+                    <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="بحث في المدفوعات..."
+                      value={paymentSearchQuery}
+                      onChange={(e) => setPaymentSearchQuery(e.target.value)}
+                      className="pr-9"
+                    />
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-1.5 text-xs border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-400"
+                    onClick={() => {
+                      const csvData = filteredPaymentRecords.map(p => ({
+                        'التاريخ': p.date,
+                        'الطالب': p.studentName,
+                        'المبلغ': p.amount,
+                        'طريقة الدفع': p.method,
+                        'رقم الإيصال': p.receiptNumber,
+                        'ملاحظات': p.notes || '',
+                      }))
+                      exportToCSV(csvData, 'المدفوعات')
+                    }}
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    تصدير
+                  </Button>
+                </div>
                 <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
                   <Table>
                     <TableHeader>
@@ -594,7 +667,7 @@ export default function FeeManagementPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {paymentRecords.map((payment, idx) => (
+                      {filteredPaymentRecords.map((payment, idx) => (
                         <motion.tr
                           key={payment.id}
                           initial={{ opacity: 0, y: 6 }}

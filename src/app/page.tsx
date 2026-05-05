@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
 import { useAppStore, type PageKey } from '@/lib/store';
 import LoginPage from '@/components/school/LoginPage';
 import AppLayout from '@/components/school/AppLayout';
@@ -19,6 +18,7 @@ import ParentPortalPage from '@/components/school/ParentPortalPage';
 import ClassRankingPage from '@/components/school/ClassRankingPage';
 import ExamsPage from '@/components/school/ExamsPage';
 import FeeManagementPage from '@/components/school/FeeManagementPage';
+import MessagingPage from '@/components/school/MessagePage';
 
 function PageRenderer({ page }: { page: PageKey }) {
   switch (page) {
@@ -46,6 +46,8 @@ function PageRenderer({ page }: { page: PageKey }) {
       return <ExamsPage />;
     case 'fees':
       return <FeeManagementPage />;
+    case 'messages':
+      return <MessagingPage />;
     case 'parents':
       return <ParentPortalPage />;
     case 'notices':
@@ -102,17 +104,7 @@ export default function Home() {
   // Show main app
   return (
     <AppLayout>
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={activePage}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          transition={{ duration: 0.2 }}
-        >
-          <PageRenderer page={activePage} />
-        </motion.div>
-      </AnimatePresence>
+      <PageRenderer page={activePage} />
     </AppLayout>
   );
 }

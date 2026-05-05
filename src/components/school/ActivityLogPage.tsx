@@ -45,18 +45,18 @@ interface ActivityEntry {
   timestamp: Date;
 }
 
-const ACTIVITY_CONFIG: Record<ActivityType, { icon: React.ElementType; color: string; bgColor: string; label: string }> = {
-  login: { icon: LogIn, color: 'text-sky-600', bgColor: 'bg-sky-50', label: 'تسجيل دخول' },
-  student_added: { icon: UserPlus, color: 'text-emerald-600', bgColor: 'bg-emerald-50', label: 'إضافة طالب' },
-  grade_entered: { icon: FileText, color: 'text-amber-600', bgColor: 'bg-amber-50', label: 'إدخال درجات' },
-  attendance_recorded: { icon: ClipboardCheck, color: 'text-teal-600', bgColor: 'bg-teal-50', label: 'تسجيل حضور' },
-  settings_changed: { icon: Settings, color: 'text-gray-600', bgColor: 'bg-gray-50', label: 'تغيير إعدادات' },
-  notice_sent: { icon: Bell, color: 'text-purple-600', bgColor: 'bg-purple-50', label: 'إرسال إشعار' },
-  user_created: { icon: Shield, color: 'text-rose-600', bgColor: 'bg-rose-50', label: 'إنشاء مستخدم' },
-  student_deleted: { icon: Trash2, color: 'text-red-600', bgColor: 'bg-red-50', label: 'حذف طالب' },
-  student_edited: { icon: Edit, color: 'text-blue-600', bgColor: 'bg-blue-50', label: 'تعديل طالب' },
-  export_data: { icon: Download, color: 'text-indigo-600', bgColor: 'bg-indigo-50', label: 'تصدير بيانات' },
-  system: { icon: AlertCircle, color: 'text-orange-600', bgColor: 'bg-orange-50', label: 'نظام' },
+const ACTIVITY_CONFIG: Record<ActivityType, { icon: React.ElementType; color: string; bgColor: string; darkBgColor: string; label: string; dotColor: string }> = {
+  login: { icon: LogIn, color: 'text-sky-600 dark:text-sky-400', bgColor: 'bg-sky-50', darkBgColor: 'dark:bg-sky-900/30', label: 'تسجيل دخول', dotColor: '#0ea5e9' },
+  student_added: { icon: UserPlus, color: 'text-emerald-600 dark:text-emerald-400', bgColor: 'bg-emerald-50', darkBgColor: 'dark:bg-emerald-900/30', label: 'إضافة طالب', dotColor: '#10b981' },
+  grade_entered: { icon: FileText, color: 'text-amber-600 dark:text-amber-400', bgColor: 'bg-amber-50', darkBgColor: 'dark:bg-amber-900/30', label: 'إدخال درجات', dotColor: '#f59e0b' },
+  attendance_recorded: { icon: ClipboardCheck, color: 'text-teal-600 dark:text-teal-400', bgColor: 'bg-teal-50', darkBgColor: 'dark:bg-teal-900/30', label: 'تسجيل حضور', dotColor: '#0d9488' },
+  settings_changed: { icon: Settings, color: 'text-gray-600 dark:text-gray-400', bgColor: 'bg-gray-50', darkBgColor: 'dark:bg-gray-800/50', label: 'تغيير إعدادات', dotColor: '#6b7280' },
+  notice_sent: { icon: Bell, color: 'text-purple-600 dark:text-purple-400', bgColor: 'bg-purple-50', darkBgColor: 'dark:bg-purple-900/30', label: 'إرسال إشعار', dotColor: '#9333ea' },
+  user_created: { icon: Shield, color: 'text-rose-600 dark:text-rose-400', bgColor: 'bg-rose-50', darkBgColor: 'dark:bg-rose-900/30', label: 'إنشاء مستخدم', dotColor: '#e11d48' },
+  student_deleted: { icon: Trash2, color: 'text-red-600 dark:text-red-400', bgColor: 'bg-red-50', darkBgColor: 'dark:bg-red-900/30', label: 'حذف طالب', dotColor: '#ef4444' },
+  student_edited: { icon: Edit, color: 'text-blue-600 dark:text-blue-400', bgColor: 'bg-blue-50', darkBgColor: 'dark:bg-blue-900/30', label: 'تعديل طالب', dotColor: '#3b82f6' },
+  export_data: { icon: Download, color: 'text-indigo-600 dark:text-indigo-400', bgColor: 'bg-indigo-50', darkBgColor: 'dark:bg-indigo-900/30', label: 'تصدير بيانات', dotColor: '#6366f1' },
+  system: { icon: AlertCircle, color: 'text-orange-600 dark:text-orange-400', bgColor: 'bg-orange-50', darkBgColor: 'dark:bg-orange-900/30', label: 'نظام', dotColor: '#f97316' },
 };
 
 // Mock data
@@ -244,12 +244,12 @@ const MOCK_ACTIVITIES: ActivityEntry[] = [
 ];
 
 const ROLE_COLORS: Record<string, string> = {
-  'مدير': 'bg-emerald-100 text-emerald-700 border-emerald-200',
-  'معاون': 'bg-teal-100 text-teal-700 border-teal-200',
-  'موظف تسجيل': 'bg-cyan-100 text-cyan-700 border-cyan-200',
-  'موظف بوابة': 'bg-amber-100 text-amber-700 border-amber-200',
-  'مدرس': 'bg-sky-100 text-sky-700 border-sky-200',
-  'نظام': 'bg-gray-100 text-gray-600 border-gray-200',
+  'مدير': 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-700',
+  'معاون': 'bg-teal-100 text-teal-700 border-teal-200 dark:bg-teal-900/30 dark:text-teal-400 dark:border-teal-700',
+  'موظف تسجيل': 'bg-cyan-100 text-cyan-700 border-cyan-200 dark:bg-cyan-900/30 dark:text-cyan-400 dark:border-cyan-700',
+  'موظف بوابة': 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700',
+  'مدرس': 'bg-sky-100 text-sky-700 border-sky-200 dark:bg-sky-900/30 dark:text-sky-400 dark:border-sky-700',
+  'نظام': 'bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600',
 };
 
 function formatArabicDate(date: Date): string {
@@ -267,22 +267,21 @@ function formatArabicTime(date: Date): string {
   });
 }
 
-function formatArabicFull(date: Date): string {
-  return date.toLocaleDateString('ar-IQ', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
-
 function isSameDay(d1: Date, d2: Date): boolean {
   return d1.getFullYear() === d2.getFullYear() &&
     d1.getMonth() === d2.getMonth() &&
     d1.getDate() === d2.getDate();
 }
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.06 } }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 12 },
+  visible: { opacity: 1, y: 0 }
+};
 
 export default function ActivityLogPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -360,9 +359,14 @@ export default function ActivityLogPage() {
   const gradeOps = MOCK_ACTIVITIES.filter((a) => a.type === 'grade_entered').length;
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      className="space-y-6"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <motion.div variants={itemVariants} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div
             className="flex items-center justify-center w-11 h-11 rounded-xl shadow-lg"
@@ -371,75 +375,68 @@ export default function ActivityLogPage() {
             <Activity className="h-5 w-5 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">سجل النشاط</h1>
-            <p className="text-sm text-muted-foreground">متابعة جميع الأنشطة والعمليات في النظام</p>
+            <h1 className="text-2xl font-bold dark:text-gray-200">سجل النشاط</h1>
+            <p className="text-sm text-muted-foreground">سجل جميع الأنشطة والعمليات</p>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
-          <Card className="border-border/50">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-sky-50">
-                <Activity className="h-4 w-4 text-sky-600" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">إجمالي الأنشطة</p>
-                <p className="text-lg font-bold">{MOCK_ACTIVITIES.length}</p>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <Card className="border-border/50">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-emerald-50">
-                <LogIn className="h-4 w-4 text-emerald-600" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">عمليات الدخول</p>
-                <p className="text-lg font-bold">{loginCount}</p>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-          <Card className="border-border/50">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-teal-50">
-                <UserPlus className="h-4 w-4 text-teal-600" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">عمليات الطلاب</p>
-                <p className="text-lg font-bold">{studentOps}</p>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-          <Card className="border-border/50">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-amber-50">
-                <FileText className="h-4 w-4 text-amber-600" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">إدخال الدرجات</p>
-                <p className="text-lg font-bold">{gradeOps}</p>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </div>
+      <motion.div variants={itemVariants} className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <Card className="border-border/50 dark:bg-gray-900/50 dark:border-gray-700 overflow-hidden relative">
+          <div className="absolute top-0 right-0 left-0 h-1" style={{ background: 'linear-gradient(90deg, #0d9488, #14b8a6)' }} />
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-sky-50 dark:bg-sky-900/40">
+              <Activity className="h-4 w-4 text-sky-600 dark:text-sky-400" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">إجمالي الأنشطة</p>
+              <p className="text-lg font-bold dark:text-gray-200">{MOCK_ACTIVITIES.length}</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-border/50 dark:bg-gray-900/50 dark:border-gray-700 overflow-hidden relative">
+          <div className="absolute top-0 right-0 left-0 h-1" style={{ background: 'linear-gradient(90deg, #059669, #10b981)' }} />
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-emerald-50 dark:bg-emerald-900/40">
+              <LogIn className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">عمليات الدخول</p>
+              <p className="text-lg font-bold dark:text-gray-200">{loginCount}</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-border/50 dark:bg-gray-900/50 dark:border-gray-700 overflow-hidden relative">
+          <div className="absolute top-0 right-0 left-0 h-1" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-teal-50 dark:bg-teal-900/40">
+              <UserPlus className="h-4 w-4 text-teal-600 dark:text-teal-400" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">عمليات الطلاب</p>
+              <p className="text-lg font-bold dark:text-gray-200">{studentOps}</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-border/50 dark:bg-gray-900/50 dark:border-gray-700 overflow-hidden relative">
+          <div className="absolute top-0 right-0 left-0 h-1" style={{ background: 'linear-gradient(90deg, #d97706, #f59e0b)' }} />
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-amber-50 dark:bg-amber-900/40">
+              <FileText className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">إدخال الدرجات</p>
+              <p className="text-lg font-bold dark:text-gray-200">{gradeOps}</p>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
 
       {/* Filters */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.25 }}
-      >
-        <Card>
+      <motion.div variants={itemVariants}>
+        <Card className="dark:bg-gray-900/50 dark:border-gray-700 overflow-hidden relative">
+          <div className="absolute top-0 right-0 left-0 h-1" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
           <CardContent className="p-4">
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1">
@@ -448,11 +445,11 @@ export default function ActivityLogPage() {
                   placeholder="البحث في الأنشطة..."
                   value={searchQuery}
                   onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
-                  className="pr-9"
+                  className="pr-9 dark:bg-gray-800 dark:border-gray-700"
                 />
               </div>
               <Select value={filterType} onValueChange={(v) => { setFilterType(v); setPage(1); }}>
-                <SelectTrigger className="w-full sm:w-48">
+                <SelectTrigger className="w-full sm:w-48 dark:bg-gray-800 dark:border-gray-700">
                   <SelectValue placeholder="نوع النشاط" />
                 </SelectTrigger>
                 <SelectContent>
@@ -463,7 +460,7 @@ export default function ActivityLogPage() {
                 </SelectContent>
               </Select>
               <Select value={filterUser} onValueChange={(v) => { setFilterUser(v); setPage(1); }}>
-                <SelectTrigger className="w-full sm:w-48">
+                <SelectTrigger className="w-full sm:w-48 dark:bg-gray-800 dark:border-gray-700">
                   <SelectValue placeholder="المستخدم" />
                 </SelectTrigger>
                 <SelectContent>
@@ -488,7 +485,7 @@ export default function ActivityLogPage() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
-              <Card>
+              <Card className="dark:bg-gray-900/50 dark:border-gray-700">
                 <CardContent className="py-16 flex flex-col items-center justify-center text-muted-foreground">
                   <Activity className="h-12 w-12 mb-4 opacity-30" />
                   <p className="text-lg font-medium">لا توجد أنشطة مطابقة</p>
@@ -508,18 +505,18 @@ export default function ActivityLogPage() {
                 <div key={group.date}>
                   {/* Date Header */}
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-muted">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-muted dark:bg-gray-800">
+                      <Calendar className="h-4 w-4 text-muted-foreground dark:text-gray-400" />
                     </div>
-                    <h3 className="font-semibold text-sm">{group.date}</h3>
-                    <Separator className="flex-1" />
-                    <Badge variant="outline" className="text-xs">
+                    <h3 className="font-semibold text-sm dark:text-gray-200">{group.date}</h3>
+                    <Separator className="flex-1 dark:bg-gray-700" />
+                    <Badge variant="outline" className="text-xs dark:border-gray-600 dark:text-gray-400">
                       {group.activities.length} نشاط
                     </Badge>
                   </div>
 
                   {/* Activities */}
-                  <div className="space-y-2 mr-4 border-r-2 border-muted pr-4">
+                  <div className="space-y-2 mr-4 border-r-2 border-teal-200 dark:border-teal-800 pr-4">
                     {group.activities.map((activity, idx) => {
                       const config = ACTIVITY_CONFIG[activity.type];
                       const Icon = config.icon;
@@ -530,30 +527,31 @@ export default function ActivityLogPage() {
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: groupIdx * 0.1 + idx * 0.05 }}
                         >
-                          <Card className="border-border/50 hover:shadow-sm transition-shadow">
+                          <Card className="border-border/50 hover:shadow-sm transition-shadow dark:bg-gray-900/50 dark:border-gray-700">
                             <CardContent className="p-3 sm:p-4">
                               <div className="flex items-start gap-3">
                                 {/* Icon */}
-                                <div className={`flex items-center justify-center w-9 h-9 rounded-lg shrink-0 ${config.bgColor}`}>
+                                <div className={`flex items-center justify-center w-9 h-9 rounded-lg shrink-0 ${config.bgColor} ${config.darkBgColor}`}>
                                   <Icon className={`h-4 w-4 ${config.color}`} />
                                 </div>
 
                                 {/* Content */}
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-2 flex-wrap">
-                                    <h4 className="font-semibold text-sm">{activity.title}</h4>
+                                    <h4 className="font-semibold text-sm dark:text-gray-200">{activity.title}</h4>
                                     <Badge
                                       variant="outline"
-                                      className={`text-[10px] h-5 ${config.bgColor} ${config.color}`}
+                                      className={`text-[10px] h-5 ${config.bgColor} ${config.darkBgColor} ${config.color}`}
                                     >
+                                      <div className="w-1.5 h-1.5 rounded-full ml-1" style={{ backgroundColor: config.dotColor }} />
                                       {config.label}
                                     </Badge>
                                   </div>
-                                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2 dark:text-gray-400">
                                     {activity.description}
                                   </p>
                                   <div className="flex items-center gap-3 mt-2">
-                                    <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+                                    <span className="text-[11px] text-muted-foreground flex items-center gap-1 dark:text-gray-500">
                                       <Clock className="h-3 w-3" />
                                       {formatArabicTime(activity.timestamp)}
                                     </span>
@@ -569,8 +567,8 @@ export default function ActivityLogPage() {
                                 {/* Timeline dot */}
                                 <div className="relative">
                                   <div
-                                    className="w-3 h-3 rounded-full border-2 border-background shrink-0"
-                                    style={{ backgroundColor: '#0d9488' }}
+                                    className="w-3 h-3 rounded-full border-2 border-white dark:border-gray-900 shrink-0"
+                                    style={{ backgroundColor: config.dotColor }}
                                   />
                                 </div>
                               </div>
@@ -590,7 +588,7 @@ export default function ActivityLogPage() {
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground dark:text-gray-400">
             عرض {((page - 1) * perPage) + 1} - {Math.min(page * perPage, filteredActivities.length)} من {filteredActivities.length} نشاط
           </p>
           <div className="flex items-center gap-2">
@@ -599,21 +597,23 @@ export default function ActivityLogPage() {
               variant="outline"
               disabled={page <= 1}
               onClick={() => setPage((p) => p - 1)}
+              className="dark:border-gray-700"
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
-            <span className="text-sm font-medium">{page} / {totalPages}</span>
+            <span className="text-sm font-medium dark:text-gray-300">{page} / {totalPages}</span>
             <Button
               size="icon"
               variant="outline"
               disabled={page >= totalPages}
               onClick={() => setPage((p) => p + 1)}
+              className="dark:border-gray-700"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
           </div>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }

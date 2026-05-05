@@ -583,6 +583,94 @@ Unresolved Issues / Next Phase Priorities:
 - Consider adding messaging/communication system between teachers and parents
 - Add keyboard shortcuts for power users
 - Add more report chart types (histograms, scatter plots)
+
+---
+Task ID: 13-b
+Agent: Feature Enhancement Agent
+Task: Add Student Card Print/Export, CSV Export functionality, and comprehensive styling enhancements
+
+Work Log:
+- **Created export utility**: `/src/lib/export-utils.ts`
+  - `exportToCSV()` function that generates CSV with BOM for Arabic support
+  - Takes array of records and filename, creates downloadable Blob
+
+- **StudentsPage.tsx - Student Card Enhancement**:
+  - Redesigned student card with professional dual-tone design:
+    - Top section: Teal gradient header with school logo (GraduationCap), school name, and academic year
+    - Middle section: Photo placeholder (Camera icon) + student info (name, class, section, student number)
+    - Bottom section: QR code + school contact info (phone, address)
+    - Added `border-2 border-teal-300` colored border around card
+  - Added "طباعة البطاقة" (Print Card) button with teal gradient
+  - Added "تحميل كصورة" (Download as Image) button using SVG foreignObject → canvas → PNG approach
+  - Added `id="student-card-printable"` for print targeting and `class="printable-card"` for print CSS
+  - Added `class="no-print"` on action buttons to hide them during print
+  - Added CSV export to "تصدير" button that fetches all students and exports with Arabic headers (الرقم, الاسم, الجنس, الصف, الشعبة, الحالة)
+  - Added Camera, Phone, MapPin, GraduationCap to imports
+
+- **globals.css - Print CSS Enhancement**:
+  - Enhanced `@media print` to hide all page content except `.printable-card`
+  - Card is centered on page with absolute positioning during print
+
+- **ClassRankingPage.tsx - CSV Export**:
+  - Added "تصدير الترتيب" button with actual export functionality
+  - Exports ranking data with Arabic headers (الترتيب, اسم الطالب, الصف, الشعبة, المعدل)
+  - Updated button styling to use teal border/teal text matching project theme
+  - Imported `exportToCSV` from export-utils
+
+- **FeeManagementPage.tsx - Export Buttons + Search**:
+  - Added export button to header "تصدير التقرير" with actual CSV export of student fee records
+  - Added export button to Fees tab alongside existing filters
+  - Added search input + export button to Payments tab
+  - Added `paymentSearchQuery` state for payment filtering
+  - Added `filteredPaymentRecords` useMemo for payment search (by student name, receipt number, notes)
+  - Changed `paymentRecords.map` to `filteredPaymentRecords.map` in Payments table
+  - Imported `exportToCSV` from export-utils
+
+- **SchedulePage.tsx - Comprehensive Styling Enhancement**:
+  - Added gradient icon in page header (Calendar with teal gradient)
+  - Added subtitle text "جدول الحصص الأسبوعي"
+  - Added gradient top strip on main timetable card
+  - Added gradient top strips on all 4 info stat cards (teal, emerald, sky, amber)
+  - Updated print button with teal gradient border styling + `window.print()` handler
+  - Improved view toggle buttons with `data-[state=active]:bg-teal-600 data-[state=active]:text-white`
+  - Added dark mode classes throughout (dark:bg-gray-900/50, dark:border-gray-700, dark:bg-gray-800, etc.)
+  - Added dark mode variants to SUBJECT_COLORS
+  - Added containerVariants/itemVariants with stagger animation
+  - Added dark mode to legend badges
+
+- **ActivityLogPage.tsx - Comprehensive Styling Enhancement**:
+  - Added gradient icon in page header (Activity with teal gradient)
+  - Added subtitle text "سجل جميع الأنشطة والعمليات"
+  - Added gradient top strips on all 4 stats cards (teal, emerald, teal-green, amber)
+  - Changed timeline border from `border-muted` to `border-teal-200 dark:border-teal-800`
+  - Enhanced ACTIVITY_CONFIG with `darkBgColor` and `dotColor` fields for each activity type
+  - Added colored dot indicator inside activity type badges (1.5px circle with dotColor)
+  - Changed timeline dot from fixed teal to activity-type-specific `dotColor`
+  - Added dark mode classes throughout (dark:bg-gray-900/50, dark:border-gray-700, dark:bg-gray-800, dark:text-gray-200, etc.)
+  - Added containerVariants/itemVariants with stagger animation
+  - Enhanced ROLE_COLORS with dark mode variants
+  - Added dark mode to filter inputs and cards
+
+- **ParentPortalPage.tsx - Comprehensive Styling Enhancement**:
+  - Added dark mode classes to all cards (dark:bg-gray-900/50, dark:border dark:border-gray-700)
+  - Added `dark:text-gray-200` to all card titles
+  - Added `dark:text-teal-400`, `dark:text-emerald-400`, `dark:text-amber-400` to card title icons
+  - Added `dark:text-gray-400` to all CardDescription elements
+  - Enhanced avatar ring with `dark:ring-teal-900/50`
+  - Enhanced avatar fallback with `dark:from-teal-900/50 dark:to-emerald-900/50`
+  - Added `dark:text-gray-200` to student name heading
+
+Stage Summary:
+- Student card redesigned with professional dual-tone design (gradient header, photo+info, QR+contact)
+- Print Card and Download as Image buttons added
+- Print CSS enhanced to show only card during print
+- CSV export added to StudentsPage, ClassRankingPage, and FeeManagementPage (both tabs)
+- Payment search filter added to FeeManagementPage
+- SchedulePage enhanced with gradient icon, subtitle, gradient strips, active toggle styling, dark mode
+- ActivityLogPage enhanced with gradient icon, subtitle, gradient strips, colored timeline, dot badges, dark mode
+- ParentPortalPage enhanced with dark mode across all cards, titles, descriptions, and avatars
+- All code lint-clean (src/ directory passes ESLint with 0 errors)
+- Dev server running without errors
 - Consider adding multi-school support for SysAdmin role
 
 ---

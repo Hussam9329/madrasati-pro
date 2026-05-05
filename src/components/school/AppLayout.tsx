@@ -30,6 +30,7 @@ import {
   Trophy,
   ClipboardList,
   Wallet,
+  MessageSquare,
 } from 'lucide-react';
 import { useAppStore, type PageKey } from '@/lib/store';
 import { Button } from '@/components/ui/button';
@@ -55,6 +56,7 @@ const navItems: { key: PageKey; label: string; icon: React.ElementType; badge?: 
   { key: 'ranking', label: 'ترتيب الصفوف', icon: Trophy },
   { key: 'exams', label: 'الامتحانات', icon: ClipboardList },
   { key: 'fees', label: 'الرسوم المدرسية', icon: Wallet },
+  { key: 'messages', label: 'التواصل والرسائل', icon: MessageSquare },
   { key: 'schedule', label: 'جدول الحصص', icon: Calendar },
   { key: 'activity', label: 'سجل النشاط', icon: Activity },
   { key: 'reports', label: 'التقارير', icon: BarChart3 },
@@ -178,7 +180,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
             <div className="flex items-center gap-1.5 mt-0.5">
               <span className="text-[11px] text-muted-foreground truncate">نظام إدارة المدرسة</span>
               <Badge className="text-[8px] px-1 py-0 h-3.5 bg-teal-100 text-teal-700 border-teal-200 dark:bg-teal-900/30 dark:text-teal-300 dark:border-teal-700 font-medium">
-                2024-2025
+                2025-2026
               </Badge>
             </div>
           </div>
@@ -259,7 +261,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 {isActive && (
                   <motion.div
                     layoutId="activeIndicator"
-                    className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white rounded-r-full"
+                    className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white rounded-l-full"
                     transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                   />
                 )}

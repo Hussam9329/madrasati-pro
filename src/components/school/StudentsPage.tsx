@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import QRCode from 'qrcode'
 import {
   Search, Plus, Download, Eye, Edit, Trash2, Printer,
-  ChevronLeft, ChevronRight, User, X, Users, ArrowRightLeft, CheckCircle2
+  ChevronLeft, ChevronRight, User, X, Users, ArrowRightLeft, CheckCircle2,
+  Camera, Phone, MapPin, GraduationCap
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -50,6 +51,7 @@ import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/hooks/use-toast'
+import { exportToCSV } from '@/lib/export-utils'
 
 // Types
 interface ClassItem {
@@ -320,6 +322,53 @@ export default function StudentsPage() {
     window.print()
   }
 
+  const downloadCardAsImage = async () => {
+    const cardEl = document.getElementById('student-card-printable')
+    if (!cardEl) return
+    try {
+      const canvas = document.createElement('canvas')
+      const scale = 2
+      canvas.width = cardEl.offsetWidth * scale
+      canvas.height = cardEl.offsetHeight * scale
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return
+      ctx.scale(scale, scale)
+      // Use SVG foreignObject to render HTML to canvas
+      const data = new XMLSerializer().serializeToString(cardEl)
+      const img = new Image()
+      img.onload = () => {
+        ctx.drawImage(img, 0, 0)
+        const link = document.createElement('a')
+        link.download = `بطاقة_${selectedStudent?.fullName || 'طالب'}.png`
+        link.href = canvas.toDataURL('image/png')
+        link.click()
+      }
+      img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${cardEl.offsetWidth}" height="${cardEl.offsetHeight}"><foreignObject width="100%" height="100%">${data}</foreignObject></svg>`)
+    } catch {
+      toast({ title: 'خطأ', description: 'فشل في تحميل البطاقة كصورة', variant: 'destructive' })
+    }
+  }
+
+  const handleExportCSV = async () => {
+    try {
+      const res = await fetch('/api/students?limit=1000')
+      const data = await res.json()
+      const allStudents: Student[] = data.students || []
+      const csvData = allStudents.map(s => ({
+        'الرقم': s.studentNumber,
+        'الاسم': s.fullName,
+        'الجنس': s.gender,
+        'الصف': s.class?.name || '',
+        'الشعبة': s.section?.name || '',
+        'الحالة': s.status,
+      }))
+      exportToCSV(csvData, 'الطلاب')
+      toast({ title: 'تم التصدير', description: 'تم تصدير بيانات الطلاب بنجاح' })
+    } catch {
+      toast({ title: 'خطأ', description: 'فشل في تصدير البيانات', variant: 'destructive' })
+    }
+  }
+
   const filteredSections = form.classId
     ? classes.find(c => c.id === form.classId)?.sections || []
     : []
@@ -355,7 +404,7 @@ export default function StudentsPage() {
               <ArrowRightLeft className="h-4 w-4" />
               نقل طالب
             </Button>
-            <Button variant="outline" className="gap-2 border-teal-300 text-teal-700 hover:bg-teal-50 dark:border-teal-700 dark:text-teal-400 dark:hover:bg-teal-900/20">
+            <Button variant="outline" className="gap-2 border-teal-300 text-teal-700 hover:bg-teal-50 dark:border-teal-700 dark:text-teal-400 dark:hover:bg-teal-900/20" onClick={handleExportCSV}>
               <Download className="h-4 w-4" />
               تصدير
             </Button>
@@ -800,62 +849,104 @@ export default function StudentsPage() {
 
               <TabsContent value="card" className="mt-4">
                 <div className="flex flex-col items-center gap-6">
-                  {/* Student Card */}
+                  {/* Student Card - Professional Design */}
                   <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="w-full max-w-md"
+                    className="w-full max-w-md printable-card"
                   >
-                    <Card className="overflow-hidden border-2 border-primary/20 dark:border-gray-700">
-                      <CardHeader className="bg-primary p-4">
-                        <CardTitle className="text-primary-foreground text-center text-lg">
-                          مدرستي Pro
-                        </CardTitle>
-                        <p className="text-primary-foreground/80 text-center text-xs">
-                          ثانوية الحسين للبنين
-                        </p>
-                      </CardHeader>
-                      <CardContent className="p-6">
+                    <div
+                      id="student-card-printable"
+                      className="overflow-hidden rounded-xl border-2 border-teal-300 dark:border-teal-700 bg-white dark:bg-gray-800"
+                    >
+                      {/* Top Section: Teal gradient header */}
+                      <div
+                        className="p-4 text-center relative overflow-hidden"
+                        style={{ background: 'linear-gradient(135deg, #0d9488 0%, #059669 60%, #047857 100%)' }}
+                      >
+                        <div className="absolute -top-4 -right-4 w-20 h-20 rounded-full bg-white/10" />
+                        <div className="absolute -bottom-3 -left-3 w-16 h-16 rounded-full bg-white/10" />
+                        <div className="relative flex items-center justify-center gap-3 mb-1">
+                          <div className="w-10 h-10 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                            <GraduationCap className="h-5 w-5 text-white" />
+                          </div>
+                          <div>
+                            <h3 className="text-white text-lg font-bold">مدرستي Pro</h3>
+                            <p className="text-white/80 text-xs">ثانوية الحسين للبنين</p>
+                          </div>
+                        </div>
+                        <p className="text-white/70 text-[10px] mt-1">العام الدراسي 2025-2026</p>
+                      </div>
+
+                      {/* Middle Section: Photo + Info */}
+                      <div className="p-5">
                         <div className="flex items-start gap-4">
-                          <Avatar className="h-20 w-20 border-2 border-primary/20">
-                            <AvatarFallback className="bg-primary/10 text-primary text-2xl">
-                              {selectedStudent.fullName.charAt(0)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 space-y-2">
-                            <div>
-                              <p className="text-xs text-muted-foreground">الاسم</p>
-                              <p className="font-bold">{selectedStudent.fullName}</p>
+                          {/* Photo placeholder */}
+                          <div className="shrink-0">
+                            <div className="h-20 w-20 rounded-xl bg-gradient-to-br from-teal-50 to-emerald-50 dark:from-teal-900/30 dark:to-emerald-900/30 border-2 border-teal-200 dark:border-teal-700 flex items-center justify-center">
+                              {selectedStudent.photo ? (
+                                <img src={selectedStudent.photo} alt={selectedStudent.fullName} className="h-full w-full object-cover rounded-lg" />
+                              ) : (
+                                <Camera className="h-6 w-6 text-teal-400" />
+                              )}
                             </div>
-                            <div className="grid grid-cols-2 gap-2">
+                          </div>
+                          {/* Student info */}
+                          <div className="flex-1 space-y-2.5">
+                            <div>
+                              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">الاسم الرباعي</p>
+                              <p className="font-bold text-sm dark:text-gray-200">{selectedStudent.fullName}</p>
+                            </div>
+                            <div className="grid grid-cols-2 gap-x-3 gap-y-2">
                               <div>
-                                <p className="text-xs text-muted-foreground">الصف</p>
-                                <p className="text-sm font-medium">{selectedStudent.class?.name}</p>
+                                <p className="text-[10px] text-muted-foreground">الصف</p>
+                                <p className="text-xs font-semibold dark:text-gray-300">{selectedStudent.class?.name}</p>
                               </div>
                               <div>
-                                <p className="text-xs text-muted-foreground">الشعبة</p>
-                                <p className="text-sm font-medium">{selectedStudent.section?.name}</p>
+                                <p className="text-[10px] text-muted-foreground">الشعبة</p>
+                                <p className="text-xs font-semibold dark:text-gray-300">{selectedStudent.section?.name}</p>
                               </div>
                             </div>
                             <div>
-                              <p className="text-xs text-muted-foreground">الرقم</p>
-                              <p className="text-sm font-mono">{selectedStudent.studentNumber}</p>
+                              <p className="text-[10px] text-muted-foreground">الرقم المدرسي</p>
+                              <p className="text-xs font-mono font-bold" style={{ color: '#0d9488' }}>{selectedStudent.studentNumber}</p>
                             </div>
                           </div>
                         </div>
-                        {qrCodeUrl && (
-                          <div className="flex justify-center mt-4">
-                            <img src={qrCodeUrl} alt="QR Code" className="w-32 h-32" />
+                      </div>
+
+                      {/* Bottom Section: QR + Contact */}
+                      <div className="border-t border-teal-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 px-5 py-4">
+                        <div className="flex items-center justify-between">
+                          <div className="space-y-1.5">
+                            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                              <Phone className="h-3 w-3" />
+                              <span>0770-123-4567</span>
+                            </div>
+                            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                              <MapPin className="h-3 w-3" />
+                              <span>بغداد - الكرخ</span>
+                            </div>
                           </div>
-                        )}
-                      </CardContent>
-                    </Card>
+                          {qrCodeUrl && (
+                            <img src={qrCodeUrl} alt="QR Code" className="w-20 h-20 rounded-lg" />
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </motion.div>
 
-                  <Button onClick={printCard} className="gap-2" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
-                    <Printer className="h-4 w-4" />
-                    طباعة البطاقة
-                  </Button>
+                  {/* Action Buttons */}
+                  <div className="flex items-center gap-3 no-print">
+                    <Button onClick={printCard} className="gap-2" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
+                      <Printer className="h-4 w-4" />
+                      طباعة البطاقة
+                    </Button>
+                    <Button onClick={downloadCardAsImage} variant="outline" className="gap-2 border-teal-300 text-teal-700 hover:bg-teal-50 dark:border-teal-700 dark:text-teal-400 dark:hover:bg-teal-900/20">
+                      <Download className="h-4 w-4" />
+                      تحميل كصورة
+                    </Button>
+                  </div>
                 </div>
               </TabsContent>
             </Tabs>

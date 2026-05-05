@@ -7,6 +7,7 @@ import {
   Filter, Download, Search
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { exportToCSV } from '@/lib/export-utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -255,7 +256,16 @@ export default function ClassRankingPage() {
             <p className="text-sm text-muted-foreground">لوحة المتصدرين - ترتيب الطلاب حسب المعدل</p>
           </div>
         </div>
-        <Button variant="outline" className="gap-2 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800/50">
+        <Button variant="outline" className="gap-2 border-teal-300 text-teal-700 hover:bg-teal-50 dark:border-teal-700 dark:text-teal-400 dark:hover:bg-teal-900/20" onClick={() => {
+          const csvData = filteredRankings.map((s, idx) => ({
+            'الترتيب': idx + 1,
+            'اسم الطالب': s.fullName,
+            'الصف': s.className,
+            'الشعبة': s.sectionName,
+            'المعدل': s.average,
+          }))
+          exportToCSV(csvData, 'ترتيب_الطلاب')
+        }}>
           <Download className="h-4 w-4" />
           تصدير الترتيب
         </Button>
