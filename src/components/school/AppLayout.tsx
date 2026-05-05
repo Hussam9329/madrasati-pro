@@ -19,6 +19,14 @@ import {
   School,
   Calendar,
   Activity,
+  Sun,
+  Moon,
+  CheckCircle2,
+  Info,
+  AlertTriangle,
+  UserPlus,
+  ClipboardCheck,
+  Heart,
 } from 'lucide-react';
 import { useAppStore, type PageKey } from '@/lib/store';
 import { Button } from '@/components/ui/button';
@@ -26,6 +34,8 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useTheme } from 'next-themes';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface AppLayoutProps {
@@ -43,14 +53,36 @@ const navItems: { key: PageKey; label: string; icon: React.ElementType; badge?: 
   { key: 'activity', label: 'سجل النشاط', icon: Activity },
   { key: 'reports', label: 'التقارير', icon: BarChart3 },
   { key: 'notices', label: 'الإشعارات', icon: Bell },
+  { key: 'parents', label: 'بوابة ولي الأمر', icon: Heart },
   { key: 'users', label: 'المستخدمون', icon: Shield },
   { key: 'settings', label: 'الإعدادات', icon: Settings },
 ];
 
+// Mock notification data
+const mockNotifications = [
+  { id: 1, type: 'student' as const, message: 'تم تسجيل الطالب أحمد محمد في الصف السادس', time: 'منذ 5 دقائق', read: false },
+  { id: 2, type: 'attendance' as const, message: 'تم تسجيل حضور الصف الرابع بنسبة 95%', time: 'منذ 15 دقيقة', read: false },
+  { id: 3, type: 'grade' as const, message: 'تم رفع درجات مادة الرياضيات للصف الخامس', time: 'منذ 30 دقيقة', read: false },
+  { id: 4, type: 'alert' as const, message: 'تنبيه: 3 طلاب لم يسجلوا حضورهم اليوم', time: 'منذ ساعة', read: true },
+  { id: 5, type: 'info' as const, message: 'تم تحديث جدول الحصص للأسبوع القادم', time: 'منذ ساعتين', read: true },
+  { id: 6, type: 'success' as const, message: 'تم تصدير تقرير الدرجات بنجاح', time: 'منذ 3 ساعات', read: true },
+];
+
+const notificationConfig: Record<string, { icon: React.ElementType; color: string; bg: string }> = {
+  student: { icon: UserPlus, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-100 dark:bg-blue-900/30' },
+  attendance: { icon: ClipboardCheck, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-100 dark:bg-emerald-900/30' },
+  grade: { icon: FileText, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-100 dark:bg-amber-900/30' },
+  alert: { icon: AlertTriangle, color: 'text-red-600 dark:text-red-400', bg: 'bg-red-100 dark:bg-red-900/30' },
+  info: { icon: Info, color: 'text-sky-600 dark:text-sky-400', bg: 'bg-sky-100 dark:bg-sky-900/30' },
+  success: { icon: CheckCircle2, color: 'text-teal-600 dark:text-teal-400', bg: 'bg-teal-100 dark:bg-teal-900/30' },
+};
+
 export default function AppLayout({ children }: AppLayoutProps) {
   const { activePage, setActivePage, auth, logout, sidebarOpen, setSidebarOpen } = useAppStore();
+  const { theme, setTheme } = useTheme();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [mounted, setMounted] = useState(false);
+  const unreadCount = mockNotifications.filter(n => !n.read).length;
 
   useEffect(() => {
     // Request animation frame to avoid synchronous setState in effect
@@ -152,7 +184,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                   transition-all duration-200 cursor-pointer relative overflow-hidden group
                   ${isActive
                     ? 'text-white shadow-md'
-                    : 'text-gray-600 hover:bg-teal-50/80 hover:text-teal-700'
+                    : 'text-gray-600 dark:text-gray-300 hover:bg-teal-50/80 dark:hover:bg-teal-900/20 hover:text-teal-700 dark:hover:text-teal-400'
                   }
                 `}
                 style={
@@ -164,7 +196,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 whileTap={{ scale: 0.98 }}
               >
                 <div className={`flex items-center justify-center w-8 h-8 rounded-lg shrink-0 transition-colors ${
-                  isActive ? 'bg-white/20' : 'bg-transparent group-hover:bg-teal-100'
+                  isActive ? 'bg-white/20' : 'bg-transparent group-hover:bg-teal-100 dark:group-hover:bg-teal-900/30'
                 }`}>
                   <Icon className="w-[18px] h-[18px]" />
                 </div>
@@ -213,7 +245,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   );
 
   return (
-    <div dir="rtl" className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100/50">
+    <div dir="rtl" className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100/50 dark:from-gray-950 dark:to-gray-900/50">
       {/* Mobile Sidebar Overlay */}
       <AnimatePresence>
         {sidebarOpen && (
@@ -231,7 +263,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="fixed top-0 right-0 h-full w-72 bg-white shadow-2xl z-50 md:hidden"
+              className="fixed top-0 right-0 h-full w-72 bg-white dark:bg-gray-900 shadow-2xl z-50 md:hidden"
             >
               {sidebarNav}
             </motion.aside>
@@ -240,14 +272,14 @@ export default function AppLayout({ children }: AppLayoutProps) {
       </AnimatePresence>
 
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex md:w-[260px] md:flex-col md:fixed md:right-0 md:inset-y-0 bg-white border-l border-gray-200/80 shadow-sm z-20">
+      <aside className="hidden md:flex md:w-[260px] md:flex-col md:fixed md:right-0 md:inset-y-0 bg-white dark:bg-gray-900 border-l border-gray-200/80 dark:border-gray-700/50 shadow-sm z-20">
         {sidebarNav}
       </aside>
 
       {/* Main Content Area */}
       <div className="flex-1 md:mr-[260px] flex flex-col min-h-screen">
         {/* Header */}
-        <header className="sticky top-0 z-10 bg-white/90 backdrop-blur-lg border-b border-gray-200/60 shadow-sm">
+        <header className="sticky top-0 z-10 bg-white/90 dark:bg-gray-900/90 backdrop-blur-lg border-b border-gray-200/60 dark:border-gray-700/50 shadow-sm">
           <div className="flex items-center justify-between h-14 px-4 md:px-6">
             <div className="flex items-center gap-3">
               {/* Mobile menu button */}
@@ -263,26 +295,137 @@ export default function AppLayout({ children }: AppLayoutProps) {
               {/* Page title with breadcrumb */}
               <div className="flex items-center gap-2">
                 <ChevronLeft className="h-4 w-4 text-muted-foreground hidden md:block" />
-                <h1 className="text-lg font-bold text-gray-800">
+                <h1 className="text-lg font-bold text-gray-800 dark:text-gray-200">
                   {navItems.find((i) => i.key === activePage)?.label || 'لوحة التحكم'}
                 </h1>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              {/* Theme Toggle */}
+              {mounted && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors duration-300"
+                  onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                  aria-label={theme === 'dark' ? 'تفعيل الوضع الفاتح' : 'تفعيل الوضع الداكن'}
+                >
+                  <motion.div
+                    initial={false}
+                    animate={{ rotate: theme === 'dark' ? 180 : 0, scale: theme === 'dark' ? 0 : 1 }}
+                    transition={{ duration: 0.3, ease: 'easeInOut' }}
+                    className="absolute"
+                  >
+                    <Moon className="h-[18px] w-[18px]" />
+                  </motion.div>
+                  <motion.div
+                    initial={false}
+                    animate={{ rotate: theme === 'dark' ? 0 : -180, scale: theme === 'dark' ? 1 : 0 }}
+                    transition={{ duration: 0.3, ease: 'easeInOut' }}
+                    className="absolute"
+                  >
+                    <Sun className="h-[18px] w-[18px]" />
+                  </motion.div>
+                </Button>
+              )}
+
+              {/* Notification Bell */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted relative"
+                    aria-label="الإشعارات"
+                  >
+                    <motion.div
+                      animate={unreadCount > 0 ? { rotate: [0, -10, 10, -10, 0] } : {}}
+                      transition={{ duration: 0.5, repeat: 2, repeatDelay: 3 }}
+                    >
+                      <Bell className="h-[18px] w-[18px]" />
+                    </motion.div>
+                    {unreadCount > 0 && (
+                      <motion.span
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        className="absolute -top-0.5 -left-0.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold text-white bg-red-500 rounded-full shadow-sm"
+                      >
+                        {unreadCount}
+                      </motion.span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 p-0" align="end" sideOffset={8}>
+                  <div className="p-3 border-b border-border">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-semibold text-sm text-foreground">الإشعارات</h3>
+                      {unreadCount > 0 && (
+                        <Badge className="text-[10px] px-1.5 py-0 h-5 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-0">
+                          {unreadCount} جديد
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                  <ScrollArea className="max-h-80">
+                    <div className="divide-y divide-border">
+                      {mockNotifications.map((notification) => {
+                        const config = notificationConfig[notification.type];
+                        const Icon = config.icon;
+                        return (
+                          <div
+                            key={notification.id}
+                            className={`flex items-start gap-3 p-3 hover:bg-muted/50 transition-colors cursor-pointer ${
+                              !notification.read ? 'bg-muted/30' : ''
+                            }`}
+                          >
+                            <div className={`flex items-center justify-center w-8 h-8 rounded-lg shrink-0 ${config.bg}`}>
+                              <Icon className={`w-4 h-4 ${config.color}`} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className={`text-xs leading-relaxed ${
+                                !notification.read ? 'text-foreground font-medium' : 'text-muted-foreground'
+                              }`}>
+                                {notification.message}
+                              </p>
+                              <p className="text-[10px] text-muted-foreground/70 mt-1">{notification.time}</p>
+                            </div>
+                            {!notification.read && (
+                              <div className="w-2 h-2 rounded-full bg-teal-500 shrink-0 mt-1.5" />
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </ScrollArea>
+                  <div className="p-2 border-t border-border">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full text-xs text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-900/20"
+                      onClick={() => setActivePage('notices')}
+                    >
+                      عرض الكل
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
+
+              <Separator orientation="vertical" className="h-8 hidden sm:block" />
+
               {/* User info */}
               <div className="hidden sm:flex items-center gap-2.5">
                 <div className="text-left">
-                  <p className="text-sm font-medium text-gray-800 leading-tight">{userName}</p>
+                  <p className="text-sm font-medium text-gray-800 dark:text-gray-200 leading-tight">{userName}</p>
                   <Badge
                     variant="outline"
-                    className={`text-[10px] px-1.5 py-0 h-4 font-medium ${roleBadgeColor[userRole] || 'bg-gray-100 text-gray-700 border-gray-200'}`}
+                    className={`text-[10px] px-1.5 py-0 h-4 font-medium ${roleBadgeColor[userRole] || 'bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600'}`}
                   >
                     {userRole}
                   </Badge>
                 </div>
                 <Avatar
-                  className="w-9 h-9 ring-2 ring-white shadow-md"
+                  className="w-9 h-9 ring-2 ring-white dark:ring-gray-700 shadow-md"
                   style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}
                 >
                   <AvatarFallback className="text-white text-sm font-bold bg-transparent">
@@ -298,7 +441,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 variant="ghost"
                 size="sm"
                 onClick={logout}
-                className="text-gray-500 hover:text-red-600 hover:bg-red-50 gap-1.5 h-9"
+                className="text-gray-500 dark:text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 gap-1.5 h-9"
               >
                 <LogOut className="w-4 h-4" />
                 <span className="hidden sm:inline text-xs">خروج</span>
@@ -323,7 +466,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
         </main>
 
         {/* Footer */}
-        <footer className="mt-auto border-t border-gray-200/60 px-4 py-3 bg-white/50">
+        <footer className="mt-auto border-t border-gray-200/60 dark:border-gray-700/50 px-4 py-3 bg-white/50 dark:bg-gray-900/50">
           <div className="flex items-center justify-between">
             <p className="text-[11px] text-muted-foreground">
               مدرستي Pro © {new Date().getFullYear()} — من تطوير Vision

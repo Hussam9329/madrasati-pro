@@ -15,6 +15,7 @@ import ReportsPage from '@/components/school/ReportsPage';
 import SettingsPage from '@/components/school/SettingsPage';
 import SchedulePage from '@/components/school/SchedulePage';
 import ActivityLogPage from '@/components/school/ActivityLogPage';
+import ParentPortalPage from '@/components/school/ParentPortalPage';
 
 function PageRenderer({ page }: { page: PageKey }) {
   switch (page) {
@@ -36,6 +37,8 @@ function PageRenderer({ page }: { page: PageKey }) {
       return <SchedulePage />;
     case 'activity':
       return <ActivityLogPage />;
+    case 'parents':
+      return <ParentPortalPage />;
     case 'notices':
       return <SettingsPage initialTab="notices" />;
     case 'users':

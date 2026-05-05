@@ -37,6 +37,11 @@ import {
   ResponsiveContainer,
   Tooltip as RechartsTooltip,
   Legend,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
 } from 'recharts';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -123,6 +128,17 @@ const noticeTypeBadge: Record<string, { label: string; className: string }> = {
 };
 
 const PIE_COLORS = ['#10b981', '#ef4444', '#f59e0b', '#f97316', '#06b6d4', '#8b5cf6', '#ec4899', '#6b7280'];
+
+// Mock data for weekly attendance trend
+const weeklyAttendanceTrend = [
+  { day: 'الأحد', attendance: 92, late: 3, absent: 5 },
+  { day: 'الإثنين', attendance: 88, late: 5, absent: 7 },
+  { day: 'الثلاثاء', attendance: 95, late: 2, absent: 3 },
+  { day: 'الأربعاء', attendance: 90, late: 4, absent: 6 },
+  { day: 'الخميس', attendance: 85, late: 6, absent: 9 },
+  { day: 'السبت', attendance: 78, late: 8, absent: 14 },
+  { day: 'الأحد*', attendance: 91, late: 3, absent: 6 },
+];
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -784,6 +800,115 @@ export default function DashboardPage() {
           </Card>
         </motion.div>
       </div>
+
+      {/* Fourth row: Weekly Attendance Trend Line Chart */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.9 }}
+      >
+        <Card className="border-0 shadow-sm overflow-hidden">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-bold text-gray-800 flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-teal-600" />
+              اتجاه الحضور الأسبوعي
+            </CardTitle>
+            <CardDescription>نسبة الحضور وعدد المتأخرين والغائبين خلال آخر 7 أيام</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-72">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={weeklyAttendanceTrend} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                  <XAxis
+                    dataKey="day"
+                    tick={{ fontSize: 12, fill: '#6b7280' }}
+                    axisLine={{ stroke: '#e5e7eb' }}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    yAxisId="left"
+                    tick={{ fontSize: 12, fill: '#6b7280' }}
+                    axisLine={{ stroke: '#e5e7eb' }}
+                    tickLine={false}
+                    domain={[60, 100]}
+                    label={{ value: 'نسبة الحضور %', angle: -90, position: 'insideLeft', style: { fontSize: 11, fill: '#9ca3af' } }}
+                  />
+                  <YAxis
+                    yAxisId="right"
+                    orientation="left"
+                    tick={{ fontSize: 12, fill: '#6b7280' }}
+                    axisLine={{ stroke: '#e5e7eb' }}
+                    tickLine={false}
+                    domain={[0, 'auto']}
+                    label={{ value: 'عدد الطلاب', angle: 90, position: 'insideRight', style: { fontSize: 11, fill: '#9ca3af' } }}
+                  />
+                  <RechartsTooltip
+                    contentStyle={{
+                      borderRadius: '8px',
+                      border: 'none',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                      fontFamily: 'inherit',
+                      direction: 'rtl',
+                    }}
+                    formatter={(value: number, name: string) => {
+                      const labels: Record<string, string> = {
+                        attendance: 'نسبة الحضور',
+                        late: 'المتأخرون',
+                        absent: 'الغائبون',
+                      };
+                      return [
+                        name === 'attendance' ? `${value}%` : value,
+                        labels[name] || name,
+                      ];
+                    }}
+                  />
+                  <Legend
+                    verticalAlign="top"
+                    iconType="circle"
+                    iconSize={8}
+                    formatter={(value: string) => {
+                      const labels: Record<string, string> = {
+                        attendance: 'نسبة الحضور',
+                        late: 'المتأخرون',
+                        absent: 'الغائبون',
+                      };
+                      return <span style={{ fontSize: '12px', color: '#6b7280' }}>{labels[value] || value}</span>;
+                    }}
+                  />
+                  <Line
+                    yAxisId="left"
+                    type="monotone"
+                    dataKey="attendance"
+                    stroke="#0d9488"
+                    strokeWidth={3}
+                    dot={{ fill: '#0d9488', r: 4, strokeWidth: 2, stroke: '#fff' }}
+                    activeDot={{ r: 6 }}
+                  />
+                  <Line
+                    yAxisId="right"
+                    type="monotone"
+                    dataKey="late"
+                    stroke="#f59e0b"
+                    strokeWidth={2}
+                    dot={{ fill: '#f59e0b', r: 3, strokeWidth: 2, stroke: '#fff' }}
+                    activeDot={{ r: 5 }}
+                  />
+                  <Line
+                    yAxisId="right"
+                    type="monotone"
+                    dataKey="absent"
+                    stroke="#ef4444"
+                    strokeWidth={2}
+                    dot={{ fill: '#ef4444', r: 3, strokeWidth: 2, stroke: '#fff' }}
+                    activeDot={{ r: 5 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
     </div>
   );
 }

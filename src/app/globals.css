@@ -137,6 +137,14 @@
   background: oklch(0.55 0.05 150);
 }
 
+/* Dark mode scrollbar */
+.dark ::-webkit-scrollbar-thumb {
+  background: oklch(0.4 0.02 150);
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.5 0.05 150);
+}
+
 /* RTL specific */
 [dir="rtl"] .sidebar-icon {
   transform: scaleX(1);
