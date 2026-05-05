@@ -303,7 +303,7 @@ export default function MessagingPage() {
             <MessageSquare className="h-5 w-5 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">التواصل والرسائل</h1>
+            <h1 className="text-2xl font-bold dark:text-gray-200">التواصل والرسائل</h1>
             <p className="text-sm text-muted-foreground">إدارة التواصل بين المدرسة وأولياء الأمور</p>
           </div>
         </div>
@@ -331,7 +331,7 @@ export default function MessagingPage() {
           { label: 'جهات الاتصال', value: contacts, icon: Users, gradient: 'from-cyan-500 to-cyan-600' },
         ].map((stat, idx) => (
           <motion.div key={stat.label} variants={itemVariants}>
-            <Card className="border-border/50 overflow-hidden relative">
+            <Card className="border-border/50 overflow-hidden relative dark:bg-gray-900/50 dark:border-gray-700">
               <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-l ${stat.gradient}`} />
               <CardContent className="p-4 flex items-center gap-3">
                 <div className={`flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br ${stat.gradient} text-white shadow-md`}>
@@ -339,7 +339,7 @@ export default function MessagingPage() {
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">{stat.label}</p>
-                  <p className="text-2xl font-bold">{stat.value}</p>
+                  <p className="text-2xl font-bold dark:text-gray-200">{stat.value}</p>
                 </div>
               </CardContent>
             </Card>
@@ -367,7 +367,7 @@ export default function MessagingPage() {
         {/* Tab 1: Messages */}
         <TabsContent value="messages" className="space-y-4">
           {/* Search & Filters */}
-          <Card className="border-border/50 overflow-hidden">
+          <Card className="border-border/50 overflow-hidden dark:bg-gray-900/50 dark:border-gray-700">
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-l from-teal-500 to-emerald-500" />
             <CardContent className="p-4">
               <div className="flex flex-col sm:flex-row gap-3">
@@ -429,44 +429,54 @@ export default function MessagingPage() {
                 return (
                   <motion.div key={msg.id} variants={itemVariants}>
                     <Card
-                      className={`border-border/50 cursor-pointer hover:shadow-md transition-all duration-200 overflow-hidden ${
-                        !msg.read ? 'border-r-4 border-r-teal-500 dark:border-r-teal-400' : ''
-                      }`}
+                      className={`border-border/50 cursor-pointer hover:shadow-lg transition-all duration-200 overflow-hidden dark:bg-gray-900/50 dark:border-gray-700 ${
+                        !msg.read ? 'border-r-4 border-r-teal-500 dark:border-r-teal-400 bg-teal-50/30 dark:bg-teal-950/10' : 'dark:hover:bg-gray-800/50'
+                      } ${msg.type === 'تنبيه' && msg.priority === 'عاجل' ? 'bg-red-50/30 dark:bg-red-950/10' : ''} ${msg.type === 'رسالة' && !msg.read ? 'bg-teal-50/20' : ''}`}
                       onClick={() => handleMessageClick(msg)}
                     >
+                      <div className={`h-0.5 ${
+                        msg.type === 'رسالة' ? 'bg-gradient-to-l from-teal-400 to-teal-500' :
+                        msg.type === 'إشعار' ? 'bg-gradient-to-l from-sky-400 to-sky-500' :
+                        msg.type === 'تنبيه' ? 'bg-gradient-to-l from-amber-400 to-amber-500' :
+                        'bg-gradient-to-l from-purple-400 to-purple-500'
+                      }`} />
                       <CardContent className="p-4">
                         <div className="flex items-start gap-3">
-                          <Avatar className="w-10 h-10 shrink-0 shadow-sm" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
-                            <AvatarFallback className="text-white text-xs font-bold bg-transparent">
-                              {getInitials(msg.sender)}
-                            </AvatarFallback>
-                          </Avatar>
+                          <div className="relative">
+                            <Avatar className="w-10 h-10 shrink-0 shadow-sm" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
+                              <AvatarFallback className="text-white text-xs font-bold bg-transparent">
+                                {getInitials(msg.sender)}
+                              </AvatarFallback>
+                            </Avatar>
+                            {!msg.read && (
+                              <div className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-teal-500 border-2 border-white dark:border-gray-900 animate-pulse" />
+                            )}
+                          </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between gap-2 mb-1">
                               <div className="flex items-center gap-2 min-w-0">
-                                <span className={`font-semibold text-sm truncate ${!msg.read ? 'text-foreground' : 'text-muted-foreground'}`}>
+                                <span className={`font-semibold text-sm truncate dark:text-gray-200 ${!msg.read ? 'text-foreground' : 'text-muted-foreground dark:text-gray-400'}`}>
                                   {msg.sender}
                                 </span>
                                 <Badge variant="outline" className={`text-[10px] px-1.5 py-0 h-4 shrink-0 ${typeConf.bg} ${typeConf.color} ${typeConf.border}`}>
+                                  <TypeIcon className="h-2.5 w-2.5 ml-0.5" />
                                   {msg.type}
                                 </Badge>
                                 {msg.priority !== 'عادي' && (
                                   <Badge variant="outline" className={`text-[10px] px-1.5 py-0 h-4 shrink-0 ${priorityConf.bg} ${priorityConf.color}`}>
+                                    <span className={`w-1.5 h-1.5 rounded-full ${priorityConf.dot} inline-block ml-1`} />
                                     {msg.priority}
                                   </Badge>
                                 )}
                               </div>
                               <div className="flex items-center gap-1.5 shrink-0">
-                                {!msg.read && (
-                                  <div className="w-2 h-2 rounded-full bg-teal-500" />
-                                )}
-                                <span className="text-[11px] text-muted-foreground">{msg.time}</span>
+                                <span className="text-[11px] text-muted-foreground dark:text-gray-500">{msg.time}</span>
                               </div>
                             </div>
-                            <p className={`text-sm mb-0.5 truncate ${!msg.read ? 'font-medium' : 'text-muted-foreground'}`}>
+                            <p className={`text-sm mb-0.5 truncate ${!msg.read ? 'font-medium dark:text-gray-200' : 'text-muted-foreground dark:text-gray-400'}`}>
                               {msg.subject}
                             </p>
-                            <p className="text-xs text-muted-foreground/70 truncate">
+                            <p className="text-xs text-muted-foreground/70 dark:text-gray-500 truncate">
                               {msg.preview}
                             </p>
                           </div>
@@ -482,10 +492,10 @@ export default function MessagingPage() {
 
         {/* Tab 2: Compose */}
         <TabsContent value="compose" className="space-y-4">
-          <Card className="border-border/50 overflow-hidden">
+          <Card className="border-border/50 overflow-hidden dark:bg-gray-900/50 dark:border-gray-700">
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-l from-teal-500 to-emerald-500" />
             <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
+              <CardTitle className="text-base flex items-center gap-2 dark:text-gray-200">
                 <Send className="h-4 w-4" style={{ color: '#0d9488' }} />
                 إرسال رسالة جديدة
               </CardTitle>
@@ -493,9 +503,9 @@ export default function MessagingPage() {
             <CardContent className="space-y-4">
               {/* Template Selector */}
               <div>
-                <label className="text-sm font-medium mb-1.5 block">قالب الرسالة</label>
+                <label className="text-sm font-medium mb-1.5 flex items-center gap-1.5 dark:text-gray-300"><BookOpen className="h-3.5 w-3.5 text-teal-500" />قالب الرسالة</label>
                 <Select value={selectedTemplate} onValueChange={handleTemplateSelect}>
-                  <SelectTrigger>
+                  <SelectTrigger className={selectedTemplate ? 'border-teal-300 dark:border-teal-700 ring-1 ring-teal-200 dark:ring-teal-800' : ''}>
                     <BookOpen className="h-4 w-4 ml-2 text-muted-foreground" />
                     <SelectValue placeholder="اختر قالباً جاهزاً..." />
                   </SelectTrigger>
@@ -511,9 +521,9 @@ export default function MessagingPage() {
 
               {/* Recipient */}
               <div>
-                <label className="text-sm font-medium mb-1.5 block">المستلم</label>
+                <label className="text-sm font-medium mb-1.5 flex items-center gap-1.5 dark:text-gray-300"><User className="h-3.5 w-3.5 text-teal-500" />المستلم</label>
                 <Select value={composeRecipient} onValueChange={setComposeRecipient}>
-                  <SelectTrigger>
+                  <SelectTrigger className={composeRecipient ? 'border-teal-300 dark:border-teal-700 ring-1 ring-teal-200 dark:ring-teal-800' : ''}>
                     <User className="h-4 w-4 ml-2 text-muted-foreground" />
                     <SelectValue placeholder="اختر المستلم أو المجموعة..." />
                   </SelectTrigger>
@@ -532,7 +542,7 @@ export default function MessagingPage() {
 
               {/* Subject */}
               <div>
-                <label className="text-sm font-medium mb-1.5 block">الموضوع</label>
+                <label className="text-sm font-medium mb-1.5 flex items-center gap-1.5 dark:text-gray-300"><Mail className="h-3.5 w-3.5 text-teal-500" />الموضوع</label>
                 <Input
                   placeholder="موضوع الرسالة"
                   value={composeSubject}
@@ -542,7 +552,7 @@ export default function MessagingPage() {
 
               {/* Message Body */}
               <div>
-                <label className="text-sm font-medium mb-1.5 block">نص الرسالة</label>
+                <label className="text-sm font-medium mb-1.5 flex items-center gap-1.5 dark:text-gray-300"><FileText className="h-3.5 w-3.5 text-teal-500" />نص الرسالة</label>
                 <Textarea
                   placeholder="اكتب رسالتك هنا..."
                   value={composeBody}
@@ -555,7 +565,7 @@ export default function MessagingPage() {
               {/* Priority + Attachment */}
               <div className="flex flex-col sm:flex-row gap-3">
                 <div className="flex-1">
-                  <label className="text-sm font-medium mb-1.5 block">الأولوية</label>
+                  <label className="text-sm font-medium mb-1.5 flex items-center gap-1.5 dark:text-gray-300"><AlertTriangle className="h-3.5 w-3.5 text-teal-500" />الأولوية</label>
                   <Select value={composePriority} onValueChange={setComposePriority}>
                     <SelectTrigger>
                       <SelectValue />
@@ -591,7 +601,7 @@ export default function MessagingPage() {
         {/* Tab 3: Announcements */}
         <TabsContent value="announcements" className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">إعلانات المدرسة</h2>
+            <h2 className="text-lg font-semibold dark:text-gray-200">إعلانات المدرسة</h2>
             <Dialog open={announcementOpen} onOpenChange={setAnnouncementOpen}>
               <DialogTrigger asChild>
                 <Button
@@ -683,7 +693,10 @@ export default function MessagingPage() {
               const priorityConf = PRIORITY_CONFIG[ann.priority];
               return (
                 <motion.div key={ann.id} variants={itemVariants}>
-                  <Card className="border-border/50 overflow-hidden hover:shadow-md transition-shadow">
+                  <Card className={`border-border/50 overflow-hidden hover:shadow-lg transition-all duration-200 dark:bg-gray-900/50 dark:border-gray-700 ${
+                    ann.priority === 'عاجل' ? 'border-r-4 border-r-red-500 dark:border-r-red-400' :
+                    ann.priority === 'مهم' ? 'border-r-4 border-r-amber-500 dark:border-r-amber-400' : ''
+                  }`}>
                     <div className={`absolute top-0 left-0 right-0 h-1 ${
                       ann.priority === 'عاجل' ? 'bg-gradient-to-l from-red-500 to-red-400' :
                       ann.priority === 'مهم' ? 'bg-gradient-to-l from-amber-500 to-amber-400' :
@@ -693,7 +706,7 @@ export default function MessagingPage() {
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                            <h3 className="font-semibold text-sm">{ann.title}</h3>
+                            <h3 className="font-semibold text-sm dark:text-gray-200">{ann.title}</h3>
                             <Badge variant="outline" className={`text-[10px] px-1.5 py-0 h-4 ${targetConf.bg} ${targetConf.color}`}>
                               {ann.target}
                             </Badge>

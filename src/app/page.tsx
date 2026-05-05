@@ -19,6 +19,8 @@ import ClassRankingPage from '@/components/school/ClassRankingPage';
 import ExamsPage from '@/components/school/ExamsPage';
 import FeeManagementPage from '@/components/school/FeeManagementPage';
 import MessagingPage from '@/components/school/MessagePage';
+import SchoolCalendarPage from '@/components/school/SchoolCalendarPage';
+import CertificatePage from '@/components/school/CertificatePage';
 
 function PageRenderer({ page }: { page: PageKey }) {
   switch (page) {
@@ -46,6 +48,10 @@ function PageRenderer({ page }: { page: PageKey }) {
       return <ExamsPage />;
     case 'fees':
       return <FeeManagementPage />;
+    case 'calendar':
+      return <SchoolCalendarPage />;
+    case 'certificates':
+      return <CertificatePage />;
     case 'messages':
       return <MessagingPage />;
     case 'parents':

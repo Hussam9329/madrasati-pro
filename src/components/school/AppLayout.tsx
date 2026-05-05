@@ -31,6 +31,8 @@ import {
   ClipboardList,
   Wallet,
   MessageSquare,
+  CalendarDays,
+  Award,
 } from 'lucide-react';
 import { useAppStore, type PageKey } from '@/lib/store';
 import { Button } from '@/components/ui/button';
@@ -56,6 +58,8 @@ const navItems: { key: PageKey; label: string; icon: React.ElementType; badge?: 
   { key: 'ranking', label: 'ترتيب الصفوف', icon: Trophy },
   { key: 'exams', label: 'الامتحانات', icon: ClipboardList },
   { key: 'fees', label: 'الرسوم المدرسية', icon: Wallet },
+  { key: 'calendar', label: 'التقويم المدرسي', icon: CalendarDays },
+  { key: 'certificates', label: 'الشهادات والوثائق', icon: Award },
   { key: 'messages', label: 'التواصل والرسائل', icon: MessageSquare },
   { key: 'schedule', label: 'جدول الحصص', icon: Calendar },
   { key: 'activity', label: 'سجل النشاط', icon: Activity },

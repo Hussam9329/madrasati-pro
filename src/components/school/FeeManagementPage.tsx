@@ -358,8 +358,8 @@ export default function FeeManagementPage() {
             <Wallet className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">الرسوم المدرسية</h1>
-            <p className="text-sm text-muted-foreground">إدارة الرسوم والمدفوعات</p>
+            <h1 className="text-2xl font-bold dark:text-gray-200">الرسوم المدرسية</h1>
+            <p className="text-sm text-muted-foreground">إدارة الرسوم والمدفوعات المدرسية</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -419,11 +419,11 @@ export default function FeeManagementPage() {
 
       {/* Fee Types Section */}
       <motion.div variants={itemVariants}>
-        <Card className="overflow-hidden">
+        <Card className="overflow-hidden dark:bg-gray-900/50 dark:border-gray-700">
           <div className="h-1" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2 text-base">
+              <CardTitle className="flex items-center gap-2 text-base dark:text-gray-200">
                 <Receipt className="h-5 w-5 text-teal-600 dark:text-teal-400" />
                 أنواع الرسوم
               </CardTitle>
@@ -445,21 +445,29 @@ export default function FeeManagementPage() {
                   key={fee.id}
                   initial={{ opacity: 0, scale: 0.97 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="rounded-xl border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-all bg-white dark:bg-gray-800/50"
+                  whileHover={{ y: -2, boxShadow: '0 8px 25px -5px rgba(13, 148, 136, 0.15)' }}
+                  className="rounded-xl border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-all bg-white dark:bg-gray-800/50 relative overflow-hidden group"
                 >
+                  <div className="absolute top-0 right-0 left-0 h-0.5 opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-lg bg-teal-100 dark:bg-teal-900/40 flex items-center justify-center">
                         <DollarSign className="h-4 w-4 text-teal-600 dark:text-teal-400" />
                       </div>
-                      <span className="font-bold text-sm">{fee.name}</span>
+                      <span className="font-bold text-sm dark:text-gray-200">{fee.name}</span>
                     </div>
                     <Badge variant="outline" className={cn('text-[10px]', FREQUENCY_COLORS[fee.frequency])}>
                       {fee.frequency}
                     </Badge>
                   </div>
-                  <p className="text-lg font-bold text-teal-700 dark:text-teal-300 mb-1">{formatIQD(fee.amount)}</p>
-                  <p className="text-[11px] text-muted-foreground">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className={cn(
+                      'w-2 h-2 rounded-full shrink-0',
+                      fee.frequency === 'شهري' ? 'bg-blue-500' : fee.frequency === 'سنوي' ? 'bg-teal-500' : 'bg-purple-500'
+                    )} />
+                    <p className="text-lg font-bold text-teal-700 dark:text-teal-300">{formatIQD(fee.amount)}</p>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground dark:text-gray-400">
                     الصفوف: {fee.applicableClasses.join('، ')}
                   </p>
                 </motion.div>
@@ -471,7 +479,7 @@ export default function FeeManagementPage() {
 
       {/* Student Payments Tabs */}
       <motion.div variants={itemVariants}>
-        <Card className="overflow-hidden">
+        <Card className="overflow-hidden dark:bg-gray-900/50 dark:border-gray-700">
           <div className="h-1" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
           <CardContent className="p-0">
             <Tabs defaultValue="fees" className="w-full">
@@ -574,23 +582,36 @@ export default function FeeManagementPage() {
                             initial={{ opacity: 0, y: 6 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: idx * 0.02 }}
-                            className="hover:bg-muted/50 border-b transition-colors"
+                            className={cn(
+                              'hover:bg-muted/50 dark:hover:bg-gray-800/50 border-b transition-colors',
+                              record.status === 'متأخر' && 'bg-red-50/30 dark:bg-red-900/5'
+                            )}
                           >
                             <TableCell>
                               <div className="flex items-center gap-2">
                                 <div className={cn(
-                                  'w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0',
+                                  'w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 shadow-sm',
                                   record.status === 'مدفوع' ? 'bg-emerald-500' :
                                   record.status === 'جزئي' ? 'bg-amber-500' :
                                   record.status === 'متأخر' ? 'bg-red-500' : 'bg-sky-500'
                                 )}>
                                   {record.studentName.charAt(0)}
                                 </div>
-                                <span className="font-medium text-sm">{record.studentName}</span>
+                                <span className="font-medium text-sm dark:text-gray-200">{record.studentName}</span>
                               </div>
                             </TableCell>
-                            <TableCell className="text-center text-xs text-muted-foreground">{record.className}</TableCell>
-                            <TableCell className="text-center text-sm font-semibold">{formatIQD(record.totalFees)}</TableCell>
+                            <TableCell className="text-center text-xs text-muted-foreground dark:text-gray-400">{record.className}</TableCell>
+                            <TableCell className="text-center">
+                              <div className="flex items-center justify-center gap-1.5">
+                                <div className={cn(
+                                  'w-1.5 h-1.5 rounded-full',
+                                  record.status === 'مدفوع' ? 'bg-emerald-500' :
+                                  record.status === 'جزئي' ? 'bg-amber-500' :
+                                  record.status === 'متأخر' ? 'bg-red-500' : 'bg-sky-500'
+                                )} />
+                                <span className="text-sm font-semibold dark:text-gray-200">{formatIQD(record.totalFees)}</span>
+                              </div>
+                            </TableCell>
                             <TableCell className="text-center">
                               <div>
                                 <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">{formatIQD(record.paid)}</span>
@@ -708,10 +729,10 @@ export default function FeeManagementPage() {
       {/* Payment Statistics Visual */}
       <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Bar Chart - Monthly Collection */}
-        <Card className="lg:col-span-2 overflow-hidden">
+        <Card className="lg:col-span-2 overflow-hidden dark:bg-gray-900/50 dark:border-gray-700">
           <div className="h-1" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
           <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-base">
+            <CardTitle className="flex items-center gap-2 text-base dark:text-gray-200">
               <TrendingUp className="h-5 w-5 text-teal-600 dark:text-teal-400" />
               التحصيل الشهري
             </CardTitle>
@@ -746,7 +767,7 @@ export default function FeeManagementPage() {
         </Card>
 
         {/* Pie Chart - Payment Method Distribution */}
-        <Card className="overflow-hidden">
+        <Card className="overflow-hidden dark:bg-gray-900/50 dark:border-gray-700">
           <div className="h-1" style={{ background: 'linear-gradient(90deg, #06b6d4, #0d9488)' }} />
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-base">

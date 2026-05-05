@@ -315,7 +315,7 @@ export default function ExamsPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold dark:text-gray-200">الامتحانات</h1>
-            <p className="text-sm text-muted-foreground">جدول الامتحانات والمواعيد</p>
+            <p className="text-sm text-muted-foreground">إدارة جداول الامتحانات والمواعيد</p>
           </div>
         </div>
         <Button
@@ -459,12 +459,12 @@ export default function ExamsPage() {
 
             return (
               <Card key={date} className={cn(
-                'overflow-hidden dark:bg-gray-900/50',
-                isToday && 'border-teal-300 ring-1 ring-teal-200',
+                'overflow-hidden dark:bg-gray-900/50 dark:border-gray-700',
+                isToday && 'border-teal-300 ring-1 ring-teal-200 dark:ring-teal-700',
                 isPast && 'opacity-60'
               )}>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-base flex items-center gap-3">
+                  <CardTitle className="text-base flex items-center gap-3 dark:text-gray-200">
                     <div className={cn(
                       'w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold shrink-0',
                       isToday ? 'bg-teal-500' : isPast ? 'bg-gray-400' : 'bg-primary'
@@ -476,7 +476,7 @@ export default function ExamsPage() {
                       <p className="text-xs font-normal text-muted-foreground">{getArabicDay(date)}</p>
                     </div>
                     {isToday && (
-                      <Badge className="bg-teal-100 text-teal-700 border-teal-200 text-xs mr-auto">اليوم</Badge>
+                      <Badge className="bg-teal-100 text-teal-700 border-teal-200 dark:bg-teal-900/30 dark:text-teal-300 dark:border-teal-700 text-xs mr-auto">اليوم</Badge>
                     )}
                     <Badge variant="outline" className="text-xs mr-auto">
                       {dateExams.length} امتحان
@@ -492,21 +492,31 @@ export default function ExamsPage() {
                           key={exam.id}
                           initial={{ opacity: 0, scale: 0.95 }}
                           animate={{ opacity: 1, scale: 1 }}
+                          whileHover={{ y: -2, boxShadow: '0 8px 25px -5px rgba(13, 148, 136, 0.12)' }}
                           className={cn(
-                            'rounded-xl border p-4 transition-all hover:shadow-md',
-                            color.bg
+                            'rounded-xl border p-4 transition-all hover:shadow-lg relative overflow-hidden',
+                            color.bg,
+                            isPast && 'opacity-50 dark:opacity-40'
                           )}
                         >
+                          {/* Gradient top strip based on exam type */}
+                          <div className="absolute top-0 right-0 left-0 h-0.5" style={{
+                            background: exam.examType === 'نهاية سنة' ? 'linear-gradient(90deg, #dc2626, #ef4444)' :
+                              exam.examType === 'نصف سنة' ? 'linear-gradient(90deg, #d97706, #f59e0b)' :
+                              exam.examType === 'شهر أول' ? 'linear-gradient(90deg, #2563eb, #3b82f6)' :
+                              exam.examType === 'شهر ثاني' ? 'linear-gradient(90deg, #0891b2, #06b6d4)' :
+                              'linear-gradient(90deg, #0d9488, #14b8a6)'
+                          }} />
                           <div className="flex items-start justify-between mb-2">
                             <div className="flex items-center gap-2">
                               <div className={cn('w-3 h-3 rounded-full', color.dot)} />
-                              <span className={cn('font-bold text-sm', color.text)}>{exam.subjectName}</span>
+                              <span className={cn('font-bold text-sm', color.text, 'dark:text-gray-200')}>{exam.subjectName}</span>
                             </div>
                             <Badge variant="outline" className={cn('text-[10px]', EXAM_TYPE_COLORS[exam.examType] || '')}>
                               {exam.examType}
                             </Badge>
                           </div>
-                          <div className="space-y-1.5 text-xs text-muted-foreground">
+                          <div className="space-y-1.5 text-xs text-muted-foreground dark:text-gray-400">
                             <div className="flex items-center gap-1.5">
                               <Clock className="h-3 w-3" />
                               <span>{exam.time}</span>
@@ -520,8 +530,24 @@ export default function ExamsPage() {
                               <span>{exam.room}</span>
                             </div>
                           </div>
+                          {/* Countdown for upcoming exams */}
+                          {!isPast && !isToday && (() => {
+                            const daysUntil = Math.ceil((new Date(exam.date).getTime() - new Date(today).getTime()) / (1000 * 60 * 60 * 24))
+                            return daysUntil > 0 && daysUntil <= 7 ? (
+                              <div className="mt-2 flex items-center gap-1.5 text-[10px] text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-900/20 rounded-full px-2 py-0.5 w-fit">
+                                <Clock className="h-2.5 w-2.5" />
+                                بعد {daysUntil} {daysUntil === 1 ? 'يوم' : 'أيام'}
+                              </div>
+                            ) : null
+                          })()}
+                          {isToday && (
+                            <div className="mt-2 flex items-center gap-1.5 text-[10px] text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-full px-2 py-0.5 w-fit">
+                              <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                              اليوم
+                            </div>
+                          )}
                           {exam.notes && (
-                            <p className="text-xs text-muted-foreground mt-2 italic">{exam.notes}</p>
+                            <p className="text-xs text-muted-foreground dark:text-gray-500 mt-2 italic">{exam.notes}</p>
                           )}
                         </motion.div>
                       )
@@ -603,15 +629,18 @@ export default function ExamsPage() {
 
       {/* Add Exam Dialog */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto dark:bg-gray-900">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto dark:bg-gray-900 dark:border-gray-700">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 dark:text-gray-200">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
+                <ClipboardList className="h-4 w-4 text-white" />
+              </div>
               إضافة امتحان جديد
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
-              <Label>المادة *</Label>
+              <Label className="dark:text-gray-300">المادة *</Label>
               <Select value={form.subjectId} onValueChange={(v) => setForm({ ...form, subjectId: v })}>
                 <SelectTrigger>
                   <SelectValue placeholder="اختر المادة" />
@@ -624,7 +653,7 @@ export default function ExamsPage() {
               </Select>
             </div>
             <div>
-              <Label>نوع الامتحان *</Label>
+              <Label className="dark:text-gray-300">نوع الامتحان *</Label>
               <Select value={form.examType} onValueChange={(v) => setForm({ ...form, examType: v })}>
                 <SelectTrigger>
                   <SelectValue />
@@ -640,7 +669,7 @@ export default function ExamsPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>التاريخ *</Label>
+                <Label className="dark:text-gray-300">التاريخ *</Label>
                 <Input
                   type="date"
                   value={form.date}
@@ -648,7 +677,7 @@ export default function ExamsPage() {
                 />
               </div>
               <div>
-                <Label>الوقت</Label>
+                <Label className="dark:text-gray-300">الوقت</Label>
                 <Input
                   type="time"
                   value={form.time}
@@ -657,7 +686,7 @@ export default function ExamsPage() {
               </div>
             </div>
             <div>
-              <Label>الصف *</Label>
+              <Label className="dark:text-gray-300">الصف *</Label>
               <Select value={form.classId} onValueChange={(v) => setForm({ ...form, classId: v })}>
                 <SelectTrigger>
                   <SelectValue placeholder="اختر الصف" />
@@ -670,7 +699,7 @@ export default function ExamsPage() {
               </Select>
             </div>
             <div>
-              <Label>القاعة</Label>
+              <Label className="dark:text-gray-300">القاعة</Label>
               <Input
                 value={form.room}
                 onChange={(e) => setForm({ ...form, room: e.target.value })}
@@ -678,7 +707,7 @@ export default function ExamsPage() {
               />
             </div>
             <div>
-              <Label>ملاحظات</Label>
+              <Label className="dark:text-gray-300">ملاحظات</Label>
               <Textarea
                 value={form.notes}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}

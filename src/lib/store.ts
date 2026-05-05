@@ -17,7 +17,9 @@ export type PageKey =
   | 'activity'
   | 'parents'
   | 'fees'
-  | 'messages';
+  | 'messages'
+  | 'calendar'
+  | 'certificates';
 
 export interface AuthState {
   user: {
