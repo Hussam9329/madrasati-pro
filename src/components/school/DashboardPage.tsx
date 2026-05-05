@@ -253,44 +253,50 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* Welcome Header */}
+      {/* Welcome Header - Prominent Gradient Card */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between"
+        className="relative rounded-2xl overflow-hidden"
+        style={{ background: 'linear-gradient(135deg, #0d9488 0%, #059669 60%, #047857 100%)' }}
       >
-        <div className="flex items-center gap-4">
-          <div
-            className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg shrink-0"
-            style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}
+        {/* Decorative circles */}
+        <div className="absolute -top-8 -left-8 w-32 h-32 rounded-full bg-white/5" />
+        <div className="absolute -bottom-6 -right-6 w-24 h-24 rounded-full bg-white/5" />
+        <div className="absolute top-1/2 left-1/3 w-16 h-16 rounded-full bg-white/5" />
+        <div className="relative px-6 py-5 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div
+              className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg shrink-0 bg-white/20 backdrop-blur-sm"
+            >
+              <School className="w-7 h-7 text-white" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-white">
+                مرحباً، {auth.user?.name || 'مستخدم'} 👋
+              </h2>
+              <p className="text-sm text-white/70 mt-0.5">
+                {new Date().toLocaleDateString('ar-IQ', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                {' · '}
+                نظرة عامة على حالة المدرسة
+              </p>
+            </div>
+          </div>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="gap-2 bg-white/20 hover:bg-white/30 text-white border-0 backdrop-blur-sm"
           >
-            <School className="w-7 h-7 text-white" />
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold text-gray-800">
-              مرحباً، {auth.user?.name || 'مستخدم'} 👋
-            </h2>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              {new Date().toLocaleDateString('ar-IQ', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-              {' · '}
-              نظرة عامة على حالة المدرسة
-            </p>
-          </div>
+            {refreshing ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <RefreshCw className="w-4 h-4" />
+            )}
+            تحديث
+          </Button>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleRefresh}
-          disabled={refreshing}
-          className="gap-2"
-        >
-          {refreshing ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <RefreshCw className="w-4 h-4" />
-          )}
-          تحديث
-        </Button>
       </motion.div>
 
       {/* Quick Actions */}
@@ -309,8 +315,8 @@ export default function DashboardPage() {
             key={action.title}
             onClick={() => setActivePage(action.page)}
             className="flex items-center gap-3 p-3 rounded-xl bg-white border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 text-right group"
-            whileHover={{ y: -2 }}
-            whileTap={{ scale: 0.98 }}
+            whileHover={{ y: -3, scale: 1.02 }}
+            whileTap={{ scale: 0.97 }}
           >
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br ${action.gradient} text-white shrink-0 shadow-sm group-hover:shadow-md transition-shadow`}>
               <action.icon className="w-5 h-5" />
@@ -345,18 +351,20 @@ export default function DashboardPage() {
           : statCards.map((card, index) => {
               const Icon = card.icon;
               return (
-                <motion.div key={card.title} variants={itemVariants}>
-                  <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden">
-                    <CardContent className="p-4">
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${card.iconBg}`}>
-                        <Icon className="w-5 h-5" style={{ color: card.color }} />
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-3 font-medium">{card.title}</p>
-                      <p className="text-2xl font-bold mt-1" style={{ color: card.color }}>
-                        {card.value.toLocaleString('ar-SA')}
-                      </p>
-                    </CardContent>
-                  </Card>
+                <motion.div key={card.title} variants={itemVariants} whileHover={{ y: -2 }}>
+                  <div className="rounded-xl p-[1px] bg-gradient-to-br from-gray-200/80 via-gray-100/50 to-gray-200/80 hover:from-teal-200/60 hover:via-emerald-200/40 hover:to-teal-200/60 transition-all duration-300">
+                    <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden">
+                      <CardContent className="p-4">
+                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${card.iconBg}`}>
+                          <Icon className="w-5 h-5" style={{ color: card.color }} />
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-3 font-medium">{card.title}</p>
+                        <p className="text-2xl font-bold mt-1" style={{ color: card.color }}>
+                          {card.value.toLocaleString('ar-SA')}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </div>
                 </motion.div>
               );
             })}
@@ -385,46 +393,64 @@ export default function DashboardPage() {
                   <Loader2 className="w-8 h-8 animate-spin text-teal-500" />
                 </div>
               ) : pieData.length > 0 ? (
-                <div className="h-64">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={pieData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={55}
-                        outerRadius={85}
-                        paddingAngle={3}
-                        dataKey="value"
-                        stroke="none"
-                      >
-                        {pieData.map((_, index) => (
-                          <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <RechartsTooltip
-                        formatter={(value: number, name: string) => [
-                          value.toLocaleString('ar-SA'),
-                          name,
-                        ]}
-                        contentStyle={{
-                          borderRadius: '8px',
-                          border: 'none',
-                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                          fontFamily: 'inherit',
-                          direction: 'rtl',
-                        }}
-                      />
-                      <Legend
-                        verticalAlign="bottom"
-                        iconType="circle"
-                        iconSize={8}
-                        formatter={(value: string) => (
-                          <span style={{ fontSize: '12px', color: '#6b7280' }}>{value}</span>
-                        )}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
+                <div>
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={pieData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={55}
+                          outerRadius={85}
+                          paddingAngle={3}
+                          dataKey="value"
+                          stroke="none"
+                        >
+                          {pieData.map((_, index) => (
+                            <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <RechartsTooltip
+                          formatter={(value: number, name: string) => [
+                            value.toLocaleString('ar-SA'),
+                            name,
+                          ]}
+                          contentStyle={{
+                            borderRadius: '8px',
+                            border: 'none',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                            fontFamily: 'inherit',
+                            direction: 'rtl',
+                          }}
+                        />
+                        <Legend
+                          verticalAlign="bottom"
+                          iconType="circle"
+                          iconSize={8}
+                          formatter={(value: string) => (
+                            <span style={{ fontSize: '12px', color: '#6b7280' }}>{value}</span>
+                          )}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  {/* Total Attendance Percentage */}
+                  {attendanceTotal > 0 && (
+                    <div className="flex items-center justify-center gap-2 pt-2 border-t border-gray-100 mt-2">
+                      <div className={`w-2.5 h-2.5 rounded-full ${
+                        ((attendance?.present || 0) / attendanceTotal * 100) >= 90 ? 'bg-emerald-500' :
+                        ((attendance?.present || 0) / attendanceTotal * 100) >= 75 ? 'bg-amber-500' : 'bg-red-500'
+                      }`} />
+                      <span className="text-sm text-muted-foreground">نسبة الحضور الإجمالية</span>
+                      <span className={`text-lg font-bold ${
+                        ((attendance?.present || 0) / attendanceTotal * 100) >= 90 ? 'text-emerald-600' :
+                        ((attendance?.present || 0) / attendanceTotal * 100) >= 75 ? 'text-amber-600' : 'text-red-600'
+                      }`}>
+                        {Math.round((attendance?.present || 0) / attendanceTotal * 100)}%
+                      </span>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="flex items-center justify-center h-64 text-muted-foreground text-sm">
@@ -543,10 +569,17 @@ export default function DashboardPage() {
                       label: notice.type,
                       className: 'bg-gray-100 text-gray-700',
                     };
+                    const borderColor: Record<string, string> = {
+                      'عام': 'border-r-gray-400',
+                      'مهم': 'border-r-red-500',
+                      'إداري': 'border-r-blue-500',
+                      'أكاديمي': 'border-r-emerald-500',
+                      'طوارئ': 'border-r-orange-500',
+                    };
                     return (
                       <div
                         key={notice.id}
-                        className="p-3 rounded-lg border border-gray-100 hover:border-gray-200 hover:bg-gray-50/50 transition-colors"
+                        className={`p-3 rounded-lg border border-gray-100 hover:border-gray-200 hover:bg-gray-50/50 transition-colors border-r-4 ${borderColor[notice.type] || 'border-r-gray-300'}`}
                       >
                         <div className="flex items-start justify-between gap-2">
                           <h4 className="text-sm font-semibold text-gray-800">{notice.title}</h4>

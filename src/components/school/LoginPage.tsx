@@ -94,16 +94,28 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             </p>
             <div className="flex items-center justify-center gap-6 text-sm text-white/60">
               <div className="flex items-center gap-2">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                </span>
                 <Shield className="w-4 h-4" />
                 <span>آمن</span>
               </div>
               <div className="w-1 h-1 rounded-full bg-white/40" />
               <div className="flex items-center gap-2">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-teal-500" />
+                </span>
                 <GraduationCap className="w-4 h-4" />
                 <span>ذكي</span>
               </div>
               <div className="w-1 h-1 rounded-full bg-white/40" />
               <div className="flex items-center gap-2">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500" />
+                </span>
                 <span>⚡</span>
                 <span>سريع</span>
               </div>
@@ -132,7 +144,18 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             <p className="text-sm text-muted-foreground mt-1">نظام إدارة المدرسة</p>
           </div>
 
-          <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
+          <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm relative overflow-hidden">
+            {/* Shimmer effect */}
+            <motion.div
+              initial={{ x: '-100%' }}
+              animate={{ x: '200%' }}
+              transition={{ duration: 1.5, ease: 'easeInOut', delay: 0.3 }}
+              className="absolute inset-0 z-10 pointer-events-none"
+              style={{
+                background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%)',
+                width: '50%',
+              }}
+            />
             <CardHeader className="text-center pb-2">
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -256,9 +279,9 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                 transition={{ delay: 0.7 }}
                 className="text-center mt-6 pt-4 border-t border-gray-100"
               >
-                <p className="text-xs text-muted-foreground">من تطوير</p>
-                <p className="text-sm font-bold tracking-wider" style={{ color: '#0d9488' }}>
-                  Vision
+                <p className="text-xs text-muted-foreground mb-1">من تطوير</p>
+                <p className="text-base font-extrabold tracking-[0.2em]" style={{ color: '#0d9488' }}>
+                  VISION
                 </p>
               </motion.div>
             </CardContent>

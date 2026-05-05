@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Plus, Edit, Trash2, BookOpen, Hash, Award, Target
+  Plus, Edit, Trash2, BookOpen, Hash, Award, Target, Users, Flame
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -75,6 +75,23 @@ interface Subject {
     maxScore: number
   }[]
 }
+
+const SUBJECT_COLORS: Record<string, { bg: string; dot: string; icon: string }> = {
+  'رياضيات': { bg: 'bg-blue-50 border-blue-200', dot: 'bg-blue-500', icon: 'text-blue-600' },
+  'فيزياء': { bg: 'bg-purple-50 border-purple-200', dot: 'bg-purple-500', icon: 'text-purple-600' },
+  'كيمياء': { bg: 'bg-emerald-50 border-emerald-200', dot: 'bg-emerald-500', icon: 'text-emerald-600' },
+  'أحياء': { bg: 'bg-green-50 border-green-200', dot: 'bg-green-500', icon: 'text-green-600' },
+  'عربي': { bg: 'bg-red-50 border-red-200', dot: 'bg-red-500', icon: 'text-red-600' },
+  'انكليزي': { bg: 'bg-cyan-50 border-cyan-200', dot: 'bg-cyan-500', icon: 'text-cyan-600' },
+  'تربية إسلامية': { bg: 'bg-amber-50 border-amber-200', dot: 'bg-amber-500', icon: 'text-amber-600' },
+  'تاريخ': { bg: 'bg-orange-50 border-orange-200', dot: 'bg-orange-500', icon: 'text-orange-600' },
+  'جغرافية': { bg: 'bg-teal-50 border-teal-200', dot: 'bg-teal-500', icon: 'text-teal-600' },
+  'حاسوب': { bg: 'bg-indigo-50 border-indigo-200', dot: 'bg-indigo-500', icon: 'text-indigo-600' },
+  'تربية رياضية': { bg: 'bg-lime-50 border-lime-200', dot: 'bg-lime-500', icon: 'text-lime-600' },
+  'فنية': { bg: 'bg-pink-50 border-pink-200', dot: 'bg-pink-500', icon: 'text-pink-600' },
+}
+
+const DEFAULT_SUBJECT_COLOR = { bg: 'bg-gray-50 border-gray-200', dot: 'bg-gray-400', icon: 'text-gray-600' }
 
 export default function SubjectsPage() {
   const { toast } = useToast()
@@ -271,16 +288,41 @@ export default function SubjectsPage() {
       {/* Top Bar */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-            <BookOpen className="h-5 w-5 text-primary" />
+          <div
+            className="flex h-10 w-10 items-center justify-center rounded-lg"
+            style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}
+          >
+            <BookOpen className="h-5 w-5 text-white" />
           </div>
           <h1 className="text-2xl font-bold">إدارة المواد الدراسية</h1>
         </div>
-        <Button onClick={openAddForm} className="gap-2">
+        <Button onClick={openAddForm} className="gap-2" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
           <Plus className="h-4 w-4" />
           إضافة مادة
         </Button>
       </div>
+
+      {/* Subject Stats Summary */}
+      {!loading && subjects.length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[
+            { label: 'إجمالي المواد', count: subjects.length, icon: BookOpen, color: '#0d9488', bg: 'bg-teal-50', iconBg: 'bg-teal-100', border: 'border-teal-200' },
+            { label: 'مواد أساسية', count: subjects.filter(s => s.type === 'أساسية').length, icon: Flame, color: '#059669', bg: 'bg-emerald-50', iconBg: 'bg-emerald-100', border: 'border-emerald-200' },
+            { label: 'مواد اختيارية', count: subjects.filter(s => s.type === 'اختيارية').length, icon: Target, color: '#d97706', bg: 'bg-amber-50', iconBg: 'bg-amber-100', border: 'border-amber-200' },
+            { label: 'المدرسون المرتبطون', count: new Set(subjects.flatMap(s => s.teachers.map(t => t.teacherId))).size, icon: Users, color: '#0891b2', bg: 'bg-cyan-50', iconBg: 'bg-cyan-100', border: 'border-cyan-200' },
+          ].map(stat => (
+            <div key={stat.label} className={`flex items-center gap-3 p-3 rounded-xl border ${stat.border} ${stat.bg}`}>
+              <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${stat.iconBg}`}>
+                <stat.icon className="w-4 h-4" style={{ color: stat.color }} />
+              </div>
+              <div>
+                <p className="text-xl font-bold" style={{ color: stat.color }}>{stat.count}</p>
+                <p className="text-xs text-muted-foreground">{stat.label}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Subjects Grid */}
       {loading ? (
@@ -315,12 +357,20 @@ export default function SubjectsPage() {
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ delay: idx * 0.05 }}
               >
-                <Card className="overflow-hidden hover:shadow-md transition-shadow">
-                  <CardContent className="p-6">
+                <Card className={`overflow-hidden hover:shadow-lg transition-all duration-300 group relative ${SUBJECT_COLORS[subject.name]?.bg || DEFAULT_SUBJECT_COLOR.bg}`}>
+                  <div className="absolute top-0 right-0 left-0 h-1 rounded-t-lg" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
+                  <CardContent className="p-6 pt-5 relative">
                     {/* Header */}
                     <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h3 className="font-bold text-base">{subject.name}</h3>
+                      <div className="flex items-start gap-2.5">
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center mt-0.5 shrink-0 bg-white/60">
+                          <BookOpen className={`w-4 h-4 ${SUBJECT_COLORS[subject.name]?.icon || DEFAULT_SUBJECT_COLOR.icon}`} />
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-base flex items-center gap-2">
+                            <span className={`w-2 h-2 rounded-full shrink-0 ${SUBJECT_COLORS[subject.name]?.dot || DEFAULT_SUBJECT_COLOR.dot}`} />
+                            {subject.name}
+                          </h3>
                         <div className="flex items-center gap-2 mt-1">
                           <Badge variant="outline" className="text-xs font-mono">
                             <Hash className="h-3 w-3 ml-1" />
@@ -338,6 +388,7 @@ export default function SubjectsPage() {
                             {subject.type}
                           </Badge>
                         </div>
+                      </div>
                       </div>
                       <div className="flex items-center gap-1">
                         <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEditForm(subject)}>

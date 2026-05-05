@@ -17,6 +17,8 @@ import {
   X,
   ChevronLeft,
   School,
+  Calendar,
+  Activity,
 } from 'lucide-react';
 import { useAppStore, type PageKey } from '@/lib/store';
 import { Button } from '@/components/ui/button';
@@ -37,6 +39,8 @@ const navItems: { key: PageKey; label: string; icon: React.ElementType; badge?: 
   { key: 'subjects', label: 'المواد', icon: BookOpen },
   { key: 'attendance', label: 'الحضور QR', icon: ScanLine, badge: 'مباشر' },
   { key: 'grades', label: 'الدرجات', icon: FileText },
+  { key: 'schedule', label: 'جدول الحصص', icon: Calendar },
+  { key: 'activity', label: 'سجل النشاط', icon: Activity },
   { key: 'reports', label: 'التقارير', icon: BarChart3 },
   { key: 'notices', label: 'الإشعارات', icon: Bell },
   { key: 'users', label: 'المستخدمون', icon: Shield },

@@ -13,6 +13,8 @@ import AttendancePage from '@/components/school/AttendancePage';
 import GradesPage from '@/components/school/GradesPage';
 import ReportsPage from '@/components/school/ReportsPage';
 import SettingsPage from '@/components/school/SettingsPage';
+import SchedulePage from '@/components/school/SchedulePage';
+import ActivityLogPage from '@/components/school/ActivityLogPage';
 
 function PageRenderer({ page }: { page: PageKey }) {
   switch (page) {
@@ -30,6 +32,10 @@ function PageRenderer({ page }: { page: PageKey }) {
       return <GradesPage />;
     case 'reports':
       return <ReportsPage />;
+    case 'schedule':
+      return <SchedulePage />;
+    case 'activity':
+      return <ActivityLogPage />;
     case 'notices':
       return <SettingsPage initialTab="notices" />;
     case 'users':

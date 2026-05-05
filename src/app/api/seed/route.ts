@@ -139,6 +139,40 @@ export async function POST() {
       'قاسم حسين عباس', 'نبيل سعيد جواد', 'صباح محمد رضا',
     ];
 
+    // Gender map based on actual Arabic naming conventions
+    const genderMap: Record<string, string> = {
+      'علي حسين جاسم': 'ذكر',
+      'أحمد محمد صالح': 'ذكر',
+      'حسين عبدالله كاظم': 'ذكر',
+      'محمد رضا جعفر': 'ذكر',
+      'عباس طالب حسن': 'ذكر',
+      'كريم صباح نوري': 'ذكر',
+      'مصطفى حيدر عبد': 'ذكر',
+      'جعفر علي حسين': 'ذكر',
+      'سجاد أحمد محمد': 'ذكر',
+      'يوسف كاظم رضا': 'ذكر',
+      'زينب محمد علي': 'أنثى',
+      'فاطمة حسين أحمد': 'أنثى',
+      'مريم عباس جواد': 'أنثى',
+      'نور سعيد خالد': 'أنثى',
+      'سارة طالب عبد': 'أنثى',
+      'حلا كريم حسن': 'أنثى',
+      'رنا مصطفى صالح': 'أنثى',
+      'دانا محمد جاسم': 'أنثى',
+      'لينا أحمد ناصر': 'أنثى',
+      'آية حسين علي': 'أنثى',
+      'عمر خالد إبراهيم': 'ذكر',
+      'ياسر محمد حسن': 'ذكر',
+      'بلال علي جعفر': 'ذكر',
+      'عمار حسين صالح': 'ذكر',
+      'ثائر أحمد كاظم': 'ذكر',
+      'وليد عبدالله نوري': 'ذكر',
+      'رعد طالب محمد': 'ذكر',
+      'قاسم حسين عباس': 'ذكر',
+      'نبيل سعيد جواد': 'ذكر',
+      'صباح محمد رضا': 'ذكر',
+    };
+
     const allSections = await db.section.findMany();
     let studentCounter = 1;
 
@@ -147,7 +181,7 @@ export async function POST() {
       const section = allSections[sectionIndex];
       const cls = classes.find(c => c.id === section.classId);
       
-      const gender = i < 20 ? 'ذكر' : 'أنثى';
+      const gender = genderMap[studentNames[i]] || 'ذكر';
       const studentNumber = `STU-2026-${String(studentCounter).padStart(5, '0')}`;
       const qrCode = `MADRASATI-${studentNumber}-${Date.now()}`;
 

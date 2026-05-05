@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Search, Plus, Edit, Trash2, Phone, Mail, BookOpen, GraduationCap
+  Search, Plus, Edit, Trash2, Phone, Mail, BookOpen, GraduationCap,
+  UserCheck, UserX, ArrowRightLeft, Users
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -68,6 +69,36 @@ const STATUS_COLORS: Record<string, string> = {
   'إجازة': 'bg-amber-100 text-amber-700 border-amber-200',
   'منقول': 'bg-blue-100 text-blue-700 border-blue-200',
   'متقاعد': 'bg-gray-100 text-gray-700 border-gray-200',
+}
+
+const SPECIALTY_COLORS: Record<string, string> = {
+  'رياضيات': 'bg-blue-100 text-blue-700',
+  'فيزياء': 'bg-purple-100 text-purple-700',
+  'كيمياء': 'bg-emerald-100 text-emerald-700',
+  'أحياء': 'bg-green-100 text-green-700',
+  'عربي': 'bg-red-100 text-red-700',
+  'انكليزي': 'bg-cyan-100 text-cyan-700',
+  'تربية إسلامية': 'bg-amber-100 text-amber-700',
+  'تاريخ': 'bg-orange-100 text-orange-700',
+  'جغرافية': 'bg-teal-100 text-teal-700',
+  'حاسوب': 'bg-indigo-100 text-indigo-700',
+  'تربية رياضية': 'bg-lime-100 text-lime-700',
+  'فنية': 'bg-pink-100 text-pink-700',
+}
+
+const SPECIALTY_DOT_COLORS: Record<string, string> = {
+  'رياضيات': 'bg-blue-500',
+  'فيزياء': 'bg-purple-500',
+  'كيمياء': 'bg-emerald-500',
+  'أحياء': 'bg-green-500',
+  'عربي': 'bg-red-500',
+  'انكليزي': 'bg-cyan-500',
+  'تربية إسلامية': 'bg-amber-500',
+  'تاريخ': 'bg-orange-500',
+  'جغرافية': 'bg-teal-500',
+  'حاسوب': 'bg-indigo-500',
+  'تربية رياضية': 'bg-lime-500',
+  'فنية': 'bg-pink-500',
 }
 
 export default function TeachersPage() {
@@ -243,16 +274,41 @@ export default function TeachersPage() {
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-              <GraduationCap className="h-5 w-5 text-primary" />
+            <div
+              className="flex h-10 w-10 items-center justify-center rounded-lg"
+              style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}
+            >
+              <GraduationCap className="h-5 w-5 text-white" />
             </div>
             <h1 className="text-2xl font-bold">إدارة المدرسين</h1>
           </div>
-          <Button onClick={openAddForm} className="gap-2">
+          <Button onClick={openAddForm} className="gap-2" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
             <Plus className="h-4 w-4" />
             إضافة مدرس
           </Button>
         </div>
+
+        {/* Teacher Stats Summary */}
+        {!loading && teachers.length > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { label: 'الإجمالي', count: teachers.length, icon: Users, color: 'text-teal-700', bg: 'bg-teal-50', iconBg: 'bg-teal-100', border: 'border-teal-200' },
+              { label: 'نشط', count: teachers.filter(t => t.status === 'نشط').length, icon: UserCheck, color: 'text-emerald-700', bg: 'bg-emerald-50', iconBg: 'bg-emerald-100', border: 'border-emerald-200' },
+              { label: 'إجازة', count: teachers.filter(t => t.status === 'إجازة').length, icon: UserX, color: 'text-amber-700', bg: 'bg-amber-50', iconBg: 'bg-amber-100', border: 'border-amber-200' },
+              { label: 'منقول', count: teachers.filter(t => t.status === 'منقول').length, icon: ArrowRightLeft, color: 'text-blue-700', bg: 'bg-blue-50', iconBg: 'bg-blue-100', border: 'border-blue-200' },
+            ].map(stat => (
+              <div key={stat.label} className={`flex items-center gap-3 p-3 rounded-xl border ${stat.border} ${stat.bg}`}>
+                <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${stat.iconBg}`}>
+                  <stat.icon className={`w-4 h-4 ${stat.color}`} />
+                </div>
+                <div>
+                  <p className="text-xl font-bold {stat.color}" style={{ color: stat.color.includes('teal') ? '#0d9488' : stat.color.includes('emerald') ? '#047857' : stat.color.includes('amber') ? '#b45309' : '#1d4ed8' }}>{stat.count}</p>
+                  <p className="text-xs text-muted-foreground">{stat.label}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-3">
@@ -315,20 +371,42 @@ export default function TeachersPage() {
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ delay: idx * 0.05 }}
               >
-                <Card className="overflow-hidden hover:shadow-md transition-shadow">
-                  <CardContent className="p-6">
+                <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 group relative">
+                  {/* Gradient hover overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-teal-500/5 via-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-lg" />
+                  <CardContent className="p-6 relative">
                     <div className="flex items-start gap-4">
-                      <Avatar className="h-14 w-14 border-2 border-primary/20">
-                        <AvatarFallback className="bg-primary/10 text-primary text-lg">
+                      <Avatar className="h-14 w-14 border-2 border-teal-200/50 shadow-sm">
+                        <AvatarFallback className="bg-gradient-to-br from-teal-100 to-emerald-100 text-teal-700 text-lg font-bold">
                           {teacher.fullName.charAt(0)}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-base truncate">{teacher.fullName}</h3>
-                        <p className="text-sm text-muted-foreground">{teacher.specialty || 'بدون اختصاص'}</p>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-bold text-base truncate">{teacher.fullName}</h3>
+                          {teacher.subjects.length > 0 && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-teal-100 text-teal-700 shrink-0">
+                              <BookOpen className="h-2.5 w-2.5" />
+                              {teacher.subjects.length}
+                            </span>
+                          )}
+                        </div>
+                        {teacher.specialty ? (
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <span className={`w-2 h-2 rounded-full ${SPECIALTY_DOT_COLORS[teacher.specialty] || 'bg-gray-400'}`} />
+                            <Badge
+                              variant="outline"
+                              className={`text-[11px] ${SPECIALTY_COLORS[teacher.specialty] || 'bg-gray-100 text-gray-700 border-gray-200'}`}
+                            >
+                              {teacher.specialty}
+                            </Badge>
+                          </div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">بدون اختصاص</p>
+                        )}
                         <Badge
                           variant="outline"
-                          className={cn('text-xs mt-1', STATUS_COLORS[teacher.status] || '')}
+                          className={cn('text-xs mt-1.5', STATUS_COLORS[teacher.status] || '')}
                         >
                           {teacher.status}
                         </Badge>
@@ -349,15 +427,15 @@ export default function TeachersPage() {
                         </div>
                       )}
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <BookOpen className="h-3.5 w-3.5" />
-                        <span>{teacher.subjects.length} مادة</span>
+                        <BookOpen className="h-3.5 w-3.5 text-teal-500" />
+                        <span className="font-medium">{teacher.subjects.length} مادة</span>
                       </div>
                     </div>
 
                     {teacher.subjects.length > 0 && (
                       <div className="mt-3 flex flex-wrap gap-1.5">
                         {teacher.subjects.map(s => (
-                          <Badge key={s.id} variant="secondary" className="text-xs">
+                          <Badge key={s.id} variant="secondary" className="text-xs bg-teal-50 text-teal-700 hover:bg-teal-100">
                             {s.subject.name}
                           </Badge>
                         ))}

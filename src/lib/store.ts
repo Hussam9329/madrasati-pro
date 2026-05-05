@@ -10,7 +10,9 @@ export type PageKey =
   | 'reports' 
   | 'settings'
   | 'users'
-  | 'notices';
+  | 'notices'
+  | 'schedule'
+  | 'activity';
 
 export interface AuthState {
   user: {

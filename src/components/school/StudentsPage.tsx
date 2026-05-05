@@ -438,7 +438,18 @@ export default function StudentsPage() {
                           </TableCell>
                           <TableCell className="text-center text-sm">{student.class.name}</TableCell>
                           <TableCell className="text-center text-sm">{student.section.name}</TableCell>
-                          <TableCell className="text-center text-sm">{student.gender}</TableCell>
+                          <TableCell className="text-center text-sm">
+                            <div className="flex items-center justify-center gap-1">
+                              {student.gender === 'ذكر' ? (
+                                <User className="h-3.5 w-3.5 text-blue-500" />
+                              ) : (
+                                <User className="h-3.5 w-3.5 text-pink-500" />
+                              )}
+                              <span className={student.gender === 'ذكر' ? 'text-blue-600' : 'text-pink-600'}>
+                                {student.gender}
+                              </span>
+                            </div>
+                          </TableCell>
                           <TableCell className="text-center">
                             <Badge
                               variant="outline"
@@ -670,7 +681,7 @@ export default function StudentsPage() {
                     </div>
                   </div>
 
-                  <InfoField label="الجنس" value={selectedStudent.gender} />
+                  <InfoField label="الجنس" value={selectedStudent.gender} icon={selectedStudent.gender === 'ذكر' ? 'male' : 'female'} />
                   <InfoField label="تاريخ الميلاد" value={selectedStudent.dateOfBirth || '—'} />
                   <InfoField label="رقم الهوية" value={selectedStudent.nationalId || '—'} />
                   <InfoField label="الهاتف" value={selectedStudent.phone || '—'} />
@@ -849,11 +860,15 @@ export default function StudentsPage() {
   )
 }
 
-function InfoField({ label, value }: { label: string; value: string }) {
+function InfoField({ label, value, icon }: { label: string; value: string; icon?: 'male' | 'female' }) {
   return (
     <div className="space-y-1">
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="text-sm font-medium">{value}</p>
+      <div className="flex items-center gap-1.5">
+        {icon === 'male' && <User className="h-4 w-4 text-blue-500" />}
+        {icon === 'female' && <User className="h-4 w-4 text-pink-500" />}
+        <p className={`text-sm font-medium ${icon === 'male' ? 'text-blue-600' : icon === 'female' ? 'text-pink-600' : ''}`}>{value}</p>
+      </div>
     </div>
   )
 }
