@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   QrCode, ScanLine, LogIn, LogOut, Search, Download, Filter,
   CheckCircle, Clock, AlertTriangle, XCircle, User, Calendar,
-  RefreshCw, ArrowLeft, ArrowRight
+  RefreshCw, ArrowLeft, ArrowRight, Radio, Users, Save
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -75,6 +75,17 @@ interface ClassData {
   sections: { id: string; name: string; _count: { students: number } }[]
 }
 
+// Enhanced status config with chip styling
+const statusConfig: Record<string, { bg: string; text: string; border: string; icon: React.ReactNode; dotColor: string; darkBg: string; darkText: string }> = {
+  'حاضر': { bg: 'bg-emerald-100', text: 'text-emerald-800', border: 'border-emerald-300', icon: <CheckCircle className="h-3.5 w-3.5" />, dotColor: 'bg-emerald-500', darkBg: 'dark:bg-emerald-900/30', darkText: 'dark:text-emerald-300' },
+  'متأخر': { bg: 'bg-amber-100', text: 'text-amber-800', border: 'border-amber-300', icon: <Clock className="h-3.5 w-3.5" />, dotColor: 'bg-amber-500', darkBg: 'dark:bg-amber-900/30', darkText: 'dark:text-amber-300' },
+  'غائب': { bg: 'bg-red-100', text: 'text-red-800', border: 'border-red-300', icon: <XCircle className="h-3.5 w-3.5" />, dotColor: 'bg-red-500', darkBg: 'dark:bg-red-900/30', darkText: 'dark:text-red-300' },
+  'مستأذن': { bg: 'bg-sky-100', text: 'text-sky-800', border: 'border-sky-300', icon: <AlertTriangle className="h-3.5 w-3.5" />, dotColor: 'bg-sky-500', darkBg: 'dark:bg-sky-900/30', darkText: 'dark:text-sky-300' },
+  'خروج مبكر': { bg: 'bg-orange-100', text: 'text-orange-800', border: 'border-orange-300', icon: <LogOut className="h-3.5 w-3.5" />, dotColor: 'bg-orange-500', darkBg: 'dark:bg-orange-900/30', darkText: 'dark:text-orange-300' },
+  'حضور ناقص': { bg: 'bg-purple-100', text: 'text-purple-800', border: 'border-purple-300', icon: <XCircle className="h-3.5 w-3.5" />, dotColor: 'bg-purple-500', darkBg: 'dark:bg-purple-900/30', darkText: 'dark:text-purple-300' },
+}
+
+// Legacy mapping for backward compatibility
 const statusColors: Record<string, string> = {
   'حاضر': 'bg-emerald-100 text-emerald-800 border-emerald-300',
   'متأخر': 'bg-amber-100 text-amber-800 border-amber-300',
@@ -92,6 +103,19 @@ const statusIcons: Record<string, React.ReactNode> = {
   'خروج مبكر': <LogOut className="h-4 w-4" />,
 }
 
+// Status chip component
+function StatusChip({ status }: { status: string }) {
+  const config = statusConfig[status]
+  if (!config) return <Badge>{status}</Badge>
+  return (
+    <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${config.bg} ${config.text} ${config.border} ${config.darkBg} ${config.darkText}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${config.dotColor}`} />
+      {config.icon}
+      {status}
+    </div>
+  )
+}
+
 export default function AttendancePage() {
   const { toast } = useToast()
   const [scanMode, setScanMode] = useState<'checkIn' | 'checkOut'>('checkIn')
@@ -101,6 +125,7 @@ export default function AttendancePage() {
   const [scanError, setScanError] = useState<string | null>(null)
   const [recentScans, setRecentScans] = useState<AttendanceRecord[]>([])
   const [loadingRecent, setLoadingRecent] = useState(false)
+  const [liveTime, setLiveTime] = useState(new Date())
 
   // Records tab state
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
@@ -109,6 +134,18 @@ export default function AttendancePage() {
   const [records, setRecords] = useState<AttendanceRecord[]>([])
   const [loadingRecords, setLoadingRecords] = useState(false)
   const [classes, setClasses] = useState<ClassData[]>([])
+
+  // Bulk attendance state
+  const [bulkDate, setBulkDate] = useState(new Date().toISOString().split('T')[0])
+  const [bulkClassId, setBulkClassId] = useState<string>('all')
+  const [bulkStudents, setBulkStudents] = useState<Array<{ id: string; fullName: string; studentNumber: string; schoolId: string; status: string }>>([])
+  const [bulkSaving, setBulkSaving] = useState(false)
+
+  // Live clock - updates every second
+  useEffect(() => {
+    const timer = setInterval(() => setLiveTime(new Date()), 1000)
+    return () => clearInterval(timer)
+  }, [])
 
   // Fetch classes for filters
   useEffect(() => {
@@ -230,10 +267,40 @@ export default function AttendancePage() {
 
   const stats = getStats()
 
+  // Format live clock
+  const formatLiveTime = (date: Date) => {
+    return date.toLocaleTimeString('ar-IQ', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+  }
+  const formatLiveDate = (date: Date) => {
+    return date.toLocaleDateString('ar-IQ', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir="rtl">
+      {/* Live Clock Display */}
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-l from-teal-600 via-emerald-600 to-teal-700 text-white shadow-lg"
+      >
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-sm">
+            <motion.div
+              className="w-2 h-2 rounded-full bg-emerald-300"
+              animate={{ opacity: [1, 0.3, 1] }}
+              transition={{ duration: 1, repeat: Infinity }}
+            />
+            <span className="text-xs font-medium">مباشر</span>
+          </div>
+          <span className="text-sm font-medium opacity-90">{formatLiveDate(liveTime)}</span>
+        </div>
+        <div className="font-mono text-2xl font-bold tracking-wider" dir="ltr">
+          {formatLiveTime(liveTime)}
+        </div>
+      </motion.div>
+
       <Tabs defaultValue="scanner" className="w-full" dir="rtl">
-        <TabsList className="grid w-full grid-cols-2 max-w-md">
+        <TabsList className="grid w-full grid-cols-3 max-w-lg">
           <TabsTrigger value="scanner" className="gap-2">
             <ScanLine className="h-4 w-4" />
             مسح QR
@@ -242,6 +309,10 @@ export default function AttendancePage() {
             <Calendar className="h-4 w-4" />
             سجل الحضور
           </TabsTrigger>
+          <TabsTrigger value="bulk" className="gap-2">
+            <Users className="h-4 w-4" />
+            حضور جماعي
+          </TabsTrigger>
         </TabsList>
 
         {/* ============ TAB 1: QR SCANNER ============ */}
@@ -249,8 +320,9 @@ export default function AttendancePage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Scanner Area */}
             <div className="space-y-4">
-              {/* Mode Toggle */}
-              <Card>
+              {/* Mode Toggle with pulsing live indicator */}
+              <Card className="overflow-hidden">
+                <div className="h-1" style={{ background: scanMode === 'checkIn' ? 'linear-gradient(90deg, #059669, #10b981)' : 'linear-gradient(90deg, #dc2626, #f87171)' }} />
                 <CardContent className="p-4">
                   <div className="flex gap-2">
                     <Button
@@ -260,6 +332,12 @@ export default function AttendancePage() {
                     >
                       <LogIn className="h-4 w-4" />
                       تسجيل دخول
+                      {scanMode === 'checkIn' && (
+                        <span className="relative flex h-2 w-2 mr-1">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-white" />
+                        </span>
+                      )}
                     </Button>
                     <Button
                       onClick={() => setScanMode('checkOut')}
@@ -268,16 +346,35 @@ export default function AttendancePage() {
                     >
                       <LogOut className="h-4 w-4" />
                       تسجيل خروج
+                      {scanMode === 'checkOut' && (
+                        <span className="relative flex h-2 w-2 mr-1">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-white" />
+                        </span>
+                      )}
                     </Button>
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Scanner Card */}
-              <Card className="overflow-hidden">
+              {/* Scanner Card with animated border pulse */}
+              <Card className="overflow-hidden relative">
+                {/* Animated border pulse effect */}
+                <motion.div
+                  className="absolute inset-0 rounded-lg pointer-events-none"
+                  animate={{
+                    boxShadow: scanMode === 'checkIn'
+                      ? ['0 0 0 0 rgba(16,185,129,0.4)', '0 0 0 8px rgba(16,185,129,0)', '0 0 0 0 rgba(16,185,129,0.4)']
+                      : ['0 0 0 0 rgba(239,68,68,0.4)', '0 0 0 8px rgba(239,68,68,0)', '0 0 0 0 rgba(239,68,68,0.4)']
+                  }}
+                  transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                />
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg flex items-center gap-2">
-                    <QrCode className="h-5 w-5 text-primary" />
+                    <div className="flex items-center gap-2">
+                      <Radio className={`h-4 w-4 ${scanMode === 'checkIn' ? 'text-emerald-500' : 'text-red-500'} animate-pulse`} />
+                      <QrCode className="h-5 w-5 text-primary" />
+                    </div>
                     {scanMode === 'checkIn' ? 'مسح دخول' : 'مسح خروج'}
                   </CardTitle>
                   <CardDescription>
@@ -285,26 +382,36 @@ export default function AttendancePage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {/* Simulated Scanner Area */}
+                  {/* Enhanced Scanner Area with animated border */}
                   <div className="relative">
-                    <div className={`w-full aspect-square max-w-[280px] mx-auto rounded-2xl border-4 border-dashed flex items-center justify-center
+                    <div className={`w-full aspect-square max-w-[280px] mx-auto rounded-2xl border-4 flex items-center justify-center relative overflow-hidden
                       ${scanMode === 'checkIn'
-                        ? 'border-emerald-400 bg-emerald-50/50'
-                        : 'border-red-400 bg-red-50/50'
+                        ? 'border-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/20'
+                        : 'border-red-400 bg-red-50/50 dark:bg-red-950/20'
                       }`}
                     >
-                      {/* Pulsing animation */}
+                      {/* Animated scanning border effect */}
                       <motion.div
-                        className={`absolute inset-4 rounded-xl border-2 ${scanMode === 'checkIn' ? 'border-emerald-500' : 'border-red-500'}`}
+                        className="absolute inset-0"
+                        style={{
+                          border: `3px solid ${scanMode === 'checkIn' ? '#10b981' : '#ef4444'}`,
+                          borderRadius: '12px',
+                        }}
                         animate={{
-                          opacity: [0.3, 1, 0.3],
-                          scale: [0.98, 1, 0.98],
+                          opacity: [0.3, 0.8, 0.3],
+                          scale: [0.97, 1, 0.97],
                         }}
                         transition={{
                           duration: 2,
                           repeat: Infinity,
                           ease: "easeInOut",
                         }}
+                      />
+                      {/* Scanning line animation */}
+                      <motion.div
+                        className={`absolute left-4 right-4 h-0.5 ${scanMode === 'checkIn' ? 'bg-emerald-500/60' : 'bg-red-500/60'}`}
+                        animate={{ top: ['10%', '90%', '10%'] }}
+                        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
                       />
                       <div className="text-center z-10 space-y-3">
                         <motion.div
@@ -331,7 +438,7 @@ export default function AttendancePage() {
                         onChange={(e) => setQrInput(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleScan()}
                         placeholder="أدخل رمز QR أو رقم الطالب..."
-                        className="flex-1 text-center"
+                        className="flex-1 text-center dark:bg-gray-800/50"
                         disabled={isScanning}
                       />
                       <Button
@@ -375,8 +482,8 @@ export default function AttendancePage() {
                         {/* Student Photo & Name */}
                         <div className="flex items-center gap-4">
                           <motion.div
-                            className={`w-20 h-20 rounded-full flex items-center justify-center text-white text-2xl font-bold
-                              ${scanMode === 'checkIn' ? 'bg-emerald-500' : 'bg-red-500'}`}
+                            className={`w-20 h-20 rounded-full flex items-center justify-center text-white text-2xl font-bold shadow-lg
+                              ${scanMode === 'checkIn' ? 'bg-gradient-to-br from-emerald-400 to-emerald-600' : 'bg-gradient-to-br from-red-400 to-red-600'}`}
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
                             transition={{ type: "spring", stiffness: 300, delay: 0.1 }}
@@ -414,10 +521,7 @@ export default function AttendancePage() {
                           </div>
                           <div className="space-y-1">
                             <p className="text-xs text-muted-foreground">الحالة</p>
-                            <Badge className={`${statusColors[scanResult.status] || 'bg-gray-100 text-gray-800'} gap-1`}>
-                              {statusIcons[scanResult.status]}
-                              {scanResult.status}
-                            </Badge>
+                            <StatusChip status={scanResult.status} />
                           </div>
                         </div>
 
@@ -427,10 +531,10 @@ export default function AttendancePage() {
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: 0.3 }}
-                            className="flex items-center gap-2 p-3 rounded-lg bg-amber-50 border border-amber-200"
+                            className="flex items-center gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800"
                           >
-                            <Clock className="h-5 w-5 text-amber-600" />
-                            <span className="text-amber-800 font-medium">
+                            <Clock className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                            <span className="text-amber-800 dark:text-amber-300 font-medium">
                               تأخير: {scanResult.lateMinutes} دقيقة
                             </span>
                           </motion.div>
@@ -440,15 +544,15 @@ export default function AttendancePage() {
                         <motion.div
                           className={`flex items-center gap-2 p-3 rounded-lg ${
                             scanMode === 'checkIn'
-                              ? 'bg-emerald-50 border border-emerald-200'
-                              : 'bg-red-50 border border-red-200'
+                              ? 'bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800'
+                              : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'
                           }`}
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           transition={{ delay: 0.2 }}
                         >
                           <CheckCircle className={`h-5 w-5 ${
-                            scanMode === 'checkIn' ? 'text-emerald-600' : 'text-red-600'
+                            scanMode === 'checkIn' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
                           }`} />
                           <span className="font-medium">{scanResult.message}</span>
                         </motion.div>
@@ -467,16 +571,16 @@ export default function AttendancePage() {
                       <div className="h-2 bg-red-500" />
                       <CardContent className="p-6 space-y-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center">
+                          <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
                             <XCircle className="h-8 w-8 text-red-500" />
                           </div>
                           <div>
-                            <h3 className="text-lg font-bold text-red-700">فشل المسح</h3>
-                            <p className="text-red-600">{scanError}</p>
+                            <h3 className="text-lg font-bold text-red-700 dark:text-red-400">فشل المسح</h3>
+                            <p className="text-red-600 dark:text-red-400">{scanError}</p>
                           </div>
                         </div>
                         {scanResult?.student && (
-                          <div className="p-3 rounded-lg bg-red-50 border border-red-200">
+                          <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
                             <p className="font-medium">{scanResult.student.fullName}</p>
                             <p className="text-sm text-muted-foreground">{scanResult.student.studentNumber}</p>
                           </div>
@@ -493,7 +597,7 @@ export default function AttendancePage() {
                   >
                     <Card className="border-dashed">
                       <CardContent className="p-12 flex flex-col items-center justify-center text-center space-y-4">
-                        <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center">
+                        <div className="w-24 h-24 rounded-full bg-muted/50 dark:bg-muted/20 flex items-center justify-center">
                           <User className="h-12 w-12 text-muted-foreground" />
                         </div>
                         <div>
@@ -511,7 +615,8 @@ export default function AttendancePage() {
           </div>
 
           {/* Recent Scans Table */}
-          <Card>
+          <Card className="overflow-hidden">
+            <div className="h-1" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg flex items-center gap-2">
@@ -563,10 +668,7 @@ export default function AttendancePage() {
                           <TableCell>{record.checkIn || '—'}</TableCell>
                           <TableCell>{record.checkOut || '—'}</TableCell>
                           <TableCell>
-                            <Badge className={`${statusColors[record.status] || ''} gap-1`}>
-                              {statusIcons[record.status]}
-                              {record.status}
-                            </Badge>
+                            <StatusChip status={record.status} />
                           </TableCell>
                         </TableRow>
                       ))}
@@ -580,48 +682,77 @@ export default function AttendancePage() {
 
         {/* ============ TAB 2: ATTENDANCE RECORDS ============ */}
         <TabsContent value="records" className="space-y-6">
-          {/* Stats Cards */}
+          {/* Enhanced Status Summary Badges */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0 }}>
-              <Card className="border-emerald-200 bg-emerald-50/50">
-                <CardContent className="p-4 text-center">
-                  <CheckCircle className="h-6 w-6 mx-auto text-emerald-600 mb-1" />
-                  <p className="text-2xl font-bold text-emerald-700">{stats.present}</p>
-                  <p className="text-xs text-emerald-600">حاضر</p>
+              <Card className="border-emerald-200 dark:border-emerald-800 overflow-hidden">
+                <div className="h-1 bg-gradient-to-l from-emerald-400 to-emerald-600" />
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                      <CheckCircle className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">{stats.present}</p>
+                      <p className="text-xs text-emerald-600 dark:text-emerald-500">حاضر</p>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </motion.div>
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
-              <Card className="border-amber-200 bg-amber-50/50">
-                <CardContent className="p-4 text-center">
-                  <Clock className="h-6 w-6 mx-auto text-amber-600 mb-1" />
-                  <p className="text-2xl font-bold text-amber-700">{stats.late}</p>
-                  <p className="text-xs text-amber-600">متأخر</p>
+              <Card className="border-amber-200 dark:border-amber-800 overflow-hidden">
+                <div className="h-1 bg-gradient-to-l from-amber-400 to-amber-600" />
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                      <Clock className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-amber-700 dark:text-amber-400">{stats.late}</p>
+                      <p className="text-xs text-amber-600 dark:text-amber-500">متأخر</p>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </motion.div>
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-              <Card className="border-red-200 bg-red-50/50">
-                <CardContent className="p-4 text-center">
-                  <XCircle className="h-6 w-6 mx-auto text-red-600 mb-1" />
-                  <p className="text-2xl font-bold text-red-700">{stats.absent}</p>
-                  <p className="text-xs text-red-600">غائب</p>
+              <Card className="border-red-200 dark:border-red-800 overflow-hidden">
+                <div className="h-1 bg-gradient-to-l from-red-400 to-red-600" />
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                      <XCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-red-700 dark:text-red-400">{stats.absent}</p>
+                      <p className="text-xs text-red-600 dark:text-red-500">غائب</p>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </motion.div>
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-              <Card className="border-sky-200 bg-sky-50/50">
-                <CardContent className="p-4 text-center">
-                  <AlertTriangle className="h-6 w-6 mx-auto text-sky-600 mb-1" />
-                  <p className="text-2xl font-bold text-sky-700">{stats.excused}</p>
-                  <p className="text-xs text-sky-600">مستأذن</p>
+              <Card className="border-sky-200 dark:border-sky-800 overflow-hidden">
+                <div className="h-1 bg-gradient-to-l from-sky-400 to-sky-600" />
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-sky-100 dark:bg-sky-900/30 flex items-center justify-center">
+                      <AlertTriangle className="h-5 w-5 text-sky-600 dark:text-sky-400" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-sky-700 dark:text-sky-400">{stats.excused}</p>
+                      <p className="text-xs text-sky-600 dark:text-sky-500">مستأذن</p>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </motion.div>
           </div>
 
           {/* Filters */}
-          <Card>
+          <Card className="overflow-hidden">
+            <div className="h-1" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
             <CardContent className="p-4">
               <div className="flex flex-wrap gap-4 items-end">
                 <div className="space-y-1 flex-1 min-w-[160px]">
@@ -630,7 +761,7 @@ export default function AttendancePage() {
                     type="date"
                     value={selectedDate}
                     onChange={(e) => setSelectedDate(e.target.value)}
-                    className="text-sm"
+                    className="text-sm dark:bg-gray-800/50"
                   />
                 </div>
                 <div className="space-y-1 flex-1 min-w-[160px]">
@@ -667,7 +798,7 @@ export default function AttendancePage() {
                   <Filter className="h-3 w-3" />
                   تصفية
                 </Button>
-                <Button variant="outline" size="sm" className="gap-1" onClick={() => window.print()}>
+                <Button size="sm" className="gap-1 text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={() => window.print()}>
                   <Download className="h-3 w-3" />
                   تصدير
                 </Button>
@@ -676,7 +807,8 @@ export default function AttendancePage() {
           </Card>
 
           {/* Records Table */}
-          <Card>
+          <Card className="overflow-hidden">
+            <div className="h-1" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
             <CardContent className="p-0">
               {loadingRecords ? (
                 <div className="p-6 space-y-4">
@@ -713,7 +845,12 @@ export default function AttendancePage() {
                         <TableRow key={record.id}>
                           <TableCell className="font-medium">
                             <div className="flex items-center gap-2">
-                              <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold">
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white ${
+                                record.status === 'حاضر' ? 'bg-emerald-500' :
+                                record.status === 'متأخر' ? 'bg-amber-500' :
+                                record.status === 'غائب' ? 'bg-red-500' :
+                                'bg-sky-500'
+                              }`}>
                                 {record.student.fullName.charAt(0)}
                               </div>
                               {record.student.fullName}
@@ -724,10 +861,7 @@ export default function AttendancePage() {
                           <TableCell dir="ltr">{record.checkIn || '—'}</TableCell>
                           <TableCell dir="ltr">{record.checkOut || '—'}</TableCell>
                           <TableCell>
-                            <Badge className={`${statusColors[record.status] || ''} gap-1`}>
-                              {statusIcons[record.status]}
-                              {record.status}
-                            </Badge>
+                            <StatusChip status={record.status} />
                           </TableCell>
                           <TableCell className="text-muted-foreground text-xs">
                             {record.lateMinutes
@@ -746,6 +880,239 @@ export default function AttendancePage() {
             </CardContent>
           </Card>
         </TabsContent>
+        {/* ============ TAB 3: BULK ATTENDANCE ============ */}
+        <TabsContent value="bulk" className="space-y-6">
+          {/* Header with selectors */}
+          <Card className="overflow-hidden">
+            <div className="h-1" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
+            <CardContent className="p-4">
+              <div className="flex flex-wrap gap-4 items-end">
+                <div className="space-y-1 flex-1 min-w-[160px]">
+                  <Label className="text-xs font-medium">التاريخ</Label>
+                  <Input
+                    type="date"
+                    value={bulkDate}
+                    onChange={(e) => setBulkDate(e.target.value)}
+                    className="text-sm"
+                  />
+                </div>
+                <div className="space-y-1 flex-1 min-w-[160px]">
+                  <Label className="text-xs font-medium">الصف</Label>
+                  <Select value={bulkClassId} onValueChange={async (v) => {
+                    setBulkClassId(v)
+                    if (v && v !== 'all') {
+                      try {
+                        const res = await fetch(`/api/students?classId=${v}&limit=100`)
+                        if (res.ok) {
+                          const data = await res.json()
+                          setBulkStudents((data.students || []).map((s: { id: string; fullName: string; studentNumber: string; schoolId: string }) => ({
+                            id: s.id,
+                            fullName: s.fullName,
+                            studentNumber: s.studentNumber,
+                            schoolId: s.schoolId,
+                            status: 'حاضر',
+                          })))
+                        }
+                      } catch {
+                        setBulkStudents([])
+                      }
+                    } else {
+                      setBulkStudents([])
+                    }
+                  }}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="اختر الصف" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">اختر صف لتسجيل الحضور</SelectItem>
+                      {classes.map(cls => (
+                        <SelectItem key={cls.id} value={cls.id}>{cls.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button
+                  variant="outline"
+                  className="gap-2"
+                  onClick={() => {
+                    setBulkStudents(prev => prev.map(s => ({ ...s, status: 'حاضر' })))
+                  }}
+                  disabled={bulkStudents.length === 0}
+                >
+                  <CheckCircle className="h-4 w-4 text-emerald-600" />
+                  تحديد الكل حاضر
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Stats */}
+          {bulkStudents.length > 0 && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <Card className="border-emerald-200 bg-emerald-50/50">
+                <CardContent className="p-3 text-center">
+                  <p className="text-2xl font-bold text-emerald-700">{bulkStudents.filter(s => s.status === 'حاضر').length}</p>
+                  <p className="text-xs text-emerald-600">حاضر</p>
+                </CardContent>
+              </Card>
+              <Card className="border-amber-200 bg-amber-50/50">
+                <CardContent className="p-3 text-center">
+                  <p className="text-2xl font-bold text-amber-700">{bulkStudents.filter(s => s.status === 'متأخر').length}</p>
+                  <p className="text-xs text-amber-600">متأخر</p>
+                </CardContent>
+              </Card>
+              <Card className="border-red-200 bg-red-50/50">
+                <CardContent className="p-3 text-center">
+                  <p className="text-2xl font-bold text-red-700">{bulkStudents.filter(s => s.status === 'غائب').length}</p>
+                  <p className="text-xs text-red-600">غائب</p>
+                </CardContent>
+              </Card>
+              <Card className="border-sky-200 bg-sky-50/50">
+                <CardContent className="p-3 text-center">
+                  <p className="text-2xl font-bold text-sky-700">{bulkStudents.filter(s => s.status === 'مستأذن').length}</p>
+                  <p className="text-xs text-sky-600">مستأذن</p>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Student List */}
+          <Card className="overflow-hidden">
+            <div className="h-1" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Users className="h-5 w-5 text-primary" />
+                  تسجيل حضور جماعي
+                </CardTitle>
+                {bulkStudents.length > 0 && (
+                  <span className="text-sm text-muted-foreground">{bulkStudents.length} طالب</span>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent>
+              {bulkClassId === 'all' ? (
+                <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+                  <Users className="h-12 w-12 mb-4 opacity-30" />
+                  <p className="text-lg font-medium">اختر صفاً لتسجيل الحضور</p>
+                  <p className="text-sm">اختر الصف من القائمة أعلاه لعرض الطلاب</p>
+                </div>
+              ) : bulkStudents.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+                  <User className="h-12 w-12 mb-4 opacity-30" />
+                  <p className="text-lg font-medium">لا يوجد طلاب في هذا الصف</p>
+                </div>
+              ) : (
+                <>
+                  <ScrollArea className="max-h-[500px]">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>الطالب</TableHead>
+                          <TableHead>الرقم</TableHead>
+                          <TableHead className="text-center">الحالة</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {bulkStudents.map((student, idx) => (
+                          <motion.tr
+                            key={student.id}
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: idx * 0.02 }}
+                            className="border-b hover:bg-muted/30"
+                          >
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white ${
+                                  student.status === 'حاضر' ? 'bg-emerald-500' :
+                                  student.status === 'متأخر' ? 'bg-amber-500' :
+                                  student.status === 'غائب' ? 'bg-red-500' :
+                                  'bg-sky-500'
+                                }`}>
+                                  {student.fullName.charAt(0)}
+                                </div>
+                                <span className="font-medium">{student.fullName}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-sm font-mono text-muted-foreground">{student.studentNumber}</TableCell>
+                            <TableCell>
+                              <div className="flex items-center justify-center gap-1.5">
+                                {['حاضر', 'متأخر', 'غائب', 'مستأذن'].map((st) => (
+                                  <Button
+                                    key={st}
+                                    size="sm"
+                                    variant={student.status === st ? 'default' : 'outline'}
+                                    className={`h-7 text-xs px-2.5 ${
+                                      student.status === st
+                                        ? st === 'حاضر' ? 'bg-emerald-600 hover:bg-emerald-700' :
+                                          st === 'متأخر' ? 'bg-amber-600 hover:bg-amber-700' :
+                                          st === 'غائب' ? 'bg-red-600 hover:bg-red-700' :
+                                          'bg-sky-600 hover:bg-sky-700'
+                                        : ''
+                                    }`}
+                                    onClick={() => {
+                                      setBulkStudents(prev => prev.map(s => s.id === student.id ? { ...s, status: st } : s))
+                                    }}
+                                  >
+                                    {st}
+                                  </Button>
+                                ))}
+                              </div>
+                            </TableCell>
+                          </motion.tr>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </ScrollArea>
+                  <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                    <p className="text-sm text-muted-foreground">
+                      جاهز لحفظ {bulkStudents.length} سجل حضور
+                    </p>
+                    <Button
+                      className="gap-2 text-white"
+                      style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}
+                      disabled={bulkSaving || bulkStudents.length === 0}
+                      onClick={async () => {
+                        setBulkSaving(true)
+                        try {
+                          const res = await fetch('/api/attendance/bulk', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              records: bulkStudents.map(s => ({
+                                studentId: s.id,
+                                schoolId: s.schoolId,
+                                date: bulkDate,
+                                status: s.status,
+                              })),
+                            }),
+                          })
+                          if (!res.ok) throw new Error()
+                          const data = await res.json()
+                          toast({
+                            title: 'تم الحفظ',
+                            description: data.message || `تم حفظ ${bulkStudents.length} سجل حضور`,
+                          })
+                          fetchRecords()
+                          fetchRecentScans()
+                        } catch {
+                          toast({ title: 'خطأ', description: 'فشل في حفظ الحضور الجماعي', variant: 'destructive' })
+                        } finally {
+                          setBulkSaving(false)
+                        }
+                      }}
+                    >
+                      <Save className="h-4 w-4" />
+                      {bulkSaving ? 'جاري الحفظ...' : 'حفظ الكل'}
+                    </Button>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
       </Tabs>
     </div>
   )

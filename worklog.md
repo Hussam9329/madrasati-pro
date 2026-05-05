@@ -354,3 +354,233 @@ Unresolved Issues / Next Phase Priorities:
 - Consider adding bulk import/export for students and grades
 - Consider adding a messaging/communication system between teachers and parents
 - Add keyboard shortcuts for power users
+
+---
+Task ID: 10-a
+Agent: Styling Enhancement Agent (Round 2)
+Task: Enhance styling of LoginPage, AttendancePage, GradesPage, ReportsPage, and AppLayout with more visual polish and detail
+
+Work Log:
+- **LoginPage enhancements** (`/src/components/school/LoginPage.tsx`):
+  - Added gradient mesh background behind the left panel (multiple radial gradients with emerald/white)
+  - Added gradient mesh background behind the right login form panel (teal radial gradients)
+  - Made feature badges ("آمن", "ذكي", "سريع") have glassmorphism effect (bg-white/10 backdrop-blur-md border-white/20 shadow-lg rounded-full)
+  - Replaced "⚡" with Sparkles icon for "سريع" badge
+  - Added subtle typing animation on welcome text "مرحباً بك" with animated cursor
+  - Added decorative floating geometric shapes (8 shapes: circles and squares) with framer-motion floating animation in left panel
+  - Added 3 floating shapes on right panel (teal/emerald colored borders)
+  - Added gradient top accent strip on login card
+  - Enhanced login button with shimmer/loading effect (animated gradient sweep when loading)
+  - Added dark mode classes (dark:bg-gray-800/50, dark:text-gray-100, dark:border-gray-700, etc.)
+  - Improved quick access hints with dark mode styling
+- **AttendancePage enhancements** (`/src/components/school/AttendancePage.tsx`):
+  - Added live clock display at top with teal gradient bar showing current time updating every second, Arabic date, and "مباشر" (live) pulsing indicator
+  - Created StatusChip component with colored dot, icon, and status text in a rounded pill shape
+  - Added pulsing dot indicator next to active scan mode button (checkIn/checkOut) with animate-ping
+  - Added gradient top strips on all cards (mode toggle, scanner, recent scans, filters, records)
+  - Enhanced status summary badges with gradient top strips, colored icon boxes, and dark mode variants
+  - Enhanced scan area with animated scanning border pulse effect, horizontal scanning line animation, and Radio icon with animate-pulse
+  - Added gradient background on student avatar in scan result (from-emerald-400 to-emerald-600)
+  - Replaced export button with teal gradient styling
+  - Added colored avatar initials in records table (green for present, amber for late, red for absent, blue for excused)
+  - Added dark mode classes throughout (bg-amber-900/20, border-amber-800, etc.)
+- **GradesPage enhancements** (`/src/components/school/GradesPage.tsx`):
+  - Added gradient icon in page header (teal gradient square with GraduationCap)
+  - Added subtitle text "إدخال ومعاينة واعتماد الدرجات"
+  - Added gradient top strip on filter card
+  - Added Target icon next to "اختيار الصف والمادة" title
+  - Enhanced "عرض الطلاب" button with teal gradient
+  - Added gradient top strips on all stat cards in stats panel
+  - Added grade distribution visual bar chart (excellent ≥80%, good 50-79%, fail <50%) with animated width bars and gradient fills
+  - Added gradient top strip on grade entry table card
+  - Added score percentage indicator next to score input (mini badge showing %)
+  - Added mini progress bar column showing score distribution per student with color coding
+  - Enhanced pass/fail summary footer with colored rounded pill badges
+  - Added dark mode classes (dark:border-gray-700, dark:bg-red-900/5 for failing rows, etc.)
+- **ReportsPage enhancements** (`/src/components/school/ReportsPage.tsx`):
+  - Added gradient icon in page header with subtitle
+  - Enhanced report type selector cards with hover gradient top strip animation, rounded-xl icons, shadow-xl on hover, teal border on hover, and dark mode border
+  - Added quick stats summary row before charts showing record counts and report description
+  - Added animated transitions when switching report types using AnimatePresence mode="wait" with key-based animations
+  - Added gradient top strip on filters card
+  - Enhanced print/download buttons with teal gradient backgrounds instead of outline style
+  - Added gradient fills on bar charts using SVG linearGradient definitions (gradientBar for horizontal, gradientBarV for vertical)
+- **AppLayout enhancements** (`/src/components/school/AppLayout.tsx`):
+  - Added subtle background dot pattern to main content area (teal dots at 24px grid, very low opacity)
+  - Added online status indicator (green dot) on user avatar
+  - Added subtle gradient background on sidebar header area (from-teal-50/50 to-transparent)
+  - Added "2024-2025" school year badge in sidebar header next to subtitle
+  - Enhanced desktop sidebar with gradient background (from-white to-gray-50/80, dark variants)
+  - Improved page transition animation (opacity 0→1, y 8→0, duration 0.25s with easeOut)
+  - Added relative z-10 on main content and footer to sit above dot pattern
+- ESLint: All changed files pass lint (only pre-existing slides/ errors remain)
+- Dev server compiling successfully with no errors
+
+Stage Summary:
+- LoginPage: gradient mesh backgrounds, glassmorphism badges, typing animation, floating geometric shapes, shimmer loading button
+- AttendancePage: live clock, color-coded status chips, pulsing live indicator, gradient card headers, enhanced scan area with scanning line animation
+- GradesPage: grade distribution visual (excellent/good/fail bars), color-coded score ranges, summary stats with gradient strips, mini progress bars per student
+- ReportsPage: gradient chart fills, quick stats summary row, animated transitions, enhanced selector cards, gradient print/download buttons
+- AppLayout: background dot pattern, online avatar indicator, sidebar gradient, school year badge, improved page transitions
+- All dark mode variants properly applied
+- All RTL-compatible with consistent Arabic text
+- Consistent teal/green (#0d9488, #059669) color scheme throughout
+
+---
+Task ID: 10-b
+Agent: Feature Enhancement Agent
+Task: Add new features - Class Ranking, Exam Management, Student Transfer, Bulk Attendance
+
+Work Log:
+- **Store Update**: Added 'ranking' and 'exams' to PageKey type in `store.ts`
+- **New Component**: Created `ClassRankingPage.tsx` - Class ranking/leaderboard (ترتيب الصفوف)
+  - Title with Trophy icon, gradient background, and subtitle
+  - Stat cards: highest average (أعلى معدل), class average (معدل الصف), total students (عدد الطلاب)
+  - Filter by class (dropdown) and subject (optional dropdown)
+  - Top 3 podium visualization (sports-style: 2nd-1st-3rd with different heights and medal colors)
+  - Gold (#1), silver (#2), bronze (#3) color-coded ranks with medal emojis
+  - Full ranking table: rank (ترتيب), student name (اسم الطالب), class (الصف), section (الشعبة), average (المعدل), status badge (ممتاز/جيد جداً/جيد/مقبول/راسب)
+  - Color-coded average values and status badges
+  - Realistic Arabic mock data (30 students) when no grade data in DB
+  - Falls back to real grade data from API when available
+  - framer-motion animations (staggered container, item variants, hover effects)
+  - Export button
+  - RTL Arabic layout, teal/green color scheme
+- **New Component**: Created `ExamsPage.tsx` - Exam management (الامتحانات)
+  - Title with ClipboardList icon, gradient background, and subtitle
+  - Stat cards: upcoming exams (امتحانات قادمة), this week (هذا الأسبوع), today (اليوم)
+  - Filter by class and exam type
+  - View toggle: list view (table) and grid view (grouped by date)
+  - List view: full table with subject, exam type, date, time, class, room
+  - Grid view: cards grouped by date with subject-colored exam cards
+  - Color-coded by subject (same color scheme as SubjectsPage)
+  - Color-coded exam types (شهر أول=blue, نصف سنة=amber, نهاية سنة=red)
+  - Today indicator and past exam dimming
+  - Add exam dialog: subject, exam type, date, time, class, room, notes
+  - 20 realistic mock exams when no API data
+  - framer-motion animations
+  - RTL Arabic layout, teal/green color scheme
+- **API Route**: Created `/src/app/api/exams/route.ts`
+  - GET: List exams with optional classId, examType, date filters
+  - POST: Create new exam with subject, type, date, time, class, room, notes
+  - In-memory storage (no Prisma Exam model) - can be upgraded to DB later
+- **API Route**: Created `/src/app/api/attendance/bulk/route.ts`
+  - POST: Accepts array of attendance records
+  - For each record: creates new or updates existing attendance for student+date
+  - Returns saved count and error details
+  - Uses Prisma ORM with proper includes for student data
+- **API Route**: Created `/src/app/api/students/transfer/route.ts`
+  - PUT: Transfer student to new class/section
+  - Validates student, new class, and new section exist
+  - Updates student's classId and sectionId
+  - Logs transfer activity to ActivityLog
+  - Returns transfer details (from/to/reason/date)
+- **StudentsPage Enhancement**: Added student transfer feature
+  - New "نقل طالب" button with ArrowRightLeft icon (teal border styling)
+  - Transfer dialog: student selector, current location display, new class/section dropdowns, reason textarea, auto-filled date
+  - Two-step process: fill form → confirm with summary card showing from/to transfer details
+  - Success toast notification after transfer
+  - CheckCircle2 confirmation step with student info summary
+  - Fetches fresh student list after successful transfer
+- **AttendancePage Enhancement**: Added bulk attendance feature
+  - New "حضور جماعي" tab with Users icon
+  - TabsList changed from 2 cols to 3 cols (max-w-lg)
+  - Date selector at top of bulk tab
+  - Class selector that loads students from API on change
+  - "تحديد الكل حاضر" (Mark all present) quick action button
+  - Stats cards showing count per status (حاضر/متأخر/غائب/مستأذن)
+  - Student list table with quick status buttons per student (حاضر/متأخر/غائب/مستأذن)
+  - Color-coded avatar initials based on status
+  - "حفظ الكل" (Save All) button that sends array to bulk API
+  - Success toast after saving
+- **Navigation Update**: Added 'ترتيب الصفوف' (Trophy icon) and 'الامتحانات' (ClipboardList icon) to AppLayout sidebar after grades
+  - Imported Trophy and ClipboardList from lucide-react
+- **Page Renderer Update**: Added ranking and exams cases in page.tsx
+  - Imported ClassRankingPage and ExamsPage components
+  - Added `case 'ranking': return <ClassRankingPage />;`
+  - Added `case 'exams': return <ExamsPage />;`
+- ESLint: All changed files pass lint (only pre-existing slides/ errors remain)
+- Dev server compiling successfully with no errors
+
+Stage Summary:
+- Two new fully-functional pages added (Class Ranking + Exams)
+- Student transfer feature added to StudentsPage with two-step confirmation
+- Bulk attendance feature added to AttendancePage with new tab
+- Three new API routes created (exams, bulk attendance, student transfer)
+- Navigation and routing updated for new pages
+- Total pages/modules now: 15 (dashboard, students, teachers, subjects, attendance, grades, ranking, exams, schedule, activity, reports, notices, parents, users, settings)
+- All code lint-clean, dev server running without errors
+
+---
+Task ID: 11
+Agent: QA Coordinator (Round 5 - Cron Review)
+Task: Assess project status, QA test, fix bugs, improve styling, add features
+
+Work Log:
+- Read worklog.md and assessed current project status (15 pages, Arabic RTL, teal/green theme)
+- **QA Testing via agent-browser**:
+  - Login page works correctly with enhanced styling (floating shapes, gradient mesh)
+  - Dashboard renders with welcome card, stat cards, charts, and notices
+  - All 15 navigation items visible in sidebar (including new ترتيب الصفوف and الامتحانات)
+  - Students page: gender data now correctly shows (male students show ذكر, female students show أنثى)
+  - Class Ranking page: podium, stat cards, filter, and ranking table working
+  - Exams page: list/grid view toggle, stat cards, filters, and add exam dialog working
+  - Attendance page: live clock, status chips, enhanced scan area, and bulk attendance tab
+  - No console errors on any page
+- **CRITICAL BUG FIX**: Database gender data was completely inverted (all male names showing أنثى, all female names showing ذكر)
+  - Root cause: Database was seeded with OLD seed code before the genderMap fix, and the seed endpoint had `if (existingSchool) return` which prevented re-seeding
+  - Fix 1: Changed DATABASE_URL in .env from `file:/home/z/my-project/db/custom.db` to `file:/home/z/my-project/db/school.db`
+  - Fix 2: Updated db.ts to detect DATABASE_URL changes and force Prisma client reconnection
+  - Fix 3: Added `?reset=true` query parameter support to seed API for force re-seeding
+  - Fix 4: Re-seeded database with correct gender data via new database file
+  - Verified: 20 male students now show "ذكر", 10 female students show "أنثى"
+- **Styling Enhancements** (via subagent Task 10-a):
+  - LoginPage: gradient mesh backgrounds, glassmorphism badges, typing animation, floating geometric shapes, shimmer loading button
+  - AttendancePage: live clock with pulsing "مباشر" indicator, color-coded StatusChip component, enhanced scan area with animated border pulse and scanning line
+  - GradesPage: grade distribution visual (excellent/good/fail animated bars), color-coded score ranges, summary stats with gradient strips, mini progress bars per student
+  - ReportsPage: gradient chart fills using SVG linearGradient, quick stats summary row, animated transitions on report type switch, enhanced selector cards
+  - AppLayout: background dot pattern, online avatar indicator, sidebar gradient, school year badge, improved page transitions
+- **New Features** (via subagent Task 10-b):
+  - ClassRankingPage: podium visualization for top 3, full ranking table with filters, stat cards, color-coded averages and status badges
+  - ExamsPage: list/grid view toggle, stat cards, exam management with add dialog, color-coded by subject and exam type
+  - Student Transfer: new "نقل طالب" button with two-step transfer dialog (form → confirmation)
+  - Bulk Attendance: new "حضور جماعي" tab with class selector, quick status buttons, "تحديد الكل حاضر" action, and save all
+  - 3 new API routes: /api/exams, /api/attendance/bulk, /api/students/transfer
+- VLM analysis confirmed: dashboard styling improvements visible, ranking page has stat cards and ranking elements
+- Lint check: Clean (only pre-existing slides/ errors)
+- Dev server: Running on port 3000 with 200 status on all pages
+
+Stage Summary:
+- **Gender data bug FIXED** - critical data integrity issue resolved
+- **Database reconnection** mechanism added to db.ts for future resilience
+- **5 pages with enhanced styling** (Login, Attendance, Grades, Reports, AppLayout)
+- **2 new pages** added (Class Ranking + Exams) - total now 15 pages/modules
+- **3 new features** added to existing pages (Student Transfer, Bulk Attendance, Exam Management)
+- **3 new API routes** created
+- All pages rendering correctly with no console errors
+- Project is stable and feature-rich
+
+Current Project Status:
+- Comprehensive Arabic RTL school management system with 15 pages/modules
+- All core CRUD operations working (students, teachers, subjects, grades, attendance)
+- QR-based attendance with scan/record + bulk attendance
+- Reports with 8 types and gradient-filled charts
+- Class ranking with podium and leaderboard
+- Exam management with list/grid views
+- Student transfer between classes
+- Parent portal for viewing child info
+- Schedule timetable and activity log
+- Dark mode with next-themes
+- Notification bell dropdown
+- Enhanced styling with gradient effects, animations, glassmorphism, and color coding
+- Database auto-reconnection mechanism
+- Consistent teal/green (#0d9488, #059669) design language
+
+Unresolved Issues / Next Phase Priorities:
+- Push updated code to GitHub and redeploy to Vercel (CRITICAL - hasn't been done since initial deploy)
+- Add real QR camera scanning capability (currently manual input only)
+- Add student card PDF printing functionality
+- Consider adding messaging/communication system between teachers and parents
+- Add keyboard shortcuts for power users
+- Add more report chart types (histograms, scatter plots)
+- Consider adding multi-school support for SysAdmin role

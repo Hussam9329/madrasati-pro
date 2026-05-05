@@ -7,6 +7,8 @@ export type PageKey =
   | 'subjects' 
   | 'attendance' 
   | 'grades' 
+  | 'ranking'
+  | 'exams'
   | 'reports' 
   | 'settings'
   | 'users'

@@ -531,7 +531,17 @@ export default function ReportsPage() {
                         <XAxis type="number" domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
                         <YAxis dataKey="name" type="category" width={100} />
                         <Tooltip formatter={(value: number) => `${value}%`} />
-                        <Bar dataKey="passRate" fill="#10b981" name="نسبة النجاح" radius={[0, 4, 4, 0]} />
+                        <Bar dataKey="passRate" name="نسبة النجاح" radius={[0, 4, 4, 0]}>
+                          {gradeStats.passRateBySubject.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={`url(#gradientBar)`} />
+                          ))}
+                          <defs>
+                            <linearGradient id="gradientBar" x1="0" y1="0" x2="1" y2="0">
+                              <stop offset="0%" stopColor="#059669" />
+                              <stop offset="100%" stopColor="#10b981" />
+                            </linearGradient>
+                          </defs>
+                        </Bar>
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -717,7 +727,17 @@ export default function ReportsPage() {
                       <XAxis dataKey="name" />
                       <YAxis />
                       <Tooltip />
-                      <Bar dataKey="avgScore" fill="#10b981" name="المعدل" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="avgScore" name="المعدل" radius={[4, 4, 0, 0]}>
+                        {gradeStats.passRateBySubject.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={`url(#gradientBarV)`} />
+                        ))}
+                        <defs>
+                          <linearGradient id="gradientBarV" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#10b981" />
+                            <stop offset="100%" stopColor="#059669" />
+                          </linearGradient>
+                        </defs>
+                      </Bar>
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -857,9 +877,15 @@ export default function ReportsPage() {
 
   return (
     <div className="space-y-6" dir="rtl">
+      {/* Header with gradient icon */}
       <div className="flex items-center gap-3">
-        <FileText className="h-6 w-6 text-primary" />
-        <h2 className="text-2xl font-bold">التقارير</h2>
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-lg" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
+          <FileText className="h-5 w-5" />
+        </div>
+        <div>
+          <h2 className="text-2xl font-bold">التقارير</h2>
+          <p className="text-sm text-muted-foreground">تقارير شاملة عن الحضور والدرجات والأداء</p>
+        </div>
       </div>
 
       {/* Report Type Selection */}
@@ -873,11 +899,12 @@ export default function ReportsPage() {
               transition={{ delay: index * 0.05 }}
             >
               <Card
-                className="cursor-pointer hover:shadow-md transition-all hover:-translate-y-1 border-2 hover:border-primary/30"
+                className="cursor-pointer hover:shadow-xl transition-all hover:-translate-y-1 border-2 hover:border-teal-300 dark:hover:border-teal-600 overflow-hidden group"
                 onClick={() => setSelectedReport(type.id)}
               >
+                <div className="h-1 w-full group-hover:w-full transition-all duration-300" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)', width: '0%' }} />
                 <CardContent className="p-4 space-y-3">
-                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${type.color.split(' ').slice(0, 1).join(' ')}`}>
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-sm ${type.color.split(' ').slice(0, 1).join(' ')}`}>
                     <type.icon className={`h-6 w-6 ${type.color.split(' ')[1]}`} />
                   </div>
                   <div>
@@ -915,19 +942,47 @@ export default function ReportsPage() {
               </div>
             </div>
             <div className="flex gap-2 no-print">
-              <Button variant="outline" size="sm" onClick={handlePrint} className="gap-1">
+              <Button size="sm" onClick={handlePrint} className="gap-1 text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
                 <Printer className="h-3 w-3" />
                 طباعة
               </Button>
-              <Button variant="outline" size="sm" onClick={handleExportPDF} className="gap-1">
+              <Button size="sm" onClick={handleExportPDF} className="gap-1 text-white bg-gradient-to-l from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700">
                 <Download className="h-3 w-3" />
                 تصدير PDF
               </Button>
             </div>
           </div>
 
+          {/* Quick Stats Summary */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={selectedReport}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="flex gap-3 p-3 rounded-xl bg-gradient-to-l from-teal-50 to-emerald-50 dark:from-teal-900/10 dark:to-emerald-900/10 border border-teal-100 dark:border-teal-800/30">
+                <div className="flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4 text-teal-600 dark:text-teal-400" />
+                  <span className="text-xs font-medium text-teal-700 dark:text-teal-300">
+                    {selectedReport.includes('attendance') || selectedReport === 'lateness' || selectedReport === 'absence'
+                      ? `سجلات الحضور: ${attendanceRecords.length}`
+                      : `سجلات الدرجات: ${gradeRecords.length}`
+                    }
+                  </span>
+                </div>
+                <Separator orientation="vertical" className="h-4" />
+                <span className="text-xs text-muted-foreground">
+                  {reportTypes.find(r => r.id === selectedReport)?.desc}
+                </span>
+              </div>
+            </motion.div>
+          </AnimatePresence>
+
           {/* Filters */}
-          <Card className="no-print">
+          <Card className="no-print overflow-hidden">
+            <div className="h-1" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
             <CardContent className="p-4">
               <div className="flex flex-wrap gap-4 items-end">
                 {(selectedReport.includes('attendance') || selectedReport === 'lateness' || selectedReport === 'absence') && (

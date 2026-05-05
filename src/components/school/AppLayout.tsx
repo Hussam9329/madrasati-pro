@@ -27,6 +27,8 @@ import {
   UserPlus,
   ClipboardCheck,
   Heart,
+  Trophy,
+  ClipboardList,
 } from 'lucide-react';
 import { useAppStore, type PageKey } from '@/lib/store';
 import { Button } from '@/components/ui/button';
@@ -49,6 +51,8 @@ const navItems: { key: PageKey; label: string; icon: React.ElementType; badge?: 
   { key: 'subjects', label: 'المواد', icon: BookOpen },
   { key: 'attendance', label: 'الحضور QR', icon: ScanLine, badge: 'مباشر' },
   { key: 'grades', label: 'الدرجات', icon: FileText },
+  { key: 'ranking', label: 'ترتيب الصفوف', icon: Trophy },
+  { key: 'exams', label: 'الامتحانات', icon: ClipboardList },
   { key: 'schedule', label: 'جدول الحصص', icon: Calendar },
   { key: 'activity', label: 'سجل النشاط', icon: Activity },
   { key: 'reports', label: 'التقارير', icon: BarChart3 },
@@ -122,8 +126,10 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const sidebarNav = (
     <div className="flex flex-col h-full">
       {/* Logo Section */}
-      <div className="p-4 pb-3">
-        <div className="flex items-center gap-3">
+      <div className="p-4 pb-3 relative overflow-hidden">
+        {/* Subtle gradient background for sidebar header */}
+        <div className="absolute inset-0 bg-gradient-to-l from-teal-50/50 to-transparent dark:from-teal-900/10 dark:to-transparent" />
+        <div className="flex items-center gap-3 relative z-10">
           <div
             className="flex items-center justify-center w-11 h-11 rounded-xl shrink-0 shadow-lg"
             style={{
@@ -136,7 +142,12 @@ export default function AppLayout({ children }: AppLayoutProps) {
             <span className="font-bold text-base leading-tight" style={{ color: '#0d9488' }}>
               مدرستي Pro
             </span>
-            <span className="text-[11px] text-muted-foreground truncate">نظام إدارة المدرسة</span>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <span className="text-[11px] text-muted-foreground truncate">نظام إدارة المدرسة</span>
+              <Badge className="text-[8px] px-1 py-0 h-3.5 bg-teal-100 text-teal-700 border-teal-200 dark:bg-teal-900/30 dark:text-teal-300 dark:border-teal-700 font-medium">
+                2024-2025
+              </Badge>
+            </div>
           </div>
           <Button
             variant="ghost"
@@ -245,7 +256,12 @@ export default function AppLayout({ children }: AppLayoutProps) {
   );
 
   return (
-    <div dir="rtl" className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100/50 dark:from-gray-950 dark:to-gray-900/50">
+    <div dir="rtl" className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100/50 dark:from-gray-950 dark:to-gray-900/50 relative">
+      {/* Background dot pattern */}
+      <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.02] pointer-events-none" style={{
+        backgroundImage: 'radial-gradient(circle, #0d9488 1px, transparent 1px)',
+        backgroundSize: '24px 24px',
+      }} />
       {/* Mobile Sidebar Overlay */}
       <AnimatePresence>
         {sidebarOpen && (
@@ -272,7 +288,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
       </AnimatePresence>
 
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex md:w-[260px] md:flex-col md:fixed md:right-0 md:inset-y-0 bg-white dark:bg-gray-900 border-l border-gray-200/80 dark:border-gray-700/50 shadow-sm z-20">
+      <aside className="hidden md:flex md:w-[260px] md:flex-col md:fixed md:right-0 md:inset-y-0 bg-gradient-to-b from-white to-gray-50/80 dark:from-gray-900 dark:to-gray-900/95 border-l border-gray-200/80 dark:border-gray-700/50 shadow-sm z-20">
         {sidebarNav}
       </aside>
 
@@ -424,14 +440,18 @@ export default function AppLayout({ children }: AppLayoutProps) {
                     {userRole}
                   </Badge>
                 </div>
-                <Avatar
-                  className="w-9 h-9 ring-2 ring-white dark:ring-gray-700 shadow-md"
-                  style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}
-                >
-                  <AvatarFallback className="text-white text-sm font-bold bg-transparent">
-                    {userInitials}
-                  </AvatarFallback>
-                </Avatar>
+                <div className="relative">
+                  <Avatar
+                    className="w-9 h-9 ring-2 ring-white dark:ring-gray-700 shadow-md"
+                    style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}
+                  >
+                    <AvatarFallback className="text-white text-sm font-bold bg-transparent">
+                      {userInitials}
+                    </AvatarFallback>
+                  </Avatar>
+                  {/* Online status indicator */}
+                  <span className="absolute -bottom-0.5 -left-0.5 w-3 h-3 bg-emerald-500 border-2 border-white dark:border-gray-800 rounded-full" />
+                </div>
               </div>
 
               <Separator orientation="vertical" className="h-8 hidden sm:block" />
@@ -451,14 +471,14 @@ export default function AppLayout({ children }: AppLayoutProps) {
         </header>
 
         {/* Main Content */}
-        <main className="flex-1 p-4 md:p-6 lg:p-8">
+        <main className="flex-1 p-4 md:p-6 lg:p-8 relative z-10">
           <AnimatePresence mode="wait">
             <motion.div
               key={activePage}
-              initial={{ opacity: 0, y: 6 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.2 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
             >
               {children}
             </motion.div>
@@ -466,7 +486,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
         </main>
 
         {/* Footer */}
-        <footer className="mt-auto border-t border-gray-200/60 dark:border-gray-700/50 px-4 py-3 bg-white/50 dark:bg-gray-900/50">
+        <footer className="mt-auto border-t border-gray-200/60 dark:border-gray-700/50 px-4 py-3 bg-white/50 dark:bg-gray-900/50 relative z-10">
           <div className="flex items-center justify-between">
             <p className="text-[11px] text-muted-foreground">
               مدرستي Pro © {new Date().getFullYear()} — من تطوير Vision

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   GraduationCap, Save, CheckCircle, XCircle, AlertTriangle,
-  BookOpen, Award, BarChart3, Lock, FileCheck, Search, Users
+  BookOpen, Award, BarChart3, Lock, FileCheck, Search, Users, TrendingUp, Target
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -92,6 +92,14 @@ interface GradeEntry {
   existingScore?: number | null
   approved: boolean
   status: string
+}
+
+// Score color helper
+function getScoreColor(score: number, maxScore: number): { bg: string; text: string; border: string; barBg: string } {
+  const pct = (score / maxScore) * 100
+  if (pct >= 80) return { bg: 'bg-emerald-100 dark:bg-emerald-900/30', text: 'text-emerald-700 dark:text-emerald-300', border: 'border-emerald-300 dark:border-emerald-700', barBg: 'bg-emerald-500' }
+  if (pct >= 50) return { bg: 'bg-amber-100 dark:bg-amber-900/30', text: 'text-amber-700 dark:text-amber-300', border: 'border-amber-300 dark:border-amber-700', barBg: 'bg-amber-500' }
+  return { bg: 'bg-red-100 dark:bg-red-900/30', text: 'text-red-700 dark:text-red-300', border: 'border-red-300 dark:border-red-700', barBg: 'bg-red-500' }
 }
 
 export default function GradesPage() {
@@ -244,12 +252,12 @@ export default function GradesPage() {
 
   // Get pass status
   const getPassStatus = (score: string): { status: string; color: string } => {
-    if (score === '') return { status: 'ناقصة', color: 'bg-gray-100 text-gray-800 border-gray-300' }
+    if (score === '') return { status: 'ناقصة', color: 'bg-gray-100 text-gray-800 border-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600' }
     const numScore = parseFloat(score)
     const passScore = selectedSubject?.passScore || 50
-    if (isNaN(numScore)) return { status: 'ناقصة', color: 'bg-gray-100 text-gray-800 border-gray-300' }
-    if (numScore >= passScore) return { status: 'ناجح', color: 'bg-emerald-100 text-emerald-800 border-emerald-300' }
-    return { status: 'راسب', color: 'bg-red-100 text-red-800 border-red-300' }
+    if (isNaN(numScore)) return { status: 'ناقصة', color: 'bg-gray-100 text-gray-800 border-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600' }
+    if (numScore >= passScore) return { status: 'ناجح', color: 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700' }
+    return { status: 'راسب', color: 'bg-red-100 text-red-800 border-red-300 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700' }
   }
 
   // Save grades
@@ -343,6 +351,11 @@ export default function GradesPage() {
     const maxScore = selectedExamType?.maxScore || 100
     const passCount = scores.filter(s => s >= passScore).length
 
+    // Grade distribution for visual
+    const excellent = scores.filter(s => (s / maxScore) * 100 >= 80).length
+    const good = scores.filter(s => { const p = (s / maxScore) * 100; return p >= 50 && p < 80 }).length
+    const fail = scores.filter(s => (s / maxScore) * 100 < 50).length
+
     return {
       average: scores.reduce((a, b) => a + b, 0) / scores.length,
       highest: Math.max(...scores),
@@ -352,6 +365,9 @@ export default function GradesPage() {
       passCount,
       failCount: scores.length - passCount,
       maxScore,
+      excellent,
+      good,
+      fail,
     }
   }
 
@@ -359,16 +375,25 @@ export default function GradesPage() {
 
   return (
     <div className="space-y-6" dir="rtl">
-      {/* Header */}
+      {/* Header with gradient icon */}
       <div className="flex items-center gap-3">
-        <GraduationCap className="h-6 w-6 text-primary" />
-        <h2 className="text-2xl font-bold">إدارة الدرجات</h2>
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-lg" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
+          <GraduationCap className="h-5 w-5" />
+        </div>
+        <div>
+          <h2 className="text-2xl font-bold">إدارة الدرجات</h2>
+          <p className="text-sm text-muted-foreground">إدخال ومعاينة واعتماد الدرجات</p>
+        </div>
       </div>
 
       {/* Filters */}
-      <Card>
+      <Card className="overflow-hidden">
+        <div className="h-1" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">اختيار الصف والمادة</CardTitle>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Target className="h-4 w-4 text-teal-600" />
+            اختيار الصف والمادة
+          </CardTitle>
           <CardDescription>حدد الصف والشعبة والمادة ونوع الامتحان لعرض الطلاب</CardDescription>
         </CardHeader>
         <CardContent>
@@ -446,7 +471,8 @@ export default function GradesPage() {
             <Button
               onClick={handleShowStudents}
               disabled={!selectedClassId || !selectedSubjectId || !selectedExamTypeId || loadingStudents}
-              className="gap-2 bg-primary hover:bg-primary/90"
+              className="gap-2 text-white"
+              style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}
             >
               {loadingStudents ? (
                 <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -459,49 +485,118 @@ export default function GradesPage() {
         </CardContent>
       </Card>
 
-      {/* Stats Panel */}
+      {/* Stats Panel - Enhanced with grade distribution visual */}
       <AnimatePresence>
         {showStats && stats && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="grid grid-cols-2 md:grid-cols-5 gap-4"
+            className="space-y-4"
           >
-            <Card className="border-primary/20">
-              <CardContent className="p-4 text-center">
-                <BarChart3 className="h-5 w-5 mx-auto text-primary mb-1" />
-                <p className="text-xl font-bold">{stats.average.toFixed(1)}</p>
-                <p className="text-xs text-muted-foreground">المعدل</p>
-              </CardContent>
-            </Card>
-            <Card className="border-emerald-200">
-              <CardContent className="p-4 text-center">
-                <Award className="h-5 w-5 mx-auto text-emerald-600 mb-1" />
-                <p className="text-xl font-bold text-emerald-700">{stats.highest}</p>
-                <p className="text-xs text-muted-foreground">أعلى درجة</p>
-              </CardContent>
-            </Card>
-            <Card className="border-red-200">
-              <CardContent className="p-4 text-center">
-                <AlertTriangle className="h-5 w-5 mx-auto text-red-600 mb-1" />
-                <p className="text-xl font-bold text-red-700">{stats.lowest}</p>
-                <p className="text-xs text-muted-foreground">أدنى درجة</p>
-              </CardContent>
-            </Card>
-            <Card className="border-amber-200">
-              <CardContent className="p-4 text-center">
-                <p className="text-xl font-bold text-amber-700">{stats.passRate.toFixed(0)}%</p>
-                <p className="text-xs text-muted-foreground">نسبة النجاح</p>
-                <Progress value={stats.passRate} className="mt-2 h-2" />
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4 text-center">
-                <p className="text-xl font-bold">{stats.total}</p>
-                <p className="text-xs text-muted-foreground">
-                  ناجح: <span className="text-emerald-600">{stats.passCount}</span> | راسب: <span className="text-red-600">{stats.failCount}</span>
-                </p>
+            {/* Summary stats bar */}
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              <Card className="border-teal-200 dark:border-teal-800 overflow-hidden">
+                <div className="h-1 bg-gradient-to-l from-teal-400 to-teal-600" />
+                <CardContent className="p-4 text-center">
+                  <BarChart3 className="h-5 w-5 mx-auto text-teal-600 dark:text-teal-400 mb-1" />
+                  <p className="text-xl font-bold text-teal-700 dark:text-teal-400">{stats.average.toFixed(1)}</p>
+                  <p className="text-xs text-muted-foreground">المعدل</p>
+                </CardContent>
+              </Card>
+              <Card className="border-emerald-200 dark:border-emerald-800 overflow-hidden">
+                <div className="h-1 bg-gradient-to-l from-emerald-400 to-emerald-600" />
+                <CardContent className="p-4 text-center">
+                  <Award className="h-5 w-5 mx-auto text-emerald-600 dark:text-emerald-400 mb-1" />
+                  <p className="text-xl font-bold text-emerald-700 dark:text-emerald-400">{stats.highest}</p>
+                  <p className="text-xs text-muted-foreground">أعلى درجة</p>
+                </CardContent>
+              </Card>
+              <Card className="border-red-200 dark:border-red-800 overflow-hidden">
+                <div className="h-1 bg-gradient-to-l from-red-400 to-red-600" />
+                <CardContent className="p-4 text-center">
+                  <AlertTriangle className="h-5 w-5 mx-auto text-red-600 dark:text-red-400 mb-1" />
+                  <p className="text-xl font-bold text-red-700 dark:text-red-400">{stats.lowest}</p>
+                  <p className="text-xs text-muted-foreground">أدنى درجة</p>
+                </CardContent>
+              </Card>
+              <Card className="border-amber-200 dark:border-amber-800 overflow-hidden">
+                <div className="h-1 bg-gradient-to-l from-amber-400 to-amber-600" />
+                <CardContent className="p-4 text-center">
+                  <TrendingUp className="h-5 w-5 mx-auto text-amber-600 dark:text-amber-400 mb-1" />
+                  <p className="text-xl font-bold text-amber-700 dark:text-amber-400">{stats.passRate.toFixed(0)}%</p>
+                  <p className="text-xs text-muted-foreground">نسبة النجاح</p>
+                  <Progress value={stats.passRate} className="mt-2 h-2" />
+                </CardContent>
+              </Card>
+              <Card className="overflow-hidden">
+                <div className="h-1" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
+                <CardContent className="p-4 text-center">
+                  <p className="text-xl font-bold">{stats.total}</p>
+                  <p className="text-xs text-muted-foreground">
+                    ناجح: <span className="text-emerald-600 dark:text-emerald-400">{stats.passCount}</span> | راسب: <span className="text-red-600 dark:text-red-400">{stats.failCount}</span>
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Grade Distribution Visual */}
+            <Card className="overflow-hidden">
+              <div className="h-1" style={{ background: 'linear-gradient(90deg, #10b981, #f59e0b, #ef4444)' }} />
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4 text-teal-600" />
+                  توزيع الدرجات
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {/* Excellent (≥80%) */}
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-medium w-24 text-emerald-700 dark:text-emerald-400">ممتاز (≥80%)</span>
+                    <div className="flex-1 h-8 bg-emerald-50 dark:bg-emerald-900/10 rounded-full overflow-hidden relative">
+                      <motion.div
+                        className="h-full bg-gradient-to-l from-emerald-400 to-emerald-500 rounded-full flex items-center justify-end px-2"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${stats.total > 0 ? (stats.excellent / stats.total) * 100 : 0}%` }}
+                        transition={{ duration: 0.8, ease: 'easeOut' }}
+                      >
+                        <span className="text-xs text-white font-bold">{stats.excellent}</span>
+                      </motion.div>
+                    </div>
+                    <span className="text-xs text-muted-foreground w-16 text-left">{stats.total > 0 ? Math.round((stats.excellent / stats.total) * 100) : 0}%</span>
+                  </div>
+                  {/* Good (50-79%) */}
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-medium w-24 text-amber-700 dark:text-amber-400">مقبول (50-79%)</span>
+                    <div className="flex-1 h-8 bg-amber-50 dark:bg-amber-900/10 rounded-full overflow-hidden relative">
+                      <motion.div
+                        className="h-full bg-gradient-to-l from-amber-400 to-amber-500 rounded-full flex items-center justify-end px-2"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${stats.total > 0 ? (stats.good / stats.total) * 100 : 0}%` }}
+                        transition={{ duration: 0.8, ease: 'easeOut', delay: 0.1 }}
+                      >
+                        <span className="text-xs text-white font-bold">{stats.good}</span>
+                      </motion.div>
+                    </div>
+                    <span className="text-xs text-muted-foreground w-16 text-left">{stats.total > 0 ? Math.round((stats.good / stats.total) * 100) : 0}%</span>
+                  </div>
+                  {/* Fail (<50%) */}
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-medium w-24 text-red-700 dark:text-red-400">راسب (&lt;50%)</span>
+                    <div className="flex-1 h-8 bg-red-50 dark:bg-red-900/10 rounded-full overflow-hidden relative">
+                      <motion.div
+                        className="h-full bg-gradient-to-l from-red-400 to-red-500 rounded-full flex items-center justify-end px-2"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${stats.total > 0 ? (stats.fail / stats.total) * 100 : 0}%` }}
+                        transition={{ duration: 0.8, ease: 'easeOut', delay: 0.2 }}
+                      >
+                        <span className="text-xs text-white font-bold">{stats.fail}</span>
+                      </motion.div>
+                    </div>
+                    <span className="text-xs text-muted-foreground w-16 text-left">{stats.total > 0 ? Math.round((stats.fail / stats.total) * 100) : 0}%</span>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </motion.div>
@@ -517,12 +612,13 @@ export default function GradesPage() {
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3 }}
           >
-            <Card>
+            <Card className="overflow-hidden">
+              <div className="h-1" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between flex-wrap gap-3">
                   <div>
                     <CardTitle className="text-lg flex items-center gap-2">
-                      <BookOpen className="h-5 w-5 text-primary" />
+                      <BookOpen className="h-5 w-5 text-teal-600" />
                       جدول الدرجات
                     </CardTitle>
                     <CardDescription className="mt-1">
@@ -546,7 +642,7 @@ export default function GradesPage() {
                       onClick={handleSaveGrades}
                       disabled={saving}
                       size="sm"
-                      className="gap-1 bg-emerald-600 hover:bg-emerald-700"
+                      className="gap-1 bg-emerald-600 hover:bg-emerald-700 text-white"
                     >
                       {saving ? (
                         <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -560,10 +656,10 @@ export default function GradesPage() {
                       disabled={approving}
                       variant="outline"
                       size="sm"
-                      className="gap-1 border-primary text-primary"
+                      className="gap-1 border-teal-500 text-teal-600 dark:border-teal-400 dark:text-teal-400"
                     >
                       {approving ? (
-                        <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                        <div className="h-4 w-4 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" />
                       ) : (
                         <FileCheck className="h-4 w-4" />
                       )}
@@ -597,8 +693,9 @@ export default function GradesPage() {
                           <TableHead className="w-12">#</TableHead>
                           <TableHead>اسم الطالب</TableHead>
                           <TableHead>الشعبة</TableHead>
-                          <TableHead className="w-32">الدرجة</TableHead>
+                          <TableHead className="w-40">الدرجة</TableHead>
                           <TableHead>الحالة</TableHead>
+                          <TableHead className="w-32">التوزيع</TableHead>
                           <TableHead className="w-24">إجراءات</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -606,14 +703,18 @@ export default function GradesPage() {
                         {gradeEntries.map((entry, index) => {
                           const passInfo = getPassStatus(entry.score)
                           const isApproved = entry.approved
+                          const maxScore = selectedExamType?.maxScore || 100
+                          const scoreNum = entry.score !== '' ? parseFloat(entry.score) : null
+                          const scoreColor = scoreNum !== null ? getScoreColor(scoreNum, maxScore) : null
+                          const scorePct = scoreNum !== null ? Math.round((scoreNum / maxScore) * 100) : 0
                           return (
-                            <TableRow key={entry.studentId} className={isApproved ? 'bg-muted/30' : ''}>
+                            <TableRow key={entry.studentId} className={`${isApproved ? 'bg-muted/30 dark:bg-muted/10' : ''} ${scoreNum !== null && scorePct < 50 ? 'bg-red-50/30 dark:bg-red-900/5' : ''}`}>
                               <TableCell className="text-muted-foreground">{index + 1}</TableCell>
                               <TableCell>
                                 <div className="flex items-center gap-2">
                                   <span className="font-medium">{entry.fullName}</span>
                                   {isApproved && (
-                                    <Badge variant="outline" className="gap-1 text-xs bg-primary/5">
+                                    <Badge variant="outline" className="gap-1 text-xs bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-300 border-teal-200 dark:border-teal-700">
                                       <Lock className="h-3 w-3" />
                                       مقفلة
                                     </Badge>
@@ -627,19 +728,29 @@ export default function GradesPage() {
                                   <Input
                                     type="number"
                                     min="0"
-                                    max={selectedExamType?.maxScore || 100}
+                                    max={maxScore}
                                     value={entry.score}
                                     onChange={(e) => handleScoreChange(entry.studentId, e.target.value)}
                                     disabled={isApproved}
-                                    placeholder={`من ${selectedExamType?.maxScore || 100}`}
-                                    className={`text-center w-24 ${
+                                    placeholder={`من ${maxScore}`}
+                                    className={`text-center w-24 font-semibold ${
                                       entry.score !== '' && parseFloat(entry.score) >= (selectedSubject?.passScore || 50)
-                                        ? 'border-emerald-400 focus:border-emerald-500'
+                                        ? 'border-emerald-400 dark:border-emerald-600 focus:border-emerald-500 focus:ring-emerald-500/20'
                                         : entry.score !== '' && parseFloat(entry.score) < (selectedSubject?.passScore || 50)
-                                          ? 'border-red-400 focus:border-red-500'
-                                          : ''
+                                          ? 'border-red-400 dark:border-red-600 focus:border-red-500 focus:ring-red-500/20'
+                                          : 'dark:bg-gray-800/50'
                                     }`}
                                   />
+                                  {/* Mini score indicator */}
+                                  {scoreNum !== null && (
+                                    <span className={`absolute -top-1.5 -right-1 text-[9px] font-bold px-1 rounded ${
+                                      scorePct >= 80 ? 'text-emerald-600 dark:text-emerald-400' :
+                                      scorePct >= 50 ? 'text-amber-600 dark:text-amber-400' :
+                                      'text-red-600 dark:text-red-400'
+                                    }`}>
+                                      {scorePct}%
+                                    </span>
+                                  )}
                                 </div>
                               </TableCell>
                               <TableCell>
@@ -650,8 +761,27 @@ export default function GradesPage() {
                                 </Badge>
                               </TableCell>
                               <TableCell>
+                                {/* Mini progress bar showing score distribution */}
+                                {scoreNum !== null && (
+                                  <div className="w-24">
+                                    <div className="w-full h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                                      <motion.div
+                                        className={`h-full rounded-full ${
+                                          scorePct >= 80 ? 'bg-emerald-500' :
+                                          scorePct >= 50 ? 'bg-amber-500' :
+                                          'bg-red-500'
+                                        }`}
+                                        initial={{ width: 0 }}
+                                        animate={{ width: `${scorePct}%` }}
+                                        transition={{ duration: 0.5, ease: 'easeOut' }}
+                                      />
+                                    </div>
+                                  </div>
+                                )}
+                              </TableCell>
+                              <TableCell>
                                 {entry.existingScore !== undefined && entry.existingScore !== null && (
-                                  <Badge variant="outline" className="text-xs">
+                                  <Badge variant="outline" className="text-xs dark:border-gray-600">
                                     سابقاً: {entry.existingScore}
                                   </Badge>
                                 )}
@@ -666,16 +796,16 @@ export default function GradesPage() {
 
                 {/* Summary Footer */}
                 {gradeEntries.length > 0 && (
-                  <div className="mt-4 pt-4 border-t flex items-center justify-between">
+                  <div className="mt-4 pt-4 border-t dark:border-gray-700 flex items-center justify-between">
                     <p className="text-sm text-muted-foreground">
                       إجمالي الطلاب: {gradeEntries.length} | تم الإدخال: {gradeEntries.filter(e => e.score !== '').length} | ناقص: {gradeEntries.filter(e => e.score === '').length}
                     </p>
-                    <div className="flex gap-2">
-                      <span className="text-xs text-emerald-600 flex items-center gap-1">
+                    <div className="flex gap-3">
+                      <span className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded-full">
                         <CheckCircle className="h-3 w-3" />
                         ناجح: {gradeEntries.filter(e => e.score !== '' && parseFloat(e.score) >= (selectedSubject?.passScore || 50)).length}
                       </span>
-                      <span className="text-xs text-red-600 flex items-center gap-1">
+                      <span className="text-xs text-red-600 dark:text-red-400 flex items-center gap-1 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded-full">
                         <XCircle className="h-3 w-3" />
                         راسب: {gradeEntries.filter(e => e.score !== '' && parseFloat(e.score) < (selectedSubject?.passScore || 50)).length}
                       </span>

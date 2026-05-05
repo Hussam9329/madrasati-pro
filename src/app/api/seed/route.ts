@@ -1,13 +1,39 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { hashPassword } from '@/lib/auth';
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const forceReset = searchParams.get('reset') === 'true';
+
     // Check if already seeded
     const existingSchool = await db.school.findFirst();
-    if (existingSchool) {
+    if (existingSchool && !forceReset) {
       return NextResponse.json({ message: 'Database already seeded', school: existingSchool });
+    }
+
+    // If force reset, delete all data in correct order (respecting foreign keys)
+    if (forceReset && existingSchool) {
+      await db.gradeModification.deleteMany();
+      await db.grade.deleteMany();
+      await db.attendanceRecord.deleteMany();
+      await db.studentNote.deleteMany();
+      await db.document.deleteMany();
+      await db.examType.deleteMany();
+      await db.teacherSubject.deleteMany();
+      await db.teacherClass.deleteMany();
+      await db.subjectClass.deleteMany();
+      await db.student.deleteMany();
+      await db.teacher.deleteMany();
+      await db.subject.deleteMany();
+      await db.section.deleteMany();
+      await db.class.deleteMany();
+      await db.notice.deleteMany();
+      await db.activityLog.deleteMany();
+      await db.user.deleteMany();
+      await db.parent.deleteMany();
+      await db.school.deleteMany();
     }
 
     // Create School

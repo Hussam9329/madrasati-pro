@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import QRCode from 'qrcode'
 import {
   Search, Plus, Download, Eye, Edit, Trash2, Printer,
-  ChevronLeft, ChevronRight, User, X, Users
+  ChevronLeft, ChevronRight, User, X, Users, ArrowRightLeft, CheckCircle2
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -143,6 +143,15 @@ export default function StudentsPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('')
   const [saving, setSaving] = useState(false)
+  const [transferOpen, setTransferOpen] = useState(false)
+  const [transferSaving, setTransferSaving] = useState(false)
+  const [transferConfirm, setTransferConfirm] = useState(false)
+  const [transferForm, setTransferForm] = useState({
+    studentId: '',
+    newClassId: '',
+    newSectionId: '',
+    reason: '',
+  })
   const limit = 10
 
   // Form state
@@ -330,6 +339,18 @@ export default function StudentsPage() {
             <Button onClick={openAddForm} className="gap-2">
               <Plus className="h-4 w-4" />
               إضافة طالب
+            </Button>
+            <Button
+              variant="outline"
+              className="gap-2 border-teal-300 text-teal-700 hover:bg-teal-50"
+              onClick={() => {
+                setTransferForm({ studentId: '', newClassId: '', newSectionId: '', reason: '' })
+                setTransferConfirm(false)
+                setTransferOpen(true)
+              }}
+            >
+              <ArrowRightLeft className="h-4 w-4" />
+              نقل طالب
             </Button>
             <Button variant="secondary" className="gap-2">
               <Download className="h-4 w-4" />
@@ -836,6 +857,178 @@ export default function StudentsPage() {
               </TabsContent>
             </Tabs>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Transfer Student Dialog */}
+      <Dialog open={transferOpen} onOpenChange={setTransferOpen}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ArrowRightLeft className="h-5 w-5 text-teal-600" />
+              نقل طالب
+            </DialogTitle>
+          </DialogHeader>
+          {!transferConfirm ? (
+            <div className="space-y-4 py-4">
+              <div>
+                <Label>الطالب *</Label>
+                <Select value={transferForm.studentId} onValueChange={(v) => setTransferForm({ ...transferForm, studentId: v })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="اختر الطالب" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {students.map(s => (
+                      <SelectItem key={s.id} value={s.id}>{s.fullName} - {s.studentNumber}</SelectItem>
+                    ))}
+                    {students.length === 0 && (
+                      <SelectItem value="none" disabled>لا يوجد طلاب في القائمة الحالية</SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+              {transferForm.studentId && (() => {
+                const selectedStu = students.find(s => s.id === transferForm.studentId)
+                if (!selectedStu) return null
+                return (
+                  <Card className="bg-muted/50 border-teal-200">
+                    <CardContent className="p-3">
+                      <p className="text-sm font-medium">الموقع الحالي:</p>
+                      <p className="text-sm text-muted-foreground">الصف: {selectedStu.class.name} | الشعبة: {selectedStu.section.name}</p>
+                    </CardContent>
+                  </Card>
+                )
+              })()}
+              <div>
+                <Label>الصف الجديد *</Label>
+                <Select value={transferForm.newClassId} onValueChange={(v) => setTransferForm({ ...transferForm, newClassId: v, newSectionId: '' })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="اختر الصف الجديد" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {classes.map(c => (
+                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>الشعبة الجديدة *</Label>
+                <Select value={transferForm.newSectionId} onValueChange={(v) => setTransferForm({ ...transferForm, newSectionId: v })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="اختر الشعبة" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {transferForm.newClassId
+                      ? classes.find(c => c.id === transferForm.newClassId)?.sections.map(s => (
+                          <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                        ))
+                      : <SelectItem value="none" disabled>اختر الصف أولاً</SelectItem>
+                    }
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>سبب النقل</Label>
+                <Textarea
+                  value={transferForm.reason}
+                  onChange={(e) => setTransferForm({ ...transferForm, reason: e.target.value })}
+                  placeholder="أدخل سبب النقل..."
+                  rows={3}
+                />
+              </div>
+              <div>
+                <Label>تاريخ النقل</Label>
+                <Input
+                  value={new Date().toLocaleDateString('ar-IQ')}
+                  disabled
+                  className="bg-muted"
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4 py-4">
+              <div className="flex flex-col items-center gap-3 p-6 bg-teal-50 dark:bg-teal-950/20 rounded-xl border border-teal-200">
+                <CheckCircle2 className="h-12 w-12 text-teal-600" />
+                <p className="text-lg font-bold text-teal-700">تأكيد نقل الطالب</p>
+              </div>
+              {(() => {
+                const selectedStu = students.find(s => s.id === transferForm.studentId)
+                const newCls = classes.find(c => c.id === transferForm.newClassId)
+                const newSec = newCls?.sections.find(s => s.id === transferForm.newSectionId)
+                if (!selectedStu) return null
+                return (
+                  <Card className="border-teal-200">
+                    <CardContent className="p-4 space-y-3">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarFallback className="bg-teal-100 text-teal-700">{selectedStu.fullName.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-bold">{selectedStu.fullName}</p>
+                          <p className="text-xs text-muted-foreground font-mono">{selectedStu.studentNumber}</p>
+                        </div>
+                      </div>
+                      <Separator />
+                      <div className="grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <p className="text-muted-foreground">من:</p>
+                          <p className="font-medium">{selectedStu.class.name} / {selectedStu.section.name}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">إلى:</p>
+                          <p className="font-medium text-teal-700">{newCls?.name || '—'} / {newSec?.name || '—'}</p>
+                        </div>
+                      </div>
+                      {transferForm.reason && (
+                        <div>
+                          <p className="text-muted-foreground text-sm">السبب:</p>
+                          <p className="text-sm">{transferForm.reason}</p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )
+              })()}
+            </div>
+          )}
+          <div className="flex justify-end gap-2 pt-4 border-t">
+            <Button variant="outline" onClick={() => setTransferOpen(false)}>إلغاء</Button>
+            {!transferConfirm ? (
+              <Button
+                onClick={() => setTransferConfirm(true)}
+                disabled={!transferForm.studentId || !transferForm.newClassId || !transferForm.newSectionId}
+                style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}
+              >
+                متابعة
+              </Button>
+            ) : (
+              <Button
+                onClick={async () => {
+                  setTransferSaving(true)
+                  try {
+                    const res = await fetch('/api/students/transfer', {
+                      method: 'PUT',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify(transferForm),
+                    })
+                    if (!res.ok) throw new Error()
+                    toast({ title: 'تم النقل', description: 'تم نقل الطالب بنجاح' })
+                    setTransferOpen(false)
+                    fetchStudents()
+                  } catch {
+                    toast({ title: 'خطأ', description: 'فشل في نقل الطالب', variant: 'destructive' })
+                  } finally {
+                    setTransferSaving(false)
+                  }
+                }}
+                disabled={transferSaving}
+                style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}
+              >
+                {transferSaving ? 'جاري النقل...' : 'تأكيد النقل'}
+              </Button>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
 
