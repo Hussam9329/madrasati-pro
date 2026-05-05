@@ -22,6 +22,9 @@ import MessagingPage from '@/components/school/MessagePage';
 import SchoolCalendarPage from '@/components/school/SchoolCalendarPage';
 import CertificatePage from '@/components/school/CertificatePage';
 import StudentProfilePage from '@/components/school/StudentProfilePage';
+import LibraryPage from '@/components/school/LibraryPage';
+import HealthPage from '@/components/school/HealthPage';
+import DataImportPage from '@/components/school/DataImportPage';
 
 function PageRenderer({ page }: { page: PageKey }) {
   const { selectedStudentId } = useAppStore();
@@ -56,6 +59,12 @@ function PageRenderer({ page }: { page: PageKey }) {
       return <CertificatePage />;
     case 'profile':
       return <StudentProfilePage studentId={selectedStudentId} />;
+    case 'library':
+      return <LibraryPage />;
+    case 'health':
+      return <HealthPage />;
+    case 'import':
+      return <DataImportPage />;
     case 'messages':
       return <MessagingPage />;
     case 'parents':

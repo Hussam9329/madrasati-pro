@@ -37,6 +37,7 @@ import {
   PanelRightOpen,
   Search,
   Keyboard,
+  Upload,
 } from 'lucide-react';
 import { useAppStore, type PageKey } from '@/lib/store';
 import { Button } from '@/components/ui/button';
@@ -72,6 +73,9 @@ const navGroups: { label: string; items: { key: PageKey; label: string; icon: Re
       { key: 'grades', label: 'الدرجات', icon: FileText },
       { key: 'ranking', label: 'ترتيب الصفوف', icon: Trophy },
       { key: 'exams', label: 'الامتحانات', icon: ClipboardList },
+      { key: 'library', label: 'إدارة المكتبة', icon: BookOpen },
+      { key: 'health', label: 'السجل الصحي', icon: Heart },
+      { key: 'import', label: 'استيراد البيانات', icon: Upload },
     ],
   },
   {
@@ -95,7 +99,7 @@ const navGroups: { label: string; items: { key: PageKey; label: string; icon: Re
     items: [
       { key: 'reports', label: 'التقارير', icon: BarChart3 },
       { key: 'notices', label: 'الإشعارات', icon: Bell },
-      { key: 'parents', label: 'بوابة ولي الأمر', icon: Heart },
+      { key: 'parents', label: 'بوابة ولي الأمر', icon: GraduationCap },
       { key: 'users', label: 'المستخدمون', icon: Shield },
       { key: 'settings', label: 'الإعدادات', icon: Settings },
     ],

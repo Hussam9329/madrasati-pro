@@ -2096,3 +2096,253 @@ Unresolved Issues / Next Phase Priorities:
 - Add more report chart types (histograms, scatter plots)
 - Add dashboard widget customization
 - Consider adding multi-school support for district-level management
+
+---
+Task ID: 1-2
+Agent: Feature Enhancement Agent
+Task: Create Library Management page and Health Record page
+
+Work Log:
+- **New Component**: Created `LibraryPage.tsx` - Library Management (إدارة المكتبة)
+  - Header with gradient BookOpen icon, title "إدارة المكتبة", subtitle "إدارة الكتب والإعارات"
+  - 4 summary stat cards with gradient top strips: Total books (إجمالي الكتب), Available (متاح), Borrowed (معار), Overdue (متأخر)
+  - Overdue books alert section showing books past due date with red indicators and student/book names
+  - 3-tab layout: Book catalog (فهرس الكتب), Borrowing records (سجل الإعارات), Statistics (الإحصائيات)
+  - Book catalog with grid/list view toggle, category filter (أدب, علوم, تاريخ, دين, لغات, تربية), search by title/author
+  - Book cards with colored cover indicator, category badge, ISBN, availability progress bar
+  - List view table with availability status badges (متاح/محدود/نفد)
+  - Add book dialog with title, author, category, ISBN, copies fields
+  - Borrowing records table with student name, book title, borrow/due/return dates, status badges (معار/مرجع/متأخر)
+  - "تسجيل إعارة" (Register Borrow) button and "تسجيل إرجاع" (Register Return) action per row
+  - Category distribution mini chart with colored bars per category and availability overlay
+  - Borrowing summary stat cards in stats tab
+  - 17 mock books, 12 mock borrowing records
+  - RTL Arabic layout, teal/green color scheme (#0d9488, #059669), framer-motion animations
+  - Dark mode classes throughout (dark:bg-gray-900/50, dark:border-gray-700, etc.)
+  - 'use client' component
+- **New Component**: Created `HealthPage.tsx` - Health Records (السجل الصحي)
+  - Header with gradient Heart icon, title "السجل الصحي", subtitle "متابعة صحة الطلاب"
+  - 4 summary stat cards with gradient top strips: Total records, Vaccinated (ملقح), Medical visits (زيارات طبية), Chronic conditions (حالات مزمنة)
+  - Chronic conditions alert section with colored badges per condition type (سكري=amber, ربو=sky, حساسية=purple)
+  - 3-tab layout: Health records (السجلات الصحية), Vaccinations (التلقيحات), Medical visits (الزيارات الطبية)
+  - Student health records with search by name and filter by class
+  - Table with blood type (color-coded), height, weight, BMI (calculated + color-coded), vision status (with Eye icon), last checkup date, status indicator
+  - BMI color coding: green=normal, amber=overweight, red=obese
+  - Vision status with Eye icon and color-coded labels (ممتاز/جيد/يحتاج فحص)
+  - Vaccination campaigns with progress bars, color-coded by completion percentage
+  - Add vaccination campaign dialog
+  - Medical visits table with student, date, reason, treatment, doctor notes
+  - Add medical visit dialog
+  - 13 mock student health records, 5 vaccination campaigns, 8 medical visits
+  - RTL Arabic layout, teal/green color scheme (#0d9488, #059669), framer-motion animations
+  - Dark mode classes throughout
+  - 'use client' component
+- **Store Update**: Added 'library' and 'health' to PageKey type in `store.ts`
+- **Page Renderer Update**: Added library and health cases in page.tsx
+  - Imported LibraryPage and HealthPage components
+  - Added `case 'library': return <LibraryPage />;`
+  - Added `case 'health': return <HealthPage />;`
+- **Navigation Update**: Added 'إدارة المكتبة' (BookOpen icon) and 'السجل الصحي' (Heart icon) to AppLayout sidebar in الأكاديمية group after الامتحانات
+  - Changed 'بوابة ولي الأمر' icon from Heart to GraduationCap to avoid duplicate Heart icon
+- ESLint: All changed files pass lint (only pre-existing slides/ errors remain)
+- Dev server compiling successfully with no errors on port 3000
+
+Stage Summary:
+- Two new fully-functional pages added (Library Management + Health Records)
+- Library page with book catalog, borrowing system, overdue alerts, and statistics
+- Health page with student records, vaccination campaigns, medical visits, and chronic conditions tracking
+- Navigation and routing updated for both new pages
+- Total pages/modules now: 17 (dashboard, students, teachers, subjects, attendance, grades, ranking, exams, library, health, fees, calendar, certificates, messages, schedule, activity, reports, notices, parents, users, settings)
+- All code lint-clean, dev server running without errors
+
+---
+Task ID: 3-4-5
+Agent: Styling Enhancement Agent
+Task: Enhance ReportsPage, ParentPortalPage, and DashboardPage with comprehensive visual polish
+
+Work Log:
+- **ReportsPage.tsx enhancements** (`/src/components/school/ReportsPage.tsx`):
+  - Added new report type "توزيع الدرجات" (Grade Distribution) with Activity icon and pink color scheme
+  - Added ScatterChart (رسم مبعثر) showing student grades with X=student index, Y=score, color-coded by pass/fail (green=pass, red=fail)
+  - Added Histogram (هيستوغرام) showing student count per score range (0-20, 21-40, 41-60, 61-80, 81-100) with gradient fills per range
+  - Added SVG linearGradient definitions for all histogram bars (histGrad0-4)
+  - Added AnimatePresence mode="wait" when switching between report types with fade+slide animation
+  - Added animated gradient border effect on report selector cards using CSS mask composite technique
+  - Added whileHover={{ scale: 1.02 }} on selector cards with shadow-xl on hover
+  - Enhanced print button with teal gradient background, shadow-md, and Printer icon
+  - Added "تصدير التقرير" (Export Report) button with FileSpreadsheet icon that generates CSV
+  - Added Quick Stats Pills row before grade charts showing عدد السجلات, أعلى درجة, أدنى درجة, المعدل
+  - Added gradient top strips on all cards (h-1.5 gradient bars)
+  - Added dark mode classes throughout
+  - Imported ScatterChart, Scatter, ZAxis from recharts for scatter plot support
+  - Imported FileSpreadsheet, Activity, Hash, ArrowUpRight, ArrowDownRight from lucide-react
+  - Imported exportToCSV from @/lib/export-utils for CSV export functionality
+
+- **ParentPortalPage.tsx enhancements** (`/src/components/school/ParentPortalPage.tsx`):
+  - Replaced simple Select dropdown with student cards showing avatar, name, class/section
+  - Student cards have teal border highlight when selected, click to select with animations
+  - Added AnimatedAttendanceRing component with SVG stroke-dashoffset animation from full to actual value
+  - Animation uses easeOutCubic easing over 1.5s duration via requestAnimationFrame
+  - Added gradient left border strips on grade cards based on score (emerald ≥80, amber 50-79, red <50)
+  - Added trend arrow icons (ArrowUpRight/ArrowDownRight/Minus) next to each grade card status badge
+  - Enhanced schedule day tabs with data-[state=active]:bg-teal-600 data-[state=active]:text-white rounded-xl styling
+  - Added gradient left border strips on notices based on type using noticeGradientBorders map
+  - Added date badges with CalendarDays icon and getTimeAgo function showing relative time
+  - Added "تواصل مع المعلم" (Contact Teacher) button with MessageSquare icon in welcome banner
+  - Contact teacher dialog with subject input, message textarea, and Send button with teal gradient
+  - Added animated welcome banner with decorative floating shapes using framer-motion
+  - Added gradient top strip on student selector card
+  - Added Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger from shadcn/ui
+  - Added Textarea component from shadcn/ui for contact message
+
+- **DashboardPage.tsx enhancements** (`/src/components/school/DashboardPage.tsx`):
+  - Added useAnimatedCounter hook that counts from 0 to target value on mount using requestAnimationFrame with easeOutCubic
+  - Created StatCard component using the animated counter, with gradient border hover effect and scale animation
+  - Enhanced quick action buttons with whileHover y:-3 scale:1.03 shadow-xl and gradient bg change
+  - Added MiniAttendanceDonut component showing present/absent/late distribution as inline chart
+  - Added "عرض الكل" (View All) link in notices section header navigating to activity page
+  - Added getTimeAgo function for notices showing relative time (منذ ساعة, منذ يومين, etc.)
+  - Added animated bell icon for مهم notices using framer-motion rotate animation
+  - Added colored left border on attendance table rows based on status (emerald/amber/red/blue)
+  - Added animated pulse dot on status badges for the 3 most recent records
+  - Added Class Performance Comparison bar chart (horizontal bars comparing avg grades across 6 classes)
+  - Uses gradient fill (classPerfGrad: teal→emerald) with BarChart layout="vertical"
+  - Enhanced welcome card with Arabic date format and system status indicator (green pulsing dot)
+  - Added Activity icon to attendance chart header
+  - Added gradient top strips on all cards (h-1.5 bars)
+  - Added dark mode classes throughout
+  - Imported BarChart, Bar from recharts for class performance chart
+  - Imported Bell, Eye, Activity from lucide-react
+  - Fixed lint error: setState-in-effect in useAnimatedCounter by wrapping in requestAnimationFrame callback
+
+- ESLint: All changed files pass lint (only pre-existing slides/ errors remain)
+- Dev server compiling successfully with no errors on port 3000
+
+Stage Summary:
+- ReportsPage: New scatter chart + histogram report type, animated transitions, gradient fills on all charts, enhanced selector cards, CSV export button, quick stats pills
+- ParentPortalPage: Student card selector, animated attendance ring, gradient borders on grade cards, enhanced schedule tabs, gradient notice borders, contact teacher dialog, animated welcome banner
+- DashboardPage: Animated stat counters, mini donut chart, colored attendance row borders, class performance bar chart, notices with View All + time-ago + bell animation, system status indicator
+- All three files have consistent teal/green (#0d9488, #059669) color scheme
+- Dark mode support throughout all enhanced components
+- All existing functionality and mock data preserved
+- No API routes or database schemas changed
+
+---
+Task ID: 6
+Agent: Feature Enhancement Agent
+Task: Create Data Import page (استيراد البيانات) for CSV/Excel bulk import
+
+Work Log:
+- **New Component**: Created `DataImportPage.tsx` - Data import (استيراد البيانات)
+  - Header with gradient Upload icon, title "استيراد البيانات", and subtitle "استيراد البيانات بشكل جماعي من ملفات CSV"
+  - Import type selector: 4 cards for each import type (Students/Users, Grades/GraduationCap, Attendance/ClipboardCheck, Teachers/BookOpen)
+    - Each card has gradient top strip, gradient icon background, hover scale animation, and "نموذج" template download button
+  - File upload area:
+    - Drag-and-drop zone with dashed border, Upload icon, "اسحب الملف هنا أو انقر للاختيار" text
+    - Supported formats: CSV, XLSX with "الحد الأقصى: 5 ميجابايت" size limit
+    - Visual dragover effect: border color change to teal, background glow with radial gradient, icon animation
+    - After file selection: file info card with name, size, type, progress bar, and success badge
+  - Data preview section:
+    - 3 stat cards (total records, valid, invalid) with gradient top strips and colored icons
+    - Column mapping interface: each CSV column has a Select dropdown to map to system fields with validation indicators (green checkmark for valid, red X for issues)
+    - Required fields marked with red asterisk
+    - Preview table showing first 5 rows of imported data with proper headers
+    - Row count summary with valid/invalid breakdown
+  - Import progress:
+    - Progress bar with percentage
+    - Success/error count cards with colored backgrounds
+    - Detailed log of imported/failed records after completion
+    - "استيراد جديد" (new import) and "عرض السجل" (view history) action buttons
+  - Import history tab:
+    - Search input with filter by status (الكل/مكتمل/فاشل/جزئي)
+    - Table of 7 previous import records with date, type icon, filename, record counts (success ✓ / fail ✗), status badges, and details dialog
+    - Details dialog shows: date, type, file, status, record breakdown (total/success/fail), and error description
+    - Status badges: مكتمل (emerald), فاشل (red), جزئي (amber)
+  - Template download: "تحميل نموذج CSV" button for each import type that generates a sample CSV with proper Arabic headers and BOM for Arabic support
+  - 4-step wizard flow: Select Type → Upload File → Preview & Map → Import Progress
+  - Realistic Arabic mock data for all import types
+  - RTL Arabic layout, teal/green color scheme (#0d9488, #059669)
+  - framer-motion animations (staggered container, item variants, hover effects, page transitions)
+  - Gradient top strips on all cards
+  - Dark mode classes throughout
+  - 'use client' component
+- **Store Update**: Added 'import' to PageKey type in `store.ts`
+- **Navigation Update**: Added 'استيراد البيانات' (Upload icon) to AppLayout sidebar in الأكاديمية group after السجل الصحي
+  - Imported Upload from lucide-react
+- **Page Renderer Update**: Added import case in page.tsx
+  - Imported DataImportPage component
+  - Added `case 'import': return <DataImportPage />;`
+- **Lint Fix**: Moved `initializeColumnMappings` before `handleFileSelect` and wrapped it with `useCallback` to fix variable declaration order lint error
+- ESLint: All changed files pass lint (only pre-existing slides/ errors remain)
+- Dev server compiling successfully with no errors
+
+Stage Summary:
+- New Data Import page fully functional with 4-step wizard (Select Type → Upload → Preview & Map → Import)
+- Drag-and-drop file upload with visual effects and progress indicator
+- Column mapping interface with validation status indicators
+- Import progress tracking with success/fail counts and detailed log
+- Import history tab with search, filter, and detail dialogs
+- CSV template download for each import type
+- Navigation updated with new "استيراد البيانات" item using Upload icon
+- All code lint-clean, dev server running without errors
+
+---
+Task ID: 15
+Agent: QA + Enhancement Coordinator (Round 7 - Cron Review)
+Task: Assess project status, QA test, fix bugs, improve styling, add features, update worklog
+
+Work Log:
+- **QA Testing via agent-browser** (comprehensive - all pages tested):
+  - Login, Dashboard, Students, Teachers, Subjects, Attendance, Grades, Ranking, Exams all working
+  - Fees, Calendar, Certificates, Messages, Schedule, Activity, Reports, Parents, Users, Settings all working
+  - Student Profile, Command Palette, Keyboard Shortcuts, Sidebar Collapse all working
+  - Dark mode toggle working correctly
+  - No console errors on ANY page (zero errors across all 22+ pages)
+- **VLM Analysis**: Visual quality rated 8/10 for new pages, good consistency, minor refinements suggested
+- **Lint check**: Clean (only pre-existing slides/ errors remain)
+
+- **NEW PAGES** (3):
+  - LibraryPage (إدارة المكتبة): Book catalog with grid/list view, category filter, borrowing records with status tracking, overdue alerts, statistics tab with category distribution chart, 17 mock books + 12 borrowing records
+  - HealthPage (السجل الصحي): Student health records with BMI calculation and color coding, vaccination campaigns with progress bars, medical visits log, chronic conditions alerts, 13 health records + 5 vaccination campaigns + 8 medical visits
+  - DataImportPage (استيراد البيانات): 4-step wizard (type selection → file upload → data preview + column mapping → import progress), drag-and-drop upload zone, import history tab, CSV template download
+
+- **STYLING ENHANCEMENTS** (3 pages):
+  - ReportsPage: Added scatter chart (توزيع الدرجات), grade range histogram (0-20/21-40/41-60/61-80/81-100), AnimatePresence transitions, gradient fills on all charts, quick stats row, export CSV button
+  - ParentPortalPage: Card-based student selector, animated attendance ring (SVG stroke-dashoffset), grade cards with gradient left borders, contact teacher button with compose dialog, animated welcome banner
+  - DashboardPage: Animated stat counters (useAnimatedCounter hook), stat card hover glow, quick action hover effects, mini attendance donut chart, notices enhancement with time-ago, class performance comparison chart, system status indicator
+
+- **Integration Updates**:
+  - store.ts: Added 'library', 'health', 'import' to PageKey type
+  - page.tsx: Added all 3 new page cases
+  - AppLayout.tsx: Added 3 new navigation items in الأكاديمية group, changed Parent Portal icon from Heart to GraduationCap
+
+Stage Summary:
+- Total pages/modules now: 22+ (dashboard, students, teachers, subjects, attendance, grades, ranking, exams, library, health, fees, calendar, certificates, messages, schedule, activity, reports, import, notices, parents, users, settings, profile)
+- 3 new fully functional pages added
+- 3 existing pages significantly enhanced with new chart types and interactive elements
+- Zero console errors across all pages
+- VLM visual quality: 8/10
+- Project is stable and feature-rich
+
+Current Project Status:
+- Comprehensive Arabic RTL school management system with 22+ pages/modules
+- Library management with book catalog and borrowing system
+- Health records with vaccinations, medical visits, and BMI tracking
+- Data import wizard with CSV template download
+- Student Profile with comprehensive information view
+- Command Palette (Ctrl+K) for quick navigation
+- Keyboard shortcuts system
+- All core CRUD operations working
+- Enhanced charts with scatter, histogram, and gradient fills
+- Dark mode with next-themes
+- Collapsible sidebar with group separators
+- Consistent teal/green (#0d9488, #059669) design language
+
+Unresolved Issues / Next Phase Priorities:
+- Push updated code to GitHub and redeploy to Vercel (CRITICAL - hasn't been done since initial deploy)
+- Add real QR camera scanning capability (currently manual input only)
+- Add student card PDF printing functionality
+- Add more interactive dashboard widgets (customizable layout)
+- Add behavior/discipline tracking module
+- Consider adding multi-school support for district-level management
+- Add automated email/SMS notification system

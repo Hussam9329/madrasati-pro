@@ -16,10 +16,13 @@ export type PageKey =
   | 'schedule'
   | 'activity'
   | 'parents'
+  | 'library'
+  | 'health'
   | 'fees'
   | 'messages'
   | 'calendar'
   | 'certificates'
+  | 'import'
   | 'profile';
 
 export interface AuthState {
