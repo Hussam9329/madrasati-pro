@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   CalendarDays, ChevronLeft, ChevronRight, Plus, MapPin,
   Clock, Calendar, Star, BookOpen, Trophy, PartyPopper,
-  Users, Dumbbell, AlertCircle
+  Users, Dumbbell, AlertCircle, Navigation
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -203,11 +203,28 @@ const itemVariants = {
   visible: { opacity: 1, y: 0 }
 }
 
+// Month slide animation variants
+const slideVariants = {
+  enter: (direction: number) => ({
+    x: direction > 0 ? -60 : 60,
+    opacity: 0,
+  }),
+  center: {
+    x: 0,
+    opacity: 1,
+  },
+  exit: (direction: number) => ({
+    x: direction < 0 ? -60 : 60,
+    opacity: 0,
+  }),
+}
+
 export default function SchoolCalendarPage() {
   const { toast } = useToast()
   const [currentDate, setCurrentDate] = useState(new Date())
   const events = useMemo(() => generateMockEvents(), [])
   const [formOpen, setFormOpen] = useState(false)
+  const [direction, setDirection] = useState(0)
   const [form, setForm] = useState({
     title: '',
     type: 'دراسي' as CalendarEvent['type'],
@@ -224,12 +241,15 @@ export default function SchoolCalendarPage() {
 
   // Navigation
   const prevMonth = () => {
+    setDirection(-1)
     setCurrentDate(new Date(currentYear, currentMonth - 1, 1))
   }
   const nextMonth = () => {
+    setDirection(1)
     setCurrentDate(new Date(currentYear, currentMonth + 1, 1))
   }
   const goToToday = () => {
+    setDirection(0)
     setCurrentDate(new Date())
   }
 
@@ -254,6 +274,9 @@ export default function SchoolCalendarPage() {
     return map
   })()
 
+  // Today's events
+  const todayEvents = events.filter(e => e.date === todayStr)
+
   // Stats
   const thisWeekEvents = (() => {
     const now = new Date()
@@ -275,6 +298,11 @@ export default function SchoolCalendarPage() {
     .sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time))
     .slice(0, 10)
 
+  // Month overview stats
+  const monthExams = monthEvents.filter(e => e.type === 'امتحان').length
+  const monthHolidays = monthEvents.filter(e => e.type === 'عطلة').length
+  const monthActivities = monthEvents.filter(e => e.type === 'نشاط' || e.type === 'رياضي').length
+
   // Add event handler
   const handleAddEvent = () => {
     if (!form.title || !form.date) {
@@ -294,6 +322,9 @@ export default function SchoolCalendarPage() {
   for (let d = 1; d <= daysInMonth; d++) {
     calendarCells.push(d)
   }
+
+  // Month key for animation
+  const monthKey = `${currentYear}-${currentMonth}`
 
   return (
     <motion.div
@@ -325,6 +356,57 @@ export default function SchoolCalendarPage() {
           إضافة حدث
         </Button>
       </motion.div>
+
+      {/* Today's Events Section */}
+      {todayEvents.length > 0 && (
+        <motion.div variants={itemVariants}>
+          <Card className="overflow-hidden border-teal-200 dark:border-teal-800" style={{ background: 'linear-gradient(135deg, rgba(13, 148, 136, 0.05), rgba(5, 150, 105, 0.05))' }}>
+            <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base dark:text-gray-200">
+                <div className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
+                أحداث اليوم
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 pt-0">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {todayEvents.map((ev) => {
+                  const config = EVENT_TYPE_CONFIG[ev.type]
+                  const Icon = config.icon
+                  return (
+                    <motion.div
+                      key={ev.id}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className={cn(
+                        'flex items-center gap-3 p-3 rounded-xl border',
+                        config.bg, config.border, config.darkBg, config.darkBorder
+                      )}
+                    >
+                      <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center shrink-0', config.bg, config.darkBg)}>
+                        <Icon className={cn('h-5 w-5', config.color, config.darkText)} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={cn('text-sm font-bold truncate', config.color, config.darkText)}>{ev.title}</p>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Clock className="h-3 w-3" />
+                          <span>{ev.time}</span>
+                          {ev.location && ev.location !== '-' && (
+                            <>
+                              <MapPin className="h-3 w-3" />
+                              <span className="truncate">{ev.location}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </motion.div>
+                  )
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
 
       {/* Summary Stats */}
       <motion.div variants={itemVariants} className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -397,11 +479,22 @@ export default function SchoolCalendarPage() {
                   <Button variant="outline" size="icon" className="h-8 w-8" onClick={prevMonth}>
                     <ChevronRight className="h-4 w-4" />
                   </Button>
-                  <div className="text-center">
-                    <h2 className="text-lg font-bold dark:text-gray-200">
-                      {ARABIC_MONTHS[currentMonth]} {currentYear}
-                    </h2>
-                  </div>
+                  <AnimatePresence mode="wait" custom={direction}>
+                    <motion.div
+                      key={monthKey}
+                      custom={direction}
+                      variants={slideVariants}
+                      initial="enter"
+                      animate="center"
+                      exit="exit"
+                      transition={{ duration: 0.25, ease: 'easeInOut' }}
+                      className="text-center"
+                    >
+                      <h2 className="text-lg font-bold dark:text-gray-200">
+                        {ARABIC_MONTHS[currentMonth]} {currentYear}
+                      </h2>
+                    </motion.div>
+                  </AnimatePresence>
                   <Button variant="outline" size="icon" className="h-8 w-8" onClick={nextMonth}>
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
@@ -418,6 +511,30 @@ export default function SchoolCalendarPage() {
               </div>
             </CardHeader>
             <CardContent className="p-4">
+              {/* Mini month overview stats bar */}
+              <div className="flex items-center gap-4 mb-4 p-2.5 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                <div className="flex items-center gap-1.5 text-xs">
+                  <div className="w-2 h-2 rounded-full bg-teal-500" />
+                  <span className="text-muted-foreground dark:text-gray-400">الفعاليات:</span>
+                  <span className="font-bold text-teal-700 dark:text-teal-300">{monthEvents.length}</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-xs">
+                  <div className="w-2 h-2 rounded-full bg-red-500" />
+                  <span className="text-muted-foreground dark:text-gray-400">الامتحانات:</span>
+                  <span className="font-bold text-red-700 dark:text-red-300">{monthExams}</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-xs">
+                  <div className="w-2 h-2 rounded-full bg-amber-500" />
+                  <span className="text-muted-foreground dark:text-gray-400">العطل:</span>
+                  <span className="font-bold text-amber-700 dark:text-amber-300">{monthHolidays}</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-xs">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                  <span className="text-muted-foreground dark:text-gray-400">الأنشطة:</span>
+                  <span className="font-bold text-emerald-700 dark:text-emerald-300">{monthActivities}</span>
+                </div>
+              </div>
+
               {/* Day names header */}
               <div className="grid grid-cols-7 gap-1 mb-2">
                 {ARABIC_DAYS.map((day, idx) => (
@@ -436,75 +553,102 @@ export default function SchoolCalendarPage() {
               </div>
 
               {/* Calendar days */}
-              <div className="grid grid-cols-7 gap-1">
-                {calendarCells.map((day, idx) => {
-                  if (day === null) {
-                    return <div key={`empty-${idx}`} className="aspect-square" />
-                  }
+              <AnimatePresence mode="wait" custom={direction}>
+                <motion.div
+                  key={monthKey}
+                  custom={direction}
+                  variants={slideVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={{ duration: 0.25, ease: 'easeInOut' }}
+                  className="grid grid-cols-7 gap-1"
+                >
+                  {calendarCells.map((day, idx) => {
+                    if (day === null) {
+                      return <div key={`empty-${idx}`} className="aspect-square" />
+                    }
 
-                  const dayOfWeek = (firstDay + day - 1) % 7
-                  const isWeekend = dayOfWeek >= 5
-                  const isToday = currentYear === today.getFullYear() && currentMonth === today.getMonth() && day === today.getDate()
-                  const dayEvents = eventsByDay[day] || []
+                    const dayOfWeek = (firstDay + day - 1) % 7
+                    const isWeekend = dayOfWeek >= 5
+                    const isToday = currentYear === today.getFullYear() && currentMonth === today.getMonth() && day === today.getDate()
+                    const dayEvents = eventsByDay[day] || []
+                    const hasEvents = dayEvents.length > 0
 
-                  return (
-                    <motion.div
-                      key={day}
-                      className={cn(
-                        'aspect-square rounded-xl flex flex-col items-center justify-center relative cursor-pointer transition-all',
-                        'hover:bg-gray-100 dark:hover:bg-gray-800',
-                        isWeekend && 'text-red-400 dark:text-red-500',
-                        isToday && 'text-white',
-                      )}
-                      style={isToday ? { background: 'linear-gradient(135deg, #0d9488, #059669)' } : undefined}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <span className={cn(
-                        'text-sm font-medium leading-none',
-                        isToday ? 'text-white' : ''
-                      )}>
-                        {day}
-                      </span>
-                      {dayEvents.length > 0 && (
-                        <div className="flex gap-0.5 mt-1">
-                          {dayEvents.slice(0, 3).map((ev, evIdx) => {
-                            const config = EVENT_TYPE_CONFIG[ev.type]
-                            return (
-                              <div
-                                key={evIdx}
-                                className={cn(
-                                  'w-1.5 h-1.5 rounded-full',
-                                  config.dot,
-                                  isToday && 'ring-1 ring-white/60'
-                                )}
-                              />
-                            )
-                          })}
-                          {dayEvents.length > 3 && (
-                            <span className={cn(
-                              'text-[8px] leading-none',
-                              isToday ? 'text-white/80' : 'text-muted-foreground'
-                            )}>
-                              +{dayEvents.length - 3}
-                            </span>
-                          )}
-                        </div>
-                      )}
-                    </motion.div>
-                  )
-                })}
-              </div>
+                    return (
+                      <motion.div
+                        key={day}
+                        className={cn(
+                          'aspect-square rounded-xl flex flex-col items-center justify-center relative cursor-pointer transition-all',
+                          hasEvents ? 'hover:bg-teal-50 dark:hover:bg-teal-900/20' : 'hover:bg-gray-100 dark:hover:bg-gray-800',
+                          isWeekend && 'text-red-400 dark:text-red-500',
+                          isToday && 'text-white',
+                        )}
+                        style={isToday ? { background: 'linear-gradient(135deg, #0d9488, #059669)' } : undefined}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        {/* Today pulsing ring */}
+                        {isToday && (
+                          <motion.div
+                            className="absolute inset-0 rounded-xl border-2 border-teal-300"
+                            animate={{ scale: [1, 1.15, 1], opacity: [0.5, 0, 0.5] }}
+                            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                          />
+                        )}
 
-              {/* Event type legend */}
+                        <span className={cn(
+                          'text-sm font-medium leading-none',
+                          isToday ? 'text-white' : ''
+                        )}>
+                          {day}
+                        </span>
+                        {dayEvents.length > 0 && (
+                          <div className="flex gap-0.5 mt-1">
+                            {dayEvents.slice(0, 3).map((ev, evIdx) => {
+                              const config = EVENT_TYPE_CONFIG[ev.type]
+                              return (
+                                <div
+                                  key={evIdx}
+                                  className={cn(
+                                    'w-1.5 h-1.5 rounded-full',
+                                    config.dot,
+                                    isToday && 'ring-1 ring-white/60'
+                                  )}
+                                />
+                              )
+                            })}
+                            {dayEvents.length > 2 && (
+                              <span className={cn(
+                                'text-[8px] leading-none font-bold',
+                                isToday ? 'text-white/90' : 'text-teal-600 dark:text-teal-400'
+                              )}>
+                                +{dayEvents.length - 2}
+                              </span>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Gradient hover effect on days with events */}
+                        {hasEvents && !isToday && (
+                          <div className="absolute inset-0 rounded-xl opacity-0 hover:opacity-100 transition-opacity pointer-events-none" style={{ background: 'linear-gradient(135deg, rgba(13, 148, 136, 0.08), rgba(5, 150, 105, 0.08))' }} />
+                        )}
+                      </motion.div>
+                    )
+                  })}
+                </motion.div>
+              </AnimatePresence>
+
+              {/* Event type legend - enhanced with larger icons and labels */}
               <div className="mt-4 pt-4 border-t border-border">
-                <div className="flex flex-wrap gap-3 justify-center">
+                <div className="flex flex-wrap gap-4 justify-center">
                   {Object.entries(EVENT_TYPE_CONFIG).map(([type, config]) => {
                     const Icon = config.icon
                     return (
-                      <div key={type} className="flex items-center gap-1.5">
+                      <div key={type} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+                        <Icon className={cn('h-4 w-4', config.color, config.darkText)} />
                         <div className={cn('w-2.5 h-2.5 rounded-full', config.dot)} />
-                        <span className="text-xs text-muted-foreground">{type}</span>
+                        <span className="text-xs font-medium text-muted-foreground dark:text-gray-300">{type}</span>
                       </div>
                     )
                   })}
@@ -583,11 +727,20 @@ export default function SchoolCalendarPage() {
                       whileHover={{ y: -1 }}
                     >
                       <div className="flex items-start gap-3">
+                        {/* Countdown days as prominent number with colored circle */}
                         <div className={cn(
-                          'w-10 h-10 rounded-lg flex items-center justify-center shrink-0',
-                          config.bg, config.darkBg
-                        )}>
-                          <Icon className={cn('h-5 w-5', config.color, config.darkText)} />
+                          'w-12 h-12 rounded-full flex flex-col items-center justify-center shrink-0 text-white shadow-sm',
+                        )} style={{ background: isToday ? 'linear-gradient(135deg, #0d9488, #059669)' : isTomorrow ? 'linear-gradient(135deg, #d97706, #f59e0b)' : 'linear-gradient(135deg, #6b7280, #9ca3af)' }}>
+                          {isToday ? (
+                            <span className="text-[10px] font-bold">اليوم</span>
+                          ) : isTomorrow ? (
+                            <span className="text-[10px] font-bold">غداً</span>
+                          ) : (
+                            <>
+                              <span className="text-base font-bold leading-none">{days}</span>
+                              <span className="text-[8px] opacity-80">يوم</span>
+                            </>
+                          )}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2">
@@ -619,26 +772,6 @@ export default function SchoolCalendarPage() {
                           <p className="text-[11px] text-muted-foreground mt-1.5 line-clamp-2">{ev.description}</p>
                         </div>
                       </div>
-                      {/* Days until indicator */}
-                      <div className="mt-2 flex items-center justify-end">
-                        {isToday ? (
-                          <Badge className="text-[10px] bg-teal-100 text-teal-700 border-teal-200 dark:bg-teal-900/30 dark:text-teal-300 dark:border-teal-700">
-                            اليوم
-                          </Badge>
-                        ) : isTomorrow ? (
-                          <Badge className="text-[10px] bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-700">
-                            غداً
-                          </Badge>
-                        ) : days > 0 ? (
-                          <Badge variant="outline" className="text-[10px] dark:border-gray-600">
-                            بعد {days} يوم
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-[10px] text-muted-foreground dark:border-gray-600">
-                            منتهي
-                          </Badge>
-                        )}
-                      </div>
                     </motion.div>
                   )
                 })}
@@ -654,6 +787,24 @@ export default function SchoolCalendarPage() {
           </Card>
         </motion.div>
       </div>
+
+      {/* Jump to Today floating button */}
+      <motion.div
+        className="fixed bottom-6 left-6 z-50"
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ delay: 1, type: 'spring', stiffness: 200 }}
+      >
+        <Button
+          onClick={goToToday}
+          size="lg"
+          className="rounded-full shadow-lg gap-2 h-12 w-12 p-0"
+          style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}
+          title="الانتقال إلى اليوم"
+        >
+          <Navigation className="h-5 w-5 text-white" />
+        </Button>
+      </motion.div>
 
       {/* Add Event Dialog */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>

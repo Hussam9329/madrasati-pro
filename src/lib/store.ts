@@ -19,7 +19,8 @@ export type PageKey =
   | 'fees'
   | 'messages'
   | 'calendar'
-  | 'certificates';
+  | 'certificates'
+  | 'profile';
 
 export interface AuthState {
   user: {
@@ -45,6 +46,12 @@ interface AppState {
   // Sidebar
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
+  sidebarCollapsed: boolean;
+  setSidebarCollapsed: (collapsed: boolean) => void;
+
+  // Recent pages (for command palette)
+  recentPages: PageKey[];
+  addRecentPage: (page: PageKey) => void;
 
   // Selected items
   selectedStudentId: string | null;
@@ -78,6 +85,15 @@ export const useAppStore = create<AppState>((set) => ({
   // Sidebar
   sidebarOpen: true,
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
+  sidebarCollapsed: false,
+  setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
+
+  // Recent pages
+  recentPages: [],
+  addRecentPage: (page) => set((state) => {
+    const filtered = state.recentPages.filter(p => p !== page);
+    return { recentPages: [page, ...filtered].slice(0, 5) };
+  }),
 
   // Selected items
   selectedStudentId: null,

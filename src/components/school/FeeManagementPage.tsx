@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import {
   Wallet, DollarSign, Plus, Search, CreditCard,
   TrendingUp, Users, CheckCircle2, Clock, AlertTriangle,
   XCircle, Receipt, Calendar, FileText, Banknote,
-  ArrowUpRight, ArrowDownRight, Filter, Download
+  ArrowUpRight, ArrowDownRight, Filter, Download, Printer
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { exportToCSV } from '@/lib/export-utils'
@@ -44,6 +44,7 @@ import { useToast } from '@/hooks/use-toast'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   PieChart, Pie, Cell, ResponsiveContainer,
+  AreaChart, Area,
 } from 'recharts'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -144,6 +145,16 @@ const MONTHLY_COLLECTION_DATA = [
   { month: 'آذار', collection: 2200000, target: 2500000 },
 ]
 
+// Cumulative payment trend data (last 6 months)
+const CUMULATIVE_TREND_DATA = [
+  { month: 'تشرين ثاني', cumulative: 5900000 },
+  { month: 'كانون أول', cumulative: 7500000 },
+  { month: 'كانون ثاني', cumulative: 9800000 },
+  { month: 'شباط', cumulative: 12250000 },
+  { month: 'آذار', cumulative: 14450000 },
+  { month: 'نيسان', cumulative: 16100000 },
+]
+
 const PAYMENT_METHOD_DATA = [
   { name: 'نقدي', value: 35, color: '#0d9488' },
   { name: 'تحويل بنكي', value: 30, color: '#059669' },
@@ -180,6 +191,31 @@ const METHOD_COLORS: Record<string, string> = {
   'تحويل بنكي': 'bg-teal-100 text-teal-700 border-teal-200 dark:bg-teal-900/30 dark:text-teal-400 dark:border-teal-700',
   'شيك': 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700',
   'بطاقة': 'bg-cyan-100 text-cyan-700 border-cyan-200 dark:bg-cyan-900/30 dark:text-cyan-400 dark:border-cyan-700',
+}
+
+// ─── Animated Counter Hook ───────────────────────────────────────────────────
+
+function useAnimatedCounter(target: number, duration = 1200) {
+  const [count, setCount] = useState(0)
+  const prevTarget = useRef(0)
+
+  useEffect(() => {
+    const start = prevTarget.current
+    const diff = target - start
+    const startTime = performance.now()
+
+    const animate = (now: number) => {
+      const elapsed = now - startTime
+      const progress = Math.min(elapsed / duration, 1)
+      const eased = 1 - Math.pow(1 - progress, 3)
+      setCount(Math.round(start + diff * eased))
+      if (progress < 1) requestAnimationFrame(animate)
+    }
+    requestAnimationFrame(animate)
+    prevTarget.current = target
+  }, [target, duration])
+
+  return count
 }
 
 // ─── Animation Variants ──────────────────────────────────────────────────────
@@ -225,6 +261,67 @@ function PieTooltip({ active, payload }: { active?: boolean; payload?: Array<{ n
   )
 }
 
+function TrendTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ name: string; value: number; color: string }>; label?: string }) {
+  if (!active || !payload || !payload[0]) return null
+  return (
+    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 shadow-lg text-xs">
+      <p className="font-bold mb-1 text-gray-800 dark:text-gray-200">{label}</p>
+      <div className="flex items-center gap-2">
+        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#0d9488' }} />
+        <span className="text-gray-600 dark:text-gray-400">المدفوعات التراكمية:</span>
+        <span className="font-semibold text-gray-800 dark:text-gray-200">{formatIQD(payload[0].value)}</span>
+      </div>
+    </div>
+  )
+}
+
+// ─── Collection Progress Ring Component ──────────────────────────────────────
+
+function CollectionProgressRing({ percentage, size = 80 }: { percentage: number; size?: number }) {
+  const strokeWidth = 6
+  const radius = (size - strokeWidth) / 2
+  const circumference = 2 * Math.PI * radius
+  const offset = circumference - (percentage / 100) * circumference
+
+  return (
+    <div className="relative" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="-rotate-90">
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={strokeWidth}
+          className="text-gray-200 dark:text-gray-700"
+        />
+        <motion.circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="url(#ringGradient)"
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          initial={{ strokeDashoffset: circumference }}
+          animate={{ strokeDashoffset: offset }}
+          transition={{ duration: 1.5, ease: 'easeOut' }}
+        />
+        <defs>
+          <linearGradient id="ringGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#0d9488" />
+            <stop offset="100%" stopColor="#059669" />
+          </linearGradient>
+        </defs>
+      </svg>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <span className="text-lg font-bold text-teal-700 dark:text-teal-300">{percentage}%</span>
+      </div>
+    </div>
+  )
+}
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function FeeManagementPage() {
@@ -260,6 +357,11 @@ export default function FeeManagementPage() {
   const totalPaid = STUDENT_FEE_RECORDS.reduce((sum, s) => sum + s.paid, 0)
   const totalRemaining = STUDENT_FEE_RECORDS.reduce((sum, s) => sum + s.remaining, 0)
   const collectionRate = totalFees > 0 ? Math.round((totalPaid / totalFees) * 100) : 0
+  const overdueCount = STUDENT_FEE_RECORDS.filter(s => s.status === 'متأخر').length
+  const overdueAmount = STUDENT_FEE_RECORDS.filter(s => s.status === 'متأخر').reduce((sum, s) => sum + s.remaining, 0)
+
+  // Animated counters
+  const animatedCollectionRate = useAnimatedCounter(collectionRate)
 
   // Filtered student records
   const filteredRecords = useMemo(() => {
@@ -280,12 +382,15 @@ export default function FeeManagementPage() {
     )
   }, [paymentRecords, paymentSearchQuery])
 
+  // Recent 3 payments for quick summary
+  const recentPayments = PAYMENT_RECORDS.slice(-3).reverse()
+
   // Summary cards data
   const summaryCards = [
-    { title: 'إجمالي الرسوم', value: formatIQD(totalFees), icon: DollarSign, gradient: 'from-teal-500 to-teal-600', bgColor: 'bg-teal-50 dark:bg-teal-950/20', borderColor: 'border-teal-200 dark:border-teal-800', iconBg: 'bg-teal-100 dark:bg-teal-900/40', iconColor: 'text-teal-600 dark:text-teal-400', valueColor: 'text-teal-700 dark:text-teal-300', stripGradient: 'linear-gradient(90deg, #0d9488, #14b8a6)' },
-    { title: 'المدفوع', value: formatIQD(totalPaid), icon: CheckCircle2, gradient: 'from-emerald-500 to-emerald-600', bgColor: 'bg-emerald-50 dark:bg-emerald-950/20', borderColor: 'border-emerald-200 dark:border-emerald-800', iconBg: 'bg-emerald-100 dark:bg-emerald-900/40', iconColor: 'text-emerald-600 dark:text-emerald-400', valueColor: 'text-emerald-700 dark:text-emerald-300', stripGradient: 'linear-gradient(90deg, #059669, #10b981)', trend: <ArrowUpRight className="h-3.5 w-3.5 text-emerald-500" /> },
-    { title: 'المتبقي', value: formatIQD(totalRemaining), icon: Clock, gradient: 'from-amber-500 to-amber-600', bgColor: 'bg-amber-50 dark:bg-amber-950/20', borderColor: 'border-amber-200 dark:border-amber-800', iconBg: 'bg-amber-100 dark:bg-amber-900/40', iconColor: 'text-amber-600 dark:text-amber-400', valueColor: 'text-amber-700 dark:text-amber-300', stripGradient: 'linear-gradient(90deg, #d97706, #f59e0b)', trend: <ArrowDownRight className="h-3.5 w-3.5 text-amber-500" /> },
-    { title: 'نسبة التحصيل', value: `${collectionRate}%`, icon: TrendingUp, gradient: 'from-cyan-500 to-cyan-600', bgColor: 'bg-cyan-50 dark:bg-cyan-950/20', borderColor: 'border-cyan-200 dark:border-cyan-800', iconBg: 'bg-cyan-100 dark:bg-cyan-900/40', iconColor: 'text-cyan-600 dark:text-cyan-400', valueColor: 'text-cyan-700 dark:text-cyan-300', stripGradient: 'linear-gradient(90deg, #06b6d4, #22d3ee)', progress: collectionRate },
+    { title: 'إجمالي الرسوم', value: formatIQD(totalFees), icon: DollarSign, gradient: 'from-teal-500 to-teal-600', bgColor: 'bg-teal-50 dark:bg-teal-950/20', borderColor: 'border-teal-200 dark:border-teal-800', iconBg: 'bg-teal-100 dark:bg-teal-900/40', iconColor: 'text-teal-600 dark:text-teal-400', valueColor: 'text-teal-700 dark:text-teal-300', stripGradient: 'linear-gradient(90deg, #0d9488, #14b8a6)', iconGradient: 'linear-gradient(135deg, #0d9488, #14b8a6)' },
+    { title: 'المدفوع', value: formatIQD(totalPaid), icon: CheckCircle2, gradient: 'from-emerald-500 to-emerald-600', bgColor: 'bg-emerald-50 dark:bg-emerald-950/20', borderColor: 'border-emerald-200 dark:border-emerald-800', iconBg: 'bg-emerald-100 dark:bg-emerald-900/40', iconColor: 'text-emerald-600 dark:text-emerald-400', valueColor: 'text-emerald-700 dark:text-emerald-300', stripGradient: 'linear-gradient(90deg, #059669, #10b981)', trend: <ArrowUpRight className="h-3.5 w-3.5 text-emerald-500" />, iconGradient: 'linear-gradient(135deg, #059669, #10b981)' },
+    { title: 'المتبقي', value: formatIQD(totalRemaining), icon: Clock, gradient: 'from-amber-500 to-amber-600', bgColor: 'bg-amber-50 dark:bg-amber-950/20', borderColor: 'border-amber-200 dark:border-amber-800', iconBg: 'bg-amber-100 dark:bg-amber-900/40', iconColor: 'text-amber-600 dark:text-amber-400', valueColor: 'text-amber-700 dark:text-amber-300', stripGradient: 'linear-gradient(90deg, #d97706, #f59e0b)', trend: <ArrowDownRight className="h-3.5 w-3.5 text-amber-500" />, iconGradient: 'linear-gradient(135deg, #d97706, #f59e0b)' },
+    { title: 'نسبة التحصيل', value: `${collectionRate}%`, icon: TrendingUp, gradient: 'from-cyan-500 to-cyan-600', bgColor: 'bg-cyan-50 dark:bg-cyan-950/20', borderColor: 'border-cyan-200 dark:border-cyan-800', iconBg: 'bg-cyan-100 dark:bg-cyan-900/40', iconColor: 'text-cyan-600 dark:text-cyan-400', valueColor: 'text-cyan-700 dark:text-cyan-300', stripGradient: 'linear-gradient(90deg, #06b6d4, #22d3ee)', progress: collectionRate, iconGradient: 'linear-gradient(135deg, #06b6d4, #22d3ee)' },
   ]
 
   // Handle add payment
@@ -341,6 +446,20 @@ export default function FeeManagementPage() {
     setFeeTypeForm({ name: '', amount: '', frequency: 'سنوي', applicableClasses: 'الكل' })
   }
 
+  // Highlight matching text
+  const highlightText = (text: string, query: string) => {
+    if (!query) return text
+    const index = text.indexOf(query)
+    if (index === -1) return text
+    return (
+      <>
+        {text.substring(0, index)}
+        <span className="bg-yellow-200 dark:bg-yellow-800/50 rounded px-0.5">{query}</span>
+        {text.substring(index + query.length)}
+      </>
+    )
+  }
+
   return (
     <motion.div
       className="space-y-6"
@@ -393,15 +512,77 @@ export default function FeeManagementPage() {
         </div>
       </motion.div>
 
+      {/* Overdue Amount Alert Banner */}
+      {overdueCount > 0 && (
+        <motion.div
+          variants={itemVariants}
+          className="rounded-xl p-4 border border-red-200 dark:border-red-800"
+          style={{ background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.08), rgba(245, 158, 11, 0.08))' }}
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, #ef4444, #f59e0b)' }}>
+              <AlertTriangle className="h-5 w-5 text-white" />
+            </div>
+            <div className="flex-1">
+              <p className="font-bold text-red-700 dark:text-red-400 text-sm">تنبيه: طلاب متأخرون عن الدفع</p>
+              <p className="text-xs text-red-600/80 dark:text-red-300/80">
+                يوجد <strong>{overdueCount}</strong> طالب متأخر بإجمالي مبلغ <strong>{formatIQD(overdueAmount)}</strong>
+              </p>
+            </div>
+            <Badge className="text-xs bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700">
+              {overdueCount} متأخر
+            </Badge>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Recent Payments Quick Summary */}
+      <motion.div variants={itemVariants}>
+        <div className="flex items-center gap-2 mb-3">
+          <CreditCard className="h-4 w-4 text-teal-600 dark:text-teal-400" />
+          <h3 className="text-sm font-bold dark:text-gray-200">آخر المدفوعات</h3>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {recentPayments.map((payment) => (
+            <motion.div
+              key={payment.id}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="rounded-xl border border-gray-200 dark:border-gray-700 p-3 bg-white dark:bg-gray-800/50 hover:shadow-md transition-shadow"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
+                  <Banknote className="h-4 w-4 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-teal-700 dark:text-teal-300 truncate">{formatIQD(payment.amount)}</p>
+                  <p className="text-[10px] text-muted-foreground truncate">{payment.studentName}</p>
+                </div>
+                <div className="text-left shrink-0">
+                  <p className="text-[10px] text-muted-foreground">{formatDateAr(payment.date)}</p>
+                  <Badge variant="outline" className={cn('text-[8px] px-1', METHOD_COLORS[payment.method])}>
+                    {payment.method}
+                  </Badge>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </motion.div>
+
       {/* Summary Cards */}
       <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {summaryCards.map((card) => (
           <Card key={card.title} className={cn('overflow-hidden relative', card.bgColor, card.borderColor)}>
             <div className="absolute top-0 right-0 left-0 h-1" style={{ background: card.stripGradient }} />
             <CardContent className="p-4 flex items-center gap-4">
-              <div className={cn('w-12 h-12 rounded-xl flex items-center justify-center shrink-0', card.iconBg)}>
-                <card.icon className={cn('h-6 w-6', card.iconColor)} />
-              </div>
+              {'progress' in card && card.progress !== undefined ? (
+                <CollectionProgressRing percentage={card.progress} size={72} />
+              ) : (
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ background: card.iconGradient }}>
+                  <card.icon className="h-6 w-6 text-white" />
+                </div>
+              )}
               <div className="flex-1 min-w-0">
                 <p className="text-xs text-muted-foreground">{card.title}</p>
                 <div className="flex items-center gap-1.5">
@@ -448,8 +629,11 @@ export default function FeeManagementPage() {
                   whileHover={{ y: -2, boxShadow: '0 8px 25px -5px rgba(13, 148, 136, 0.15)' }}
                   className="rounded-xl border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-all bg-white dark:bg-gray-800/50 relative overflow-hidden group"
                 >
+                  {/* Hover gradient overlay */}
+                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{ background: 'linear-gradient(135deg, rgba(13, 148, 136, 0.08), rgba(5, 150, 105, 0.08))' }} />
+                  {/* Animated border glow on hover */}
                   <div className="absolute top-0 right-0 left-0 h-0.5 opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
-                  <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-start justify-between mb-3 relative z-10">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-lg bg-teal-100 dark:bg-teal-900/40 flex items-center justify-center">
                         <DollarSign className="h-4 w-4 text-teal-600 dark:text-teal-400" />
@@ -460,14 +644,14 @@ export default function FeeManagementPage() {
                       {fee.frequency}
                     </Badge>
                   </div>
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2 mb-1 relative z-10">
                     <div className={cn(
                       'w-2 h-2 rounded-full shrink-0',
                       fee.frequency === 'شهري' ? 'bg-blue-500' : fee.frequency === 'سنوي' ? 'bg-teal-500' : 'bg-purple-500'
                     )} />
                     <p className="text-lg font-bold text-teal-700 dark:text-teal-300">{formatIQD(fee.amount)}</p>
                   </div>
-                  <p className="text-[11px] text-muted-foreground dark:text-gray-400">
+                  <p className="text-[11px] text-muted-foreground dark:text-gray-400 relative z-10">
                     الصفوف: {fee.applicableClasses.join('، ')}
                   </p>
                 </motion.div>
@@ -569,6 +753,7 @@ export default function FeeManagementPage() {
                         <TableHead className="text-center">المدفوع</TableHead>
                         <TableHead className="text-center">المتبقي</TableHead>
                         <TableHead className="text-center">الحالة</TableHead>
+                        <TableHead className="text-center">إجراءات</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -597,10 +782,14 @@ export default function FeeManagementPage() {
                                 )}>
                                   {record.studentName.charAt(0)}
                                 </div>
-                                <span className="font-medium text-sm dark:text-gray-200">{record.studentName}</span>
+                                <span className="font-medium text-sm dark:text-gray-200">
+                                  {searchQuery ? highlightText(record.studentName, searchQuery) : record.studentName}
+                                </span>
                               </div>
                             </TableCell>
-                            <TableCell className="text-center text-xs text-muted-foreground dark:text-gray-400">{record.className}</TableCell>
+                            <TableCell className="text-center text-xs text-muted-foreground dark:text-gray-400">
+                              {searchQuery ? highlightText(record.className, searchQuery) : record.className}
+                            </TableCell>
                             <TableCell className="text-center">
                               <div className="flex items-center justify-center gap-1.5">
                                 <div className={cn(
@@ -615,7 +804,7 @@ export default function FeeManagementPage() {
                             <TableCell className="text-center">
                               <div>
                                 <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">{formatIQD(record.paid)}</span>
-                                <div className="w-16 mx-auto mt-1">
+                                <div className="w-16 mx-auto mt-1" title={`${formatIQD(record.paid)} من ${formatIQD(record.totalFees)} (${paidPercent}%)`}>
                                   <Progress value={paidPercent} className="h-1" />
                                 </div>
                               </div>
@@ -626,6 +815,17 @@ export default function FeeManagementPage() {
                                 <StatusIcon className="h-3 w-3" />
                                 {record.status}
                               </Badge>
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-teal-600 hover:text-teal-700 hover:bg-teal-50 dark:text-teal-400 dark:hover:bg-teal-900/20"
+                                onClick={() => toast({ title: 'طباعة إيصال', description: `جاري طباعة إيصال ${record.studentName}` })}
+                                title="طباعة إيصال"
+                              >
+                                <Printer className="h-3.5 w-3.5" />
+                              </Button>
                             </TableCell>
                           </motion.tr>
                         )
@@ -685,6 +885,7 @@ export default function FeeManagementPage() {
                         <TableHead className="text-center">طريقة الدفع</TableHead>
                         <TableHead className="text-center">رقم الإيصال</TableHead>
                         <TableHead>ملاحظات</TableHead>
+                        <TableHead className="text-center">إيصال</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -702,7 +903,9 @@ export default function FeeManagementPage() {
                               {formatDateAr(payment.date)}
                             </div>
                           </TableCell>
-                          <TableCell className="text-sm font-medium">{payment.studentName}</TableCell>
+                          <TableCell className="text-sm font-medium">
+                            {paymentSearchQuery ? highlightText(payment.studentName, paymentSearchQuery) : payment.studentName}
+                          </TableCell>
                           <TableCell className="text-center text-sm font-semibold text-teal-700 dark:text-teal-300">{formatIQD(payment.amount)}</TableCell>
                           <TableCell className="text-center">
                             <Badge variant="outline" className={cn('text-[10px] gap-1', METHOD_COLORS[payment.method])}>
@@ -715,6 +918,17 @@ export default function FeeManagementPage() {
                           </TableCell>
                           <TableCell className="text-center text-xs font-mono" dir="ltr">{payment.receiptNumber}</TableCell>
                           <TableCell className="text-xs text-muted-foreground max-w-[120px] truncate">{payment.notes || '—'}</TableCell>
+                          <TableCell className="text-center">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-teal-600 hover:text-teal-700 hover:bg-teal-50 dark:text-teal-400 dark:hover:bg-teal-900/20"
+                              onClick={() => toast({ title: 'طباعة إيصال', description: `جاري طباعة إيصال ${payment.receiptNumber}` })}
+                              title="طباعة إيصال"
+                            >
+                              <Printer className="h-3.5 w-3.5" />
+                            </Button>
+                          </TableCell>
                         </motion.tr>
                       ))}
                     </TableBody>
@@ -741,6 +955,12 @@ export default function FeeManagementPage() {
             <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={MONTHLY_COLLECTION_DATA} margin={{ top: 10, right: 10, left: 10, bottom: 5 }}>
+                  <defs>
+                    <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#0d9488" />
+                      <stop offset="100%" stopColor="#059669" />
+                    </linearGradient>
+                  </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.5} />
                   <XAxis
                     dataKey="month"
@@ -758,7 +978,7 @@ export default function FeeManagementPage() {
                   <Legend
                     formatter={(value: string) => <span className="text-xs text-muted-foreground">{value}</span>}
                   />
-                  <Bar dataKey="collection" name="المحصل" fill="#0d9488" radius={[4, 4, 0, 0]} barSize={28} />
+                  <Bar dataKey="collection" name="المحصل" fill="url(#barGradient)" radius={[4, 4, 0, 0]} barSize={28} />
                   <Bar dataKey="target" name="المستهدف" fill="#d1d5db" radius={[4, 4, 0, 0]} barSize={28} />
                 </BarChart>
               </ResponsiveContainer>
@@ -810,9 +1030,60 @@ export default function FeeManagementPage() {
         </Card>
       </motion.div>
 
+      {/* Payment Trend Area Chart */}
+      <motion.div variants={itemVariants}>
+        <Card className="overflow-hidden dark:bg-gray-900/50 dark:border-gray-700">
+          <div className="h-1" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base dark:text-gray-200">
+              <TrendingUp className="h-5 w-5 text-teal-600 dark:text-teal-400" />
+              اتجاه المدفوعات التراكمية
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={CUMULATIVE_TREND_DATA} margin={{ top: 10, right: 10, left: 10, bottom: 5 }}>
+                  <defs>
+                    <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#0d9488" stopOpacity={0.3} />
+                      <stop offset="100%" stopColor="#059669" stopOpacity={0.05} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.5} />
+                  <XAxis
+                    dataKey="month"
+                    tick={{ fontSize: 11, fill: '#6b7280' }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 10, fill: '#6b7280' }}
+                    axisLine={false}
+                    tickLine={false}
+                    tickFormatter={(v: number) => `${(v / 1000000).toFixed(1)}M`}
+                  />
+                  <Tooltip content={<TrendTooltip />} />
+                  <Area
+                    type="monotone"
+                    dataKey="cumulative"
+                    name="المدفوعات التراكمية"
+                    stroke="#0d9488"
+                    strokeWidth={2.5}
+                    fill="url(#areaGradient)"
+                    dot={{ fill: '#0d9488', r: 4, strokeWidth: 2, stroke: '#fff' }}
+                    activeDot={{ r: 6, fill: '#059669', strokeWidth: 2, stroke: '#fff' }}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
       {/* Add Payment Dialog */}
       <Dialog open={addPaymentOpen} onOpenChange={setAddPaymentOpen}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto dark:bg-gray-900">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CreditCard className="h-5 w-5 text-primary" />
@@ -821,7 +1092,7 @@ export default function FeeManagementPage() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
-              <Label>اسم الطالب *</Label>
+              <Label className="dark:text-gray-300">اسم الطالب *</Label>
               <Select value={paymentForm.studentName} onValueChange={(v) => setPaymentForm({ ...paymentForm, studentName: v })}>
                 <SelectTrigger>
                   <SelectValue placeholder="اختر الطالب" />
@@ -834,7 +1105,7 @@ export default function FeeManagementPage() {
               </Select>
             </div>
             <div>
-              <Label>المبلغ (د.ع) *</Label>
+              <Label className="dark:text-gray-300">المبلغ (د.ع) *</Label>
               <Input
                 type="number"
                 placeholder="أدخل المبلغ"
@@ -843,7 +1114,7 @@ export default function FeeManagementPage() {
               />
             </div>
             <div>
-              <Label>طريقة الدفع *</Label>
+              <Label className="dark:text-gray-300">طريقة الدفع *</Label>
               <Select value={paymentForm.method} onValueChange={(v) => setPaymentForm({ ...paymentForm, method: v as typeof paymentForm.method })}>
                 <SelectTrigger>
                   <SelectValue />
@@ -857,7 +1128,7 @@ export default function FeeManagementPage() {
               </Select>
             </div>
             <div>
-              <Label>رقم الإيصال *</Label>
+              <Label className="dark:text-gray-300">رقم الإيصال *</Label>
               <Input
                 placeholder="مثال: REC-2025-020"
                 value={paymentForm.receiptNumber}
@@ -866,7 +1137,7 @@ export default function FeeManagementPage() {
               />
             </div>
             <div>
-              <Label>التاريخ</Label>
+              <Label className="dark:text-gray-300">التاريخ</Label>
               <Input
                 type="date"
                 value={paymentForm.date}
@@ -874,7 +1145,7 @@ export default function FeeManagementPage() {
               />
             </div>
             <div>
-              <Label>ملاحظات</Label>
+              <Label className="dark:text-gray-300">ملاحظات</Label>
               <Textarea
                 placeholder="ملاحظات إضافية..."
                 value={paymentForm.notes}
@@ -894,7 +1165,7 @@ export default function FeeManagementPage() {
 
       {/* Add Fee Type Dialog */}
       <Dialog open={addFeeTypeOpen} onOpenChange={setAddFeeTypeOpen}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto dark:bg-gray-900">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Receipt className="h-5 w-5 text-primary" />
@@ -903,7 +1174,7 @@ export default function FeeManagementPage() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
-              <Label>اسم الرسم *</Label>
+              <Label className="dark:text-gray-300">اسم الرسم *</Label>
               <Input
                 placeholder="مثال: رسوم مختبر"
                 value={feeTypeForm.name}
@@ -911,7 +1182,7 @@ export default function FeeManagementPage() {
               />
             </div>
             <div>
-              <Label>المبلغ (د.ع) *</Label>
+              <Label className="dark:text-gray-300">المبلغ (د.ع) *</Label>
               <Input
                 type="number"
                 placeholder="أدخل المبلغ"
@@ -920,7 +1191,7 @@ export default function FeeManagementPage() {
               />
             </div>
             <div>
-              <Label>التكرار</Label>
+              <Label className="dark:text-gray-300">التكرار</Label>
               <Select value={feeTypeForm.frequency} onValueChange={(v) => setFeeTypeForm({ ...feeTypeForm, frequency: v as typeof feeTypeForm.frequency })}>
                 <SelectTrigger>
                   <SelectValue />
@@ -933,7 +1204,7 @@ export default function FeeManagementPage() {
               </Select>
             </div>
             <div>
-              <Label>الصفوف المطبق عليها</Label>
+              <Label className="dark:text-gray-300">الصفوف المطبق عليها</Label>
               <Input
                 placeholder="الكل أو اسم الصف"
                 value={feeTypeForm.applicableClasses}

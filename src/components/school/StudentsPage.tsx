@@ -6,7 +6,7 @@ import QRCode from 'qrcode'
 import {
   Search, Plus, Download, Eye, Edit, Trash2, Printer,
   ChevronLeft, ChevronRight, User, X, Users, ArrowRightLeft, CheckCircle2,
-  Camera, Phone, MapPin, GraduationCap
+  Camera, Phone, MapPin, GraduationCap, UserCircle
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -52,6 +52,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/hooks/use-toast'
 import { exportToCSV } from '@/lib/export-utils'
+import { useAppStore } from '@/lib/store'
 
 // Types
 interface ClassItem {
@@ -129,6 +130,7 @@ const ATTENDANCE_COLORS: Record<string, string> = {
 
 export default function StudentsPage() {
   const { toast } = useToast()
+  const { setSelectedStudentId, setActivePage } = useAppStore()
   const [students, setStudents] = useState<Student[]>([])
   const [classes, setClasses] = useState<ClassItem[]>([])
   const [total, setTotal] = useState(0)
@@ -225,6 +227,11 @@ export default function StudentsPage() {
     } catch {
       toast({ title: 'خطأ', description: 'فشل في جلب بيانات الطالب', variant: 'destructive' })
     }
+  }
+
+  const navigateToProfile = (studentId: string) => {
+    setSelectedStudentId(studentId)
+    setActivePage('profile')
   }
 
   const openAddForm = () => {
@@ -494,7 +501,7 @@ export default function StudentsPage() {
                           exit={{ opacity: 0, y: -10 }}
                           transition={{ delay: idx * 0.03 }}
                           className="cursor-pointer hover:bg-muted/50 dark:hover:bg-gray-800/50 border-b transition-colors"
-                          onClick={() => openProfile(student.id)}
+                          onClick={() => navigateToProfile(student.id)}
                         >
                           <TableCell className="text-center font-mono text-sm">
                             {student.studentNumber}
@@ -533,6 +540,9 @@ export default function StudentsPage() {
                           </TableCell>
                           <TableCell className="text-center">
                             <div className="flex items-center justify-center gap-1" onClick={(e) => e.stopPropagation()}>
+                              <Button size="icon" variant="ghost" className="h-8 w-8 text-teal-600 dark:text-teal-400" onClick={() => navigateToProfile(student.id)} title="عرض الملف">
+                                <UserCircle className="h-4 w-4" />
+                              </Button>
                               <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openProfile(student.id)}>
                                 <Eye className="h-4 w-4" />
                               </Button>

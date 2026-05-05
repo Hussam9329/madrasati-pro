@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Award, Plus, Download, Printer, Eye, FileText,
   GraduationCap, Star, Clock, BookOpen, MapPin, QrCode,
-  Stamp, CheckCircle2, Search
+  Stamp, CheckCircle2, Search, BarChart3
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -178,6 +178,30 @@ const STATUS_COLORS: Record<string, { bg: string; text: string; darkBg: string; 
   'مطبوعة': { bg: 'bg-blue-100', text: 'text-blue-700', darkBg: 'dark:bg-blue-900/30', darkText: 'dark:text-blue-300' },
 }
 
+// Animated counter hook
+function useAnimatedCounter(target: number, duration = 1200) {
+  const [count, setCount] = useState(0)
+  const prevTarget = useRef(0)
+
+  useEffect(() => {
+    const start = prevTarget.current
+    const diff = target - start
+    const startTime = performance.now()
+
+    const animate = (now: number) => {
+      const elapsed = now - startTime
+      const progress = Math.min(elapsed / duration, 1)
+      const eased = 1 - Math.pow(1 - progress, 3)
+      setCount(Math.round(start + diff * eased))
+      if (progress < 1) requestAnimationFrame(animate)
+    }
+    requestAnimationFrame(animate)
+    prevTarget.current = target
+  }, [target, duration])
+
+  return count
+}
+
 // Animation variants
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -214,6 +238,27 @@ export default function CertificatePage() {
   const pending = certificates.filter(c => c.status === 'معلقة').length
   const printed = certificates.filter(c => c.status === 'مطبوعة').length
   const templates = CERTIFICATE_TYPES.length
+
+  // Animated counters
+  const animatedIssued = useAnimatedCounter(issued)
+  const animatedPending = useAnimatedCounter(pending)
+  const animatedPrinted = useAnimatedCounter(printed)
+  const animatedTemplates = useAnimatedCounter(templates)
+
+  // Certificate type distribution for mini chart
+  const typeDistribution = useMemo(() => {
+    const dist: Record<string, number> = {}
+    certificates.forEach(c => {
+      dist[c.certificateType] = (dist[c.certificateType] || 0) + 1
+    })
+    return Object.entries(dist).map(([name, count]) => ({
+      name,
+      count,
+      certType: CERTIFICATE_TYPES.find(t => t.name === name),
+    }))
+  }, [certificates])
+
+  const maxTypeCount = Math.max(...typeDistribution.map(t => t.count))
 
   // Filter certificates
   const filteredCertificates = certificates.filter(c => {
@@ -296,12 +341,12 @@ export default function CertificatePage() {
         <Card className="border-emerald-200 bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-950/20 dark:to-green-950/20 overflow-hidden relative">
           <div className="absolute top-0 right-0 left-0 h-1" style={{ background: 'linear-gradient(90deg, #059669, #10b981)' }} />
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center shrink-0">
-              <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+            <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, #059669, #10b981)' }}>
+              <CheckCircle2 className="h-5 w-5 text-white" />
             </div>
             <div>
               <p className="text-[11px] text-muted-foreground">شهادات صادرة</p>
-              <p className="text-xl font-bold text-emerald-700 dark:text-emerald-300">{issued}</p>
+              <p className="text-xl font-bold text-emerald-700 dark:text-emerald-300">{animatedIssued}</p>
             </div>
           </CardContent>
         </Card>
@@ -309,12 +354,12 @@ export default function CertificatePage() {
         <Card className="border-amber-200 bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/20 dark:to-yellow-950/20 overflow-hidden relative">
           <div className="absolute top-0 right-0 left-0 h-1" style={{ background: 'linear-gradient(90deg, #d97706, #f59e0b)' }} />
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center shrink-0">
-              <Clock className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+            <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, #d97706, #f59e0b)' }}>
+              <Clock className="h-5 w-5 text-white" />
             </div>
             <div>
               <p className="text-[11px] text-muted-foreground">معلقة</p>
-              <p className="text-xl font-bold text-amber-700 dark:text-amber-300">{pending}</p>
+              <p className="text-xl font-bold text-amber-700 dark:text-amber-300">{animatedPending}</p>
             </div>
           </CardContent>
         </Card>
@@ -322,12 +367,12 @@ export default function CertificatePage() {
         <Card className="border-teal-200 bg-gradient-to-br from-teal-50 to-cyan-50 dark:from-teal-950/20 dark:to-cyan-950/20 overflow-hidden relative">
           <div className="absolute top-0 right-0 left-0 h-1" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-teal-100 dark:bg-teal-900/40 flex items-center justify-center shrink-0">
-              <FileText className="h-5 w-5 text-teal-600 dark:text-teal-400" />
+            <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
+              <FileText className="h-5 w-5 text-white" />
             </div>
             <div>
               <p className="text-[11px] text-muted-foreground">قوالب متاحة</p>
-              <p className="text-xl font-bold text-teal-700 dark:text-teal-300">{templates}</p>
+              <p className="text-xl font-bold text-teal-700 dark:text-teal-300">{animatedTemplates}</p>
             </div>
           </CardContent>
         </Card>
@@ -335,12 +380,49 @@ export default function CertificatePage() {
         <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-sky-50 dark:from-blue-950/20 dark:to-sky-950/20 overflow-hidden relative">
           <div className="absolute top-0 right-0 left-0 h-1" style={{ background: 'linear-gradient(90deg, #2563eb, #3b82f6)' }} />
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center shrink-0">
-              <Printer className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, #2563eb, #3b82f6)' }}>
+              <Printer className="h-5 w-5 text-white" />
             </div>
             <div>
               <p className="text-[11px] text-muted-foreground">مطبوعة</p>
-              <p className="text-xl font-bold text-blue-700 dark:text-blue-300">{printed}</p>
+              <p className="text-xl font-bold text-blue-700 dark:text-blue-300">{animatedPrinted}</p>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Certificate Type Distribution Mini Chart */}
+      <motion.div variants={itemVariants}>
+        <Card className="overflow-hidden dark:bg-gray-900/50 dark:border-gray-700">
+          <div className="h-1" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2 dark:text-gray-200">
+              <BarChart3 className="h-4 w-4 text-teal-600 dark:text-teal-400" />
+              إحصائيات الشهادات
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4 pt-0">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+              {typeDistribution.map((td) => {
+                const Icon = td.certType?.icon || FileText
+                const barPercent = maxTypeCount > 0 ? (td.count / maxTypeCount) * 100 : 0
+                return (
+                  <div key={td.name} className="flex flex-col items-center gap-1.5 p-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+                    <Icon className={cn('h-4 w-4', td.certType?.color || 'text-gray-500', td.certType?.darkText || '')} />
+                    <span className="text-[10px] text-muted-foreground text-center leading-tight">{td.name}</span>
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+                      <motion.div
+                        className="h-full rounded-full"
+                        style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }}
+                        initial={{ width: 0 }}
+                        animate={{ width: `${barPercent}%` }}
+                        transition={{ duration: 0.8, ease: 'easeOut' }}
+                      />
+                    </div>
+                    <span className="text-xs font-bold text-teal-700 dark:text-teal-300">{td.count}</span>
+                  </div>
+                )
+              })}
             </div>
           </CardContent>
         </Card>
@@ -359,11 +441,13 @@ export default function CertificatePage() {
                 whileTap={{ scale: 0.98 }}
               >
                 <Card className={cn(
-                  'overflow-hidden cursor-pointer transition-all hover:shadow-lg border',
+                  'overflow-hidden cursor-pointer transition-all hover:shadow-lg border relative group',
                   type.border, type.darkBorder
                 )}>
+                  {/* Gradient hover overlay */}
+                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{ background: 'linear-gradient(135deg, rgba(13, 148, 136, 0.08), rgba(5, 150, 105, 0.08))' }} />
                   <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
-                  <CardContent className="p-4">
+                  <CardContent className="p-4 relative z-10">
                     <div className="flex items-start gap-3">
                       <div className={cn(
                         'w-12 h-12 rounded-xl flex items-center justify-center shrink-0',
@@ -422,7 +506,7 @@ export default function CertificatePage() {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow>
+                  <TableRow className="bg-gray-50 dark:bg-gray-800/50">
                     <TableHead>اسم الطالب</TableHead>
                     <TableHead className="text-center">نوع الشهادة</TableHead>
                     <TableHead className="text-center">الصف</TableHead>
@@ -436,6 +520,7 @@ export default function CertificatePage() {
                     {filteredCertificates.map((cert, idx) => {
                       const statusColor = STATUS_COLORS[cert.status]
                       const certType = CERTIFICATE_TYPES.find(t => t.name === cert.certificateType)
+                      const isEven = idx % 2 === 0
 
                       return (
                         <motion.tr
@@ -443,7 +528,10 @@ export default function CertificatePage() {
                           initial={{ opacity: 0, y: 8 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: idx * 0.02 }}
-                          className="hover:bg-muted/50 dark:hover:bg-gray-800/50 border-b transition-colors"
+                          className={cn(
+                            'hover:bg-muted/50 dark:hover:bg-gray-800/50 border-b transition-colors',
+                            isEven ? 'bg-gray-50/50 dark:bg-gray-800/20' : 'bg-white dark:bg-transparent'
+                          )}
                         >
                           <TableCell>
                             <div className="flex items-center gap-2">
@@ -533,18 +621,48 @@ export default function CertificatePage() {
             </DialogTitle>
           </DialogHeader>
           {previewCert && (
-            <div className="space-y-4">
+            <motion.div
+              className="space-y-4"
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
+            >
               {/* Certificate Preview */}
-              <div id="certificate-preview" className="bg-white border-2 border-teal-200 rounded-xl overflow-hidden shadow-lg print:border-0 print:shadow-none print:rounded-none">
+              <div id="certificate-preview" className="bg-white border-2 border-teal-200 rounded-xl overflow-hidden shadow-lg relative print:border-0 print:shadow-none print:rounded-none">
+                {/* Watermark overlay */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
+                  <GraduationCap className="h-48 w-48 text-teal-100 dark:text-teal-900/30 opacity-40" />
+                </div>
+
+                {/* Decorative corner patterns (Islamic geometric-inspired) */}
+                <div className="absolute top-0 right-0 w-20 h-20 pointer-events-none z-0">
+                  <div className="absolute top-2 right-2 w-3 h-3 border-t-2 border-r-2 border-teal-300/50 rounded-tr-sm" />
+                  <div className="absolute top-5 right-5 w-6 h-6 border-t border-r border-teal-200/30 rounded-tr-sm" />
+                  <div className="absolute top-3 right-8 w-2 h-2 border-t border-r border-teal-200/40 rounded-tr-sm" />
+                </div>
+                <div className="absolute top-0 left-0 w-20 h-20 pointer-events-none z-0">
+                  <div className="absolute top-2 left-2 w-3 h-3 border-t-2 border-l-2 border-teal-300/50 rounded-tl-sm" />
+                  <div className="absolute top-5 left-5 w-6 h-6 border-t border-l border-teal-200/30 rounded-tl-sm" />
+                  <div className="absolute top-3 left-8 w-2 h-2 border-t border-l border-teal-200/40 rounded-tl-sm" />
+                </div>
+                <div className="absolute bottom-0 right-0 w-20 h-20 pointer-events-none z-0">
+                  <div className="absolute bottom-2 right-2 w-3 h-3 border-b-2 border-r-2 border-teal-300/50 rounded-br-sm" />
+                  <div className="absolute bottom-5 right-5 w-6 h-6 border-b border-r border-teal-200/30 rounded-br-sm" />
+                </div>
+                <div className="absolute bottom-0 left-0 w-20 h-20 pointer-events-none z-0">
+                  <div className="absolute bottom-2 left-2 w-3 h-3 border-b-2 border-l-2 border-teal-300/50 rounded-bl-sm" />
+                  <div className="absolute bottom-5 left-5 w-6 h-6 border-b border-l border-teal-200/30 rounded-bl-sm" />
+                </div>
+
                 {/* Header with gradient */}
-                <div className="text-center py-4 px-6" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
+                <div className="text-center py-4 px-6 relative z-10" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
                   <p className="text-white/90 text-sm font-medium">جمهورية العراق</p>
                   <p className="text-white/90 text-sm font-medium">وزارة التربية</p>
                   <p className="text-white text-lg font-bold mt-1">مدرسة الحكمة المتوسطة</p>
                 </div>
 
                 {/* Certificate body */}
-                <div className="p-6 sm:p-8 text-center">
+                <div className="p-6 sm:p-8 text-center relative z-10">
                   {/* Decorative top */}
                   <div className="flex items-center justify-center gap-3 mb-4">
                     <div className="w-16 h-0.5 bg-teal-200" />
@@ -605,7 +723,13 @@ export default function CertificatePage() {
                       <div className="border-t-2 border-gray-300 pt-2 mt-8">
                         <p className="text-xs text-gray-600">الختم الرسمي</p>
                         <div className="flex items-center justify-center mt-1">
-                          <Stamp className="h-5 w-5 text-gray-300" />
+                          {/* Animated rotating seal */}
+                          <motion.div
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+                          >
+                            <Stamp className="h-8 w-8 text-red-300/60" />
+                          </motion.div>
                         </div>
                       </div>
                     </div>
@@ -614,14 +738,18 @@ export default function CertificatePage() {
                   {/* Footer */}
                   <div className="flex items-center justify-between mt-8 pt-4 border-t border-gray-200">
                     <div className="flex items-center gap-2">
-                      <QrCode className="h-8 w-8 text-gray-300" />
+                      <div className="p-1.5 bg-gray-50 rounded-md border border-gray-200">
+                        <QrCode className="h-7 w-7 text-gray-400" />
+                      </div>
                       <div>
                         <p className="text-[9px] text-gray-400">رمز التحقق</p>
-                        <p className="text-[9px] text-gray-400 font-mono">CERT-{previewCert.id.toUpperCase()}</p>
+                        <p className="text-[9px] text-gray-500 font-mono font-semibold">CERT-{previewCert.id.toUpperCase()}</p>
                       </div>
                     </div>
                     <div className="text-left">
-                      <p className="text-xs text-gray-500">التاريخ: {new Date(previewCert.date).toLocaleDateString('ar-IQ')}</p>
+                      <p className="text-xs text-gray-500">
+                        التاريخ: {new Date(previewCert.date).toLocaleDateString('ar-IQ', { year: 'numeric', month: 'long', day: 'numeric' })}
+                      </p>
                       <p className="text-[10px] text-gray-400">السنة الدراسية 2025-2026</p>
                     </div>
                   </div>
@@ -648,7 +776,7 @@ export default function CertificatePage() {
                   تحميل PDF
                 </Button>
               </div>
-            </div>
+            </motion.div>
           )}
         </DialogContent>
       </Dialog>

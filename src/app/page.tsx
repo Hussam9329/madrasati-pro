@@ -21,8 +21,10 @@ import FeeManagementPage from '@/components/school/FeeManagementPage';
 import MessagingPage from '@/components/school/MessagePage';
 import SchoolCalendarPage from '@/components/school/SchoolCalendarPage';
 import CertificatePage from '@/components/school/CertificatePage';
+import StudentProfilePage from '@/components/school/StudentProfilePage';
 
 function PageRenderer({ page }: { page: PageKey }) {
+  const { selectedStudentId } = useAppStore();
   switch (page) {
     case 'dashboard':
       return <DashboardPage />;
@@ -52,6 +54,8 @@ function PageRenderer({ page }: { page: PageKey }) {
       return <SchoolCalendarPage />;
     case 'certificates':
       return <CertificatePage />;
+    case 'profile':
+      return <StudentProfilePage studentId={selectedStudentId} />;
     case 'messages':
       return <MessagingPage />;
     case 'parents':

@@ -1742,3 +1742,357 @@ Unresolved Issues / Next Phase Priorities:
 - Add parent-teacher conference scheduling
 - Consider adding library/book management module
 - Push updated code to GitHub and redeploy to Vercel
+
+---
+Task ID: 2
+Agent: Styling Enhancement Agent
+Task: Enhance MessagePage with better chat UI, gradient animations, visual polish
+
+Work Log:
+- **Message card hover effects** (`/src/components/school/MessagePage.tsx`):
+  - Added `whileHover={{ scale: 1.01, y: -2 }}` spring animation on message cards
+  - Added gradient hover background overlay (teal→emerald with 5% opacity, transitioning on group-hover)
+  - Added `ring-2 ring-white dark:ring-gray-800` on avatar for depth
+
+- **Message preview dialog enhancement**:
+  - Added decorative gradient border (3px) around dialog — top, left, and right sides using `linear-gradient(90deg, #0d9488, #059669, #0d9488)`
+  - Enhanced sender/recipient info section with dual avatar layout (sender teal gradient, recipient sky gradient) with ArrowUpRight icon between them
+  - Added timestamp display with Calendar icon and formatted date•time
+  - Moved message content to a `bg-gray-50 dark:bg-gray-800/50` rounded container with `max-h-60 overflow-y-auto` and preserved line breaks (`whitespace-pre-wrap`)
+  - Upgraded type/priority badges to h-5 height with icons
+
+- **Announcements section enhancement**:
+  - Added gradient top strips (2px thick) on announcement cards with priority-based colors
+  - Added `whileHover={{ y: -3, scale: 1.01 }}` lift animation on announcement cards
+  - Added colored right borders on ALL announcement cards (red for عاجل, amber for مهم, teal for عادي) instead of only priority cards
+  - Added Calendar icon next to date display
+
+- **Compose tab enhancement**:
+  - Added animated character counter for message body (MAX_CHARS=1000)
+    - Mini progress bar with color coding: teal <70%, amber 70-90%, red >90%
+    - Animated width transition using framer-motion
+    - `font-mono` count display with matching color
+  - Added template selector with preview card
+    - AnimatePresence-based expand/collapse animation
+    - Teal-bordered card showing template name, subject, and content snippet
+    - Gradient top strip on preview card
+    - "قالب" badge indicator
+  - Added file attachment area with dashed border
+    - `border-2 border-dashed` with hover transition to teal
+    - Upload icon with circular background that changes color on hover
+    - "اسحب الملفات هنا أو انقر للرفع" Arabic instruction
+    - File type/size hint text
+  - Separated attachment area from priority into its own section
+  - Added hover:scale-[1.02] on send button
+
+- **Summary cards**:
+  - Added gradient icon backgrounds with `shadow-lg` (matching FeeManagementPage style)
+  - Enhanced gradient top strips (2px thick using inline style with `linear-gradient`)
+  - Added `whileHover={{ y: -4, scale: 1.02 }}` spring animation with shadow transition
+
+- **Message type indicators**:
+  - Added colored left border strips on ALL message cards based on type (teal for رسالة, sky for إشعار, amber for تنبيه, purple for طلب) via `border-r-4` with `typeConf.leftBorder`
+  - Made top gradient strips thicker (h-0.5 → h-[2px]) with enhanced gradient colors
+  - Enhanced TYPE_CONFIG with new `stripColor` and `leftBorder` properties
+  - Enhanced PRIORITY_CONFIG with `stripColor` property
+
+- **"Mark all as read" button**:
+  - Added `CheckCheck` icon button next to search/filter area
+  - Teal-themed outline style with `border-teal-200 text-teal-700 hover:bg-teal-50`
+  - Dark mode variant support
+
+- **Reply functionality**:
+  - Added inline "رد" (Reply) button with `Reply` icon in message detail dialog
+  - AnimatePresence-based expand/collapse reply area
+  - Reply card with gradient top strip, Reply icon header, and recipient info
+  - Textarea with `bg-white dark:bg-gray-900` for contrast
+  - Cancel (X icon) and Send buttons
+  - Send button disabled when reply text is empty
+  - Teal gradient send button matching app theme
+
+- **Empty state for announcements**:
+  - Added illustration-style icon (Megaphone in amber circle with Plus badge)
+  - Descriptive text in Arabic with helper subtitle
+  - Used when MOCK_ANNOUNCEMENTS is empty
+
+- **Tab active state styling**:
+  - Added `data-[state=active]:bg-teal-600 data-[state=active]:text-white data-[state=active]:shadow-md` on all TabsTriggers
+  - Added `transition-all` for smooth state changes
+
+- **Additional enhancements**:
+  - Added `useMemo` for filteredMessages and selectedTemplateData for performance
+  - Added gradient icon in compose card header (teal gradient square with Send icon)
+  - Added gradient icon in announcement dialog header
+  - Added gradient icon in compose dialog header
+  - Enhanced compose dialog with same decorative gradient border as message dialog
+  - Added `hover:scale-105` on header "رسالة جديدة" button
+  - Fixed msg #14 subject from "سلوك needs متابعة" to "سلوك يحتاج متابعة" (Arabic only)
+  - Added Upload, Reply, Calendar, ArrowUpRight icons to imports
+  - All dark mode classes maintained throughout
+  - ESLint: No new errors (only pre-existing slides/ errors)
+
+Stage Summary:
+- Message cards: hover gradient overlay + scale animation + type-based left borders + 2px top strips
+- Message dialog: gradient border, dual avatars, formatted content, inline reply with textarea
+- Announcements: hover lift, gradient strips, all cards have colored right borders
+- Compose: animated character counter, template preview card, dashed attachment area
+- Summary cards: gradient icons, thick top strips, hover lift animation
+- Mark all as read button with CheckCheck icon
+- Reply functionality with AnimatePresence expand/collapse
+- Empty state for announcements with illustration
+- Teal active tab styling
+- All existing functionality preserved
+
+---
+Task ID: 3-4-5
+Agent: Styling Enhancement Agent
+Task: Enhance CertificatePage, SchoolCalendarPage, and FeeManagementPage with professional styling
+
+Work Log:
+- **CertificatePage.tsx enhancements** (`/src/components/school/CertificatePage.tsx`):
+  - Added decorative border patterns to certificate preview (ornamental corner patterns using CSS borders - top-right, top-left, bottom-right, bottom-left corners with nested border elements)
+  - Added watermark-like school logo overlay (GraduationCap icon at low opacity as background in certificate preview)
+  - Enhanced certificate type cards with hover gradient overlay effect (teal/emerald gradient that appears on group-hover)
+  - Added gradient icon backgrounds in summary stat cards (replacing flat bg with gradient backgrounds using `linear-gradient(135deg, ...)`)
+  - Added animated stamp/seal effect in certificate preview using framer-motion (rotating Stamp icon with infinite rotation animation)
+  - Added gradient top strips on the recent certificates table card (1px teal→emerald gradient - already existed, verified)
+  - Enhanced table rows with alternating row colors (bg-gray-50/bg-white pattern using `isEven` check)
+  - Added "إحصائيات الشهادات" mini chart/visual showing certificate type distribution using colored animated progress bars per type
+  - Added animation on certificate preview dialog open (scale from 0.95 to 1, opacity fade using motion.div)
+  - Improved the certificate preview footer with better date formatting (using `toLocaleDateString` with `{ year: 'numeric', month: 'long', day: 'numeric' }`) and QR code styling (bordered container with rounded-md)
+  - Added animated counter effect on summary stat card values (useAnimatedCounter hook with cubic easing)
+  - Added BarChart3 icon import for stats section header
+
+- **SchoolCalendarPage.tsx enhancements** (`/src/components/school/SchoolCalendarPage.tsx`):
+  - Added month transition animation when navigating months (AnimatePresence with slide effect using custom slideVariants and direction state)
+  - Added today's date highlight with pulsing ring animation in the calendar grid (motion.div with scale/opacity animation)
+  - Added event count badge on calendar days with more than 2 events (show "+N" badge with bold font)
+  - Enhanced upcoming events cards with countdown days as a prominent number with colored circle background (gradient circles: teal for today, amber for tomorrow, gray for other days)
+  - Added gradient hover effect on calendar day cells when they have events (subtle teal gradient overlay on hover)
+  - Added "Today's Events" section that shows only today's events prominently at the top (conditional card with gradient accent and pulsing green dot)
+  - Improved event type legend with larger icons and labels (each type gets its own icon + dot + text in a rounded container)
+  - Added a mini month overview stats bar (total events, exams this month, holidays, activities - with colored dots and bold counts)
+  - Added "الانتقال إلى اليوم" (Jump to Today) floating button (fixed bottom-left with Navigation icon and gradient background, spring animation on load)
+  - Added gradient top strips on calendar card and upcoming events card (already existed, verified)
+  - Added Navigation icon import for floating button
+  - Removed the "days until indicator" badges in favor of the more prominent countdown circles
+
+- **FeeManagementPage.tsx enhancements** (`/src/components/school/FeeManagementPage.tsx`):
+  - Added payment trend area chart (last 6 months) below the bar chart showing cumulative payments (AreaChart with gradient fill, custom TrendTooltip, and CUMULATIVE_TREND_DATA)
+  - Added "آخر المدفوعات" (Recent Payments) quick summary cards at top (last 3 payments with amount, student name, date, method badge, and gradient icon)
+  - Added overdue amount alert banner when there are متأخر students (amber/red gradient alert bar with AlertTriangle icon, overdue count, and total overdue amount)
+  - Added tooltip on progress bars showing exact paid/total amounts (using `title` attribute with formatted IQD amounts)
+  - Added "طباعة إيصال" (Print Receipt) button in both fees table and payments table rows (Printer icon button with toast notification)
+  - Enhanced fee type cards with hover gradient overlay and animated border glow (gradient overlay appears on group-hover, top border strip appears on group-hover)
+  - Added collection progress ring chart (circular SVG) in the collection rate stat card (CollectionProgressRing component with animated stroke-dashoffset, gradient stroke, and percentage text)
+  - Added animated counter effect on summary stat card values (useAnimatedCounter hook - used for collectionRate)
+  - Added search highlight effect (yellow background) on matching text in filtered results (highlightText function with `<span className="bg-yellow-200">` for matched portion)
+  - Added gradient icon backgrounds on all stat cards (replacing flat bg with `linear-gradient(135deg, ...)` backgrounds)
+  - Added gradient bar fill on bar chart using SVG linearGradient definition
+  - Added "إجراءات" column header in fees table for the receipt print button
+  - Added "إيصال" column header in payments table for the receipt print button
+  - Added useRef and useEffect imports for animated counter hook
+  - Added AreaChart, Area imports from recharts
+
+- ESLint: All changed files pass lint (only pre-existing slides/ errors remain)
+- Dev server compiling successfully with no errors
+
+Stage Summary:
+- CertificatePage: decorative borders, watermark, gradient hover, gradient stat icons, animated seal, alternating rows, distribution chart, dialog animation, better footer, animated counters
+- SchoolCalendarPage: month slide animation, pulsing today ring, event count badges, countdown circles, gradient hover, today's events section, enhanced legend, month stats bar, floating jump button
+- FeeManagementPage: area trend chart, recent payments cards, overdue alert, progress tooltips, print receipt buttons, gradient hover/glow on fee cards, collection progress ring, animated counters, search highlighting
+- All RTL Arabic with consistent teal/green (#0d9488, #059669) color scheme
+- All dark mode classes properly applied
+- All existing functionality preserved intact
+
+---
+Task ID: 6-7-8
+Agent: Feature Enhancement Agent
+Task: Fix AppLayout sidebar issues, add Command Palette (Ctrl+K), add keyboard shortcuts system
+
+Work Log:
+- **Store Update** (`/src/lib/store.ts`):
+  - Added `sidebarCollapsed` state and `setSidebarCollapsed` action
+  - Added `recentPages` state (PageKey[]) and `addRecentPage` action (tracks last 5 visited pages)
+
+- **AppLayout Sidebar Fixes** (`/src/components/school/AppLayout.tsx`):
+  - **Bottom cutoff fix**: Changed nav section from `ScrollArea` to `overflow-y-auto` div, added `shrink-0` to footer section so it's always visible
+  - **Active state indicators**: Changed active item from gradient background to `bg-teal-600/10 dark:bg-teal-500/20 text-teal-700 dark:text-teal-300` with a right border strip (2px teal gradient from #0d9488 to #059669) using `layoutId` animation
+  - **Hover improvements**: Added gradient hover background `hover:bg-gradient-to-l hover:from-teal-500/5 hover:to-emerald-500/5`, added `scale(1.02)` on icon hover via `motion.div`
+  - **Navigation group separators**: Restructured nav items into 5 groups with `Separator` between them:
+    - Group 1 (الرئيسية): لوحة التحكم, الطلاب, المدرسون, المواد
+    - Group 2 (الأكاديمية): الحضور QR, الدرجات, ترتيب الصفوف, الامتحانات
+    - Group 3 (المالية والفعاليات): الرسوم المدرسية, التقويم المدرسي, الشهادات والوثائق
+    - Group 4 (التواصل): التواصل والرسائل, جدول الحصص, سجل النشاط
+    - Group 5 (التقارير والإعدادات): التقارير, الإشعارات, بوابة ولي الأمر, المستخدمون, الإعدادات
+  - **Collapse/Expand**: Added sidebar collapse/expand toggle with smooth framer-motion width animation (w-16 ↔ w-260px), toggle button at sidebar edge, preference saved to localStorage, collapsed mode shows icons only with tooltips and dot badges
+  - Main content area animates margin-right with framer-motion to match sidebar width
+
+- **New Component: CommandPalette** (`/src/components/school/CommandPalette.tsx`):
+  - Uses shadcn/ui `CommandDialog` (cmdk) for search/command palette
+  - Opens with `Ctrl+K` keyboard shortcut
+  - Searchable list of all 19 pages/modules with icons
+  - Quick actions section: "إضافة طالب", "تسجيل حضور", "إصدار شهادة", "إرسال رسالة", "تبديل الوضع الداكن"
+  - Recent pages section showing last 3 visited pages from store
+  - Pages grouped by category matching sidebar groups
+  - Arabic labels, RTL layout, keyboard navigation (arrow keys + Enter)
+  - Close on Escape, search input placeholder in Arabic
+  - ⌘K badge button added to AppLayout header
+
+- **New Component: KeyboardShortcutsDialog** (`/src/components/school/KeyboardShortcutsDialog.tsx`):
+  - Uses shadcn/ui `Dialog` component
+  - Shows all keyboard shortcuts in a formatted table with key badges
+  - Two categories: التنقل (Navigation) and عام (General)
+  - Key badges styled as keyboard keys: `bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md px-2 py-0.5 text-xs font-mono`
+  - Navigation shortcuts: Ctrl+1 through Ctrl+9 for first 9 pages
+  - General shortcuts: Ctrl+K (command palette), Ctrl+/ (shortcuts help), Ctrl+D (dark mode), Escape (close)
+  - Gradient icon header with Keyboard icon
+  - Footer hint showing Ctrl+/ to open
+
+- **Keyboard Shortcuts System** (in AppLayout):
+  - `Ctrl+K` → Open Command Palette
+  - `Ctrl+1` through `Ctrl+9` → Navigate to first 9 pages
+  - `Ctrl+/` → Show keyboard shortcuts help dialog
+  - `Ctrl+D` → Toggle dark mode
+  - `Escape` → Close any open dialog/panel (command palette, shortcuts dialog, mobile sidebar)
+  - Updated footer hint text to show new shortcuts
+
+- **Integration**:
+  - CommandPalette rendered inside AppLayout
+  - KeyboardShortcutsDialog rendered inside AppLayout
+  - Search button with ⌘K badge in AppLayout header
+  - Keyboard icon button in AppLayout header for shortcuts dialog
+  - Recent pages tracking via `addRecentPage` on every `activePage` change
+  - All existing functionality preserved (notifications, theme toggle, user info, etc.)
+
+- ESLint: All changed files pass lint (only pre-existing slides/ errors remain)
+- Dev server compiling successfully with 200 status
+
+Stage Summary:
+- Sidebar fully fixed: bottom cutoff resolved, active states enhanced, hover effects improved, group separators added, collapse/expand with localStorage persistence
+- Command Palette (Ctrl+K) with searchable pages, quick actions, recent pages, and Arabic labels
+- Keyboard Shortcuts System with Ctrl+K, Ctrl+1-9, Ctrl+/, Ctrl+D, and Escape
+- KeyboardShortcutsDialog with formatted key badges and shortcut descriptions
+- All three tasks (6, 7, 8) completed successfully
+- All code lint-clean, dev server running without errors
+
+---
+Task ID: 9
+Agent: Feature Enhancement Agent
+Task: Add Student Profile page with detailed information view
+
+Work Log:
+- **New Component**: Created `StudentProfilePage.tsx` - Student profile page (ملف الطالب)
+  - Back button to return to students list
+  - Student header card with gradient background (teal→emerald), decorative circles, avatar with initials, full name, student number, class/section, status badge, gender, QR code display
+  - Action buttons row: Print card, Export grades, Send message to guardian, Transfer student, Edit student (all with teal gradient/outline styling)
+  - Personal information card with gradient top strip: date of birth, gender, national ID, phone, address, guardian name, guardian phone, guardian relation
+  - Attendance summary card with circular SVG progress ring (animated, color-coded by percentage), present/absent/late/excused stat chips, monthly attendance mini bar chart (last 3 months)
+  - Grades overview card with average score display (color-coded), class rank, pass/fail count, subject grades list with animated mini progress bars and grade badges
+  - Payment status card with paid/remaining/total amounts, payment progress bar, status badge, last payment info box
+  - Activity timeline with 5 recent activities (attendance, grade, late, payment records) with type-based icons and colored indicators
+  - Mock student data for default display, fetches real data from API when studentId prop is provided
+  - QR code generation using qrcode library with teal color
+  - framer-motion animations (staggered container, item variants, animated progress rings and bars)
+  - RTL Arabic layout, teal/green color scheme (#0d9488, #059669)
+  - Dark mode classes throughout (dark:bg-gray-900/50, dark:text-gray-200, dark:border-gray-700, etc.)
+  - Gradient top strips on all cards
+  - 'use client' component
+- **Store Update**: Added 'profile' to PageKey type in `store.ts`
+  - selectedStudentId and setSelectedStudentId were already present in the store
+- **Page Renderer Update**: Added profile case in page.tsx
+  - Imported StudentProfilePage component
+  - Added `case 'profile': return <StudentProfilePage studentId={selectedStudentId} />;`
+  - Moved useAppStore() call to top of PageRenderer function to avoid conditional hook call lint error
+- **StudentsPage Enhancement**: Added navigation to student profile
+  - Imported useAppStore from store
+  - Added navigateToProfile function that sets selectedStudentId and activePage to 'profile'
+  - Changed row click handler from openProfile (dialog) to navigateToProfile (full page)
+  - Added "عرض الملف" (View Profile) icon button with UserCircle icon and teal color in action column
+  - Imported UserCircle from lucide-react
+- ESLint: All changed files pass lint (only pre-existing slides/ errors remain)
+- Dev server compiling successfully with no errors
+
+Stage Summary:
+- Student Profile page fully functional with comprehensive student information view
+- Header card with gradient background, avatar, and QR code
+- Personal info, attendance summary (SVG ring + monthly chart), grades overview (progress bars), payment status, and activity timeline
+- Navigation from StudentsPage via row click or "عرض الملف" button
+- Store updated with 'profile' PageKey
+- All dark mode variants properly applied
+- All code lint-clean, dev server running without errors
+
+---
+Task ID: 14
+Agent: QA + Enhancement Coordinator (Round 6 - Cron Review)
+Task: Assess project status, QA test, fix bugs, improve styling, add features, update worklog
+
+Work Log:
+- **QA Testing via agent-browser**:
+  - Login page works correctly with enhanced styling
+  - Dashboard renders with welcome card, stat cards, charts, and notices
+  - All 19 navigation items visible in sidebar (including new groups with separators)
+  - Students page: gender display correct, "عرض الملف" button working, row click navigates to profile
+  - Student Profile page: comprehensive info view with header card, personal info, attendance ring, grades, payments, activity timeline
+  - Command Palette (Ctrl+K): opens with search, shows pages + quick actions, keyboard navigation works
+  - Keyboard Shortcuts dialog: opens with "?" button, shows all shortcuts in formatted table
+  - Sidebar collapse/expand: works smoothly with framer-motion animation, preference saved in localStorage
+  - Calendar page: enhanced with today's events section, month stats, event count badges
+  - Fees page: enhanced with overdue alert banner, recent payments cards, collection progress ring
+  - Certificates page: enhanced with decorative borders, watermark, animated seal, distribution chart
+  - Messages page: enhanced with reply functionality, mark all as read, character counter, template preview
+  - No console errors on any page
+- **VLM Analysis**: Visual quality rated 8/10, good styling consistency, minor spacing refinements suggested
+- **Lint check**: Clean (only pre-existing slides/ errors remain)
+- **Dev server**: Running on port 3000 with 200 status on all pages
+
+Stage Summary:
+- **STYLING ENHANCEMENTS** across 4 pages:
+  - MessagePage: hover gradient effects, message preview dialog with decorative border, reply functionality, mark all as read, character counter, template preview, enhanced announcements
+  - CertificatePage: decorative ornamental borders, watermark overlay, animated rotating seal, distribution chart, animated counters, alternating table rows
+  - SchoolCalendarPage: month transition animation, pulsing today ring, event count badges, today's events section, month stats bar, enhanced event legend
+  - FeeManagementPage: payment trend area chart, recent payments cards, overdue alert banner, print receipt buttons, collection progress ring, animated counters, search highlight
+- **APPAYOUT FIXES**:
+  - Bottom cutoff fixed with overflow-y-auto + shrink-0
+  - Active state indicators with gradient right border strip
+  - Hover improvements with gradient backgrounds and scale effects
+  - Navigation group separators with Arabic labels
+  - Collapse/expand sidebar with localStorage persistence
+- **NEW FEATURES**:
+  - Command Palette (Ctrl+K) with page search, quick actions, recent pages
+  - Keyboard Shortcuts system with help dialog (Ctrl+K, Ctrl+1-9, Ctrl+/, Ctrl+D, Escape)
+  - Student Profile page with comprehensive info view (header, personal, attendance ring, grades, payments, activity timeline)
+  - Navigation from StudentsPage to Student Profile via row click or "عرض الملف" button
+
+Current Project Status:
+- Comprehensive Arabic RTL school management system with 19+ pages/modules
+- All core CRUD operations working (students, teachers, subjects, grades, attendance)
+- QR-based attendance with scan/record + bulk attendance
+- Reports with 8 types and gradient-filled charts
+- Class ranking with podium and leaderboard
+- Exam management with list/grid views
+- Student transfer between classes
+- Parent portal for viewing child info
+- Schedule timetable and activity log pages
+- Fee management with payment tracking and charts
+- School calendar with event management
+- Certificate/document management with print preview
+- Messaging system with templates and announcements
+- Student Profile with comprehensive information view
+- Command Palette (Ctrl+K) for quick navigation
+- Keyboard shortcuts system
+- Dark mode with next-themes
+- Notification bell with dropdown in header
+- Collapsible sidebar with group separators
+- Enhanced styling with gradient effects, animations, glassmorphism, and color coding
+- Database auto-reconnection mechanism
+- Consistent teal/green (#0d9488, #059669) design language
+
+Unresolved Issues / Next Phase Priorities:
+- Push updated code to GitHub and redeploy to Vercel (CRITICAL - hasn't been done since initial deploy)
+- Add real QR camera scanning capability (currently manual input only)
+- Add student card PDF printing functionality
+- Consider adding data import (CSV/Excel) for bulk student/grade entry
+- Add more report chart types (histograms, scatter plots)
+- Add dashboard widget customization
+- Consider adding multi-school support for district-level management
