@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { verifyToken } from '@/lib/auth';
 
 export async function GET(
   request: Request,
@@ -100,24 +99,6 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-
-    // Check authorization - only مدير or مسؤول نظام can delete
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { error: 'غير مصرح بهذا الإجراء' },
-        { status: 401 }
-      );
-    }
-
-    const token = authHeader.split(' ')[1];
-    const user = verifyToken(token);
-    if (!user || (user.role !== 'مدير' && user.role !== 'مسؤول نظام')) {
-      return NextResponse.json(
-        { error: 'غير مصرح بهذا الإجراء. يتطلب صلاحيات مدير أو مسؤول نظام' },
-        { status: 403 }
-      );
-    }
 
     const existingStudent = await db.student.findUnique({ where: { id } });
     if (!existingStudent) {
