@@ -31,7 +31,6 @@ export async function GET(request: Request) {
         include: {
           class: true,
           section: true,
-          parent: true,
         },
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,
@@ -71,7 +70,6 @@ export async function POST(request: Request) {
       classId,
       sectionId,
       schoolId,
-      parentId,
       guardianName,
       guardianPhone,
       guardianRelation,
@@ -116,7 +114,6 @@ export async function POST(request: Request) {
         classId,
         sectionId,
         schoolId,
-        parentId,
         guardianName,
         guardianPhone,
         guardianRelation,
@@ -126,7 +123,6 @@ export async function POST(request: Request) {
       include: {
         class: true,
         section: true,
-        parent: true,
       },
     });
 
