@@ -22,7 +22,7 @@ export async function DELETE(
     const sectionIds = sections.map(s => s.id);
 
     if (sectionIds.length > 0) {
-      // Delete attendance records for students in these sections
+      // Delete attendance records and grades for students in these sections
       const students = await db.student.findMany({
         where: { sectionId: { in: sectionIds } },
         select: { id: true },
@@ -30,12 +30,8 @@ export async function DELETE(
       const studentIds = students.map(s => s.id);
 
       if (studentIds.length > 0) {
-        await db.gradeModification.deleteMany({
-          where: { grade: { studentId: { in: studentIds } } },
-        });
         await db.grade.deleteMany({ where: { studentId: { in: studentIds } } });
         await db.attendanceRecord.deleteMany({ where: { studentId: { in: studentIds } } });
-        await db.studentNote.deleteMany({ where: { studentId: { in: studentIds } } });
         await db.student.deleteMany({ where: { id: { in: studentIds } } });
       }
 

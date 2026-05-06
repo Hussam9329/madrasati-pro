@@ -16,8 +16,6 @@ import {
   BarChart3,
   TrendingUp,
   School,
-  Bell,
-  Eye,
   Activity,
 } from 'lucide-react';
 import { useAppStore, type PageKey } from '@/lib/store';
@@ -92,13 +90,6 @@ interface DashboardData {
     missingGrades: number;
     completionPercentage: number;
   }>;
-  notices: Array<{
-    id: string;
-    title: string;
-    content: string;
-    type: string;
-    createdAt: string;
-  }>;
   studentsByStatus: Array<{
     status: string;
     count: number;
@@ -132,14 +123,6 @@ const statusRowBorder: Record<string, string> = {
   'مستأذن': 'border-r-blue-500',
   'إجازة مرضية': 'border-r-purple-500',
   'إجازة رسمية': 'border-r-cyan-500',
-};
-
-const noticeTypeBadge: Record<string, { label: string; className: string }> = {
-  'عام': { label: 'عام', className: 'bg-gray-100 text-gray-700' },
-  'مهم': { label: 'مهم', className: 'bg-red-100 text-red-700' },
-  'إداري': { label: 'إداري', className: 'bg-blue-100 text-blue-700' },
-  'أكاديمي': { label: 'أكاديمي', className: 'bg-emerald-100 text-emerald-700' },
-  'طوارئ': { label: 'طوارئ', className: 'bg-orange-100 text-orange-700' },
 };
 
 const PIE_COLORS = ['#10b981', '#ef4444', '#f59e0b', '#f97316', '#06b6d4', '#8b5cf6', '#ec4899', '#6b7280'];
@@ -371,20 +354,6 @@ export default function DashboardPage() {
         },
       ]
     : [];
-
-  const getTimeAgo = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / (1000 * 60));
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    if (diffMins < 60) return `منذ ${diffMins} دقيقة`;
-    if (diffHours < 24) return `منذ ${diffHours} ساعة`;
-    if (diffDays === 1) return 'أمس';
-    if (diffDays < 7) return `منذ ${diffDays} أيام`;
-    return `منذ ${Math.floor(diffDays / 7)} أسبوع`;
-  };
 
   if (error && !data) {
     return (
@@ -684,157 +653,61 @@ export default function DashboardPage() {
         </motion.div>
       </div>
 
-      {/* Bottom section: Notices + Grade Completion */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Notices - Enhanced with View All, time-ago, bell icon for مهم */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-        >
-          <Card className="border-0 shadow-sm h-full overflow-hidden dark:bg-gray-900/50 dark:border dark:border-gray-700">
-            <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #f59e0b, #f97316)' }} />
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-base font-bold text-gray-800 dark:text-gray-200">الإشعارات الأخيرة</CardTitle>
-                  <CardDescription>آخر الإشعارات والتنبيهات</CardDescription>
-                </div>
-                <Button variant="ghost" size="sm" className="gap-1 text-teal-600 hover:text-teal-700 dark:text-teal-400" onClick={() => setActivePage('activity')}>
-                  <Eye className="w-3.5 h-3.5" />
-                  عرض الكل
-                </Button>
+      {/* Grade Completion - Full Width */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+      >
+        <Card className="border-0 shadow-sm overflow-hidden dark:bg-gray-900/50 dark:border dark:border-gray-700">
+          <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #2563eb, #1d4ed8)' }} />
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-bold text-gray-800 dark:text-gray-200">
+              نسبة إكمال الدرجات
+            </CardTitle>
+            <CardDescription>تقدم إدخال الدرجات لكل مادة</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="space-y-4">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="space-y-2">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-2 w-full" />
+                  </div>
+                ))}
               </div>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="space-y-4">
-                  {Array.from({ length: 3 }).map((_, i) => (
-                    <div key={i} className="space-y-2">
-                      <Skeleton className="h-4 w-40" />
-                      <Skeleton className="h-3 w-full" />
+            ) : data?.gradeCompletion && data.gradeCompletion.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                {data.gradeCompletion.map((subject) => (
+                  <div key={subject.subjectId} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {subject.subjectName}
+                      </span>
+                      <span className="text-xs font-semibold" style={{ color: '#2563eb' }}>
+                        {subject.completionPercentage}%
+                      </span>
                     </div>
-                  ))}
-                </div>
-              ) : data?.notices && data.notices.length > 0 ? (
-                <div className="space-y-3 max-h-72 overflow-y-auto custom-scrollbar">
-                  {data.notices.map((notice) => {
-                    const typeInfo = noticeTypeBadge[notice.type] || {
-                      label: notice.type,
-                      className: 'bg-gray-100 text-gray-700',
-                    };
-                    const borderColor: Record<string, string> = {
-                      'عام': 'border-r-gray-400',
-                      'مهم': 'border-r-red-500',
-                      'إداري': 'border-r-blue-500',
-                      'أكاديمي': 'border-r-emerald-500',
-                      'طوارئ': 'border-r-orange-500',
-                    };
-                    return (
-                      <div
-                        key={notice.id}
-                        className={`p-3 rounded-lg border border-gray-100 dark:border-gray-700 hover:border-gray-200 dark:hover:border-gray-600 hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors border-r-4 ${borderColor[notice.type] || 'border-r-gray-300'}`}
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex items-center gap-2">
-                            {notice.type === 'مهم' && (
-                              <motion.div
-                                animate={{ rotate: [0, 15, -15, 0] }}
-                                transition={{ duration: 0.5, repeat: 3, repeatDelay: 2 }}
-                              >
-                                <Bell className="w-4 h-4 text-red-500" />
-                              </motion.div>
-                            )}
-                            <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-200">{notice.title}</h4>
-                          </div>
-                          <Badge variant="secondary" className={`text-xs shrink-0 ${typeInfo.className}`}>
-                            {typeInfo.label}
-                          </Badge>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1.5 line-clamp-2">
-                          {notice.content}
-                        </p>
-                        <div className="flex items-center gap-2 mt-2">
-                          <p className="text-xs text-muted-foreground/60">
-                            {new Date(notice.createdAt).toLocaleDateString('ar-SA', {
-                              year: 'numeric',
-                              month: 'short',
-                              day: 'numeric',
-                            })}
-                          </p>
-                          <span className="text-xs text-teal-600 dark:text-teal-400 font-medium">
-                            {getTimeAgo(notice.createdAt)}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="flex items-center justify-center h-40 text-muted-foreground text-sm">
-                  لا توجد إشعارات
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Grade Completion */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-        >
-          <Card className="border-0 shadow-sm h-full overflow-hidden dark:bg-gray-900/50 dark:border dark:border-gray-700">
-            <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #2563eb, #1d4ed8)' }} />
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base font-bold text-gray-800 dark:text-gray-200">
-                نسبة إكمال الدرجات
-              </CardTitle>
-              <CardDescription>تقدم إدخال الدرجات لكل مادة</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="space-y-4">
-                  {Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} className="space-y-2">
-                      <Skeleton className="h-4 w-32" />
-                      <Skeleton className="h-2 w-full" />
+                    <Progress
+                      value={subject.completionPercentage}
+                      className="h-2"
+                    />
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>تم: {subject.totalGrades}</span>
+                      <span>متوقع: {subject.expectedGrades}</span>
                     </div>
-                  ))}
-                </div>
-              ) : data?.gradeCompletion && data.gradeCompletion.length > 0 ? (
-                <div className="space-y-4 max-h-72 overflow-y-auto custom-scrollbar">
-                  {data.gradeCompletion.map((subject) => (
-                    <div key={subject.subjectId} className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                          {subject.subjectName}
-                        </span>
-                        <span className="text-xs font-semibold" style={{ color: '#2563eb' }}>
-                          {subject.completionPercentage}%
-                        </span>
-                      </div>
-                      <Progress
-                        value={subject.completionPercentage}
-                        className="h-2"
-                      />
-                      <div className="flex justify-between text-xs text-muted-foreground">
-                        <span>تم: {subject.totalGrades}</span>
-                        <span>متوقع: {subject.expectedGrades}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex items-center justify-center h-40 text-muted-foreground text-sm">
-                  لا توجد بيانات درجات
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </motion.div>
-      </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-40 text-muted-foreground text-sm">
+                لا توجد بيانات درجات
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
 
       {/* Third row: Students by Status + Class Attendance */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

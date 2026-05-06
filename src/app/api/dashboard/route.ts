@@ -105,12 +105,6 @@ export async function GET() {
       };
     });
 
-    // Active notices
-    const notices = await db.notice.findMany({
-      take: 5,
-      orderBy: { createdAt: 'desc' },
-    });
-
     // Student status breakdown
     const studentsByStatus = await db.student.groupBy({
       by: ['status'],
@@ -149,7 +143,11 @@ export async function GET() {
       };
     });
 
+    // School info
+    const school = await db.school.findFirst();
+
     return NextResponse.json({
+      school: school ? { name: school.name, academicYear: school.academicYear } : null,
       totals: {
         students: totalStudents,
         teachers: totalTeachers,
@@ -159,7 +157,6 @@ export async function GET() {
       todayAttendance: attendanceStats,
       recentAttendance,
       gradeCompletion,
-      notices,
       studentsByStatus: studentsByStatus.map((s) => ({
         status: s.status,
         count: s._count.status,

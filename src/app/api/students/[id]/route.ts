@@ -14,7 +14,6 @@ export async function GET(
       include: {
         class: true,
         section: true,
-        parent: true,
         grades: {
           include: {
             subject: true,
@@ -24,9 +23,6 @@ export async function GET(
         attendance: {
           orderBy: { date: 'desc' },
           take: 30,
-        },
-        notes: {
-          orderBy: { createdAt: 'desc' },
         },
       },
     });
@@ -77,7 +73,6 @@ export async function PUT(
         status: body.status,
         classId: body.classId,
         sectionId: body.sectionId,
-        parentId: body.parentId,
         guardianName: body.guardianName,
         guardianPhone: body.guardianPhone,
         guardianRelation: body.guardianRelation,
@@ -86,7 +81,6 @@ export async function PUT(
       include: {
         class: true,
         section: true,
-        parent: true,
       },
     });
 
@@ -135,13 +129,7 @@ export async function DELETE(
 
     // Delete related records first
     await db.attendanceRecord.deleteMany({ where: { studentId: id } });
-    await db.studentNote.deleteMany({ where: { studentId: id } });
-    await db.document.deleteMany({ where: { studentId: id } });
-    await db.gradeModification.deleteMany({
-      where: { grade: { studentId: id } },
-    });
     await db.grade.deleteMany({ where: { studentId: id } });
-
     await db.student.delete({ where: { id } });
 
     return NextResponse.json({ message: 'تم حذف الطالب بنجاح' });

@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import {
-  Settings, Users, Bell, Plus, Edit, Trash2, Save, Shield,
-  UserPlus, Megaphone, AlertCircle, Info, CheckCircle,
+  Settings, Users, Edit, Trash2, Save, Shield,
+  UserPlus, AlertCircle, CheckCircle,
   School, Phone, Mail, MapPin, Clock, User as UserIcon, X
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -23,7 +23,6 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter,
   DialogHeader, DialogTitle, DialogTrigger
 } from '@/components/ui/dialog'
-import { Textarea } from '@/components/ui/textarea'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -58,16 +57,6 @@ interface UserData {
   updatedAt: string
 }
 
-interface NoticeData {
-  id: string
-  title: string
-  content: string
-  type: string
-  schoolId: string
-  createdBy: string
-  createdAt: string
-}
-
 const roleColors: Record<string, string> = {
   'مدير': 'bg-red-100 text-red-800 border-red-300',
   'معاون': 'bg-purple-100 text-purple-800 border-purple-300',
@@ -75,18 +64,6 @@ const roleColors: Record<string, string> = {
   'موظف بوابة': 'bg-amber-100 text-amber-800 border-amber-300',
   'مدرس': 'bg-emerald-100 text-emerald-800 border-emerald-300',
   'مسؤول نظام': 'bg-gray-100 text-gray-800 border-gray-300',
-}
-
-const noticeTypeColors: Record<string, string> = {
-  'عام': 'bg-sky-100 text-sky-800 border-sky-300',
-  'عاجل': 'bg-red-100 text-red-800 border-red-300',
-  'أكاديمي': 'bg-purple-100 text-purple-800 border-purple-300',
-}
-
-const noticeTypeIcons: Record<string, React.ReactNode> = {
-  'عام': <Info className="h-4 w-4" />,
-  'عاجل': <AlertCircle className="h-4 w-4" />,
-  'أكاديمي': <School className="h-4 w-4" />,
 }
 
 interface SettingsPageProps {
@@ -114,13 +91,6 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
   const [editingUser, setEditingUser] = useState<UserData | null>(null)
   const [userForm, setUserForm] = useState({ username: '', password: '', name: '', role: 'موظف تسجيل', active: true })
   const [savingUser, setSavingUser] = useState(false)
-
-  // ============ NOTICES STATE ============
-  const [notices, setNotices] = useState<NoticeData[]>([])
-  const [loadingNotices, setLoadingNotices] = useState(false)
-  const [noticeDialogOpen, setNoticeDialogOpen] = useState(false)
-  const [noticeForm, setNoticeForm] = useState({ title: '', content: '', type: 'عام' })
-  const [savingNotice, setSavingNotice] = useState(false)
 
   // ============ FETCH FUNCTIONS ============
   const fetchSchool = useCallback(async () => {
@@ -166,21 +136,6 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
       console.error('Failed to fetch users')
     } finally {
       setLoadingUsers(false)
-    }
-  }, [])
-
-  const fetchNotices = useCallback(async () => {
-    setLoadingNotices(true)
-    try {
-      const res = await fetch('/api/notices?limit=50')
-      if (res.ok) {
-        const data = await res.json()
-        setNotices(data.notices || [])
-      }
-    } catch {
-      console.error('Failed to fetch notices')
-    } finally {
-      setLoadingNotices(false)
     }
   }, [])
 
@@ -309,42 +264,6 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
     }
   }
 
-  // ============ NOTICES HANDLERS ============
-  const handleSaveNotice = async () => {
-    if (!noticeForm.title || !noticeForm.content) {
-      toast({ title: 'خطأ', description: 'العنوان والمحتوى مطلوبان', variant: 'destructive' })
-      return
-    }
-
-    setSavingNotice(true)
-    try {
-      const schoolId = school?.id || 'default'
-      const res = await fetch('/api/notices', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...noticeForm,
-          schoolId,
-          createdBy: 'المدير',
-        }),
-      })
-
-      if (res.ok) {
-        toast({ title: 'تم الإنشاء', description: 'تم إنشاء الإعلان بنجاح' })
-        setNoticeDialogOpen(false)
-        setNoticeForm({ title: '', content: '', type: 'عام' })
-        fetchNotices()
-      } else {
-        const data = await res.json()
-        toast({ title: 'خطأ', description: data.error, variant: 'destructive' })
-      }
-    } catch {
-      toast({ title: 'خطأ', description: 'حدث خطأ في الاتصال', variant: 'destructive' })
-    } finally {
-      setSavingNotice(false)
-    }
-  }
-
   // Format date
   const formatDate = (dateStr: string) => {
     try {
@@ -370,7 +289,7 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
       </div>
 
       <Tabs defaultValue={initialTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 max-w-lg">
+        <TabsList className="grid w-full grid-cols-2 max-w-lg">
           <TabsTrigger value="settings" className="gap-2">
             <Settings className="h-4 w-4" />
             إعدادات المدرسة
@@ -378,10 +297,6 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
           <TabsTrigger value="users" className="gap-2" onClick={fetchUsers}>
             <Users className="h-4 w-4" />
             المستخدمون
-          </TabsTrigger>
-          <TabsTrigger value="notices" className="gap-2" onClick={fetchNotices}>
-            <Bell className="h-4 w-4" />
-            الإشعارات
           </TabsTrigger>
         </TabsList>
 
@@ -809,147 +724,6 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
           </Card>
         </TabsContent>
 
-        {/* ============ NOTICES TAB ============ */}
-        <TabsContent value="notices" className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-amber-100">
-                <Bell className="h-4 w-4 text-amber-700" />
-              </div>
-              <h3 className="text-lg font-bold">الإشعارات والإعلانات</h3>
-            </div>
-            <Dialog open={noticeDialogOpen} onOpenChange={setNoticeDialogOpen}>
-              <DialogTrigger asChild>
-                <Button onClick={() => { setNoticeForm({ title: '', content: '', type: 'عام' }); setNoticeDialogOpen(true) }} className="gap-2 text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
-                  <Plus className="h-4 w-4" />
-                  إضافة إعلان
-                </Button>
-              </DialogTrigger>
-              <DialogContent dir="rtl" className="max-w-md">
-                <DialogHeader>
-                  <DialogTitle className="flex items-center gap-2">
-                    <Megaphone className="h-5 w-5" />
-                    إضافة إعلان جديد
-                  </DialogTitle>
-                  <DialogDescription>أدخل تفاصيل الإعلان</DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label>العنوان</Label>
-                    <Input
-                      value={noticeForm.title}
-                      onChange={(e) => setNoticeForm({ ...noticeForm, title: e.target.value })}
-                      placeholder="عنوان الإعلان"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>المحتوى</Label>
-                    <Textarea
-                      value={noticeForm.content}
-                      onChange={(e) => setNoticeForm({ ...noticeForm, content: e.target.value })}
-                      placeholder="محتوى الإعلان..."
-                      rows={4}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>النوع</Label>
-                    <Select value={noticeForm.type} onValueChange={(v) => setNoticeForm({ ...noticeForm, type: v })}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="عام">عام</SelectItem>
-                        <SelectItem value="عاجل">عاجل</SelectItem>
-                        <SelectItem value="أكاديمي">أكاديمي</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setNoticeDialogOpen(false)}>
-                    إلغاء
-                  </Button>
-                  <Button onClick={handleSaveNotice} disabled={savingNotice} className="gap-2 bg-primary hover:bg-primary/90">
-                    {savingNotice ? (
-                      <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      <Save className="h-4 w-4" />
-                    )}
-                    نشر الإعلان
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          </div>
-
-          {loadingNotices ? (
-            <div className="space-y-4">
-              {[1, 2, 3].map(i => (
-                <Card key={i}>
-                  <CardContent className="p-6 space-y-3">
-                    <Skeleton className="h-5 w-48" />
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-3/4" />
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : notices.length === 0 ? (
-            <Card className="border-dashed">
-              <CardContent className="p-12 flex flex-col items-center justify-center text-center">
-                <Megaphone className="h-12 w-12 text-muted-foreground mb-3" />
-                <h3 className="text-lg font-semibold text-muted-foreground">لا توجد إعلانات</h3>
-                <p className="text-sm text-muted-foreground mt-1">أضف إعلان جديد للبدء</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-4">
-              <AnimatePresence>
-                {notices.map((notice, index) => (
-                  <motion.div
-                    key={notice.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ delay: index * 0.05 }}
-                  >
-                    <Card className={`overflow-hidden ${
-                      notice.type === 'عاجل' ? 'border-red-300' :
-                      notice.type === 'أكاديمي' ? 'border-purple-300' :
-                      'border-border'
-                    }`}>
-                      {notice.type === 'عاجل' && (
-                        <div className="h-1 bg-red-500" />
-                      )}
-                      <CardContent className="p-4">
-                        <div className="flex items-start gap-3">
-                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
-                            noticeTypeColors[notice.type]?.split(' ')[0] || 'bg-gray-100'
-                          }`}>
-                            {noticeTypeIcons[notice.type] || <Info className="h-5 w-5" />}
-                          </div>
-                          <div className="flex-1 min-w-0 space-y-2">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <h4 className="font-semibold">{notice.title}</h4>
-                              <Badge className={`${noticeTypeColors[notice.type] || 'bg-gray-100 text-gray-800'} text-xs`}>
-                                {notice.type}
-                              </Badge>
-                            </div>
-                            <p className="text-sm text-muted-foreground whitespace-pre-wrap">{notice.content}</p>
-                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                              <span>بواسطة: {notice.createdBy}</span>
-                              <span>{formatDate(notice.createdAt)}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </div>
-          )}
-        </TabsContent>
       </Tabs>
     </div>
   )

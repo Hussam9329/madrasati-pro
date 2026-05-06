@@ -70,8 +70,6 @@ export async function POST(request: Request) {
       schoolId,
       score,
       status,
-      modifiedBy,
-      modificationReason,
     } = body;
 
     if (!studentId || !subjectId || !examTypeId || !schoolId) {
@@ -101,21 +99,7 @@ export async function POST(request: Request) {
         );
       }
 
-      // Update grade and log modification
-      const oldScore = existingGrade.score;
-
-      if (oldScore !== null && oldScore !== score && modificationReason) {
-        await db.gradeModification.create({
-          data: {
-            gradeId: existingGrade.id,
-            oldScore: oldScore,
-            newScore: score,
-            reason: modificationReason,
-            modifiedBy: modifiedBy || 'النظام',
-          },
-        });
-      }
-
+      // Update grade
       const grade = await db.grade.update({
         where: { id: existingGrade.id },
         data: {

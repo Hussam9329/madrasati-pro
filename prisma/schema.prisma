@@ -7,10 +7,10 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ==================== SCHOOL ====================
+// ==================== SCHOOL (مارينا - Single School) ====================
 model School {
   id              String   @id @default(cuid())
-  name            String
+  name            String   @default("مارينا")
   logo            String?
   address         String?
   phone           String?
@@ -47,11 +47,12 @@ model Class {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  school       School         @relation(fields: [schoolId], references: [id])
-  sections     Section[]
-  students     Student[]
-  subjects     SubjectClass[]
+  school        School          @relation(fields: [schoolId], references: [id])
+  sections      Section[]
+  students      Student[]
+  subjects      SubjectClass[]
   scheduleSlots ScheduleSlot[]
+  teacherAssignments TeacherClass[]
 }
 
 model Section {
@@ -98,7 +99,6 @@ model Student {
   school     School             @relation(fields: [schoolId], references: [id])
   attendance AttendanceRecord[]
   grades     Grade[]
-  notes      StudentNote[]
 }
 
 // ==================== TEACHERS ====================
@@ -169,6 +169,7 @@ model TeacherClass {
   sectionId String?
 
   teacher   Teacher @relation(fields: [teacherId], references: [id])
+  class     Class   @relation(fields: [classId], references: [id])
 
   @@unique([teacherId, classId])
 }
@@ -185,7 +186,7 @@ model ExamType {
   grades     Grade[]
 }
 
-// ==================== ATTENDANCE ====================
+// ==================== ATTENDANCE (QR-based) ====================
 model AttendanceRecord {
   id          String   @id @default(cuid())
   studentId   String
@@ -223,40 +224,15 @@ model Grade {
   subject      Subject  @relation(fields: [subjectId], references: [id])
   examType     ExamType @relation(fields: [examTypeId], references: [id])
   school       School   @relation(fields: [schoolId], references: [id])
-  modifications GradeModification[]
 
   @@unique([studentId, subjectId, examTypeId])
-}
-
-model GradeModification {
-  id         String   @id @default(cuid())
-  gradeId    String
-  oldScore   Float
-  newScore   Float
-  reason     String
-  modifiedBy String
-  createdAt  DateTime @default(now())
-
-  grade      Grade    @relation(fields: [gradeId], references: [id])
-}
-
-// ==================== STUDENT NOTES ====================
-model StudentNote {
-  id        String   @id @default(cuid())
-  studentId String
-  content   String
-  type      String   @default("ملاحظة")
-  createdBy String
-  createdAt DateTime @default(now())
-
-  student   Student  @relation(fields: [studentId], references: [id])
 }
 
 // ==================== SCHEDULE ====================
 model ScheduleSlot {
   id        String   @id @default(cuid())
-  day       String   // الأحد, الاثنين, الثلاثاء, الأربعاء, الخميس
-  period    Int      // 1-7
+  day       String
+  period    Int
   subjectId String
   teacherId String
   classId   String

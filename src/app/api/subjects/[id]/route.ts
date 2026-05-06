@@ -151,9 +151,6 @@ export async function DELETE(
     await db.teacherSubject.deleteMany({ where: { subjectId: id } });
     await db.subjectClass.deleteMany({ where: { subjectId: id } });
     await db.examType.deleteMany({ where: { subjectId: id } });
-    await db.gradeModification.deleteMany({
-      where: { grade: { subjectId: id } },
-    });
     await db.grade.deleteMany({ where: { subjectId: id } });
 
     await db.subject.delete({ where: { id } });

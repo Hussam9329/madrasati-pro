@@ -65,20 +65,6 @@ export async function PUT(request: Request) {
       },
     });
 
-    // Log activity
-    try {
-      const schoolId = student.schoolId;
-      await db.activityLog.create({
-        data: {
-          action: 'نقل طالب',
-          details: `تم نقل الطالب ${student.fullName} من ${student.class.name} / ${student.section.name} إلى ${newClass.name} / ${newSection.name}${reason ? ` - السبب: ${reason}` : ''}`,
-          schoolId,
-        },
-      });
-    } catch {
-      // Silent fail for activity log
-    }
-
     return NextResponse.json({
       message: 'تم نقل الطالب بنجاح',
       student: updatedStudent,
