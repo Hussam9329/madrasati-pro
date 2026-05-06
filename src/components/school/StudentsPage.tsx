@@ -423,6 +423,8 @@ export default function StudentsPage() {
           <div className="relative flex-1">
             <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
+              id="search"
+              name="search"
               placeholder="البحث عن طالب..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1) }}
@@ -430,7 +432,7 @@ export default function StudentsPage() {
             />
           </div>
           <Select value={filterClass} onValueChange={(v) => { setFilterClass(v); setPage(1) }}>
-            <SelectTrigger className="w-full sm:w-48">
+            <SelectTrigger id="filterClass" className="w-full sm:w-48">
               <SelectValue placeholder="الصف" />
             </SelectTrigger>
             <SelectContent>
@@ -441,7 +443,7 @@ export default function StudentsPage() {
             </SelectContent>
           </Select>
           <Select value={filterStatus} onValueChange={(v) => { setFilterStatus(v); setPage(1) }}>
-            <SelectTrigger className="w-full sm:w-40">
+            <SelectTrigger id="filterStatus" className="w-full sm:w-40">
               <SelectValue placeholder="الحالة" />
             </SelectTrigger>
             <SelectContent>
@@ -604,6 +606,8 @@ export default function StudentsPage() {
             <div className="sm:col-span-2">
               <Label>الاسم الرباعي *</Label>
               <Input
+                id="fullName"
+                name="fullName"
                 value={form.fullName}
                 onChange={(e) => setForm({ ...form, fullName: e.target.value })}
                 placeholder="أدخل الاسم الرباعي"
@@ -612,7 +616,7 @@ export default function StudentsPage() {
             <div>
               <Label>الجنس</Label>
               <Select value={form.gender} onValueChange={(v) => setForm({ ...form, gender: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger id="gender"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ذكر">ذكر</SelectItem>
                   <SelectItem value="أنثى">أنثى</SelectItem>
@@ -622,6 +626,8 @@ export default function StudentsPage() {
             <div>
               <Label>تاريخ الميلاد</Label>
               <Input
+                id="dateOfBirth"
+                name="dateOfBirth"
                 type="date"
                 value={form.dateOfBirth}
                 onChange={(e) => setForm({ ...form, dateOfBirth: e.target.value })}
@@ -630,6 +636,8 @@ export default function StudentsPage() {
             <div>
               <Label>رقم الهوية</Label>
               <Input
+                id="nationalId"
+                name="nationalId"
                 value={form.nationalId}
                 onChange={(e) => setForm({ ...form, nationalId: e.target.value })}
                 placeholder="رقم الهوية الوطنية"
@@ -638,6 +646,8 @@ export default function StudentsPage() {
             <div>
               <Label>الهاتف</Label>
               <Input
+                id="phone"
+                name="phone"
                 value={form.phone}
                 onChange={(e) => setForm({ ...form, phone: e.target.value })}
                 placeholder="رقم الهاتف"
@@ -646,7 +656,7 @@ export default function StudentsPage() {
             <div>
               <Label>الصف *</Label>
               <Select value={form.classId} onValueChange={(v) => setForm({ ...form, classId: v, sectionId: '' })}>
-                <SelectTrigger><SelectValue placeholder="اختر الصف" /></SelectTrigger>
+                <SelectTrigger id="classId"><SelectValue placeholder="اختر الصف" /></SelectTrigger>
                 <SelectContent>
                   {classes.map(c => (
                     <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
@@ -657,7 +667,7 @@ export default function StudentsPage() {
             <div>
               <Label>الشعبة *</Label>
               <Select value={form.sectionId} onValueChange={(v) => setForm({ ...form, sectionId: v })}>
-                <SelectTrigger><SelectValue placeholder="اختر الشعبة" /></SelectTrigger>
+                <SelectTrigger id="sectionId"><SelectValue placeholder="اختر الشعبة" /></SelectTrigger>
                 <SelectContent>
                   {filteredSections.map(s => (
                     <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
@@ -668,6 +678,8 @@ export default function StudentsPage() {
             <div className="sm:col-span-2">
               <Label>العنوان</Label>
               <Input
+                id="address"
+                name="address"
                 value={form.address}
                 onChange={(e) => setForm({ ...form, address: e.target.value })}
                 placeholder="العنوان"
@@ -680,6 +692,8 @@ export default function StudentsPage() {
             <div>
               <Label>اسم ولي الأمر</Label>
               <Input
+                id="guardianName"
+                name="guardianName"
                 value={form.guardianName}
                 onChange={(e) => setForm({ ...form, guardianName: e.target.value })}
                 placeholder="اسم ولي الأمر"
@@ -688,6 +702,8 @@ export default function StudentsPage() {
             <div>
               <Label>رقم ولي الأمر</Label>
               <Input
+                id="guardianPhone"
+                name="guardianPhone"
                 value={form.guardianPhone}
                 onChange={(e) => setForm({ ...form, guardianPhone: e.target.value })}
                 placeholder="رقم هاتف ولي الأمر"
@@ -696,7 +712,7 @@ export default function StudentsPage() {
             <div>
               <Label>صلة القرابة</Label>
               <Select value={form.guardianRelation} onValueChange={(v) => setForm({ ...form, guardianRelation: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger id="guardianRelation"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="أب">أب</SelectItem>
                   <SelectItem value="أم">أم</SelectItem>
@@ -978,7 +994,7 @@ export default function StudentsPage() {
               <div>
                 <Label>الطالب *</Label>
                 <Select value={transferForm.studentId} onValueChange={(v) => setTransferForm({ ...transferForm, studentId: v })}>
-                  <SelectTrigger>
+                  <SelectTrigger id="transferStudent">
                     <SelectValue placeholder="اختر الطالب" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1006,7 +1022,7 @@ export default function StudentsPage() {
               <div>
                 <Label>الصف الجديد *</Label>
                 <Select value={transferForm.newClassId} onValueChange={(v) => setTransferForm({ ...transferForm, newClassId: v, newSectionId: '' })}>
-                  <SelectTrigger>
+                  <SelectTrigger id="transferNewClass">
                     <SelectValue placeholder="اختر الصف الجديد" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1019,7 +1035,7 @@ export default function StudentsPage() {
               <div>
                 <Label>الشعبة الجديدة *</Label>
                 <Select value={transferForm.newSectionId} onValueChange={(v) => setTransferForm({ ...transferForm, newSectionId: v })}>
-                  <SelectTrigger>
+                  <SelectTrigger id="transferNewSection">
                     <SelectValue placeholder="اختر الشعبة" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1035,6 +1051,8 @@ export default function StudentsPage() {
               <div>
                 <Label>سبب النقل</Label>
                 <Textarea
+                  id="transferReason"
+                  name="transferReason"
                   value={transferForm.reason}
                   onChange={(e) => setTransferForm({ ...transferForm, reason: e.target.value })}
                   placeholder="أدخل سبب النقل..."
@@ -1044,6 +1062,8 @@ export default function StudentsPage() {
               <div>
                 <Label>تاريخ النقل</Label>
                 <Input
+                  id="transferDate"
+                  name="transferDate"
                   value={new Date().toLocaleDateString('ar-IQ')}
                   disabled
                   className="bg-muted"

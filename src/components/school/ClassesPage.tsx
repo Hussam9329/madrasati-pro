@@ -582,6 +582,8 @@ export default function ClassesPage() {
             <div>
               <Label>اسم الصف *</Label>
               <Input
+                id="className"
+                name="className"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 placeholder="مثال: الأولى إعدادي"
@@ -592,7 +594,7 @@ export default function ClassesPage() {
               <div>
                 <Label>المستوى *</Label>
                 <Select value={form.level} onValueChange={(v) => setForm({ ...form, level: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger id="level"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {LEVELS.map(l => (
                       <SelectItem key={l} value={l}>{l}</SelectItem>
@@ -603,7 +605,7 @@ export default function ClassesPage() {
               <div>
                 <Label>المرحلة *</Label>
                 <Select value={form.stage} onValueChange={(v) => setForm({ ...form, stage: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger id="stage"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {STAGES.map(s => (
                       <SelectItem key={s} value={s}>{s}</SelectItem>
@@ -616,7 +618,7 @@ export default function ClassesPage() {
             <div>
               <Label>الفرع (اختياري)</Label>
               <Select value={form.branch} onValueChange={(v) => setForm({ ...form, branch: v === 'بدون فرع' ? '' : v })}>
-                <SelectTrigger><SelectValue placeholder="اختر الفرع" /></SelectTrigger>
+                <SelectTrigger id="branch"><SelectValue placeholder="اختر الفرع" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="بدون فرع">بدون فرع</SelectItem>
                   {BRANCHES.map(b => (
@@ -698,7 +700,7 @@ export default function ClassesPage() {
             <div>
               <Label className="mb-2 block">اختر الأستاذ</Label>
               <Select value={assignTeacherId} onValueChange={setAssignTeacherId}>
-                <SelectTrigger>
+                <SelectTrigger id="assignTeacher">
                   <SelectValue placeholder="اختر أستاذ من القائمة" />
                 </SelectTrigger>
                 <SelectContent>

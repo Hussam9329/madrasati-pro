@@ -434,6 +434,8 @@ export default function AttendancePage() {
                     <Label className="text-sm font-medium">إدخال QR يدوياً</Label>
                     <div className="flex gap-2">
                       <Input
+                        id="qrInput"
+                        name="qrInput"
                         value={qrInput}
                         onChange={(e) => setQrInput(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleScan()}
@@ -758,6 +760,8 @@ export default function AttendancePage() {
                 <div className="space-y-1 flex-1 min-w-[160px]">
                   <Label className="text-xs font-medium">التاريخ</Label>
                   <Input
+                    id="selectedDate"
+                    name="selectedDate"
                     type="date"
                     value={selectedDate}
                     onChange={(e) => setSelectedDate(e.target.value)}
@@ -767,7 +771,7 @@ export default function AttendancePage() {
                 <div className="space-y-1 flex-1 min-w-[160px]">
                   <Label className="text-xs font-medium">الصف</Label>
                   <Select value={filterClassId} onValueChange={setFilterClassId}>
-                    <SelectTrigger>
+                    <SelectTrigger id="filterClass">
                       <SelectValue placeholder="جميع الصفوف" />
                     </SelectTrigger>
                     <SelectContent>
@@ -781,7 +785,7 @@ export default function AttendancePage() {
                 <div className="space-y-1 flex-1 min-w-[160px]">
                   <Label className="text-xs font-medium">الحالة</Label>
                   <Select value={filterStatus} onValueChange={setFilterStatus}>
-                    <SelectTrigger>
+                    <SelectTrigger id="filterStatus">
                       <SelectValue placeholder="جميع الحالات" />
                     </SelectTrigger>
                     <SelectContent>
@@ -890,6 +894,8 @@ export default function AttendancePage() {
                 <div className="space-y-1 flex-1 min-w-[160px]">
                   <Label className="text-xs font-medium">التاريخ</Label>
                   <Input
+                    id="bulkDate"
+                    name="bulkDate"
                     type="date"
                     value={bulkDate}
                     onChange={(e) => setBulkDate(e.target.value)}
@@ -920,7 +926,7 @@ export default function AttendancePage() {
                       setBulkStudents([])
                     }
                   }}>
-                    <SelectTrigger>
+                    <SelectTrigger id="bulkClass">
                       <SelectValue placeholder="اختر الصف" />
                     </SelectTrigger>
                     <SelectContent>

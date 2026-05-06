@@ -478,6 +478,8 @@ export default function SubjectsPage() {
             <div>
               <Label>اسم المادة *</Label>
               <Input
+                id="subjectName"
+                name="subjectName"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 placeholder="أدخل اسم المادة"
@@ -487,6 +489,8 @@ export default function SubjectsPage() {
               <div>
                 <Label>رمز المادة *</Label>
                 <Input
+                  id="subjectCode"
+                  name="subjectCode"
                   value={form.code}
                   onChange={(e) => setForm({ ...form, code: e.target.value })}
                   placeholder="مثال: MAT"
@@ -496,7 +500,7 @@ export default function SubjectsPage() {
               <div>
                 <Label>النوع</Label>
                 <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger id="subjectType"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="أساسية">أساسية</SelectItem>
                     <SelectItem value="اختيارية">اختيارية</SelectItem>
@@ -508,6 +512,8 @@ export default function SubjectsPage() {
               <div>
                 <Label>الدرجة الكاملة</Label>
                 <Input
+                  id="maxScore"
+                  name="maxScore"
                   type="number"
                   value={form.maxScore}
                   onChange={(e) => setForm({ ...form, maxScore: e.target.value })}
@@ -517,6 +523,8 @@ export default function SubjectsPage() {
               <div>
                 <Label>درجة النجاح</Label>
                 <Input
+                  id="passScore"
+                  name="passScore"
                   type="number"
                   value={form.passScore}
                   onChange={(e) => setForm({ ...form, passScore: e.target.value })}

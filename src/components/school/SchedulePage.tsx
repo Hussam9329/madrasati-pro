@@ -231,7 +231,7 @@ export default function SchedulePage() {
                   <div className="space-y-2">
                     <Label>اليوم</Label>
                     <Select value={newSlot.day} onValueChange={v => setNewSlot(p => ({ ...p, day: v }))}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectTrigger id="scheduleDay"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         {DAYS.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
                       </SelectContent>
@@ -240,7 +240,7 @@ export default function SchedulePage() {
                   <div className="space-y-2">
                     <Label>الحصة</Label>
                     <Select value={String(newSlot.period)} onValueChange={v => setNewSlot(p => ({ ...p, period: parseInt(v) }))}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectTrigger id="schedulePeriod"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         {PERIODS.map(p => <SelectItem key={p.num} value={String(p.num)}>الحصة {p.num}</SelectItem>)}
                       </SelectContent>
@@ -250,7 +250,7 @@ export default function SchedulePage() {
                 <div className="space-y-2">
                   <Label>المادة</Label>
                   <Select value={newSlot.subjectId} onValueChange={v => setNewSlot(p => ({ ...p, subjectId: v }))}>
-                    <SelectTrigger><SelectValue placeholder="اختر المادة" /></SelectTrigger>
+                    <SelectTrigger id="scheduleSubject"><SelectValue placeholder="اختر المادة" /></SelectTrigger>
                     <SelectContent>
                       {subjects.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                     </SelectContent>
@@ -259,7 +259,7 @@ export default function SchedulePage() {
                 <div className="space-y-2">
                   <Label>الأستاذ</Label>
                   <Select value={newSlot.teacherId} onValueChange={v => setNewSlot(p => ({ ...p, teacherId: v }))}>
-                    <SelectTrigger><SelectValue placeholder="اختر الأستاذ" /></SelectTrigger>
+                    <SelectTrigger id="scheduleTeacher"><SelectValue placeholder="اختر الأستاذ" /></SelectTrigger>
                     <SelectContent>
                       {teachers.map(t => <SelectItem key={t.id} value={t.id}>{t.fullName}</SelectItem>)}
                     </SelectContent>
@@ -268,7 +268,7 @@ export default function SchedulePage() {
                 <div className="space-y-2">
                   <Label>الصف</Label>
                   <Select value={newSlot.classId} onValueChange={v => setNewSlot(p => ({ ...p, classId: v }))}>
-                    <SelectTrigger><SelectValue placeholder="اختر الصف" /></SelectTrigger>
+                    <SelectTrigger id="scheduleClass"><SelectValue placeholder="اختر الصف" /></SelectTrigger>
                     <SelectContent>
                       {classes.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                     </SelectContent>
@@ -276,7 +276,7 @@ export default function SchedulePage() {
                 </div>
                 <div className="space-y-2">
                   <Label>القاعة (اختياري)</Label>
-                  <Input value={newSlot.room} onChange={e => setNewSlot(p => ({ ...p, room: e.target.value }))} placeholder="مثال: قاعة 1" />
+                  <Input id="room" name="room" value={newSlot.room} onChange={e => setNewSlot(p => ({ ...p, room: e.target.value }))} placeholder="مثال: قاعة 1" />
                 </div>
                 <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700">
                   <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" />
@@ -374,7 +374,7 @@ export default function SchedulePage() {
 
         {viewMode === 'class' ? (
           <Select value={selectedClassId} onValueChange={setSelectedClassId}>
-            <SelectTrigger className="w-full sm:w-64 dark:bg-gray-800 dark:border-gray-700">
+            <SelectTrigger id="viewClass" className="w-full sm:w-64 dark:bg-gray-800 dark:border-gray-700">
               <SelectValue placeholder="اختر الصف" />
             </SelectTrigger>
             <SelectContent>
@@ -383,7 +383,7 @@ export default function SchedulePage() {
           </Select>
         ) : (
           <Select value={selectedTeacherId} onValueChange={setSelectedTeacherId}>
-            <SelectTrigger className="w-full sm:w-64 dark:bg-gray-800 dark:border-gray-700">
+            <SelectTrigger id="viewTeacher" className="w-full sm:w-64 dark:bg-gray-800 dark:border-gray-700">
               <SelectValue placeholder="اختر الأستاذ" />
             </SelectTrigger>
             <SelectContent>

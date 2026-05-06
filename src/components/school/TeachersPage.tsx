@@ -310,6 +310,8 @@ export default function TeachersPage() {
           <div className="relative flex-1">
             <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
+              id="search"
+              name="search"
               placeholder="البحث عن مدرس..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -317,7 +319,7 @@ export default function TeachersPage() {
             />
           </div>
           <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-full sm:w-48">
+            <SelectTrigger id="filterStatus" className="w-full sm:w-48">
               <SelectValue placeholder="الحالة" />
             </SelectTrigger>
             <SelectContent>
@@ -461,6 +463,8 @@ export default function TeachersPage() {
             <div>
               <Label>الاسم الرباعي *</Label>
               <Input
+                id="fullName"
+                name="fullName"
                 value={form.fullName}
                 onChange={(e) => setForm({ ...form, fullName: e.target.value })}
                 placeholder="أدخل الاسم الرباعي"
@@ -470,6 +474,8 @@ export default function TeachersPage() {
               <div>
                 <Label>الهاتف</Label>
                 <Input
+                  id="phone"
+                  name="phone"
                   value={form.phone}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
                   placeholder="رقم الهاتف"
@@ -479,6 +485,8 @@ export default function TeachersPage() {
               <div>
                 <Label>البريد الإلكتروني</Label>
                 <Input
+                  id="email"
+                  name="email"
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
                   placeholder="البريد الإلكتروني"
@@ -489,7 +497,7 @@ export default function TeachersPage() {
             <div>
               <Label>الحالة</Label>
               <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger id="status"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="نشط">نشط</SelectItem>
                   <SelectItem value="إجازة">إجازة</SelectItem>
@@ -501,6 +509,8 @@ export default function TeachersPage() {
             <div>
               <Label>ملاحظات</Label>
               <Textarea
+                id="notes"
+                name="notes"
                 value={form.notes}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
                 placeholder="أضف ملاحظات عن المدرس..."

@@ -342,6 +342,8 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
                         اسم المدرسة
                       </Label>
                       <Input
+                        id="schoolName"
+                        name="schoolName"
                         value={schoolForm.name}
                         onChange={(e) => setSchoolForm({ ...schoolForm, name: e.target.value })}
                         placeholder="اسم المدرسة"
@@ -354,6 +356,8 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
                         اسم المدير
                       </Label>
                       <Input
+                        id="principalName"
+                        name="principalName"
                         value={schoolForm.principalName}
                         onChange={(e) => setSchoolForm({ ...schoolForm, principalName: e.target.value })}
                         placeholder="اسم المدير"
@@ -366,6 +370,8 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
                         العنوان
                       </Label>
                       <Input
+                        id="address"
+                        name="address"
                         value={schoolForm.address}
                         onChange={(e) => setSchoolForm({ ...schoolForm, address: e.target.value })}
                         placeholder="عنوان المدرسة"
@@ -378,6 +384,8 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
                         الهاتف
                       </Label>
                       <Input
+                        id="phone"
+                        name="phone"
                         value={schoolForm.phone}
                         onChange={(e) => setSchoolForm({ ...schoolForm, phone: e.target.value })}
                         placeholder="رقم الهاتف"
@@ -391,6 +399,8 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
                         البريد الإلكتروني
                       </Label>
                       <Input
+                        id="email"
+                        name="email"
                         value={schoolForm.email}
                         onChange={(e) => setSchoolForm({ ...schoolForm, email: e.target.value })}
                         placeholder="البريد الإلكتروني"
@@ -404,6 +414,8 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
                         السنة الدراسية
                       </Label>
                       <Input
+                        id="academicYear"
+                        name="academicYear"
                         value={schoolForm.academicYear}
                         onChange={(e) => setSchoolForm({ ...schoolForm, academicYear: e.target.value })}
                         placeholder="2026-2027"
@@ -434,7 +446,7 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
                         نوع المدرسة
                       </Label>
                       <Select value={schoolForm.schoolType} onValueChange={(v) => setSchoolForm({ ...schoolForm, schoolType: v })}>
-                        <SelectTrigger>
+                        <SelectTrigger id="schoolType">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -451,7 +463,7 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
                         نوع الدوام
                       </Label>
                       <Select value={schoolForm.shiftType} onValueChange={(v) => setSchoolForm({ ...schoolForm, shiftType: v })}>
-                        <SelectTrigger>
+                        <SelectTrigger id="shiftType">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -467,6 +479,8 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
                         بداية الدوام
                       </Label>
                       <Input
+                        id="startTime"
+                        name="startTime"
                         type="time"
                         value={schoolForm.startTime}
                         onChange={(e) => setSchoolForm({ ...schoolForm, startTime: e.target.value })}
@@ -479,6 +493,8 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
                         نهاية الدوام
                       </Label>
                       <Input
+                        id="endTime"
+                        name="endTime"
                         type="time"
                         value={schoolForm.endTime}
                         onChange={(e) => setSchoolForm({ ...schoolForm, endTime: e.target.value })}
@@ -491,6 +507,8 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
                         حد التأخير (بالدقائق)
                       </Label>
                       <Input
+                        id="lateThreshold"
+                        name="lateThreshold"
                         type="number"
                         min="1"
                         max="60"
@@ -505,7 +523,7 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
                         value={schoolForm.weekendDays}
                         onValueChange={(v) => setSchoolForm({ ...schoolForm, weekendDays: v })}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger id="weekendDays">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -569,6 +587,8 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
                   <div className="space-y-2">
                     <Label>الاسم الكامل</Label>
                     <Input
+                      id="userName"
+                      name="userName"
                       value={userForm.name}
                       onChange={(e) => setUserForm({ ...userForm, name: e.target.value })}
                       placeholder="أدخل الاسم الكامل"
@@ -577,6 +597,8 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
                   <div className="space-y-2">
                     <Label>اسم المستخدم</Label>
                     <Input
+                      id="username"
+                      name="username"
                       value={userForm.username}
                       onChange={(e) => setUserForm({ ...userForm, username: e.target.value })}
                       placeholder="أدخل اسم المستخدم"
@@ -586,6 +608,8 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
                   <div className="space-y-2">
                     <Label>{editingUser ? 'كلمة المرور الجديدة (اتركها فارغة للإبقاء)' : 'كلمة المرور'}</Label>
                     <Input
+                      id="password"
+                      name="password"
                       type="password"
                       value={userForm.password}
                       onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
@@ -595,7 +619,7 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
                   <div className="space-y-2">
                     <Label>الدور</Label>
                     <Select value={userForm.role} onValueChange={(v) => setUserForm({ ...userForm, role: v })}>
-                      <SelectTrigger>
+                      <SelectTrigger id="userRole">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>

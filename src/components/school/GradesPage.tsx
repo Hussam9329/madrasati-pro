@@ -412,7 +412,7 @@ export default function GradesPage() {
                 <Skeleton className="h-10 w-full" />
               ) : (
                 <Select value={selectedClassId} onValueChange={setSelectedClassId}>
-                  <SelectTrigger>
+                  <SelectTrigger id="gradeClass">
                     <SelectValue placeholder="اختر الصف" />
                   </SelectTrigger>
                   <SelectContent>
@@ -428,7 +428,7 @@ export default function GradesPage() {
             <div className="space-y-1 flex-1 min-w-[140px]">
               <Label className="text-xs font-medium">الشعبة</Label>
               <Select value={selectedSectionId} onValueChange={setSelectedSectionId} disabled={!selectedClassId}>
-                <SelectTrigger>
+                <SelectTrigger id="gradeSection">
                   <SelectValue placeholder="جميع الشعب" />
                 </SelectTrigger>
                 <SelectContent>
@@ -447,7 +447,7 @@ export default function GradesPage() {
                 <Skeleton className="h-10 w-full" />
               ) : (
                 <Select value={selectedSubjectId} onValueChange={setSelectedSubjectId}>
-                  <SelectTrigger>
+                  <SelectTrigger id="gradeSubject">
                     <SelectValue placeholder="اختر المادة" />
                   </SelectTrigger>
                   <SelectContent>
@@ -463,7 +463,7 @@ export default function GradesPage() {
             <div className="space-y-1 flex-1 min-w-[160px]">
               <Label className="text-xs font-medium">نوع الامتحان *</Label>
               <Select value={selectedExamTypeId} onValueChange={setSelectedExamTypeId} disabled={!selectedSubjectId}>
-                <SelectTrigger>
+                <SelectTrigger id="gradeExamType">
                   <SelectValue placeholder="اختر نوع الامتحان" />
                 </SelectTrigger>
                 <SelectContent>

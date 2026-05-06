@@ -1285,6 +1285,8 @@ export default function ReportsPage() {
                       <div className="space-y-1 flex-1 min-w-[160px]">
                         <Label className="text-xs font-medium">التاريخ</Label>
                         <Input
+                          id="reportDate"
+                          name="reportDate"
                           type="date"
                           value={reportDate}
                           onChange={(e) => setReportDate(e.target.value)}
@@ -1294,6 +1296,8 @@ export default function ReportsPage() {
                       <div className="space-y-1 flex-1 min-w-[160px]">
                         <Label className="text-xs font-medium">الشهر</Label>
                         <Input
+                          id="reportMonth"
+                          name="reportMonth"
                           type="month"
                           value={reportMonth}
                           onChange={(e) => setReportMonth(e.target.value)}
@@ -1305,7 +1309,7 @@ export default function ReportsPage() {
                 <div className="space-y-1 flex-1 min-w-[160px]">
                   <Label className="text-xs font-medium">الصف</Label>
                   <Select value={reportClassId} onValueChange={setReportClassId}>
-                    <SelectTrigger>
+                    <SelectTrigger id="reportClass">
                       <SelectValue placeholder="جميع الصفوف" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1320,7 +1324,7 @@ export default function ReportsPage() {
                   <div className="space-y-1 flex-1 min-w-[160px]">
                     <Label className="text-xs font-medium">المادة</Label>
                     <Select value={reportSubjectId} onValueChange={setReportSubjectId}>
-                      <SelectTrigger>
+                      <SelectTrigger id="reportSubject">
                         <SelectValue placeholder="جميع المواد" />
                       </SelectTrigger>
                       <SelectContent>
