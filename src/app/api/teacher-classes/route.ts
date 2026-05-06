@@ -15,7 +15,7 @@ export async function GET(request: Request) {
     const assignments = await db.teacherClass.findMany({
       where,
       include: {
-        teacher: { select: { id: true, fullName: true, specialty: true, phone: true } },
+        teacher: { select: { id: true, fullName: true, notes: true, phone: true } },
       },
       orderBy: { id: 'desc' },
     });

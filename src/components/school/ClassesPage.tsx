@@ -61,7 +61,7 @@ interface TeacherClassItem {
   teacherId: string
   classId: string
   sectionId: string | null
-  teacher: { id: string; fullName: string; specialty?: string | null; phone?: string | null }
+  teacher: { id: string; fullName: string; notes?: string | null; phone?: string | null }
 }
 
 interface ClassItem {
@@ -83,7 +83,8 @@ interface ClassItem {
 interface TeacherOption {
   id: string
   fullName: string
-  specialty?: string | null
+  notes?: string | null
+  subjects?: string[]
 }
 
 // ─── Constants ───────────────────────────────────────────────────
@@ -167,10 +168,11 @@ export default function ClassesPage() {
     try {
       const res = await fetch('/api/teachers')
       const data = await res.json()
-      setTeachers((data || []).map((t: { id: string; fullName: string; specialty?: string | null }) => ({
+      setTeachers((data || []).map((t: { id: string; fullName: string; notes?: string | null; subjects?: { subject: { name: string } }[] }) => ({
         id: t.id,
         fullName: t.fullName,
-        specialty: t.specialty,
+        notes: t.notes,
+        subjects: t.subjects?.map((s: { subject: { name: string } }) => s.subject.name) || [],
       })))
     } catch {
       // silent
@@ -704,8 +706,8 @@ export default function ClassesPage() {
                     <SelectItem key={t.id} value={t.id}>
                       <span className="flex items-center gap-2">
                         {t.fullName}
-                        {t.specialty && (
-                          <span className="text-xs text-muted-foreground">({t.specialty})</span>
+                        {t.subjects && t.subjects.length > 0 && (
+                          <span className="text-xs text-muted-foreground">({t.subjects.join(', ')})</span>
                         )}
                       </span>
                     </SelectItem>
