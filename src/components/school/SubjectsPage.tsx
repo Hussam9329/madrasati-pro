@@ -480,6 +480,7 @@ export default function SubjectsPage() {
               <Input
                 id="subjectName"
                 name="subjectName"
+                autoComplete="off"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 placeholder="أدخل اسم المادة"
@@ -491,6 +492,7 @@ export default function SubjectsPage() {
                 <Input
                   id="subjectCode"
                   name="subjectCode"
+                  autoComplete="off"
                   value={form.code}
                   onChange={(e) => setForm({ ...form, code: e.target.value })}
                   placeholder="مثال: MAT"
@@ -514,6 +516,7 @@ export default function SubjectsPage() {
                 <Input
                   id="maxScore"
                   name="maxScore"
+                  autoComplete="off"
                   type="number"
                   value={form.maxScore}
                   onChange={(e) => setForm({ ...form, maxScore: e.target.value })}
@@ -525,6 +528,7 @@ export default function SubjectsPage() {
                 <Input
                   id="passScore"
                   name="passScore"
+                  autoComplete="off"
                   type="number"
                   value={form.passScore}
                   onChange={(e) => setForm({ ...form, passScore: e.target.value })}

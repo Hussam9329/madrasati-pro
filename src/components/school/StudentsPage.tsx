@@ -425,6 +425,7 @@ export default function StudentsPage() {
             <Input
               id="search"
               name="search"
+              autoComplete="off"
               placeholder="البحث عن طالب..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1) }}
@@ -608,6 +609,7 @@ export default function StudentsPage() {
               <Input
                 id="fullName"
                 name="fullName"
+                autoComplete="name"
                 value={form.fullName}
                 onChange={(e) => setForm({ ...form, fullName: e.target.value })}
                 placeholder="أدخل الاسم الرباعي"
@@ -628,6 +630,7 @@ export default function StudentsPage() {
               <Input
                 id="dateOfBirth"
                 name="dateOfBirth"
+                autoComplete="bday"
                 type="date"
                 value={form.dateOfBirth}
                 onChange={(e) => setForm({ ...form, dateOfBirth: e.target.value })}
@@ -638,6 +641,7 @@ export default function StudentsPage() {
               <Input
                 id="nationalId"
                 name="nationalId"
+                autoComplete="off"
                 value={form.nationalId}
                 onChange={(e) => setForm({ ...form, nationalId: e.target.value })}
                 placeholder="رقم الهوية الوطنية"
@@ -648,6 +652,7 @@ export default function StudentsPage() {
               <Input
                 id="phone"
                 name="phone"
+                autoComplete="tel"
                 value={form.phone}
                 onChange={(e) => setForm({ ...form, phone: e.target.value })}
                 placeholder="رقم الهاتف"
@@ -680,6 +685,7 @@ export default function StudentsPage() {
               <Input
                 id="address"
                 name="address"
+                autoComplete="street-address"
                 value={form.address}
                 onChange={(e) => setForm({ ...form, address: e.target.value })}
                 placeholder="العنوان"
@@ -694,6 +700,7 @@ export default function StudentsPage() {
               <Input
                 id="guardianName"
                 name="guardianName"
+                autoComplete="name"
                 value={form.guardianName}
                 onChange={(e) => setForm({ ...form, guardianName: e.target.value })}
                 placeholder="اسم ولي الأمر"
@@ -704,6 +711,7 @@ export default function StudentsPage() {
               <Input
                 id="guardianPhone"
                 name="guardianPhone"
+                autoComplete="tel"
                 value={form.guardianPhone}
                 onChange={(e) => setForm({ ...form, guardianPhone: e.target.value })}
                 placeholder="رقم هاتف ولي الأمر"
@@ -1053,6 +1061,7 @@ export default function StudentsPage() {
                 <Textarea
                   id="transferReason"
                   name="transferReason"
+                  autoComplete="off"
                   value={transferForm.reason}
                   onChange={(e) => setTransferForm({ ...transferForm, reason: e.target.value })}
                   placeholder="أدخل سبب النقل..."
@@ -1064,6 +1073,7 @@ export default function StudentsPage() {
                 <Input
                   id="transferDate"
                   name="transferDate"
+                  autoComplete="off"
                   value={new Date().toLocaleDateString('ar-IQ')}
                   disabled
                   className="bg-muted"

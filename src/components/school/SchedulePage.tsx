@@ -276,7 +276,7 @@ export default function SchedulePage() {
                 </div>
                 <div className="space-y-2">
                   <Label>القاعة (اختياري)</Label>
-                  <Input id="room" name="room" value={newSlot.room} onChange={e => setNewSlot(p => ({ ...p, room: e.target.value }))} placeholder="مثال: قاعة 1" />
+                  <Input id="room" name="room" autoComplete="off" value={newSlot.room} onChange={e => setNewSlot(p => ({ ...p, room: e.target.value }))} placeholder="مثال: قاعة 1" />
                 </div>
                 <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700">
                   <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" />

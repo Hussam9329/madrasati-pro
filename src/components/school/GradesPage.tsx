@@ -739,6 +739,7 @@ export default function GradesPage() {
                                     type="number"
                                     min="0"
                                     max={maxScore}
+                                    autoComplete="off"
                                     value={entry.score}
                                     onChange={(e) => handleScoreChange(entry.studentId, e.target.value)}
                                     disabled={isApproved}

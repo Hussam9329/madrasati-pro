@@ -312,6 +312,7 @@ export default function TeachersPage() {
             <Input
               id="search"
               name="search"
+              autoComplete="off"
               placeholder="البحث عن مدرس..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -465,6 +466,7 @@ export default function TeachersPage() {
               <Input
                 id="fullName"
                 name="fullName"
+                autoComplete="name"
                 value={form.fullName}
                 onChange={(e) => setForm({ ...form, fullName: e.target.value })}
                 placeholder="أدخل الاسم الرباعي"
@@ -476,6 +478,7 @@ export default function TeachersPage() {
                 <Input
                   id="phone"
                   name="phone"
+                  autoComplete="tel"
                   value={form.phone}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
                   placeholder="رقم الهاتف"
@@ -487,6 +490,7 @@ export default function TeachersPage() {
                 <Input
                   id="email"
                   name="email"
+                  autoComplete="email"
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
                   placeholder="البريد الإلكتروني"
@@ -511,6 +515,7 @@ export default function TeachersPage() {
               <Textarea
                 id="notes"
                 name="notes"
+                autoComplete="off"
                 value={form.notes}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
                 placeholder="أضف ملاحظات عن المدرس..."

@@ -1287,6 +1287,7 @@ export default function ReportsPage() {
                         <Input
                           id="reportDate"
                           name="reportDate"
+                          autoComplete="off"
                           type="date"
                           value={reportDate}
                           onChange={(e) => setReportDate(e.target.value)}
@@ -1298,6 +1299,7 @@ export default function ReportsPage() {
                         <Input
                           id="reportMonth"
                           name="reportMonth"
+                          autoComplete="off"
                           type="month"
                           value={reportMonth}
                           onChange={(e) => setReportMonth(e.target.value)}

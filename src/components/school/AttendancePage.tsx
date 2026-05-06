@@ -436,6 +436,7 @@ export default function AttendancePage() {
                       <Input
                         id="qrInput"
                         name="qrInput"
+                        autoComplete="off"
                         value={qrInput}
                         onChange={(e) => setQrInput(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleScan()}
@@ -762,6 +763,7 @@ export default function AttendancePage() {
                   <Input
                     id="selectedDate"
                     name="selectedDate"
+                    autoComplete="off"
                     type="date"
                     value={selectedDate}
                     onChange={(e) => setSelectedDate(e.target.value)}
@@ -896,6 +898,7 @@ export default function AttendancePage() {
                   <Input
                     id="bulkDate"
                     name="bulkDate"
+                    autoComplete="off"
                     type="date"
                     value={bulkDate}
                     onChange={(e) => setBulkDate(e.target.value)}

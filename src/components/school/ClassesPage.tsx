@@ -584,6 +584,7 @@ export default function ClassesPage() {
               <Input
                 id="className"
                 name="className"
+                autoComplete="off"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 placeholder="مثال: الأولى إعدادي"

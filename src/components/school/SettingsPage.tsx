@@ -344,6 +344,7 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
                       <Input
                         id="schoolName"
                         name="schoolName"
+                        autoComplete="organization"
                         value={schoolForm.name}
                         onChange={(e) => setSchoolForm({ ...schoolForm, name: e.target.value })}
                         placeholder="اسم المدرسة"
@@ -358,6 +359,7 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
                       <Input
                         id="principalName"
                         name="principalName"
+                        autoComplete="name"
                         value={schoolForm.principalName}
                         onChange={(e) => setSchoolForm({ ...schoolForm, principalName: e.target.value })}
                         placeholder="اسم المدير"
@@ -372,6 +374,7 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
                       <Input
                         id="address"
                         name="address"
+                        autoComplete="street-address"
                         value={schoolForm.address}
                         onChange={(e) => setSchoolForm({ ...schoolForm, address: e.target.value })}
                         placeholder="عنوان المدرسة"
@@ -386,6 +389,7 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
                       <Input
                         id="phone"
                         name="phone"
+                        autoComplete="tel"
                         value={schoolForm.phone}
                         onChange={(e) => setSchoolForm({ ...schoolForm, phone: e.target.value })}
                         placeholder="رقم الهاتف"
@@ -401,6 +405,7 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
                       <Input
                         id="email"
                         name="email"
+                        autoComplete="email"
                         value={schoolForm.email}
                         onChange={(e) => setSchoolForm({ ...schoolForm, email: e.target.value })}
                         placeholder="البريد الإلكتروني"
@@ -416,6 +421,7 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
                       <Input
                         id="academicYear"
                         name="academicYear"
+                        autoComplete="off"
                         value={schoolForm.academicYear}
                         onChange={(e) => setSchoolForm({ ...schoolForm, academicYear: e.target.value })}
                         placeholder="2026-2027"
@@ -481,6 +487,7 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
                       <Input
                         id="startTime"
                         name="startTime"
+                        autoComplete="off"
                         type="time"
                         value={schoolForm.startTime}
                         onChange={(e) => setSchoolForm({ ...schoolForm, startTime: e.target.value })}
@@ -495,6 +502,7 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
                       <Input
                         id="endTime"
                         name="endTime"
+                        autoComplete="off"
                         type="time"
                         value={schoolForm.endTime}
                         onChange={(e) => setSchoolForm({ ...schoolForm, endTime: e.target.value })}
@@ -509,6 +517,7 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
                       <Input
                         id="lateThreshold"
                         name="lateThreshold"
+                        autoComplete="off"
                         type="number"
                         min="1"
                         max="60"
@@ -589,6 +598,7 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
                     <Input
                       id="userName"
                       name="userName"
+                      autoComplete="name"
                       value={userForm.name}
                       onChange={(e) => setUserForm({ ...userForm, name: e.target.value })}
                       placeholder="أدخل الاسم الكامل"
@@ -599,6 +609,7 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
                     <Input
                       id="username"
                       name="username"
+                      autoComplete="username"
                       value={userForm.username}
                       onChange={(e) => setUserForm({ ...userForm, username: e.target.value })}
                       placeholder="أدخل اسم المستخدم"
@@ -610,6 +621,7 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
                     <Input
                       id="password"
                       name="password"
+                      autoComplete="new-password"
                       type="password"
                       value={userForm.password}
                       onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
