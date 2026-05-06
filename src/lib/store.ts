@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 export type PageKey = 
   | 'dashboard' 
@@ -57,44 +58,55 @@ interface AppState {
   setLoading: (loading: boolean) => void;
 }
 
-export const useAppStore = create<AppState>((set) => ({
-  // Auth
-  auth: {
-    user: null,
-    token: null,
-    isAuthenticated: false,
-  },
-  setAuth: (auth) => set({ auth }),
-  logout: () => set({
-    auth: { user: null, token: null, isAuthenticated: false },
-    activePage: 'dashboard',
-  }),
+export const useAppStore = create<AppState>()(
+  persist(
+    (set) => ({
+      // Auth
+      auth: {
+        user: null,
+        token: null,
+        isAuthenticated: false,
+      },
+      setAuth: (auth) => set({ auth }),
+      logout: () => set({
+        auth: { user: null, token: null, isAuthenticated: false },
+        activePage: 'dashboard',
+      }),
 
-  // Navigation
-  activePage: 'dashboard',
-  setActivePage: (page) => set({ activePage: page }),
+      // Navigation
+      activePage: 'dashboard',
+      setActivePage: (page) => set({ activePage: page }),
 
-  // Sidebar
-  sidebarOpen: true,
-  setSidebarOpen: (open) => set({ sidebarOpen: open }),
-  sidebarCollapsed: false,
-  setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
+      // Sidebar
+      sidebarOpen: true,
+      setSidebarOpen: (open) => set({ sidebarOpen: open }),
+      sidebarCollapsed: false,
+      setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
 
-  // Recent pages
-  recentPages: [],
-  addRecentPage: (page) => set((state) => {
-    const filtered = state.recentPages.filter(p => p !== page);
-    return { recentPages: [page, ...filtered].slice(0, 5) };
-  }),
+      // Recent pages
+      recentPages: [],
+      addRecentPage: (page) => set((state) => {
+        const filtered = state.recentPages.filter(p => p !== page);
+        return { recentPages: [page, ...filtered].slice(0, 5) };
+      }),
 
-  // Selected items
-  selectedStudentId: null,
-  setSelectedStudentId: (id) => set({ selectedStudentId: id }),
-  
-  selectedTeacherId: null,
-  setSelectedTeacherId: (id) => set({ selectedTeacherId: id }),
+      // Selected items
+      selectedStudentId: null,
+      setSelectedStudentId: (id) => set({ selectedStudentId: id }),
+      
+      selectedTeacherId: null,
+      setSelectedTeacherId: (id) => set({ selectedTeacherId: id }),
 
-  // Loading
-  loading: false,
-  setLoading: (loading) => set({ loading }),
-}));
+      // Loading
+      loading: false,
+      setLoading: (loading) => set({ loading }),
+    }),
+    {
+      name: 'madrasati-storage',
+      partialize: (state) => ({
+        auth: state.auth,
+        sidebarCollapsed: state.sidebarCollapsed,
+      }),
+    }
+  )
+);
