@@ -17,7 +17,6 @@ export async function GET(
           },
         },
         classes: true,
-        documents: true,
         school: {
           select: { id: true, name: true },
         },
@@ -140,7 +139,7 @@ export async function DELETE(
     // Delete related records
     await db.teacherSubject.deleteMany({ where: { teacherId: id } });
     await db.teacherClass.deleteMany({ where: { teacherId: id } });
-    await db.document.deleteMany({ where: { teacherId: id } });
+    await db.scheduleSlot.deleteMany({ where: { teacherId: id } });
 
     await db.teacher.delete({ where: { id } });
 

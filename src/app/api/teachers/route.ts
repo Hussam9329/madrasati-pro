@@ -16,7 +16,7 @@ export async function GET(request: Request) {
         { fullName: { contains: search } },
         { phone: { contains: search } },
         { email: { contains: search } },
-        { specialty: { contains: search } },
+        { notes: { contains: search } },
       ];
     }
 
@@ -52,7 +52,7 @@ export async function POST(request: Request) {
       fullName,
       phone,
       email,
-      specialty,
+      notes,
       status,
       photo,
       schoolId,
@@ -72,7 +72,7 @@ export async function POST(request: Request) {
         fullName,
         phone,
         email,
-        specialty,
+        notes,
         status: status || 'نشط',
         photo,
         schoolId,

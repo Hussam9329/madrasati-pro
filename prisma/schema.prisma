@@ -107,7 +107,7 @@ model Teacher {
   fullName    String
   phone       String?
   email       String?
-  specialty   String?
+  notes       String?
   status      String   @default("نشط")
   photo       String?
   createdAt   DateTime @default(now())

@@ -4,12 +4,13 @@ import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Search, Plus, Edit, Trash2, Phone, Mail, BookOpen, GraduationCap,
-  UserCheck, UserX, ArrowRightLeft, Users
+  UserCheck, UserX, ArrowRightLeft, Users, StickyNote
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import {
   Select,
   SelectContent,
@@ -53,7 +54,7 @@ interface Teacher {
   fullName: string
   phone: string | null
   email: string | null
-  specialty: string | null
+  notes: string | null
   status: string
   photo: string | null
   schoolId: string
@@ -71,42 +72,13 @@ const STATUS_COLORS: Record<string, string> = {
   'متقاعد': 'bg-gray-100 text-gray-700 border-gray-200',
 }
 
-const SPECIALTY_COLORS: Record<string, string> = {
-  'رياضيات': 'bg-blue-100 text-blue-700',
-  'فيزياء': 'bg-purple-100 text-purple-700',
-  'كيمياء': 'bg-emerald-100 text-emerald-700',
-  'أحياء': 'bg-green-100 text-green-700',
-  'عربي': 'bg-red-100 text-red-700',
-  'انكليزي': 'bg-cyan-100 text-cyan-700',
-  'تربية إسلامية': 'bg-amber-100 text-amber-700',
-  'تاريخ': 'bg-orange-100 text-orange-700',
-  'جغرافية': 'bg-teal-100 text-teal-700',
-  'حاسوب': 'bg-indigo-100 text-indigo-700',
-  'تربية رياضية': 'bg-lime-100 text-lime-700',
-  'فنية': 'bg-pink-100 text-pink-700',
-}
-
-const SPECIALTY_DOT_COLORS: Record<string, string> = {
-  'رياضيات': 'bg-blue-500',
-  'فيزياء': 'bg-purple-500',
-  'كيمياء': 'bg-emerald-500',
-  'أحياء': 'bg-green-500',
-  'عربي': 'bg-red-500',
-  'انكليزي': 'bg-cyan-500',
-  'تربية إسلامية': 'bg-amber-500',
-  'تاريخ': 'bg-orange-500',
-  'جغرافية': 'bg-teal-500',
-  'حاسوب': 'bg-indigo-500',
-  'تربية رياضية': 'bg-lime-500',
-  'فنية': 'bg-pink-500',
-}
-
 export default function TeachersPage() {
   const { toast } = useToast()
   const [teachers, setTeachers] = useState<Teacher[]>([])
   const [subjects, setSubjects] = useState<SubjectItem[]>([])
+  const [schoolId, setSchoolId] = useState<string>('')
   const [search, setSearch] = useState('')
-  const [filterSpecialty, setFilterSpecialty] = useState('all')
+  const [filterStatus, setFilterStatus] = useState('all')
   const [loading, setLoading] = useState(true)
   const [formOpen, setFormOpen] = useState(false)
   const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null)
@@ -118,17 +90,29 @@ export default function TeachersPage() {
     fullName: '',
     phone: '',
     email: '',
-    specialty: '',
+    notes: '',
     status: 'نشط',
     selectedSubjects: [] as string[],
   })
+
+  const fetchSchoolId = useCallback(async () => {
+    try {
+      const res = await fetch('/api/school')
+      const data = await res.json()
+      if (data.school?.id) {
+        setSchoolId(data.school.id)
+      }
+    } catch {
+      // silent
+    }
+  }, [])
 
   const fetchTeachers = useCallback(async () => {
     setLoading(true)
     try {
       const params = new URLSearchParams()
       if (search) params.set('search', search)
-      if (filterSpecialty !== 'all') params.set('status', filterSpecialty)
+      if (filterStatus !== 'all') params.set('status', filterStatus)
 
       const res = await fetch(`/api/teachers?${params}`)
       const data = await res.json()
@@ -138,7 +122,7 @@ export default function TeachersPage() {
     } finally {
       setLoading(false)
     }
-  }, [search, filterSpecialty, toast])
+  }, [search, filterStatus, toast])
 
   const fetchSubjects = useCallback(async () => {
     try {
@@ -149,6 +133,10 @@ export default function TeachersPage() {
       // silent
     }
   }, [])
+
+  useEffect(() => {
+    fetchSchoolId()
+  }, [fetchSchoolId])
 
   useEffect(() => {
     fetchTeachers()
@@ -164,7 +152,7 @@ export default function TeachersPage() {
       fullName: '',
       phone: '',
       email: '',
-      specialty: '',
+      notes: '',
       status: 'نشط',
       selectedSubjects: [],
     })
@@ -177,7 +165,7 @@ export default function TeachersPage() {
       fullName: teacher.fullName,
       phone: teacher.phone || '',
       email: teacher.email || '',
-      specialty: teacher.specialty || '',
+      notes: teacher.notes || '',
       status: teacher.status,
       selectedSubjects: teacher.subjects.map(s => s.subjectId),
     })
@@ -190,25 +178,31 @@ export default function TeachersPage() {
       return
     }
 
+    if (!schoolId && !editingTeacher) {
+      toast({ title: 'خطأ', description: 'لم يتم العثور على بيانات المدرسة', variant: 'destructive' })
+      return
+    }
+
     setSaving(true)
     try {
-      // Get schoolId from first teacher or subject
-      const schoolId = teachers[0]?.schoolId || ''
-
       if (editingTeacher) {
         const res = await fetch(`/api/teachers/${editingTeacher.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             fullName: form.fullName,
-            phone: form.phone,
-            email: form.email,
-            specialty: form.specialty,
+            phone: form.phone || null,
+            email: form.email || null,
+            notes: form.notes || null,
             status: form.status,
             subjectIds: form.selectedSubjects,
           }),
         })
-        if (!res.ok) throw new Error()
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}))
+          console.error('Update teacher error:', errorData)
+          throw new Error()
+        }
         toast({ title: 'تم التحديث', description: 'تم تحديث بيانات المدرس بنجاح' })
       } else {
         const res = await fetch('/api/teachers', {
@@ -216,15 +210,19 @@ export default function TeachersPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             fullName: form.fullName,
-            phone: form.phone,
-            email: form.email,
-            specialty: form.specialty,
+            phone: form.phone || null,
+            email: form.email || null,
+            notes: form.notes || null,
             status: form.status,
             schoolId,
             subjectIds: form.selectedSubjects,
           }),
         })
-        if (!res.ok) throw new Error()
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}))
+          console.error('Create teacher error:', errorData)
+          throw new Error()
+        }
         toast({ title: 'تمت الإضافة', description: 'تم إضافة المدرس بنجاح' })
       }
       setFormOpen(false)
@@ -259,12 +257,9 @@ export default function TeachersPage() {
     }))
   }
 
-  // Get unique specialties for filter
-  const specialties = [...new Set(teachers.map(t => t.specialty).filter(Boolean))]
-
-  // Filter teachers by search
+  // Filter teachers by status
   const filteredTeachers = teachers.filter(t => {
-    if (filterSpecialty !== 'all' && t.specialty !== filterSpecialty) return false
+    if (filterStatus !== 'all' && t.status !== filterStatus) return false
     return true
   })
 
@@ -302,7 +297,7 @@ export default function TeachersPage() {
                   <stat.icon className={`w-4 h-4 ${stat.color}`} />
                 </div>
                 <div>
-                  <p className="text-xl font-bold {stat.color}" style={{ color: stat.color.includes('teal') ? '#0d9488' : stat.color.includes('emerald') ? '#047857' : stat.color.includes('amber') ? '#b45309' : '#1d4ed8' }}>{stat.count}</p>
+                  <p className="text-xl font-bold" style={{ color: stat.color.includes('teal') ? '#0d9488' : stat.color.includes('emerald') ? '#047857' : stat.color.includes('amber') ? '#b45309' : '#1d4ed8' }}>{stat.count}</p>
                   <p className="text-xs text-muted-foreground">{stat.label}</p>
                 </div>
               </div>
@@ -321,15 +316,16 @@ export default function TeachersPage() {
               className="pr-9"
             />
           </div>
-          <Select value={filterSpecialty} onValueChange={setFilterSpecialty}>
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
             <SelectTrigger className="w-full sm:w-48">
-              <SelectValue placeholder="الاختصاص" />
+              <SelectValue placeholder="الحالة" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">جميع الاختصاصات</SelectItem>
-              {specialties.map(s => (
-                <SelectItem key={s} value={s!}>{s}</SelectItem>
-              ))}
+              <SelectItem value="all">جميع الحالات</SelectItem>
+              <SelectItem value="نشط">نشط</SelectItem>
+              <SelectItem value="إجازة">إجازة</SelectItem>
+              <SelectItem value="منقول">منقول</SelectItem>
+              <SelectItem value="متقاعد">متقاعد</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -391,19 +387,6 @@ export default function TeachersPage() {
                             </span>
                           )}
                         </div>
-                        {teacher.specialty ? (
-                          <div className="flex items-center gap-1.5 mt-0.5">
-                            <span className={`w-2 h-2 rounded-full ${SPECIALTY_DOT_COLORS[teacher.specialty] || 'bg-gray-400'}`} />
-                            <Badge
-                              variant="outline"
-                              className={`text-[11px] ${SPECIALTY_COLORS[teacher.specialty] || 'bg-gray-100 text-gray-700 border-gray-200'}`}
-                            >
-                              {teacher.specialty}
-                            </Badge>
-                          </div>
-                        ) : (
-                          <p className="text-sm text-muted-foreground">بدون اختصاص</p>
-                        )}
                         <Badge
                           variant="outline"
                           className={cn('text-xs mt-1.5', STATUS_COLORS[teacher.status] || '')}
@@ -424,6 +407,12 @@ export default function TeachersPage() {
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <Mail className="h-3.5 w-3.5" />
                           <span className="truncate">{teacher.email}</span>
+                        </div>
+                      )}
+                      {teacher.notes && (
+                        <div className="flex items-start gap-2 text-sm text-muted-foreground">
+                          <StickyNote className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                          <span className="line-clamp-2">{teacher.notes}</span>
                         </div>
                       )}
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -497,27 +486,26 @@ export default function TeachersPage() {
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>الاختصاص</Label>
-                <Input
-                  value={form.specialty}
-                  onChange={(e) => setForm({ ...form, specialty: e.target.value })}
-                  placeholder="الاختصاص"
-                />
-              </div>
-              <div>
-                <Label>الحالة</Label>
-                <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="نشط">نشط</SelectItem>
-                    <SelectItem value="إجازة">إجازة</SelectItem>
-                    <SelectItem value="منقول">منقول</SelectItem>
-                    <SelectItem value="متقاعد">متقاعد</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <div>
+              <Label>الحالة</Label>
+              <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="نشط">نشط</SelectItem>
+                  <SelectItem value="إجازة">إجازة</SelectItem>
+                  <SelectItem value="منقول">منقول</SelectItem>
+                  <SelectItem value="متقاعد">متقاعد</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>ملاحظات</Label>
+              <Textarea
+                value={form.notes}
+                onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                placeholder="أضف ملاحظات عن المدرس..."
+                rows={3}
+              />
             </div>
 
             <Separator />
