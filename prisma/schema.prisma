@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -18,74 +18,73 @@ model School {
   principalName   String?
   academicYear    String   @default("2026-2027")
   schoolType      String   @default("ثانوية اعتيادية")
-  shiftType       String   @default("صباحي") // صباحي، مسائي، مزدوج
+  shiftType       String   @default("صباحي")
   startTime       String   @default("08:00")
   endTime         String   @default("13:30")
-  lateThreshold   Int      @default(10) // minutes
-  weekendDays     String   @default("5,6") // Friday=5, Saturday=6
+  lateThreshold   Int      @default(10)
+  weekendDays     String   @default("5,6")
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  students   Student[]
-  teachers   Teacher[]
-  subjects   Subject[]
-  classes    Class[]
-  sections   Section[]
-  attendance AttendanceRecord[]
-  grades     Grade[]
-  notices    Notice[]
-  activities ActivityLog[]
+  students      Student[]
+  teachers      Teacher[]
+  subjects      Subject[]
+  classes       Class[]
+  sections      Section[]
+  attendance    AttendanceRecord[]
+  grades        Grade[]
+  scheduleSlots ScheduleSlot[]
 }
 
 // ==================== CLASSES & SECTIONS ====================
 model Class {
   id        String   @id @default(cuid())
-  name      String   // الرابع الإعدادي، الخامس العلمي، إلخ
-  level     String   // إعدادي
-  stage     String   // الرابع، الخامس، السادس
-  branch    String?  // علمي، أدبي، أحيائي، تطبيقي
+  name      String
+  level     String
+  stage     String
+  branch    String?
   schoolId  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  school    School   @relation(fields: [schoolId], references: [id])
-  sections  Section[]
-  students  Student[]
-  subjects  SubjectClass[]
+  school       School         @relation(fields: [schoolId], references: [id])
+  sections     Section[]
+  students     Student[]
+  subjects     SubjectClass[]
+  scheduleSlots ScheduleSlot[]
 }
 
 model Section {
   id        String   @id @default(cuid())
-  name      String   // أ، ب، ج
+  name      String
   classId   String
   schoolId  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  class     Class    @relation(fields: [classId], references: [id])
-  school    School   @relation(fields: [schoolId], references: [id])
-  students  Student[]
+  class    Class    @relation(fields: [classId], references: [id])
+  school   School   @relation(fields: [schoolId], references: [id])
+  students Student[]
 }
 
 // ==================== STUDENTS ====================
 model Student {
   id              String   @id @default(cuid())
-  studentNumber   String   @unique // STU-2026-00045
+  studentNumber   String   @unique
   fullName        String
-  gender          String   @default("ذكر") // ذكر، أنثى
+  gender          String   @default("ذكر")
   dateOfBirth     String?
   nationalId      String?
   phone           String?
   address         String?
   photo           String?
-  status          String   @default("مستمر") // مستمر، منقول، تارك، مفصول، متخرج
-  qrCode          String?  // QR code data
-  cardStatus      String   @default("فعالة") // فعالة، موقوفة، مفقودة، مستبدلة
+  status          String   @default("مستمر")
+  qrCode          String?
+  cardStatus      String   @default("فعالة")
 
   classId         String
   sectionId       String
   schoolId        String
-  parentId        String?
 
   guardianName    String?
   guardianPhone   String?
@@ -94,26 +93,12 @@ model Student {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  class           Class    @relation(fields: [classId], references: [id])
-  section         Section  @relation(fields: [sectionId], references: [id])
-  school          School   @relation(fields: [schoolId], references: [id])
-  parent          Parent?  @relation(fields: [parentId], references: [id])
-  attendance      AttendanceRecord[]
-  grades          Grade[]
-  notes           StudentNote[]
-  documents       Document[]
-}
-
-// ==================== PARENTS ====================
-model Parent {
-  id        String   @id @default(cuid())
-  name      String
-  phone     String
-  email     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  children  Student[]
+  class      Class              @relation(fields: [classId], references: [id])
+  section    Section            @relation(fields: [sectionId], references: [id])
+  school     School             @relation(fields: [schoolId], references: [id])
+  attendance AttendanceRecord[]
+  grades     Grade[]
+  notes      StudentNote[]
 }
 
 // ==================== TEACHERS ====================
@@ -123,16 +108,16 @@ model Teacher {
   phone       String?
   email       String?
   specialty   String?
-  status      String   @default("نشط") // نشط، إجازة، منقول، متقاعد
+  status      String   @default("نشط")
   photo       String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  schoolId    String
-  school      School   @relation(fields: [schoolId], references: [id])
-  subjects    TeacherSubject[]
-  classes     TeacherClass[]
-  documents   Document[]
+  schoolId      String
+  school        School           @relation(fields: [schoolId], references: [id])
+  subjects      TeacherSubject[]
+  classes       TeacherClass[]
+  scheduleSlots ScheduleSlot[]
 }
 
 // ==================== SUBJECTS ====================
@@ -140,18 +125,19 @@ model Subject {
   id            String   @id @default(cuid())
   name          String
   code          String   @unique
-  type          String   @default("أساسية") // أساسية، اختيارية
+  type          String   @default("أساسية")
   maxScore      Int      @default(100)
   passScore     Int      @default(50)
   schoolId      String
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  school        School        @relation(fields: [schoolId], references: [id])
+  school        School           @relation(fields: [schoolId], references: [id])
   teachers      TeacherSubject[]
   classes       SubjectClass[]
   grades        Grade[]
   examTypes     ExamType[]
+  scheduleSlots ScheduleSlot[]
 }
 
 model TeacherSubject {
@@ -177,7 +163,7 @@ model SubjectClass {
 }
 
 model TeacherClass {
-  id        String @id @default(cuid())
+  id        String  @id @default(cuid())
   teacherId String
   classId   String
   sectionId String?
@@ -190,7 +176,7 @@ model TeacherClass {
 // ==================== EXAM TYPES ====================
 model ExamType {
   id         String   @id @default(cuid())
-  name       String   // شهر أول، شهر ثاني، نصف السنة، إلخ
+  name       String
   maxScore   Int
   subjectId  String
   createdAt  DateTime @default(now())
@@ -204,10 +190,10 @@ model AttendanceRecord {
   id          String   @id @default(cuid())
   studentId   String
   schoolId    String
-  date        String   // YYYY-MM-DD
-  checkIn     String?  // HH:mm
+  date        String
+  checkIn     String?
   checkOut    String?
-  status      String   @default("غائب") // حاضر، متأخر، غائب، مستأذن، خروج مبكر، حضور ناقص، إجازة مرضية، إجازة رسمية
+  status      String   @default("غائب")
   lateMinutes Int?
   earlyExitReason String?
   earlyExitApproved Boolean?
@@ -227,7 +213,7 @@ model Grade {
   examTypeId   String
   schoolId     String
   score        Float?
-  status       String   @default("ناقصة") // مكتملة، ناقصة، غائب، مؤجلة، معاد، مقفلة
+  status       String   @default("ناقصة")
   approved     Boolean  @default(false)
   approvedBy   String?
   createdAt    DateTime @default(now())
@@ -259,38 +245,34 @@ model StudentNote {
   id        String   @id @default(cuid())
   studentId String
   content   String
-  type      String   @default("ملاحظة") // ملاحظة، سلوكية، إدارية
+  type      String   @default("ملاحظة")
   createdBy String
   createdAt DateTime @default(now())
 
   student   Student  @relation(fields: [studentId], references: [id])
 }
 
-// ==================== DOCUMENTS ====================
-model Document {
+// ==================== SCHEDULE ====================
+model ScheduleSlot {
   id        String   @id @default(cuid())
-  title     String
-  fileUrl   String
-  type      String   // صورة شخصية، هوية، شهادة، إلخ
-  studentId String?
-  teacherId String?
-  createdAt DateTime @default(now())
-
-  student   Student? @relation(fields: [studentId], references: [id])
-  teacher   Teacher? @relation(fields: [teacherId], references: [id])
-}
-
-// ==================== NOTICES ====================
-model Notice {
-  id        String   @id @default(cuid())
-  title     String
-  content   String
-  type      String   @default("عام") // عام، عاجل، أكاديمي
+  day       String   // الأحد, الاثنين, الثلاثاء, الأربعاء, الخميس
+  period    Int      // 1-7
+  subjectId String
+  teacherId String
+  classId   String
+  sectionId String?
   schoolId  String
-  createdBy String
+  room      String?
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
+  subject   Subject  @relation(fields: [subjectId], references: [id])
+  teacher   Teacher  @relation(fields: [teacherId], references: [id])
+  class     Class    @relation(fields: [classId], references: [id])
   school    School   @relation(fields: [schoolId], references: [id])
+
+  @@unique([day, period, teacherId, schoolId])
+  @@unique([day, period, classId, sectionId, schoolId])
 }
 
 // ==================== USERS & AUTH ====================
@@ -299,20 +281,8 @@ model User {
   username  String   @unique
   password  String
   name      String
-  role      String   @default("موظف تسجيل") // مدير، معاون، موظف تسجيل، موظف بوابة، مدرس، مسؤول نظام
+  role      String   @default("موظف تسجيل")
   active    Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-}
-
-// ==================== ACTIVITY LOG ====================
-model ActivityLog {
-  id        String   @id @default(cuid())
-  action    String
-  details   String?
-  userId    String?
-  schoolId  String
-  createdAt DateTime @default(now())
-
-  school    School   @relation(fields: [schoolId], references: [id])
 }

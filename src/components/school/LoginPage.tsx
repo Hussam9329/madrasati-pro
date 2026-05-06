@@ -88,7 +88,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
       <div
         className="hidden lg:flex lg:w-1/2 relative overflow-hidden items-center justify-center p-12"
         style={{
-          background: 'linear-gradient(135deg, #0d9488 0%, #059669 40%, #047857 100%)',
+          background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 40%, #1e40af 100%)',
         }}
       >
         {/* Gradient mesh background */}
@@ -149,7 +149,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             <div className="w-24 h-24 rounded-2xl mx-auto mb-8 flex items-center justify-center bg-white/15 backdrop-blur-sm shadow-xl border border-white/20">
               <School className="w-12 h-12 text-white" />
             </div>
-            <h1 className="text-5xl font-bold mb-4 tracking-tight">مدرستي Pro</h1>
+            <h1 className="text-5xl font-bold mb-4 tracking-tight">مارينا</h1>
             {/* Typing animation for welcome text */}
             <div className="h-10 flex items-center justify-center mb-4">
               <span className="text-2xl font-light text-white/90">
@@ -162,7 +162,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
               />
             </div>
             <p className="text-lg text-white/70 mb-8 leading-relaxed">
-              حضور ذكي · درجات دقيقة · تقارير شاملة
+              حضور ذكي بالـ QR · درجات دقيقة · جدول بدون تضاربات
             </p>
             {/* Glassmorphism feature badges */}
             <div className="flex items-center justify-center gap-4 text-sm">
@@ -199,24 +199,24 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
       <div className="flex-1 flex items-center justify-center p-6 relative overflow-hidden bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
         {/* Gradient mesh behind login card */}
         <div className="absolute inset-0">
-          <div className="absolute top-0 right-0 w-[400px] h-[400px] opacity-30 dark:opacity-10" style={{ background: 'radial-gradient(circle, rgba(13,148,136,0.15) 0%, transparent 70%)' }} />
-          <div className="absolute bottom-0 left-0 w-[350px] h-[350px] opacity-25 dark:opacity-10" style={{ background: 'radial-gradient(circle, rgba(5,150,105,0.12) 0%, transparent 70%)' }} />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] opacity-20 dark:opacity-5" style={{ background: 'radial-gradient(circle, rgba(13,148,136,0.08) 0%, transparent 60%)' }} />
+          <div className="absolute top-0 right-0 w-[400px] h-[400px] opacity-30 dark:opacity-10" style={{ background: 'radial-gradient(circle, rgba(37,99,235,0.15) 0%, transparent 70%)' }} />
+          <div className="absolute bottom-0 left-0 w-[350px] h-[350px] opacity-25 dark:opacity-10" style={{ background: 'radial-gradient(circle, rgba(29,78,216,0.12) 0%, transparent 70%)' }} />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] opacity-20 dark:opacity-5" style={{ background: 'radial-gradient(circle, rgba(37,99,235,0.08) 0%, transparent 60%)' }} />
         </div>
 
         {/* Floating shapes on right panel */}
         <motion.div
-          className="absolute top-[15%] right-[10%] w-16 h-16 rounded-full border border-teal-200/30 dark:border-teal-700/20"
+          className="absolute top-[15%] right-[10%] w-16 h-16 rounded-full border border-blue-200/30 dark:border-blue-700/20"
           animate={{ y: [0, -15, 0], rotate: [0, 90, 0] }}
           transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
         />
         <motion.div
-          className="absolute bottom-[20%] left-[8%] w-12 h-12 rounded-md border border-emerald-200/30 dark:border-emerald-700/20"
+          className="absolute bottom-[20%] left-[8%] w-12 h-12 rounded-md border border-blue-200/30 dark:border-blue-700/20"
           animate={{ y: [0, 12, 0], rotate: [0, -45, 0] }}
           transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
         />
         <motion.div
-          className="absolute top-[60%] right-[5%] w-8 h-8 rounded-full bg-teal-100/20 dark:bg-teal-900/10"
+          className="absolute top-[60%] right-[5%] w-8 h-8 rounded-full bg-blue-100/20 dark:bg-blue-900/10"
           animate={{ y: [0, -8, 0], scale: [1, 1.1, 1] }}
           transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
         />
@@ -231,17 +231,17 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           <div className="lg:hidden text-center mb-8">
             <div
               className="mx-auto mb-4 flex items-center justify-center w-16 h-16 rounded-xl shadow-lg"
-              style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}
+              style={{ background: 'linear-gradient(135deg, #2563eb, #1d4ed8)' }}
             >
               <School className="w-8 h-8 text-white" />
             </div>
-            <h2 className="text-2xl font-bold" style={{ color: '#0d9488' }}>مدرستي Pro</h2>
+            <h2 className="text-2xl font-bold" style={{ color: '#2563eb' }}>مارينا</h2>
             <p className="text-sm text-muted-foreground mt-1">نظام إدارة المدرسة</p>
           </div>
 
           <Card className="shadow-2xl border-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl relative overflow-hidden">
             {/* Gradient top accent */}
-            <div className="absolute top-0 inset-x-0 h-1" style={{ background: 'linear-gradient(90deg, #0d9488, #059669, #0d9488)' }} />
+            <div className="absolute top-0 inset-x-0 h-1" style={{ background: 'linear-gradient(90deg, #2563eb, #1d4ed8, #2563eb)' }} />
             
             {/* Shimmer effect */}
             <motion.div
@@ -305,7 +305,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
                       placeholder="أدخل اسم المستخدم"
-                      className="h-12 text-base border-gray-200 dark:border-gray-700 focus:border-teal-500 focus:ring-teal-500/20 rounded-xl pr-4 pl-10 dark:bg-gray-800/50 dark:text-gray-100"
+                      className="h-12 text-base border-gray-200 dark:border-gray-700 focus:border-blue-500 focus:ring-blue-500/20 rounded-xl pr-4 pl-10 dark:bg-gray-800/50 dark:text-gray-100"
                       required
                       disabled={loading}
                       dir="rtl"
@@ -327,7 +327,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="أدخل كلمة المرور"
-                      className="h-12 text-base border-gray-200 dark:border-gray-700 focus:border-teal-500 focus:ring-teal-500/20 rounded-xl pr-4 pl-12 dark:bg-gray-800/50 dark:text-gray-100"
+                      className="h-12 text-base border-gray-200 dark:border-gray-700 focus:border-blue-500 focus:ring-blue-500/20 rounded-xl pr-4 pl-12 dark:bg-gray-800/50 dark:text-gray-100"
                       required
                       disabled={loading}
                       dir="rtl"
@@ -350,7 +350,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                     disabled={loading}
                     className="w-full h-12 text-base font-semibold text-white transition-all duration-200 hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] rounded-xl relative overflow-hidden"
                     style={{
-                      background: 'linear-gradient(135deg, #0d9488, #059669)',
+                      background: 'linear-gradient(135deg, #2563eb, #1d4ed8)',
                     }}
                   >
                     {loading ? (
@@ -378,11 +378,11 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                 </div>
 
                 {/* Quick access hints */}
-                <div className="mt-4 p-3 bg-teal-50/50 dark:bg-teal-900/10 rounded-xl border border-teal-100 dark:border-teal-800/30">
-                  <p className="text-xs text-teal-700 dark:text-teal-400 font-medium mb-2">للتجربة السريعة:</p>
-                  <div className="grid grid-cols-2 gap-2 text-xs text-teal-600 dark:text-teal-400">
-                    <div>المدير: <code className="bg-teal-100 dark:bg-teal-900/30 px-1.5 py-0.5 rounded text-teal-800 dark:text-teal-300">admin</code></div>
-                    <div>كلمة المرور: <code className="bg-teal-100 dark:bg-teal-900/30 px-1.5 py-0.5 rounded text-teal-800 dark:text-teal-300">admin123</code></div>
+                <div className="mt-4 p-3 bg-blue-50/50 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-800/30">
+                  <p className="text-xs text-blue-700 dark:text-blue-400 font-medium mb-2">للتجربة السريعة:</p>
+                  <div className="grid grid-cols-2 gap-2 text-xs text-blue-600 dark:text-blue-400">
+                    <div>المدير: <code className="bg-blue-100 dark:bg-blue-900/30 px-1.5 py-0.5 rounded text-blue-800 dark:text-blue-300">admin</code></div>
+                    <div>كلمة المرور: <code className="bg-blue-100 dark:bg-blue-900/30 px-1.5 py-0.5 rounded text-blue-800 dark:text-blue-300">admin123</code></div>
                   </div>
                 </div>
               </motion.form>
@@ -394,8 +394,8 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                 className="text-center mt-6 pt-4 border-t border-gray-100 dark:border-gray-800"
               >
                 <p className="text-xs text-muted-foreground mb-1">من تطوير</p>
-                <p className="text-base font-extrabold tracking-[0.2em] uppercase" style={{ color: '#0d9488' }}>
-                  VISION
+                <p className="text-base font-extrabold tracking-[0.2em]" style={{ color: '#2563eb' }}>
+                  مارينا
                 </p>
               </motion.div>
             </CardContent>

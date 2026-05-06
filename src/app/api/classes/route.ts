@@ -42,3 +42,48 @@ export async function GET(request: Request) {
     );
   }
 }
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const { name, level, stage, branch, schoolId, sections } = body;
+
+    if (!name || !level || !stage || !schoolId) {
+      return NextResponse.json(
+        { error: 'اسم الصف والمستوى والمرحلة والمدرسة مطلوبون' },
+        { status: 400 }
+      );
+    }
+
+    const newClass = await db.class.create({
+      data: {
+        name,
+        level,
+        stage,
+        branch,
+        schoolId,
+        sections: sections
+          ? {
+              create: sections.map((sec: { name: string }) => ({
+                name: sec.name,
+                schoolId,
+              })),
+            }
+          : {
+              create: { name: 'أ', schoolId },
+            },
+      },
+      include: {
+        sections: true,
+      },
+    });
+
+    return NextResponse.json(newClass, { status: 201 });
+  } catch (error) {
+    console.error('Create class error:', error);
+    return NextResponse.json(
+      { error: 'حدث خطأ في إنشاء الصف' },
+      { status: 500 }
+    );
+  }
+}

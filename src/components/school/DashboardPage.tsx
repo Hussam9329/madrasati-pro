@@ -325,7 +325,7 @@ export default function DashboardPage() {
           title: 'إجمالي الطلاب',
           value: data.totals.students,
           icon: GraduationCap,
-          color: '#059669',
+          color: '#1d4ed8',
           bgColor: 'bg-emerald-50',
           iconBg: 'bg-emerald-100',
         },
@@ -405,7 +405,7 @@ export default function DashboardPage() {
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         className="relative rounded-2xl overflow-hidden"
-        style={{ background: 'linear-gradient(135deg, #0d9488 0%, #059669 60%, #047857 100%)' }}
+        style={{ background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 60%, #1e40af 100%)' }}
       >
         {/* Decorative circles */}
         <div className="absolute -top-8 -left-8 w-32 h-32 rounded-full bg-white/5" />
@@ -509,7 +509,7 @@ export default function DashboardPage() {
           transition={{ delay: 0.3 }}
         >
           <Card className="border-0 shadow-sm h-full overflow-hidden dark:bg-gray-900/50 dark:border dark:border-gray-700">
-            <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
+            <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #2563eb, #1d4ed8)' }} />
             <CardHeader className="pb-2">
               <CardTitle className="text-base font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
                 <Activity className="w-4 h-4 text-teal-600" />
@@ -601,7 +601,7 @@ export default function DashboardPage() {
           className="lg:col-span-2"
         >
           <Card className="border-0 shadow-sm h-full overflow-hidden dark:bg-gray-900/50 dark:border dark:border-gray-700">
-            <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
+            <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #2563eb, #1d4ed8)' }} />
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <div>
@@ -786,7 +786,7 @@ export default function DashboardPage() {
           transition={{ delay: 0.6 }}
         >
           <Card className="border-0 shadow-sm h-full overflow-hidden dark:bg-gray-900/50 dark:border dark:border-gray-700">
-            <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
+            <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #2563eb, #1d4ed8)' }} />
             <CardHeader className="pb-2">
               <CardTitle className="text-base font-bold text-gray-800 dark:text-gray-200">
                 نسبة إكمال الدرجات
@@ -811,7 +811,7 @@ export default function DashboardPage() {
                         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                           {subject.subjectName}
                         </span>
-                        <span className="text-xs font-semibold" style={{ color: '#0d9488' }}>
+                        <span className="text-xs font-semibold" style={{ color: '#2563eb' }}>
                           {subject.completionPercentage}%
                         </span>
                       </div>
@@ -845,7 +845,7 @@ export default function DashboardPage() {
           transition={{ delay: 0.7 }}
         >
           <Card className="border-0 shadow-sm h-full overflow-hidden dark:bg-gray-900/50 dark:border dark:border-gray-700">
-            <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
+            <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #2563eb, #1d4ed8)' }} />
             <CardHeader className="pb-2">
               <CardTitle className="text-base font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
                 <TrendingUp className="w-4 h-4 text-teal-600" />
@@ -905,7 +905,7 @@ export default function DashboardPage() {
           transition={{ delay: 0.8 }}
         >
           <Card className="border-0 shadow-sm h-full overflow-hidden dark:bg-gray-900/50 dark:border dark:border-gray-700">
-            <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
+            <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #2563eb, #1d4ed8)' }} />
             <CardHeader className="pb-2">
               <CardTitle className="text-base font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
                 <GraduationCap className="w-4 h-4 text-teal-600" />
@@ -964,7 +964,7 @@ export default function DashboardPage() {
         transition={{ delay: 0.9 }}
       >
         <Card className="border-0 shadow-sm overflow-hidden dark:bg-gray-900/50 dark:border dark:border-gray-700">
-          <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
+          <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #2563eb, #1d4ed8)' }} />
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-teal-600" />
@@ -1037,9 +1037,9 @@ export default function DashboardPage() {
                     yAxisId="left"
                     type="monotone"
                     dataKey="attendance"
-                    stroke="#0d9488"
+                    stroke="#2563eb"
                     strokeWidth={3}
-                    dot={{ fill: '#0d9488', r: 4, strokeWidth: 2, stroke: '#fff' }}
+                    dot={{ fill: '#2563eb', r: 4, strokeWidth: 2, stroke: '#fff' }}
                     activeDot={{ r: 6 }}
                   />
                   <Line
@@ -1074,7 +1074,7 @@ export default function DashboardPage() {
         transition={{ delay: 1.0 }}
       >
         <Card className="border-0 shadow-sm overflow-hidden dark:bg-gray-900/50 dark:border dark:border-gray-700">
-          <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
+          <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #2563eb, #1d4ed8)' }} />
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
               <BarChart3 className="w-4 h-4 text-teal-600" />
@@ -1088,7 +1088,7 @@ export default function DashboardPage() {
                 <BarChart data={classPerformanceData} layout="vertical" margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
                   <defs>
                     <linearGradient id="classPerfGrad" x1="0" y1="0" x2="1" y2="0">
-                      <stop offset="0%" stopColor="#059669" />
+                      <stop offset="0%" stopColor="#1d4ed8" />
                       <stop offset="100%" stopColor="#10b981" />
                     </linearGradient>
                   </defs>

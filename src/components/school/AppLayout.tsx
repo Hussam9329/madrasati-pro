@@ -9,7 +9,6 @@ import {
   ScanLine,
   FileText,
   BarChart3,
-  Bell,
   Shield,
   Settings,
   LogOut,
@@ -18,26 +17,12 @@ import {
   ChevronLeft,
   School,
   Calendar,
-  Activity,
   Sun,
   Moon,
-  CheckCircle2,
-  Info,
-  AlertTriangle,
-  UserPlus,
-  ClipboardCheck,
-  Heart,
-  Trophy,
-  ClipboardList,
-  Wallet,
-  MessageSquare,
-  CalendarDays,
-  Award,
-  PanelRightClose,
-  PanelRightOpen,
   Search,
   Keyboard,
-  Upload,
+  Printer,
+  Layers,
 } from 'lucide-react';
 import { useAppStore, type PageKey } from '@/lib/store';
 import { Button } from '@/components/ui/button';
@@ -45,7 +30,6 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useTheme } from 'next-themes';
 import { motion, AnimatePresence } from 'framer-motion';
 import CommandPalette from '@/components/school/CommandPalette';
@@ -55,51 +39,30 @@ interface AppLayoutProps {
   children: React.ReactNode;
 }
 
-// Navigation groups with separators
+// Navigation groups - مارينا School System
 const navGroups: { label: string; items: { key: PageKey; label: string; icon: React.ElementType; badge?: string }[] }[] = [
   {
     label: 'الرئيسية',
     items: [
       { key: 'dashboard', label: 'لوحة التحكم', icon: LayoutDashboard },
       { key: 'students', label: 'الطلاب', icon: GraduationCap },
-      { key: 'teachers', label: 'المدرسون', icon: Users },
+      { key: 'teachers', label: 'الأساتذة', icon: Users },
       { key: 'subjects', label: 'المواد', icon: BookOpen },
     ],
   },
   {
     label: 'الأكاديمية',
     items: [
+      { key: 'classes', label: 'الصفوف والشعب', icon: Layers },
       { key: 'attendance', label: 'الحضور QR', icon: ScanLine, badge: 'مباشر' },
       { key: 'grades', label: 'الدرجات', icon: FileText },
-      { key: 'ranking', label: 'ترتيب الصفوف', icon: Trophy },
-      { key: 'exams', label: 'الامتحانات', icon: ClipboardList },
-      { key: 'library', label: 'إدارة المكتبة', icon: BookOpen },
-      { key: 'health', label: 'السجل الصحي', icon: Heart },
-      { key: 'import', label: 'استيراد البيانات', icon: Upload },
-    ],
-  },
-  {
-    label: 'المالية والفعاليات',
-    items: [
-      { key: 'fees', label: 'الرسوم المدرسية', icon: Wallet },
-      { key: 'calendar', label: 'التقويم المدرسي', icon: CalendarDays },
-      { key: 'certificates', label: 'الشهادات والوثائق', icon: Award },
-    ],
-  },
-  {
-    label: 'التواصل',
-    items: [
-      { key: 'messages', label: 'التواصل والرسائل', icon: MessageSquare },
       { key: 'schedule', label: 'جدول الحصص', icon: Calendar },
-      { key: 'activity', label: 'سجل النشاط', icon: Activity },
     ],
   },
   {
     label: 'التقارير والإعدادات',
     items: [
       { key: 'reports', label: 'التقارير', icon: BarChart3 },
-      { key: 'notices', label: 'الإشعارات', icon: Bell },
-      { key: 'parents', label: 'بوابة ولي الأمر', icon: GraduationCap },
       { key: 'users', label: 'المستخدمون', icon: Shield },
       { key: 'settings', label: 'الإعدادات', icon: Settings },
     ],
@@ -108,25 +71,6 @@ const navGroups: { label: string; items: { key: PageKey; label: string; icon: Re
 
 // Flat nav items for backward compatibility (Ctrl+1-9)
 const flatNavItems = navGroups.flatMap((g) => g.items);
-
-// Mock notification data
-const mockNotifications = [
-  { id: 1, type: 'student' as const, message: 'تم تسجيل الطالب أحمد محمد في الصف السادس', time: 'منذ 5 دقائق', read: false },
-  { id: 2, type: 'attendance' as const, message: 'تم تسجيل حضور الصف الرابع بنسبة 95%', time: 'منذ 15 دقيقة', read: false },
-  { id: 3, type: 'grade' as const, message: 'تم رفع درجات مادة الرياضيات للصف الخامس', time: 'منذ 30 دقيقة', read: false },
-  { id: 4, type: 'alert' as const, message: 'تنبيه: 3 طلاب لم يسجلوا حضورهم اليوم', time: 'منذ ساعة', read: true },
-  { id: 5, type: 'info' as const, message: 'تم تحديث جدول الحصص للأسبوع القادم', time: 'منذ ساعتين', read: true },
-  { id: 6, type: 'success' as const, message: 'تم تصدير تقرير الدرجات بنجاح', time: 'منذ 3 ساعات', read: true },
-];
-
-const notificationConfig: Record<string, { icon: React.ElementType; color: string; bg: string }> = {
-  student: { icon: UserPlus, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-100 dark:bg-blue-900/30' },
-  attendance: { icon: ClipboardCheck, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-100 dark:bg-emerald-900/30' },
-  grade: { icon: FileText, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-100 dark:bg-amber-900/30' },
-  alert: { icon: AlertTriangle, color: 'text-red-600 dark:text-red-400', bg: 'bg-red-100 dark:bg-red-900/30' },
-  info: { icon: Info, color: 'text-sky-600 dark:text-sky-400', bg: 'bg-sky-100 dark:bg-sky-900/30' },
-  success: { icon: CheckCircle2, color: 'text-teal-600 dark:text-teal-400', bg: 'bg-teal-100 dark:bg-teal-900/30' },
-};
 
 export default function AppLayout({ children }: AppLayoutProps) {
   const {
@@ -145,7 +89,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const [mounted, setMounted] = useState(false);
   const [commandOpen, setCommandOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
-  const unreadCount = mockNotifications.filter((n) => !n.read).length;
 
   // Load collapsed state from localStorage
   useEffect(() => {
@@ -169,7 +112,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
   // Keyboard shortcuts
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
-      // Ctrl+1 through Ctrl+9 → navigate to first 9 pages
       if (event.ctrlKey && !event.shiftKey && !event.altKey) {
         const num = parseInt(event.key, 10);
         if (num >= 1 && num <= 9 && num <= flatNavItems.length) {
@@ -178,26 +120,22 @@ export default function AppLayout({ children }: AppLayoutProps) {
           setSidebarOpen(false);
           return;
         }
-        // Ctrl+K → open command palette
         if (event.key === 'k' || event.key === 'K') {
           event.preventDefault();
           setCommandOpen(true);
           return;
         }
-        // Ctrl+/ → show keyboard shortcuts
         if (event.key === '/') {
           event.preventDefault();
           setShortcutsOpen(true);
           return;
         }
-        // Ctrl+D → toggle dark mode
         if (event.key === 'd' || event.key === 'D') {
           event.preventDefault();
           setTheme(theme === 'dark' ? 'light' : 'dark');
           return;
         }
       }
-      // Escape → close any open dialog/panel
       if (event.key === 'Escape') {
         if (commandOpen) {
           setCommandOpen(false);
@@ -241,8 +179,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
     'موظف تسجيل': 'bg-cyan-100 text-cyan-700 border-cyan-200',
     'موظف بوابة': 'bg-amber-100 text-amber-700 border-amber-200',
     'مدرس': 'bg-sky-100 text-sky-700 border-sky-200',
-    'ولي أمر': 'bg-purple-100 text-purple-700 border-purple-200',
-    'طالب': 'bg-pink-100 text-pink-700 border-pink-200',
     'مسؤول نظام': 'bg-red-100 text-red-700 border-red-200',
   };
 
@@ -259,26 +195,25 @@ export default function AppLayout({ children }: AppLayoutProps) {
     <div className="flex flex-col h-full">
       {/* Logo Section */}
       <div className="p-4 pb-3 relative overflow-hidden shrink-0">
-        {/* Subtle gradient background for sidebar header */}
-        <div className="absolute inset-0 bg-gradient-to-l from-teal-50/50 to-transparent dark:from-teal-900/10 dark:to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-l from-blue-50/50 to-transparent dark:from-blue-900/10 dark:to-transparent" />
         <div className="flex items-center gap-3 relative z-10">
           <div
             className="flex items-center justify-center w-11 h-11 rounded-xl shrink-0 shadow-lg"
             style={{
-              background: 'linear-gradient(135deg, #0d9488, #059669)',
+              background: 'linear-gradient(135deg, #2563eb, #1d4ed8)',
             }}
           >
             <School className="w-6 h-6 text-white" />
           </div>
           {!sidebarCollapsed && (
             <div className="flex flex-col min-w-0">
-              <span className="font-bold text-base leading-tight" style={{ color: '#0d9488' }}>
-                مدرستي Pro
+              <span className="font-bold text-base leading-tight" style={{ color: '#2563eb' }}>
+                مارينا
               </span>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span className="text-[11px] text-muted-foreground truncate">نظام إدارة المدرسة</span>
-                <Badge className="text-[8px] px-1 py-0 h-3.5 bg-teal-100 text-teal-700 border-teal-200 dark:bg-teal-900/30 dark:text-teal-300 dark:border-teal-700 font-medium">
-                  2025-2026
+                <Badge className="text-[8px] px-1 py-0 h-3.5 bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700 font-medium">
+                  2026-2027
                 </Badge>
               </div>
             </div>
@@ -301,7 +236,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
         <div className="px-4 py-2.5 bg-muted/30 shrink-0">
           <div className="flex items-center justify-between">
             <span className="text-[11px] text-muted-foreground">{formatDate(currentTime)}</span>
-            <span className="text-xs font-semibold" style={{ color: '#0d9488' }}>
+            <span className="text-xs font-semibold" style={{ color: '#2563eb' }}>
               {formatTime(currentTime)}
             </span>
           </div>
@@ -310,7 +245,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
       {mounted && sidebarCollapsed && (
         <div className="px-2 py-2 text-center shrink-0">
-          <span className="text-[10px] font-semibold block" style={{ color: '#0d9488' }}>
+          <span className="text-[10px] font-semibold block" style={{ color: '#2563eb' }}>
             {formatTime(currentTime)}
           </span>
         </div>
@@ -350,28 +285,27 @@ export default function AppLayout({ children }: AppLayoutProps) {
                       ${sidebarCollapsed ? 'px-2 py-2.5 justify-center' : 'px-3 py-2.5'}
                       ${
                         isActive
-                          ? 'bg-teal-600/10 dark:bg-teal-500/20 text-teal-700 dark:text-teal-300'
-                          : 'text-gray-600 dark:text-gray-300 hover:bg-gradient-to-l hover:from-teal-500/5 hover:to-emerald-500/5 dark:hover:bg-teal-900/20 hover:text-teal-700 dark:hover:text-teal-400'
+                          ? 'bg-blue-600/10 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300'
+                          : 'text-gray-600 dark:text-gray-300 hover:bg-gradient-to-l hover:from-blue-500/5 hover:to-indigo-500/5 dark:hover:bg-blue-900/20 hover:text-blue-700 dark:hover:text-blue-400'
                       }
                     `}
                     whileHover={{ x: isActive ? 0 : -2 }}
                     whileTap={{ scale: 0.98 }}
                     title={sidebarCollapsed ? item.label : undefined}
                   >
-                    {/* Right border strip for active item */}
                     {isActive && (
                       <motion.div
                         layoutId="activeIndicator"
                         className="absolute right-0 top-1/2 -translate-y-1/2 w-0.5 h-6 rounded-l-full"
-                        style={{ background: 'linear-gradient(to bottom, #0d9488, #059669)' }}
+                        style={{ background: 'linear-gradient(to bottom, #2563eb, #1d4ed8)' }}
                         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                       />
                     )}
                     <div
                       className={`flex items-center justify-center w-8 h-8 rounded-lg shrink-0 transition-all duration-200 ${
                         isActive
-                          ? 'bg-teal-600/20 dark:bg-teal-500/30'
-                          : 'bg-transparent group-hover:bg-teal-100 dark:group-hover:bg-teal-900/30'
+                          ? 'bg-blue-600/20 dark:bg-blue-500/30'
+                          : 'bg-transparent group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30'
                       }`}
                     >
                       <motion.div whileHover={{ scale: 1.02 }}>
@@ -385,7 +319,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                           <Badge
                             className={`text-[9px] px-1.5 py-0 h-4 ${
                               isActive
-                                ? 'bg-teal-600/15 text-teal-700 dark:bg-teal-500/25 dark:text-teal-300 border-teal-600/20 dark:border-teal-500/30'
+                                ? 'bg-blue-600/15 text-blue-700 dark:bg-blue-500/25 dark:text-blue-300 border-blue-600/20 dark:border-blue-500/30'
                                 : 'bg-emerald-100 text-emerald-700 border-emerald-200'
                             }`}
                           >
@@ -405,16 +339,13 @@ export default function AppLayout({ children }: AppLayoutProps) {
         </div>
       </div>
 
-      {/* Footer - always visible with shrink-0 */}
+      {/* Footer */}
       <div className="p-4 pt-2 shrink-0">
         <Separator className="mb-3" />
         {!sidebarCollapsed ? (
           <div className="flex items-center justify-between">
             <div className="text-center flex-1">
-              <p className="text-[10px] text-muted-foreground/70">من تطوير</p>
-              <p className="text-sm font-bold tracking-wide" style={{ color: '#0d9488' }}>
-                Vision
-              </p>
+              <p className="text-[10px] text-muted-foreground/70">مدرسة مارينا</p>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -432,7 +363,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
   );
 
   const sidebarWidth = sidebarCollapsed ? 'w-16' : 'w-[260px]';
-  const mainMargin = sidebarCollapsed ? 'md:mr-16' : 'md:mr-[260px]';
 
   return (
     <div dir="rtl" className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100/50 dark:from-gray-950 dark:to-gray-900/50 relative">
@@ -440,7 +370,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
       <div
         className="absolute inset-0 opacity-[0.03] dark:opacity-[0.02] pointer-events-none"
         style={{
-          backgroundImage: 'radial-gradient(circle, #0d9488 1px, transparent 1px)',
+          backgroundImage: 'radial-gradient(circle, #2563eb 1px, transparent 1px)',
           backgroundSize: '24px 24px',
         }}
       />
@@ -484,9 +414,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
           aria-label={sidebarCollapsed ? 'توسيع القائمة' : 'تصغير القائمة'}
         >
           {sidebarCollapsed ? (
-            <PanelRightOpen className="w-3 h-3 text-muted-foreground" />
+            <ChevronLeft className="w-3 h-3 text-muted-foreground" />
           ) : (
-            <PanelRightClose className="w-3 h-3 text-muted-foreground" />
+            <ChevronLeft className="w-3 h-3 text-muted-foreground rotate-180" />
           )}
         </button>
       </motion.aside>
@@ -511,7 +441,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 <Menu className="w-5 h-5" />
               </Button>
 
-              {/* Page title with breadcrumb */}
+              {/* Page title */}
               <div className="flex items-center gap-2">
                 <ChevronLeft className="h-4 w-4 text-muted-foreground hidden md:block" />
                 <h1 className="text-lg font-bold text-gray-800 dark:text-gray-200">
@@ -574,89 +504,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 </Button>
               )}
 
-              {/* Notification Bell */}
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted relative"
-                    aria-label="الإشعارات"
-                  >
-                    <motion.div
-                      animate={unreadCount > 0 ? { rotate: [0, -10, 10, -10, 0] } : {}}
-                      transition={{ duration: 0.5, repeat: 2, repeatDelay: 3 }}
-                    >
-                      <Bell className="h-[18px] w-[18px]" />
-                    </motion.div>
-                    {unreadCount > 0 && (
-                      <motion.span
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        className="absolute -top-0.5 -left-0.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold text-white bg-red-500 rounded-full shadow-sm"
-                      >
-                        {unreadCount}
-                      </motion.span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-80 p-0" align="end" sideOffset={8}>
-                  <div className="p-3 border-b border-border">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-semibold text-sm text-foreground">الإشعارات</h3>
-                      {unreadCount > 0 && (
-                        <Badge className="text-[10px] px-1.5 py-0 h-5 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-0">
-                          {unreadCount} جديد
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                  <ScrollArea className="max-h-80">
-                    <div className="divide-y divide-border">
-                      {mockNotifications.map((notification) => {
-                        const config = notificationConfig[notification.type];
-                        const Icon = config.icon;
-                        return (
-                          <div
-                            key={notification.id}
-                            className={`flex items-start gap-3 p-3 hover:bg-muted/50 transition-colors cursor-pointer ${
-                              !notification.read ? 'bg-muted/30' : ''
-                            }`}
-                          >
-                            <div className={`flex items-center justify-center w-8 h-8 rounded-lg shrink-0 ${config.bg}`}>
-                              <Icon className={`w-4 h-4 ${config.color}`} />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p
-                                className={`text-xs leading-relaxed ${
-                                  !notification.read ? 'text-foreground font-medium' : 'text-muted-foreground'
-                                }`}
-                              >
-                                {notification.message}
-                              </p>
-                              <p className="text-[10px] text-muted-foreground/70 mt-1">{notification.time}</p>
-                            </div>
-                            {!notification.read && (
-                              <div className="w-2 h-2 rounded-full bg-teal-500 shrink-0 mt-1.5" />
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </ScrollArea>
-                  <div className="p-2 border-t border-border">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="w-full text-xs text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-900/20"
-                      onClick={() => setActivePage('notices')}
-                    >
-                      عرض الكل
-                    </Button>
-                  </div>
-                </PopoverContent>
-              </Popover>
-
               <Separator orientation="vertical" className="h-8 hidden sm:block" />
 
               {/* User info */}
@@ -676,13 +523,12 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 <div className="relative">
                   <Avatar
                     className="w-9 h-9 ring-2 ring-white dark:ring-gray-700 shadow-md"
-                    style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}
+                    style={{ background: 'linear-gradient(135deg, #2563eb, #1d4ed8)' }}
                   >
                     <AvatarFallback className="text-white text-sm font-bold bg-transparent">
                       {userInitials}
                     </AvatarFallback>
                   </Avatar>
-                  {/* Online status indicator */}
                   <span className="absolute -bottom-0.5 -left-0.5 w-3 h-3 bg-emerald-500 border-2 border-white dark:border-gray-800 rounded-full" />
                 </div>
               </div>
@@ -722,7 +568,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
         <footer className="mt-auto border-t border-gray-200/60 dark:border-gray-700/50 px-4 py-3 bg-white/50 dark:bg-gray-900/50 relative z-10">
           <div className="flex items-center justify-between">
             <p className="text-[11px] text-muted-foreground">
-              مدرستي Pro © {new Date().getFullYear()} — من تطوير Vision
+              مارينا © {new Date().getFullYear()} — نظام إدارة المدرسة
             </p>
             <div className="flex items-center gap-3">
               <span className="text-[10px] text-muted-foreground/50 hidden sm:inline">

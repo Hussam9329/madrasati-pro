@@ -18,24 +18,13 @@ import {
   ScanLine,
   FileText,
   BarChart3,
-  Bell,
   Shield,
   Settings,
   Calendar,
-  Activity,
-  Heart,
-  Trophy,
-  ClipboardList,
-  Wallet,
-  MessageSquare,
-  CalendarDays,
-  Award,
   UserPlus,
   ClipboardCheck,
-  FileBadge,
-  Send,
   Moon,
-  Search,
+  Layers,
 } from 'lucide-react';
 import { useAppStore, type PageKey } from '@/lib/store';
 import { useTheme } from 'next-themes';
@@ -48,21 +37,13 @@ interface CommandPaletteProps {
 const pageItems: { key: PageKey; label: string; icon: React.ElementType; group: string }[] = [
   { key: 'dashboard', label: 'لوحة التحكم', icon: LayoutDashboard, group: 'الرئيسية' },
   { key: 'students', label: 'الطلاب', icon: GraduationCap, group: 'الرئيسية' },
-  { key: 'teachers', label: 'المدرسون', icon: Users, group: 'الرئيسية' },
+  { key: 'teachers', label: 'الأساتذة', icon: Users, group: 'الرئيسية' },
   { key: 'subjects', label: 'المواد', icon: BookOpen, group: 'الرئيسية' },
+  { key: 'classes', label: 'الصفوف والشعب', icon: Layers, group: 'الأكاديمية' },
   { key: 'attendance', label: 'الحضور QR', icon: ScanLine, group: 'الأكاديمية' },
   { key: 'grades', label: 'الدرجات', icon: FileText, group: 'الأكاديمية' },
-  { key: 'ranking', label: 'ترتيب الصفوف', icon: Trophy, group: 'الأكاديمية' },
-  { key: 'exams', label: 'الامتحانات', icon: ClipboardList, group: 'الأكاديمية' },
-  { key: 'fees', label: 'الرسوم المدرسية', icon: Wallet, group: 'المالية والفعاليات' },
-  { key: 'calendar', label: 'التقويم المدرسي', icon: CalendarDays, group: 'المالية والفعاليات' },
-  { key: 'certificates', label: 'الشهادات والوثائق', icon: Award, group: 'المالية والفعاليات' },
-  { key: 'messages', label: 'التواصل والرسائل', icon: MessageSquare, group: 'التواصل' },
-  { key: 'schedule', label: 'جدول الحصص', icon: Calendar, group: 'التواصل' },
-  { key: 'activity', label: 'سجل النشاط', icon: Activity, group: 'التواصل' },
+  { key: 'schedule', label: 'جدول الحصص', icon: Calendar, group: 'الأكاديمية' },
   { key: 'reports', label: 'التقارير', icon: BarChart3, group: 'التقارير والإعدادات' },
-  { key: 'notices', label: 'الإشعارات', icon: Bell, group: 'التقارير والإعدادات' },
-  { key: 'parents', label: 'بوابة ولي الأمر', icon: Heart, group: 'التقارير والإعدادات' },
   { key: 'users', label: 'المستخدمون', icon: Shield, group: 'التقارير والإعدادات' },
   { key: 'settings', label: 'الإعدادات', icon: Settings, group: 'التقارير والإعدادات' },
 ];
@@ -70,8 +51,6 @@ const pageItems: { key: PageKey; label: string; icon: React.ElementType; group: 
 const quickActions = [
   { id: 'add-student', label: 'إضافة طالب', icon: UserPlus, page: 'students' as PageKey },
   { id: 'record-attendance', label: 'تسجيل حضور', icon: ClipboardCheck, page: 'attendance' as PageKey },
-  { id: 'issue-certificate', label: 'إصدار شهادة', icon: FileBadge, page: 'certificates' as PageKey },
-  { id: 'send-message', label: 'إرسال رسالة', icon: Send, page: 'messages' as PageKey },
   { id: 'toggle-dark', label: 'تبديل الوضع الداكن', icon: Moon, page: null },
 ];
 
@@ -131,7 +110,7 @@ export default function CommandPalette({ open, onOpenChange }: CommandPalettePro
         {/* Recent Pages */}
         {recentItems.length > 0 && (
           <>
-            <CommandGroup heading="المواقع الأخيرة" className="text-teal-700 dark:text-teal-300">
+            <CommandGroup heading="المواقع الأخيرة" className="text-blue-700 dark:text-blue-300">
               {recentItems.map((item) => {
                 const Icon = item.icon;
                 return (
@@ -140,7 +119,7 @@ export default function CommandPalette({ open, onOpenChange }: CommandPalettePro
                     onSelect={() => handleSelect(item.key)}
                     className="cursor-pointer"
                   >
-                    <Icon className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                    <Icon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                     <span>{item.label}</span>
                   </CommandItem>
                 );
@@ -151,7 +130,7 @@ export default function CommandPalette({ open, onOpenChange }: CommandPalettePro
         )}
 
         {/* Quick Actions */}
-        <CommandGroup heading="إجراءات سريعة" className="text-emerald-700 dark:text-emerald-300">
+        <CommandGroup heading="إجراءات سريعة" className="text-blue-700 dark:text-blue-300">
           {quickActions.map((action) => {
             const Icon = action.icon;
             return (
@@ -160,7 +139,7 @@ export default function CommandPalette({ open, onOpenChange }: CommandPalettePro
                 onSelect={() => handleSelect(action.page, action.id === 'toggle-dark' ? 'toggle-dark' : undefined)}
                 className="cursor-pointer"
               >
-                <Icon className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                <Icon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                 <span>{action.label}</span>
               </CommandItem>
             );
@@ -170,7 +149,7 @@ export default function CommandPalette({ open, onOpenChange }: CommandPalettePro
         <CommandSeparator />
 
         {/* Pages grouped */}
-        {['الرئيسية', 'الأكاديمية', 'المالية والفعاليات', 'التواصل', 'التقارير والإعدادات'].map((groupName) => {
+        {['الرئيسية', 'الأكاديمية', 'التقارير والإعدادات'].map((groupName) => {
           const groupItems = pageItems.filter((item) => item.group === groupName);
           if (groupItems.length === 0) return null;
           return (

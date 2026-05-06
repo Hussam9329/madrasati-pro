@@ -15,10 +15,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "مدرستي Pro - نظام إدارة المدرسة",
-  description: "نظام إدارة مدرسية متكامل مع حضور QR ودرجات وتقارير - من تطوير Vision",
-  keywords: ["مدرستي", "إدارة مدرسية", "حضور QR", "درجات", "تقارير"],
-  authors: [{ name: "Vision" }],
+  title: "مارينا - نظام إدارة المدرسة",
+  description: "نظام إدارة مدرسة مارينا - حضور QR ودرجات وجدول حصص بدون تضاربات",
+  keywords: ["مارينا", "إدارة مدرسية", "حضور QR", "درجات", "جدول حصص"],
+  authors: [{ name: "مارينا" }],
   icons: {
     icon: "/logo.svg",
   },

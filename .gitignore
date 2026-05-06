@@ -59,3 +59,4 @@ db/custom.db-journal
 agent-ctx/
 # Zscripts
 .zscripts/
+.env*.local
