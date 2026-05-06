@@ -84,8 +84,40 @@ export async function POST(request: Request) {
       where: { studentId, date },
     });
 
+    // Prevent duplicate check-in
+    if (existingRecord && existingRecord.checkIn && checkIn) {
+      return NextResponse.json(
+        {
+          error: 'تم تسجيل حضور هذا الطالب مسبقاً اليوم',
+          action: 'duplicateCheckIn',
+          existingRecord: {
+            id: existingRecord.id,
+            checkIn: existingRecord.checkIn,
+            status: existingRecord.status,
+          },
+        },
+        { status: 409 }
+      );
+    }
+
+    // Prevent duplicate check-out
+    if (existingRecord && existingRecord.checkOut && checkOut) {
+      return NextResponse.json(
+        {
+          error: 'تم تسجيل خروج هذا الطالب مسبقاً اليوم',
+          action: 'duplicateCheckOut',
+          existingRecord: {
+            id: existingRecord.id,
+            checkOut: existingRecord.checkOut,
+            status: existingRecord.status,
+          },
+        },
+        { status: 409 }
+      );
+    }
+
     if (existingRecord) {
-      // Update existing record
+      // Update existing record (only fill missing fields)
       const record = await db.attendanceRecord.update({
         where: { id: existingRecord.id },
         data: {

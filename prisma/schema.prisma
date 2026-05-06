@@ -204,6 +204,8 @@ model AttendanceRecord {
 
   student     Student  @relation(fields: [studentId], references: [id])
   school      School   @relation(fields: [schoolId], references: [id])
+
+  @@unique([studentId, date])
 }
 
 // ==================== GRADES ====================

@@ -83,6 +83,8 @@ const statusConfig: Record<string, { bg: string; text: string; border: string; i
   'مستأذن': { bg: 'bg-sky-100', text: 'text-sky-800', border: 'border-sky-300', icon: <AlertTriangle className="h-3.5 w-3.5" />, dotColor: 'bg-sky-500', darkBg: 'dark:bg-sky-900/30', darkText: 'dark:text-sky-300' },
   'خروج مبكر': { bg: 'bg-orange-100', text: 'text-orange-800', border: 'border-orange-300', icon: <LogOut className="h-3.5 w-3.5" />, dotColor: 'bg-orange-500', darkBg: 'dark:bg-orange-900/30', darkText: 'dark:text-orange-300' },
   'حضور ناقص': { bg: 'bg-purple-100', text: 'text-purple-800', border: 'border-purple-300', icon: <XCircle className="h-3.5 w-3.5" />, dotColor: 'bg-purple-500', darkBg: 'dark:bg-purple-900/30', darkText: 'dark:text-purple-300' },
+  'مكرر دخول': { bg: 'bg-orange-100', text: 'text-orange-800', border: 'border-orange-300', icon: <AlertTriangle className="h-3.5 w-3.5" />, dotColor: 'bg-orange-500', darkBg: 'dark:bg-orange-900/30', darkText: 'dark:text-orange-300' },
+  'مكرر خروج': { bg: 'bg-orange-100', text: 'text-orange-800', border: 'border-orange-300', icon: <AlertTriangle className="h-3.5 w-3.5" />, dotColor: 'bg-orange-500', darkBg: 'dark:bg-orange-900/30', darkText: 'dark:text-orange-300' },
 }
 
 // Legacy mapping for backward compatibility
@@ -93,6 +95,8 @@ const statusColors: Record<string, string> = {
   'مستأذن': 'bg-sky-100 text-sky-800 border-sky-300',
   'خروج مبكر': 'bg-orange-100 text-orange-800 border-orange-300',
   'حضور ناقص': 'bg-purple-100 text-purple-800 border-purple-300',
+  'مكرر دخول': 'bg-orange-100 text-orange-800 border-orange-300',
+  'مكرر خروج': 'bg-orange-100 text-orange-800 border-orange-300',
 }
 
 const statusIcons: Record<string, React.ReactNode> = {
@@ -101,6 +105,8 @@ const statusIcons: Record<string, React.ReactNode> = {
   'غائب': <XCircle className="h-4 w-4" />,
   'مستأذن': <AlertTriangle className="h-4 w-4" />,
   'خروج مبكر': <LogOut className="h-4 w-4" />,
+  'مكرر دخول': <AlertTriangle className="h-4 w-4" />,
+  'مكرر خروج': <AlertTriangle className="h-4 w-4" />,
 }
 
 // Status chip component
@@ -230,6 +236,30 @@ export default function AttendancePage() {
       const data = await res.json()
 
       if (!res.ok) {
+        // Handle duplicate check-in/check-out (409 status)
+        if (res.status === 409 && (data.action === 'duplicateCheckIn' || data.action === 'duplicateCheckOut')) {
+          const isCheckIn = data.action === 'duplicateCheckIn'
+          setScanError(data.error || (isCheckIn ? 'تم تسجيل الحضور مسبقاً' : 'تم تسجيل الخروج مسبقاً'))
+          if (data.student) {
+            setScanResult({
+              ...data,
+              action: data.action,
+              status: isCheckIn ? 'مكرر دخول' : 'مكرر خروج',
+              record: {
+                id: data.existingRecord?.id || '',
+                checkIn: data.existingRecord?.checkIn || null,
+                checkOut: data.existingRecord?.checkOut || null,
+                status: data.existingRecord?.status || 'خطأ',
+              },
+            })
+          }
+          toast({
+            title: isCheckIn ? 'تكرار تسجيل الدخول' : 'تكرار تسجيل الخروج',
+            description: data.error,
+            variant: 'destructive',
+          })
+          return
+        }
         setScanError(data.error || 'حدث خطأ في المسح')
         if (data.student) {
           setScanResult({ ...data, action: 'error', status: data.student.cardStatus || 'خطأ', record: { id: '', checkIn: null, checkOut: null, status: 'خطأ' } })
@@ -570,22 +600,70 @@ export default function AttendancePage() {
                     exit={{ opacity: 0, y: -20, scale: 0.95 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <Card className="border-2 border-red-400 overflow-hidden">
-                      <div className="h-2 bg-red-500" />
+                    <Card className={`border-2 overflow-hidden ${
+                      scanResult?.action === 'duplicateCheckIn' || scanResult?.action === 'duplicateCheckOut'
+                        ? 'border-orange-400'
+                        : 'border-red-400'
+                    }`}>
+                      <div className={`h-2 ${
+                        scanResult?.action === 'duplicateCheckIn' || scanResult?.action === 'duplicateCheckOut'
+                          ? 'bg-orange-500'
+                          : 'bg-red-500'
+                      }`} />
                       <CardContent className="p-6 space-y-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-                            <XCircle className="h-8 w-8 text-red-500" />
+                          <div className={`w-16 h-16 rounded-full flex items-center justify-center ${
+                            scanResult?.action === 'duplicateCheckIn' || scanResult?.action === 'duplicateCheckOut'
+                              ? 'bg-orange-100 dark:bg-orange-900/30'
+                              : 'bg-red-100 dark:bg-red-900/30'
+                          }`}>
+                            {scanResult?.action === 'duplicateCheckIn' || scanResult?.action === 'duplicateCheckOut' ? (
+                              <AlertTriangle className="h-8 w-8 text-orange-500" />
+                            ) : (
+                              <XCircle className="h-8 w-8 text-red-500" />
+                            )}
                           </div>
                           <div>
-                            <h3 className="text-lg font-bold text-red-700 dark:text-red-400">فشل المسح</h3>
-                            <p className="text-red-600 dark:text-red-400">{scanError}</p>
+                            <h3 className={`text-lg font-bold ${
+                              scanResult?.action === 'duplicateCheckIn' || scanResult?.action === 'duplicateCheckOut'
+                                ? 'text-orange-700 dark:text-orange-400'
+                                : 'text-red-700 dark:text-red-400'
+                            }`}>
+                              {scanResult?.action === 'duplicateCheckIn'
+                                ? 'تكرار تسجيل الدخول'
+                                : scanResult?.action === 'duplicateCheckOut'
+                                ? 'تكرار تسجيل الخروج'
+                                : 'فشل المسح'
+                              }
+                            </h3>
+                            <p className={`${
+                              scanResult?.action === 'duplicateCheckIn' || scanResult?.action === 'duplicateCheckOut'
+                                ? 'text-orange-600 dark:text-orange-400'
+                                : 'text-red-600 dark:text-red-400'
+                            }`}>{scanError}</p>
                           </div>
                         </div>
                         {scanResult?.student && (
-                          <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+                          <div className={`p-3 rounded-lg border ${
+                            scanResult?.action === 'duplicateCheckIn' || scanResult?.action === 'duplicateCheckOut'
+                              ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800'
+                              : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                          }`}>
                             <p className="font-medium">{scanResult.student.fullName}</p>
                             <p className="text-sm text-muted-foreground">{scanResult.student.studentNumber}</p>
+                          </div>
+                        )}
+                        {(scanResult?.action === 'duplicateCheckIn' || scanResult?.action === 'duplicateCheckOut') && scanResult?.record && (
+                          <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+                            <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+                              {scanResult.action === 'duplicateCheckIn'
+                                ? `تم تسجيل الدخول مسبقاً في: ${scanResult.record.checkIn || '—'}`
+                                : `تم تسجيل الخروج مسبقاً في: ${scanResult.record.checkOut || '—'}`
+                              }
+                            </p>
+                            <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                              الحالة: {scanResult.record.status}
+                            </p>
                           </div>
                         )}
                       </CardContent>

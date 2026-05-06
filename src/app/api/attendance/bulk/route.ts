@@ -30,9 +30,37 @@ export async function POST(request: Request) {
           where: { studentId, date },
         });
 
+        // Prevent duplicate check-in if student already checked in
+        if (existingRecord && existingRecord.checkIn && checkIn) {
+          errors.push({
+            studentId,
+            error: `تم تسجيل حضور الطالب مسبقاً في ${existingRecord.checkIn}`,
+            existingRecord: {
+              id: existingRecord.id,
+              checkIn: existingRecord.checkIn,
+              status: existingRecord.status,
+            }
+          });
+          continue;
+        }
+
+        // Prevent duplicate check-out if student already checked out
+        if (existingRecord && existingRecord.checkOut && checkOut) {
+          errors.push({
+            studentId,
+            error: `تم تسجيل خروج الطالب مسبقاً في ${existingRecord.checkOut}`,
+            existingRecord: {
+              id: existingRecord.id,
+              checkOut: existingRecord.checkOut,
+              status: existingRecord.status,
+            }
+          });
+          continue;
+        }
+
         let result;
         if (existingRecord) {
-          // Update existing record
+          // Update existing record (only fill missing fields, don't overwrite)
           result = await db.attendanceRecord.update({
             where: { id: existingRecord.id },
             data: {

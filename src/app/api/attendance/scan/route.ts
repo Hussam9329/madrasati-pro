@@ -101,7 +101,31 @@ export async function POST(request: Request) {
       }
 
       if (existingRecord) {
-        // Already checked in, update check-in time
+        // Check if student already checked in today
+        if (existingRecord.checkIn) {
+          return NextResponse.json(
+            {
+              error: 'تم تسجيل حضور هذا الطالب مسبقاً اليوم',
+              action: 'duplicateCheckIn',
+              student: {
+                id: student.id,
+                fullName: student.fullName,
+                studentNumber: student.studentNumber,
+                class: student.class.name,
+                section: student.section.name,
+              },
+              existingRecord: {
+                id: existingRecord.id,
+                checkIn: existingRecord.checkIn,
+                status: existingRecord.status,
+                lateMinutes: existingRecord.lateMinutes,
+              },
+            },
+            { status: 409 }
+          );
+        }
+
+        // Record exists but no check-in yet (e.g. was marked absent), update it
         const record = await db.attendanceRecord.update({
           where: { id: existingRecord.id },
           data: {
@@ -112,10 +136,8 @@ export async function POST(request: Request) {
         });
 
         return NextResponse.json({
-          message: existingRecord.checkIn
-            ? 'تم تحديث وقت الحضور'
-            : 'تم تسجيل الحضور',
-          action: existingRecord.checkIn ? 'updated' : 'checkIn',
+          message: 'تم تسجيل الحضور',
+          action: 'checkIn',
           status: attendanceStatus,
           lateMinutes,
           record,
@@ -175,9 +197,8 @@ export async function POST(request: Request) {
     if (existingRecord.checkOut) {
       return NextResponse.json(
         {
-          message: 'تم تسجيل الخروج مسبقاً',
-          action: 'alreadyCheckedOut',
-          record: existingRecord,
+          error: 'تم تسجيل خروج هذا الطالب مسبقاً اليوم',
+          action: 'duplicateCheckOut',
           student: {
             id: student.id,
             fullName: student.fullName,
@@ -185,8 +206,14 @@ export async function POST(request: Request) {
             class: student.class.name,
             section: student.section.name,
           },
+          existingRecord: {
+            id: existingRecord.id,
+            checkIn: existingRecord.checkIn,
+            checkOut: existingRecord.checkOut,
+            status: existingRecord.status,
+          },
         },
-        { status: 200 }
+        { status: 409 }
       );
     }
 
