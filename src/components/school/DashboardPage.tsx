@@ -47,6 +47,7 @@ import {
   Bar,
 } from 'recharts';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/hooks/use-toast';
 
 interface DashboardData {
   totals: {
@@ -259,6 +260,7 @@ export default function DashboardPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
   const { setActivePage, auth } = useAppStore();
+  const { toast } = useToast();
 
   const fetchData = useCallback(async () => {
     try {
@@ -267,13 +269,17 @@ export default function DashboardPage() {
       if (!res.ok) throw new Error('فشل جلب البيانات');
       const json = await res.json();
       setData(json);
+      if (refreshing) {
+        toast({ title: 'تم التحديث', description: 'تم تحديث بيانات لوحة التحكم بنجاح' });
+      }
     } catch {
       setError('تعذر جلب بيانات لوحة التحكم');
+      toast({ title: 'خطأ في الاتصال', description: 'تعذر جلب بيانات لوحة التحكم، تحقق من الاتصال بالخادم', variant: 'destructive' });
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [refreshing, toast]);
 
   useEffect(() => {
     fetchData();
@@ -282,6 +288,7 @@ export default function DashboardPage() {
   const handleRefresh = () => {
     setRefreshing(true);
     setLoading(true);
+    toast({ title: 'جاري التحديث...', description: 'يتم تحديث بيانات لوحة التحكم' });
     fetchData();
   };
 

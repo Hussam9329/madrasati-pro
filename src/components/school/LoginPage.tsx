@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 
 interface LoginPageProps {
   onLogin: (user: { id: string; username: string; name: string; role: string }, token: string) => void;
@@ -19,6 +20,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [typedText, setTypedText] = useState('');
+  const { toast } = useToast();
   const welcomeText = 'مرحباً بك';
 
   // Typing animation for welcome text
@@ -63,8 +65,10 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
         },
         data.token
       );
+      toast({ title: 'تم تسجيل الدخول', description: `مرحباً بك، ${data.user.name}` });
     } catch {
       setError('تعذر الاتصال بالخادم. يرجى المحاولة لاحقاً');
+      toast({ title: 'خطأ في الاتصال', description: 'تعذر الاتصال بالخادم، تحقق من اتصالك بالإنترنت', variant: 'destructive' });
     } finally {
       setLoading(false);
     }

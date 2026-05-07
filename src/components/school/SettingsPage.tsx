@@ -28,6 +28,16 @@ import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Switch } from '@/components/ui/switch'
 import { useToast } from '@/hooks/use-toast'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 
 // ============ TYPES ============
 interface SchoolData {
@@ -91,6 +101,7 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
   const [editingUser, setEditingUser] = useState<UserData | null>(null)
   const [userForm, setUserForm] = useState({ username: '', password: '', name: '', role: 'موظف تسجيل', active: true })
   const [savingUser, setSavingUser] = useState(false)
+  const [deleteUserId, setDeleteUserId] = useState<string | null>(null)
 
   // ============ FETCH FUNCTIONS ============
   const fetchSchool = useCallback(async () => {
@@ -249,11 +260,12 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
     }
   }
 
-  const handleDeleteUser = async (userId: string) => {
+  const handleDeleteUser = async () => {
+    if (!deleteUserId) return
     try {
-      const res = await fetch(`/api/users/${userId}`, { method: 'DELETE' })
+      const res = await fetch(`/api/users/${deleteUserId}`, { method: 'DELETE' })
       if (res.ok) {
-        toast({ title: 'تم الحذف', description: 'تم حذف المستخدم' })
+        toast({ title: 'تم الحذف', description: 'تم حذف المستخدم بنجاح' })
         fetchUsers()
       } else {
         const data = await res.json()
@@ -261,6 +273,8 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
       }
     } catch {
       toast({ title: 'خطأ', description: 'حدث خطأ في الحذف', variant: 'destructive' })
+    } finally {
+      setDeleteUserId(null)
     }
   }
 
@@ -743,7 +757,7 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => handleDeleteUser(user.id)}
+                                onClick={() => setDeleteUserId(user.id)}
                                 className="gap-1 text-red-600 hover:text-red-700"
                               >
                                 <Trash2 className="h-3 w-3" />
@@ -761,6 +775,24 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
         </TabsContent>
 
       </Tabs>
+
+      {/* Delete User Confirmation Dialog */}
+      <AlertDialog open={!!deleteUserId} onOpenChange={() => setDeleteUserId(null)}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>تأكيد حذف المستخدم</AlertDialogTitle>
+            <AlertDialogDescription>
+              هل أنت متأكد من حذف هذا المستخدم؟ لا يمكن التراجع عن هذا الإجراء وسيتم حذف حساب المستخدم نهائياً من النظام.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteUser} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              حذف
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

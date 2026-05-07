@@ -39,6 +39,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { useAppStore } from '@/lib/store';
+import { useToast } from '@/hooks/use-toast';
 
 // Mock student profile data
 const MOCK_PROFILE = {
@@ -248,6 +249,7 @@ function ActivityItem({ activity, index }: { activity: typeof MOCK_PROFILE.activ
 
 export default function StudentProfilePage({ studentId }: StudentProfilePageProps) {
   const { setActivePage, setSelectedStudentId } = useAppStore();
+  const { toast } = useToast();
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
   const [student, setStudent] = useState(MOCK_PROFILE);
 
@@ -280,6 +282,7 @@ export default function StudentProfilePage({ studentId }: StudentProfilePageProp
             });
           }
         } catch {
+          toast({ title: 'خطأ', description: 'فشل في تحميل بيانات الطالب، يتم عرض بيانات تجريبية', variant: 'destructive' });
           // Fall back to mock data
         }
       };
@@ -298,6 +301,7 @@ export default function StudentProfilePage({ studentId }: StudentProfilePageProp
         });
         setQrCodeUrl(url);
       } catch {
+        toast({ title: 'تنبيه', description: 'فشل في توليد رمز QR' });
         // QR generation failed
       }
     };
@@ -421,23 +425,23 @@ export default function StudentProfilePage({ studentId }: StudentProfilePageProp
 
       {/* Action Buttons */}
       <motion.div variants={itemVariants} className="flex flex-wrap gap-2">
-        <Button className="gap-2" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
+        <Button className="gap-2" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={() => toast({ title: 'طباعة', description: 'يتم تجهيز البطاقة للطباعة...' })}>
           <Printer className="h-4 w-4" />
           طباعة البطاقة
         </Button>
-        <Button variant="outline" className="gap-2 border-teal-300 text-teal-700 hover:bg-teal-50 dark:border-teal-700 dark:text-teal-400 dark:hover:bg-teal-900/20">
+        <Button variant="outline" className="gap-2 border-teal-300 text-teal-700 hover:bg-teal-50 dark:border-teal-700 dark:text-teal-400 dark:hover:bg-teal-900/20" onClick={() => toast({ title: 'تصدير', description: 'يتم تصدير الدرجات كملف CSV' })}>
           <Download className="h-4 w-4" />
           تصدير الدرجات
         </Button>
-        <Button variant="outline" className="gap-2 border-teal-300 text-teal-700 hover:bg-teal-50 dark:border-teal-700 dark:text-teal-400 dark:hover:bg-teal-900/20">
+        <Button variant="outline" className="gap-2 border-teal-300 text-teal-700 hover:bg-teal-50 dark:border-teal-700 dark:text-teal-400 dark:hover:bg-teal-900/20" onClick={() => toast({ title: 'رسالة', description: 'سيتم إرسال رسالة لولي الأمر' })}>
           <MessageSquare className="h-4 w-4" />
           رسالة لولي الأمر
         </Button>
-        <Button variant="outline" className="gap-2 border-teal-300 text-teal-700 hover:bg-teal-50 dark:border-teal-700 dark:text-teal-400 dark:hover:bg-teal-900/20">
+        <Button variant="outline" className="gap-2 border-teal-300 text-teal-700 hover:bg-teal-50 dark:border-teal-700 dark:text-teal-400 dark:hover:bg-teal-900/20" onClick={() => toast({ title: 'نقل', description: 'سيتم فتح نموذج نقل الطالب' })}>
           <ArrowRightLeft className="h-4 w-4" />
           نقل الطالب
         </Button>
-        <Button variant="outline" className="gap-2 border-teal-300 text-teal-700 hover:bg-teal-50 dark:border-teal-700 dark:text-teal-400 dark:hover:bg-teal-900/20">
+        <Button variant="outline" className="gap-2 border-teal-300 text-teal-700 hover:bg-teal-50 dark:border-teal-700 dark:text-teal-400 dark:hover:bg-teal-900/20" onClick={() => toast({ title: 'تعديل', description: 'سيتم فتح نموذج تعديل بيانات الطالب' })}>
           <Edit className="h-4 w-4" />
           تعديل
         </Button>

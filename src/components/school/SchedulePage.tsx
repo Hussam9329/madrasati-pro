@@ -22,6 +22,16 @@ import {
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface Subject { id: string; name: string; code: string; type: string }
 interface Teacher { id: string; fullName: string; phone: string | null; specialty: string | null }
@@ -67,6 +77,7 @@ export default function SchedulePage() {
   const [selectedTeacherId, setSelectedTeacherId] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [deleteSlotId, setDeleteSlotId] = useState<string | null>(null);
   const [newSlot, setNewSlot] = useState({ day: 'الأحد', period: 1, subjectId: '', teacherId: '', classId: '', room: '' });
 
   // Fetch initial data
@@ -172,15 +183,20 @@ export default function SchedulePage() {
   };
 
   // Delete slot
-  const handleDeleteSlot = async (id: string) => {
+  const handleDeleteSlot = async () => {
+    if (!deleteSlotId) return;
     try {
-      const res = await fetch(`/api/schedule?id=${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/schedule?id=${deleteSlotId}`, { method: 'DELETE' });
       if (res.ok) {
         toast({ title: 'تم الحذف', description: 'تم حذف الحصة بنجاح' });
-        setSlots(prev => prev.filter(s => s.id !== id));
+        setSlots(prev => prev.filter(s => s.id !== deleteSlotId));
+      } else {
+        toast({ title: 'خطأ', description: 'فشل في حذف الحصة', variant: 'destructive' });
       }
     } catch {
       toast({ title: 'خطأ', description: 'حدث خطأ في حذف الحصة', variant: 'destructive' });
+    } finally {
+      setDeleteSlotId(null);
     }
   };
 
@@ -466,7 +482,7 @@ export default function SchedulePage() {
                             </p>
                             {slot.room && <p className="text-[10px] text-muted-foreground/70">{slot.room}</p>}
                             <button
-                              onClick={(e) => { e.stopPropagation(); handleDeleteSlot(slot.id); }}
+                              onClick={(e) => { e.stopPropagation(); setDeleteSlotId(slot.id); }}
                               className="absolute -top-1 -left-1 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
                             >
                               <Trash2 className="w-3 h-3" />
@@ -501,6 +517,23 @@ export default function SchedulePage() {
           </CardContent>
         </Card>
       )}
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteSlotId} onOpenChange={() => setDeleteSlotId(null)}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>تأكيد حذف الحصة</AlertDialogTitle>
+            <AlertDialogDescription>
+              هل أنت متأكد من حذف هذه الحصة؟ لا يمكن التراجع عن هذا الإجراء وسيتم إزالة الحصة من الجدول نهائياً.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteSlot} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              حذف
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </motion.div>
   );
 }
