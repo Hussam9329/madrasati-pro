@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Layers, Plus, Trash2, Edit, Users, BookOpen, GraduationCap,
+  Lightbulb,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -46,7 +47,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { useToast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 
 // ─── Types ───────────────────────────────────────────────────────
 interface Section {
@@ -125,7 +126,6 @@ const SECTION_COLORS: Record<string, string> = {
 
 // ─── Component ───────────────────────────────────────────────────
 export default function ClassesPage() {
-  const { toast } = useToast()
 
   // Data
   const [classes, setClasses] = useState<ClassItem[]>([])
@@ -160,9 +160,9 @@ export default function ClassesPage() {
       const data = await res.json()
       setClasses(data || [])
     } catch {
-      toast({ title: 'خطأ', description: 'فشل في جلب بيانات الصفوف', variant: 'destructive' })
+      toast.error('خطأ', { description: 'فشل في جلب بيانات الصفوف' })
     }
-  }, [toast])
+  }, [])
 
   const fetchTeachers = useCallback(async () => {
     try {
@@ -232,15 +232,15 @@ export default function ClassesPage() {
 
   const handleSave = async () => {
     if (!form.name) {
-      toast({ title: 'تنبيه', description: 'اسم الصف مطلوب', variant: 'destructive' })
+      toast.error('تنبيه', { description: 'اسم الصف مطلوب' })
       return
     }
     if (form.selectedSections.length === 0) {
-      toast({ title: 'تنبيه', description: 'يجب اختيار شعبة واحدة على الأقل', variant: 'destructive' })
+      toast.error('تنبيه', { description: 'يجب اختيار شعبة واحدة على الأقل' })
       return
     }
     if (!schoolId) {
-      toast({ title: 'تنبيه', description: 'لم يتم العثور على معرف المدرسة', variant: 'destructive' })
+      toast.error('تنبيه', { description: 'لم يتم العثور على معرف المدرسة' })
       return
     }
 
@@ -262,15 +262,11 @@ export default function ClassesPage() {
         const err = await res.json()
         throw new Error(err.error || 'Failed')
       }
-      toast({ title: 'تمت الإضافة', description: 'تم إضافة الصف بنجاح' })
+      toast.success('تمت الإضافة', { description: 'تم إضافة الصف بنجاح' })
       setFormOpen(false)
       fetchClasses()
     } catch (err) {
-      toast({
-        title: 'خطأ',
-        description: err instanceof Error ? err.message : 'فشل في حفظ البيانات',
-        variant: 'destructive',
-      })
+      toast.error('خطأ', { description: err instanceof Error ? err.message : 'فشل في حفظ البيانات' })
     } finally {
       setSaving(false)
     }
@@ -282,10 +278,10 @@ export default function ClassesPage() {
     try {
       const res = await fetch(`/api/classes/${deleteId}`, { method: 'DELETE' })
       if (!res.ok) throw new Error()
-      toast({ title: 'تم الحذف', description: 'تم حذف الصف بنجاح' })
+      toast.success('تم الحذف', { description: 'تم حذف الصف بنجاح' })
       fetchClasses()
     } catch {
-      toast({ title: 'خطأ', description: 'فشل في حذف الصف', variant: 'destructive' })
+      toast.error('خطأ', { description: 'فشل في حذف الصف' })
     } finally {
       setDeleteId(null)
     }
@@ -300,7 +296,7 @@ export default function ClassesPage() {
 
   const handleAssign = async () => {
     if (!assignTeacherId || !assignTarget) {
-      toast({ title: 'تنبيه', description: 'يرجى اختيار الأستاذ', variant: 'destructive' })
+      toast.error('تنبيه', { description: 'يرجى اختيار الأستاذ' })
       return
     }
 
@@ -319,15 +315,11 @@ export default function ClassesPage() {
       if (!res.ok) {
         throw new Error(data.error || 'Failed')
       }
-      toast({ title: 'تم التعيين', description: 'تم تعيين الأستاذ بنجاح' })
+      toast.success('تم التعيين', { description: 'تم تعيين الأستاذ بنجاح' })
       setAssignOpen(false)
       fetchAssignments()
     } catch (err) {
-      toast({
-        title: 'خطأ',
-        description: err instanceof Error ? err.message : 'فشل في تعيين الأستاذ',
-        variant: 'destructive',
-      })
+      toast.error('خطأ', { description: err instanceof Error ? err.message : 'فشل في تعيين الأستاذ' })
     } finally {
       setSaving(false)
     }
@@ -337,10 +329,10 @@ export default function ClassesPage() {
     try {
       const res = await fetch(`/api/teacher-classes?id=${assignmentId}`, { method: 'DELETE' })
       if (!res.ok) throw new Error()
-      toast({ title: 'تم الإلغاء', description: 'تم إلغاء تعيين الأستاذ بنجاح' })
+      toast.success('تم الإلغاء', { description: 'تم إلغاء تعيين الأستاذ بنجاح' })
       fetchAssignments()
     } catch {
-      toast({ title: 'خطأ', description: 'فشل في إلغاء التعيين', variant: 'destructive' })
+      toast.error('خطأ', { description: 'فشل في إلغاء التعيين' })
     }
   }
 
@@ -361,19 +353,27 @@ export default function ClassesPage() {
   // ─── Render ────────────────────────────────────────────────────
   return (
     <div className="space-y-6">
+      {/* Page Guidance Hint */}
+      <div className="hint-card p-3 flex items-start gap-3">
+        <Lightbulb className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
+        <div className="flex-1">
+          <p className="text-sm font-medium text-blue-800 dark:text-blue-300">الصفوف والشعب</p>
+          <p className="text-xs text-blue-600 dark:text-blue-400">أنشئ الصفوف الدراسية وأضف الشعب لكل صف. يمكنك تعيين المدرسين للشعب وربطها بالمواد.</p>
+        </div>
+      </div>
+
       {/* Top Bar */}
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div
-              className="flex h-10 w-10 items-center justify-center rounded-lg"
-              style={{ background: 'linear-gradient(135deg, #2563eb, #1d4ed8)' }}
+              className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary"
             >
               <Layers className="h-5 w-5 text-white" />
             </div>
             <h1 className="text-2xl font-bold">الصفوف والشعب</h1>
           </div>
-          <Button onClick={openAddForm} className="gap-2" style={{ background: 'linear-gradient(135deg, #2563eb, #1d4ed8)' }}>
+          <Button onClick={openAddForm} className="gap-2 bg-primary">
             <Plus className="h-4 w-4" />
             إضافة صف جديد
           </Button>
@@ -383,17 +383,17 @@ export default function ClassesPage() {
         {!loading && classes.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { label: 'إجمالي الصفوف', count: classes.length, icon: Layers, color: '#2563eb', bg: 'bg-blue-50', iconBg: 'bg-blue-100', border: 'border-blue-200' },
-              { label: 'إجمالي الشعب', count: totalSections, icon: BookOpen, color: '#7c3aed', bg: 'bg-violet-50', iconBg: 'bg-violet-100', border: 'border-violet-200' },
-              { label: 'إجمالي الطلاب', count: totalStudents, icon: Users, color: '#059669', bg: 'bg-emerald-50', iconBg: 'bg-emerald-100', border: 'border-emerald-200' },
-              { label: 'المدرسون المعينون', count: new Set(teacherAssignments.map(a => a.teacherId)).size, icon: GraduationCap, color: '#d97706', bg: 'bg-amber-50', iconBg: 'bg-amber-100', border: 'border-amber-200' },
+              { label: 'إجمالي الصفوف', count: classes.length, icon: Layers, textClass: 'text-primary', bg: 'bg-blue-50', iconBg: 'bg-blue-100', border: 'border-blue-200' },
+              { label: 'إجمالي الشعب', count: totalSections, icon: BookOpen, textClass: 'text-violet-600', bg: 'bg-violet-50', iconBg: 'bg-violet-100', border: 'border-violet-200' },
+              { label: 'إجمالي الطلاب', count: totalStudents, icon: Users, textClass: 'text-emerald-600', bg: 'bg-emerald-50', iconBg: 'bg-emerald-100', border: 'border-emerald-200' },
+              { label: 'المدرسون المعينون', count: new Set(teacherAssignments.map(a => a.teacherId)).size, icon: GraduationCap, textClass: 'text-amber-600', bg: 'bg-amber-50', iconBg: 'bg-amber-100', border: 'border-amber-200' },
             ].map(stat => (
               <div key={stat.label} className={`flex items-center gap-3 p-3 rounded-xl border ${stat.border} ${stat.bg}`}>
                 <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${stat.iconBg}`}>
-                  <stat.icon className="w-4 h-4" style={{ color: stat.color }} />
+                  <stat.icon className={`w-4 h-4 ${stat.textClass}`} />
                 </div>
                 <div>
-                  <p className="text-xl font-bold" style={{ color: stat.color }}>{stat.count}</p>
+                  <p className={`text-xl font-bold ${stat.textClass}`}>{stat.count}</p>
                   <p className="text-xs text-muted-foreground">{stat.label}</p>
                 </div>
               </div>
@@ -419,10 +419,14 @@ export default function ClassesPage() {
           ))}
         </div>
       ) : classes.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-          <Layers className="h-12 w-12 mb-4 opacity-30" />
-          <p className="text-lg font-medium">لا توجد صفوف دراسية</p>
-          <p className="text-sm">قم بإضافة صفوف جديدة للبدء</p>
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <Layers className="h-16 w-16 mb-4 text-muted-foreground/20" />
+          <h3 className="text-lg font-semibold text-muted-foreground">لا توجد صفوف دراسية بعد</h3>
+          <p className="text-sm text-muted-foreground mt-1 max-w-sm">أنشئ الصفوف الدراسية وأضف الشعب لكل صف. يمكنك تعيين المدرسين للشعب وربطها بالمواد الدراسية.</p>
+          <Button className="mt-4 gap-2 bg-primary" onClick={openAddForm}>
+            <Plus className="h-4 w-4" />
+            إضافة صف جديد
+          </Button>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -441,7 +445,7 @@ export default function ClassesPage() {
                 >
                   <Card className={`overflow-hidden hover:shadow-lg transition-all duration-300 group relative ${levelColor.bg}`}>
                     {/* Gradient header line */}
-                    <div className="absolute top-0 right-0 left-0 h-1" style={{ background: 'linear-gradient(90deg, #2563eb, #1d4ed8)' }} />
+                    <div className="absolute top-0 right-0 left-0 h-1 bg-primary" />
 
                     <CardContent className="p-6 pt-5 relative">
                       {/* Header */}
@@ -658,7 +662,7 @@ export default function ClassesPage() {
           </div>
           <div className="flex justify-end gap-2 pt-4 border-t">
             <Button variant="outline" onClick={() => setFormOpen(false)}>إلغاء</Button>
-            <Button onClick={handleSave} disabled={saving} style={{ background: 'linear-gradient(135deg, #2563eb, #1d4ed8)' }}>
+            <Button onClick={handleSave} disabled={saving} className="bg-primary">
               {saving ? 'جاري الحفظ...' : 'إضافة'}
             </Button>
           </div>
@@ -670,7 +674,7 @@ export default function ClassesPage() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <GraduationCap className="h-5 w-5" style={{ color: '#2563eb' }} />
+              <GraduationCap className="h-5 w-5 text-primary" />
               تعيين أستاذ
             </DialogTitle>
           </DialogHeader>
@@ -763,7 +767,7 @@ export default function ClassesPage() {
             <Button
               onClick={handleAssign}
               disabled={saving || !assignTeacherId}
-              style={{ background: 'linear-gradient(135deg, #2563eb, #1d4ed8)' }}
+              className="bg-primary"
             >
               {saving ? 'جاري التعيين...' : 'تعيين'}
             </Button>

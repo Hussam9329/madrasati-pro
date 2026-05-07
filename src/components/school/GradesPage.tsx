@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   GraduationCap, Save, CheckCircle, XCircle, AlertTriangle,
-  BookOpen, Award, BarChart3, Lock, FileCheck, Search, Users, TrendingUp, Target
+  BookOpen, Award, BarChart3, Lock, FileCheck, Search, Users, TrendingUp, Target, Lightbulb
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -21,7 +21,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Progress } from '@/components/ui/progress'
-import { useToast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 
 // Types
 interface ClassData {
@@ -103,7 +103,6 @@ function getScoreColor(score: number, maxScore: number): { bg: string; text: str
 }
 
 export default function GradesPage() {
-  const { toast } = useToast()
 
   // Filter state
   const [classes, setClasses] = useState<ClassData[]>([])
@@ -173,7 +172,7 @@ export default function GradesPage() {
   // Show students - fetch students and existing grades
   const handleShowStudents = async () => {
     if (!selectedClassId || !selectedSubjectId || !selectedExamTypeId) {
-      toast({ title: 'خطأ', description: 'الرجاء اختيار الصف والمادة ونوع الامتحان', variant: 'destructive' })
+      toast.error('خطأ', { description: 'الرجاء اختيار الصف والمادة ونوع الامتحان' })
       return
     }
 
@@ -226,7 +225,7 @@ export default function GradesPage() {
       setIsShowingStudents(true)
       setShowStats(false)
     } catch {
-      toast({ title: 'خطأ', description: 'حدث خطأ في جلب البيانات', variant: 'destructive' })
+      toast.error('خطأ', { description: 'حدث خطأ في جلب البيانات' })
     } finally {
       setLoadingStudents(false)
     }
@@ -239,7 +238,7 @@ export default function GradesPage() {
 
     // Validate max score
     if (numValue !== '' && parseFloat(numValue) > maxScore) {
-      toast({ title: 'تنبيه', description: `الدرجة لا يمكن أن تتجاوز ${maxScore}`, variant: 'destructive' })
+      toast.error('تنبيه', { description: `الدرجة لا يمكن أن تتجاوز ${maxScore}` })
       return
     }
 
@@ -297,16 +296,16 @@ export default function GradesPage() {
         }
       }
 
-      toast({
-        title: 'تم الحفظ',
-        description: `تم حفظ ${successCount} درجة${errorCount > 0 ? ` وفشل ${errorCount}` : ''}`,
-        variant: errorCount > 0 ? 'destructive' : 'default',
-      })
+      if (errorCount > 0) {
+        toast.error('تم الحفظ جزئياً', { description: `تم حفظ ${successCount} درجة وفشل ${errorCount}` })
+      } else {
+        toast.success('تم الحفظ', { description: `تم حفظ ${successCount} درجة بنجاح` })
+      }
 
       // Refresh data
       handleShowStudents()
     } catch {
-      toast({ title: 'خطأ', description: 'حدث خطأ في حفظ الدرجات', variant: 'destructive' })
+      toast.error('خطأ', { description: 'حدث خطأ في حفظ الدرجات' })
     } finally {
       setSaving(false)
     }
@@ -321,7 +320,7 @@ export default function GradesPage() {
         .map(g => g.id)
 
       if (gradeIds.length === 0) {
-        toast({ title: 'تنبيه', description: 'لا توجد درجات للاعتماد', variant: 'destructive' })
+        toast.error('تنبيه', { description: 'لا توجد درجات للاعتماد' })
         return
       }
 
@@ -334,13 +333,13 @@ export default function GradesPage() {
       const data = await res.json()
 
       if (res.ok) {
-        toast({ title: 'تم الاعتماد', description: data.message })
+        toast.success('تم الاعتماد', { description: data.message })
         handleShowStudents()
       } else {
-        toast({ title: 'خطأ', description: data.error, variant: 'destructive' })
+        toast.error('خطأ', { description: data.error })
       }
     } catch {
-      toast({ title: 'خطأ', description: 'حدث خطأ في اعتماد الدرجات', variant: 'destructive' })
+      toast.error('خطأ', { description: 'حدث خطأ في اعتماد الدرجات' })
     } finally {
       setApproving(false)
     }
@@ -382,9 +381,16 @@ export default function GradesPage() {
 
   return (
     <div className="space-y-6" dir="rtl">
+      <div className="hint-card p-3 flex items-start gap-3">
+        <Lightbulb className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
+        <div className="flex-1">
+          <p className="text-sm font-medium text-blue-800 dark:text-blue-300">نظام الدرجات</p>
+          <p className="text-xs text-blue-600 dark:text-blue-400">اختر الصف والمادة ونوع الامتحان لإدخال درجات الطلاب. يمكنك حفظ الدرجات كمسودة ثم اعتمادها لاحقاً.</p>
+        </div>
+      </div>
       {/* Header with gradient icon */}
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-lg" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-lg bg-primary">
           <GraduationCap className="h-5 w-5" />
         </div>
         <div>
@@ -395,7 +401,7 @@ export default function GradesPage() {
 
       {/* Filters */}
       <Card className="overflow-hidden">
-        <div className="h-1" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
+        <div className="h-1 bg-primary" />
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <Target className="h-4 w-4 text-teal-600" />
@@ -478,8 +484,7 @@ export default function GradesPage() {
             <Button
               onClick={handleShowStudents}
               disabled={!selectedClassId || !selectedSubjectId || !selectedExamTypeId || loadingStudents}
-              className="gap-2 text-white"
-              style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}
+              className="gap-2 bg-primary text-white"
             >
               {loadingStudents ? (
                 <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -537,7 +542,7 @@ export default function GradesPage() {
                 </CardContent>
               </Card>
               <Card className="overflow-hidden">
-                <div className="h-1" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
+                <div className="h-1 bg-primary" />
                 <CardContent className="p-4 text-center">
                   <p className="text-xl font-bold">{stats.total}</p>
                   <p className="text-xs text-muted-foreground">
@@ -549,7 +554,7 @@ export default function GradesPage() {
 
             {/* Grade Distribution Visual */}
             <Card className="overflow-hidden">
-              <div className="h-1" style={{ background: 'linear-gradient(90deg, #10b981, #f59e0b, #ef4444)' }} />
+              <div className="h-1 bg-primary" />
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
                   <BarChart3 className="h-4 w-4 text-teal-600" />
@@ -620,7 +625,7 @@ export default function GradesPage() {
             transition={{ duration: 0.3 }}
           >
             <Card className="overflow-hidden">
-              <div className="h-1" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
+              <div className="h-1 bg-primary" />
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between flex-wrap gap-3">
                   <div>
@@ -689,8 +694,13 @@ export default function GradesPage() {
                   </div>
                 ) : gradeEntries.length === 0 ? (
                   <div className="text-center py-12">
-                    <Search className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-                    <p className="text-muted-foreground">لا يوجد طلاب في الصف المحدد</p>
+                    <Search className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
+                    <p className="text-lg font-medium text-muted-foreground mb-1">لا يوجد طلاب في الصف المحدد</p>
+                    <p className="text-sm text-muted-foreground mb-4">تأكد من اختيار الصف والشعبة الصحيحة أو قم بتسجيل طلاب في النظام أولاً</p>
+                    <Button variant="outline" size="sm" onClick={() => setIsShowingStudents(false)} className="gap-2">
+                      <Search className="h-4 w-4" />
+                      تعديل الفلتر
+                    </Button>
                   </div>
                 ) : (
                   <ScrollArea className="max-h-[500px]">

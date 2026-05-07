@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 import {
   Settings, Users, Edit, Trash2, Save, Shield,
   UserPlus, AlertCircle, CheckCircle,
-  School, Phone, Mail, MapPin, Clock, User as UserIcon, X
+  School, Phone, Mail, MapPin, Clock, User as UserIcon, X, Lightbulb
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -27,7 +27,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Switch } from '@/components/ui/switch'
-import { useToast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -81,7 +81,6 @@ interface SettingsPageProps {
 }
 
 export default function SettingsPage({ initialTab = 'settings' }: SettingsPageProps) {
-  const { toast } = useToast()
 
   // ============ SCHOOL SETTINGS STATE ============
   const [school, setSchool] = useState<SchoolData | null>(null)
@@ -168,14 +167,14 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
       })
 
       if (res.ok) {
-        toast({ title: 'تم الحفظ', description: 'تم تحديث بيانات المدرسة بنجاح' })
+        toast.success('تم الحفظ', { description: 'تم تحديث بيانات المدرسة بنجاح' })
         fetchSchool()
       } else {
         const data = await res.json()
-        toast({ title: 'خطأ', description: data.error || 'حدث خطأ في الحفظ', variant: 'destructive' })
+        toast.error('خطأ', { description: data.error || 'حدث خطأ في الحفظ' })
       }
     } catch {
-      toast({ title: 'خطأ', description: 'حدث خطأ في الاتصال', variant: 'destructive' })
+      toast.error('خطأ', { description: 'حدث خطأ في الاتصال' })
     } finally {
       setSavingSchool(false)
     }
@@ -201,12 +200,12 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
 
   const handleSaveUser = async () => {
     if (!userForm.username || !userForm.name) {
-      toast({ title: 'خطأ', description: 'اسم المستخدم والاسم مطلوبان', variant: 'destructive' })
+      toast.error('خطأ', { description: 'اسم المستخدم والاسم مطلوبان' })
       return
     }
 
     if (!editingUser && !userForm.password) {
-      toast({ title: 'خطأ', description: 'كلمة المرور مطلوبة للمستخدم الجديد', variant: 'destructive' })
+      toast.error('خطأ', { description: 'كلمة المرور مطلوبة للمستخدم الجديد' })
       return
     }
 
@@ -229,12 +228,12 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
         })
 
         if (res.ok) {
-          toast({ title: 'تم التحديث', description: 'تم تحديث بيانات المستخدم' })
+          toast.success('تم التحديث', { description: 'تم تحديث بيانات المستخدم' })
           setUserDialogOpen(false)
           fetchUsers()
         } else {
           const data = await res.json()
-          toast({ title: 'خطأ', description: data.error, variant: 'destructive' })
+          toast.error('خطأ', { description: data.error })
         }
       } else {
         // Create user
@@ -245,16 +244,16 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
         })
 
         if (res.ok) {
-          toast({ title: 'تم الإنشاء', description: 'تم إنشاء المستخدم بنجاح' })
+          toast.success('تم الإنشاء', { description: 'تم إنشاء المستخدم بنجاح' })
           setUserDialogOpen(false)
           fetchUsers()
         } else {
           const data = await res.json()
-          toast({ title: 'خطأ', description: data.error, variant: 'destructive' })
+          toast.error('خطأ', { description: data.error })
         }
       }
     } catch {
-      toast({ title: 'خطأ', description: 'حدث خطأ في الاتصال', variant: 'destructive' })
+      toast.error('خطأ', { description: 'حدث خطأ في الاتصال' })
     } finally {
       setSavingUser(false)
     }
@@ -265,14 +264,14 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
     try {
       const res = await fetch(`/api/users/${deleteUserId}`, { method: 'DELETE' })
       if (res.ok) {
-        toast({ title: 'تم الحذف', description: 'تم حذف المستخدم بنجاح' })
+        toast.success('تم الحذف', { description: 'تم حذف المستخدم بنجاح' })
         fetchUsers()
       } else {
         const data = await res.json()
-        toast({ title: 'خطأ', description: data.error, variant: 'destructive' })
+        toast.error('خطأ', { description: data.error })
       }
     } catch {
-      toast({ title: 'خطأ', description: 'حدث خطأ في الحذف', variant: 'destructive' })
+      toast.error('خطأ', { description: 'حدث خطأ في الحذف' })
     } finally {
       setDeleteUserId(null)
     }
@@ -291,13 +290,19 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
 
   return (
     <div className="space-y-6" dir="rtl">
+      <div className="hint-card p-3 flex items-start gap-3">
+        <Lightbulb className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
+        <div className="flex-1">
+          <p className="text-sm font-medium text-blue-800 dark:text-blue-300">الإعدادات</p>
+          <p className="text-xs text-blue-600 dark:text-blue-400">من هنا يمكنك تعديل إعدادات المدرسة وإدارة حسابات المستخدمين والصلاحيات.</p>
+        </div>
+      </div>
       {/* Page Header */}
       <div className="flex items-center gap-3">
         <div
-          className="flex h-10 w-10 items-center justify-center rounded-lg"
-          style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}
+          className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-white"
         >
-          <Settings className="h-5 w-5 text-white" />
+          <Settings className="h-5 w-5" />
         </div>
         <h1 className="text-2xl font-bold">الإعدادات</h1>
       </div>
@@ -338,7 +343,7 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
             >
               {/* School Info */}
               <Card className="border-0 shadow-sm overflow-hidden">
-                <div className="h-1" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
+                <div className="h-1 bg-primary" />
                 <CardHeader className="pb-3">
                   <CardTitle className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-teal-100">
@@ -448,7 +453,7 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
 
               {/* School Type & Schedule */}
               <Card className="border-0 shadow-sm overflow-hidden">
-                <div className="h-1" style={{ background: 'linear-gradient(90deg, #059669, #0d9488)' }} />
+                <div className="h-1 bg-primary" />
                 <CardHeader className="pb-3">
                   <CardTitle className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-emerald-100">
@@ -565,8 +570,7 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
                 <Button
                   onClick={handleSaveSchool}
                   disabled={savingSchool}
-                  className="gap-2 min-w-[160px] text-white transition-all duration-200 hover:shadow-lg hover:scale-[1.01] active:scale-[0.99]"
-                  style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}
+                  className="gap-2 min-w-[160px] bg-primary text-white transition-all duration-200 hover:shadow-lg hover:scale-[1.01] active:scale-[0.99]"
                 >
                   {savingSchool ? (
                     <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -591,7 +595,7 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
             </div>
             <Dialog open={userDialogOpen} onOpenChange={setUserDialogOpen}>
               <DialogTrigger asChild>
-                <Button onClick={() => handleOpenUserDialog()} className="gap-2 text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
+                <Button onClick={() => handleOpenUserDialog()} className="gap-2 bg-primary text-white">
                   <UserPlus className="h-4 w-4" />
                   إضافة مستخدم
                 </Button>
@@ -684,7 +688,7 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
           </div>
 
           <Card className="border-0 shadow-sm overflow-hidden">
-            <div className="h-1" style={{ background: 'linear-gradient(90deg, #0d9488, #0891b2)' }} />
+            <div className="h-1 bg-primary" />
             <CardContent className="p-0 pt-0">
               {loadingUsers ? (
                 <div className="p-6 space-y-4">
@@ -698,9 +702,13 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
                 </div>
               ) : users.length === 0 ? (
                 <div className="text-center py-12">
-                  <Users className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-                  <p className="text-muted-foreground">لا يوجد مستخدمون</p>
-                  <p className="text-sm text-muted-foreground mt-1">أضف مستخدم جديد للبدء</p>
+                  <Users className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
+                  <p className="text-lg font-medium text-muted-foreground mb-1">لا يوجد مستخدمون</p>
+                  <p className="text-sm text-muted-foreground mb-4">أضف مستخدم جديد للبدء في إدارة حسابات النظام والصلاحيات</p>
+                  <Button onClick={() => handleOpenUserDialog()} className="gap-2 bg-primary text-white">
+                    <UserPlus className="h-4 w-4" />
+                    إضافة مستخدم
+                  </Button>
                 </div>
               ) : (
                 <ScrollArea className="max-h-[500px]">

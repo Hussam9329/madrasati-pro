@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { GraduationCap, Eye, EyeOff, Loader2, Shield, School, Sparkles } from 'lucide-react';
+import { GraduationCap, Eye, EyeOff, Loader2, Shield, School, Sparkles, Lightbulb, Info, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 interface LoginPageProps {
   onLogin: (user: { id: string; username: string; name: string; role: string }, token: string) => void;
@@ -20,7 +20,6 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [typedText, setTypedText] = useState('');
-  const { toast } = useToast();
   const welcomeText = 'مرحباً بك';
 
   // Typing animation for welcome text
@@ -65,10 +64,10 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
         },
         data.token
       );
-      toast({ title: 'تم تسجيل الدخول', description: `مرحباً بك، ${data.user.name}` });
+      toast.success('تم تسجيل الدخول', { description: `مرحباً بك، ${data.user.name}` });
     } catch {
       setError('تعذر الاتصال بالخادم. يرجى المحاولة لاحقاً');
-      toast({ title: 'خطأ في الاتصال', description: 'تعذر الاتصال بالخادم، تحقق من اتصالك بالإنترنت', variant: 'destructive' });
+      toast.error('خطأ في الاتصال', { description: 'تعذر الاتصال بالخادم، تحقق من اتصالك بالإنترنت' });
     } finally {
       setLoading(false);
     }
@@ -90,10 +89,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
     <div className="min-h-screen flex" dir="rtl">
       {/* Left decorative panel */}
       <div
-        className="hidden lg:flex lg:w-1/2 relative overflow-hidden items-center justify-center p-12"
-        style={{
-          background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 40%, #1e40af 100%)',
-        }}
+        className="hidden lg:flex lg:w-1/2 relative overflow-hidden items-center justify-center p-12 bg-gradient-to-br from-primary via-primary to-primary/80"
       >
         {/* Gradient mesh background */}
         <div className="absolute inset-0">
@@ -234,19 +230,18 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           {/* Mobile logo */}
           <div className="lg:hidden text-center mb-8">
             <div
-              className="mx-auto mb-4 flex items-center justify-center w-16 h-16 rounded-xl shadow-lg"
-              style={{ background: 'linear-gradient(135deg, #2563eb, #1d4ed8)' }}
+              className="mx-auto mb-4 flex items-center justify-center w-16 h-16 rounded-xl shadow-lg bg-primary"
             >
               <School className="w-8 h-8 text-white" />
             </div>
-            <h2 className="text-2xl font-bold" style={{ color: '#2563eb' }}>مدرستي</h2>
+            <h2 className="text-2xl font-bold text-primary">مدرستي</h2>
             <p className="text-sm text-muted-foreground mt-1">نظام إدارة المدرسة</p>
           </div>
 
           <Card className="shadow-2xl border-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl relative overflow-hidden">
             {/* Gradient top accent */}
-            <div className="absolute top-0 inset-x-0 h-1" style={{ background: 'linear-gradient(90deg, #2563eb, #1d4ed8, #2563eb)' }} />
-            
+            <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-primary via-primary to-primary" />
+
             {/* Shimmer effect */}
             <motion.div
               initial={{ x: '-100%' }}
@@ -291,10 +286,14 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
-                    className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-xl text-sm text-center flex items-center justify-center gap-2"
+                    className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3"
                   >
-                    <span className="text-lg">⚠️</span>
-                    {error}
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <AlertCircle className="w-4 h-4 text-red-500 dark:text-red-400 shrink-0" />
+                      <span className="text-sm font-semibold text-red-700 dark:text-red-400">فشل تسجيل الدخول</span>
+                    </div>
+                    <p className="text-sm text-red-600 dark:text-red-400/80 mr-6">{error}</p>
+                    <p className="text-xs text-red-500 dark:text-red-400/60 mr-6 mt-1">يرجى التحقق من بيانات الدخول والمحاولة مرة أخرى</p>
                   </motion.div>
                 )}
 
@@ -311,7 +310,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
                       placeholder="أدخل اسم المستخدم"
-                      className="h-12 text-base border-gray-200 dark:border-gray-700 focus:border-blue-500 focus:ring-blue-500/20 rounded-xl pr-4 pl-10 dark:bg-gray-800/50 dark:text-gray-100"
+                      className="h-12 text-base border-gray-200 dark:border-gray-700 focus:border-primary focus:ring-primary/20 rounded-xl pr-4 pl-10 dark:bg-gray-800/50 dark:text-gray-100"
                       required
                       disabled={loading}
                       dir="rtl"
@@ -335,7 +334,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="أدخل كلمة المرور"
-                      className="h-12 text-base border-gray-200 dark:border-gray-700 focus:border-blue-500 focus:ring-blue-500/20 rounded-xl pr-4 pl-12 dark:bg-gray-800/50 dark:text-gray-100"
+                      className="h-12 text-base border-gray-200 dark:border-gray-700 focus:border-primary focus:ring-primary/20 rounded-xl pr-4 pl-12 dark:bg-gray-800/50 dark:text-gray-100"
                       required
                       disabled={loading}
                       dir="rtl"
@@ -349,6 +348,20 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                       {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                     </button>
                   </div>
+                  {/* Info hint below password */}
+                  <div className="flex items-start gap-1.5 mt-1.5">
+                    <Info className="w-3.5 h-3.5 text-muted-foreground/60 mt-0.5 shrink-0" />
+                    <p className="text-xs text-muted-foreground/70">تأكد من إدخال بيانات الدخول الصحيحة الخاصة بك</p>
+                  </div>
+                  {/* Forgot password link */}
+                  <div className="flex justify-start mt-1">
+                    <button
+                      type="button"
+                      className="text-xs font-medium text-primary/80 hover:text-primary transition-colors hover:underline underline-offset-2"
+                    >
+                      نسيت كلمة المرور؟
+                    </button>
+                  </div>
                 </div>
 
                 {/* Enhanced login button with shimmer */}
@@ -356,10 +369,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                   <Button
                     type="submit"
                     disabled={loading}
-                    className="w-full h-12 text-base font-semibold text-white transition-all duration-200 hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] rounded-xl relative overflow-hidden"
-                    style={{
-                      background: 'linear-gradient(135deg, #2563eb, #1d4ed8)',
-                    }}
+                    className="w-full h-12 text-base font-semibold text-white transition-all duration-200 hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] rounded-xl relative overflow-hidden bg-gradient-to-br from-primary to-primary/80"
                   >
                     {loading ? (
                       <span className="flex items-center gap-2 relative z-10">
@@ -387,7 +397,10 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
 
                 {/* Quick access hints */}
                 <div className="mt-4 p-3 bg-blue-50/50 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-800/30">
-                  <p className="text-xs text-blue-700 dark:text-blue-400 font-medium mb-2">للتجربة السريعة:</p>
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <Lightbulb className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                    <p className="text-xs text-blue-700 dark:text-blue-400 font-medium">للتجربة السريعة — استخدم هذه البيانات:</p>
+                  </div>
                   <div className="grid grid-cols-2 gap-2 text-xs text-blue-600 dark:text-blue-400">
                     <div>المدير: <code className="bg-blue-100 dark:bg-blue-900/30 px-1.5 py-0.5 rounded text-blue-800 dark:text-blue-300">admin</code></div>
                     <div>كلمة المرور: <code className="bg-blue-100 dark:bg-blue-900/30 px-1.5 py-0.5 rounded text-blue-800 dark:text-blue-300">admin123</code></div>
@@ -402,7 +415,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                 className="text-center mt-6 pt-4 border-t border-gray-100 dark:border-gray-800"
               >
                 <p className="text-xs text-muted-foreground mb-1">من تطوير</p>
-                <p className="text-base font-extrabold tracking-[0.2em]" style={{ color: '#2563eb' }}>
+                <p className="text-base font-extrabold tracking-[0.2em] text-primary">
                   مدرستي
                 </p>
               </motion.div>

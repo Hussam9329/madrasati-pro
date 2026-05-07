@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   QrCode, ScanLine, LogIn, LogOut, Search, Download, Filter,
   CheckCircle, Clock, AlertTriangle, XCircle, User, Calendar,
-  RefreshCw, ArrowLeft, ArrowRight, Radio, Users, Save
+  RefreshCw, ArrowLeft, ArrowRight, Radio, Users, Save,
+  Lightbulb,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -22,7 +23,7 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useToast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 
 // Types
 interface Student {
@@ -123,7 +124,6 @@ function StatusChip({ status }: { status: string }) {
 }
 
 export default function AttendancePage() {
-  const { toast } = useToast()
   const [scanMode, setScanMode] = useState<'checkIn' | 'checkOut'>('checkIn')
   const [qrInput, setQrInput] = useState('')
   const [isScanning, setIsScanning] = useState(false)
@@ -218,7 +218,7 @@ export default function AttendancePage() {
   // Handle QR scan
   const handleScan = async () => {
     if (!qrInput.trim()) {
-      toast({ title: 'خطأ', description: 'الرجاء إدخال رمز QR', variant: 'destructive' })
+      toast.error('خطأ', { description: 'الرجاء إدخال رمز QR' })
       return
     }
 
@@ -253,11 +253,7 @@ export default function AttendancePage() {
               },
             })
           }
-          toast({
-            title: isCheckIn ? 'تكرار تسجيل الدخول' : 'تكرار تسجيل الخروج',
-            description: data.error,
-            variant: 'destructive',
-          })
+          toast.error(isCheckIn ? 'تكرار تسجيل الدخول' : 'تكرار تسجيل الخروج', { description: data.error })
           return
         }
         setScanError(data.error || 'حدث خطأ في المسح')
@@ -268,8 +264,7 @@ export default function AttendancePage() {
       }
 
       setScanResult(data)
-      toast({
-        title: data.message,
+      toast.success(data.message, {
         description: `${data.student.fullName} - ${data.student.class} / ${data.student.section}`,
       })
 
@@ -307,6 +302,15 @@ export default function AttendancePage() {
 
   return (
     <div className="space-y-6" dir="rtl">
+      {/* Page Guidance Hint */}
+      <div className="hint-card p-3 flex items-start gap-3">
+        <Lightbulb className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
+        <div className="flex-1">
+          <p className="text-sm font-medium text-blue-800 dark:text-blue-300">نظام الحضور</p>
+          <p className="text-xs text-blue-600 dark:text-blue-400">يمكنك تسجيل حضور الطلاب عبر مسح رمز QR أو الإدخال اليدوي. اختر الصف والشعبة ثم سجل حالة كل طالب.</p>
+        </div>
+      </div>
+
       {/* Live Clock Display */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
@@ -352,7 +356,7 @@ export default function AttendancePage() {
             <div className="space-y-4">
               {/* Mode Toggle with pulsing live indicator */}
               <Card className="overflow-hidden">
-                <div className="h-1" style={{ background: scanMode === 'checkIn' ? 'linear-gradient(90deg, #059669, #10b981)' : 'linear-gradient(90deg, #dc2626, #f87171)' }} />
+                <div className="h-1" className={scanMode === 'checkIn' ? 'bg-emerald-500' : 'bg-red-500'} />
                 <CardContent className="p-4">
                   <div className="flex gap-2">
                     <Button
@@ -697,7 +701,7 @@ export default function AttendancePage() {
 
           {/* Recent Scans Table */}
           <Card className="overflow-hidden">
-            <div className="h-1" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
+            <div className="h-1" className="bg-primary" />
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg flex items-center gap-2">
@@ -725,9 +729,14 @@ export default function AttendancePage() {
                   ))}
                 </div>
               ) : recentScans.length === 0 ? (
-                <div className="text-center py-8">
-                  <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-                  <p className="text-muted-foreground">لا توجد عمليات مسح اليوم</p>
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <Calendar className="h-16 w-16 mb-4 text-muted-foreground/20" />
+                  <h3 className="text-lg font-semibold text-muted-foreground">لا توجد عمليات مسح اليوم</h3>
+                  <p className="text-sm text-muted-foreground mt-1 max-w-sm">ابدأ بمسح بطاقة الطالب أو إدخال رقم QR يدوياً لتسجيل الحضور والانصراف.</p>
+                  <Button variant="outline" className="mt-4 gap-2" onClick={() => { const input = document.getElementById('qrInput') as HTMLInputElement; input?.focus() }}>
+                    <ScanLine className="h-4 w-4" />
+                    مسح الآن
+                  </Button>
                 </div>
               ) : (
                 <ScrollArea className="max-h-72">
@@ -833,7 +842,7 @@ export default function AttendancePage() {
 
           {/* Filters */}
           <Card className="overflow-hidden">
-            <div className="h-1" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
+            <div className="h-1" className="bg-primary" />
             <CardContent className="p-4">
               <div className="flex flex-wrap gap-4 items-end">
                 <div className="space-y-1 flex-1 min-w-[160px]">
@@ -882,7 +891,7 @@ export default function AttendancePage() {
                   <Filter className="h-3 w-3" />
                   تصفية
                 </Button>
-                <Button size="sm" className="gap-1 text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={() => window.print()}>
+                <Button size="sm" className="gap-1 text-white" className="bg-primary" onClick={() => window.print()}>
                   <Download className="h-3 w-3" />
                   تصدير
                 </Button>
@@ -892,7 +901,7 @@ export default function AttendancePage() {
 
           {/* Records Table */}
           <Card className="overflow-hidden">
-            <div className="h-1" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
+            <div className="h-1" className="bg-primary" />
             <CardContent className="p-0">
               {loadingRecords ? (
                 <div className="p-6 space-y-4">
@@ -905,10 +914,10 @@ export default function AttendancePage() {
                   ))}
                 </div>
               ) : records.length === 0 ? (
-                <div className="text-center py-12">
-                  <Search className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-                  <p className="text-muted-foreground">لا توجد سجلات حضور للتاريخ المحدد</p>
-                  <p className="text-sm text-muted-foreground mt-1">جرّب تغيير التاريخ أو الفلاتر</p>
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <Search className="h-16 w-16 mb-4 text-muted-foreground/20" />
+                  <h3 className="text-lg font-semibold text-muted-foreground">لا توجد سجلات حضور للتاريخ المحدد</h3>
+                  <p className="text-sm text-muted-foreground mt-1 max-w-sm">جرّب تغيير التاريخ أو الفلاتر للبحث عن سجلات حضور سابقة. يمكنك أيضاً تسجيل حضور جديد من تبويب مسح QR.</p>
                 </div>
               ) : (
                 <ScrollArea className="max-h-[500px]">
@@ -968,7 +977,7 @@ export default function AttendancePage() {
         <TabsContent value="bulk" className="space-y-6">
           {/* Header with selectors */}
           <Card className="overflow-hidden">
-            <div className="h-1" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
+            <div className="h-1" className="bg-primary" />
             <CardContent className="p-4">
               <div className="flex flex-wrap gap-4 items-end">
                 <div className="space-y-1 flex-1 min-w-[160px]">
@@ -1065,7 +1074,7 @@ export default function AttendancePage() {
 
           {/* Student List */}
           <Card className="overflow-hidden">
-            <div className="h-1" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
+            <div className="h-1" className="bg-primary" />
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg flex items-center gap-2">
@@ -1079,15 +1088,16 @@ export default function AttendancePage() {
             </CardHeader>
             <CardContent>
               {bulkClassId === 'all' ? (
-                <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-                  <Users className="h-12 w-12 mb-4 opacity-30" />
-                  <p className="text-lg font-medium">اختر صفاً لتسجيل الحضور</p>
-                  <p className="text-sm">اختر الصف من القائمة أعلاه لعرض الطلاب</p>
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <Users className="h-16 w-16 mb-4 text-muted-foreground/20" />
+                  <h3 className="text-lg font-semibold text-muted-foreground">اختر صفاً لتسجيل الحضور</h3>
+                  <p className="text-sm text-muted-foreground mt-1 max-w-sm">اختر الصف والشعبة من القائمة أعلاه لعرض قائمة الطلاب وتسجيل حالة حضورهم.</p>
                 </div>
               ) : bulkStudents.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-                  <User className="h-12 w-12 mb-4 opacity-30" />
-                  <p className="text-lg font-medium">لا يوجد طلاب في هذا الصف</p>
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <User className="h-16 w-16 mb-4 text-muted-foreground/20" />
+                  <h3 className="text-lg font-semibold text-muted-foreground">لا يوجد طلاب في هذا الصف</h3>
+                  <p className="text-sm text-muted-foreground mt-1 max-w-sm">لم يتم تسجيل أي طالب في هذا الصف بعد. تأكد من إضافة الطلاب أولاً من صفحة الطلاب.</p>
                 </div>
               ) : (
                 <>
@@ -1158,7 +1168,7 @@ export default function AttendancePage() {
                     </p>
                     <Button
                       className="gap-2 text-white"
-                      style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}
+                      className="bg-primary"
                       disabled={bulkSaving || bulkStudents.length === 0}
                       onClick={async () => {
                         setBulkSaving(true)
@@ -1177,14 +1187,11 @@ export default function AttendancePage() {
                           })
                           if (!res.ok) throw new Error()
                           const data = await res.json()
-                          toast({
-                            title: 'تم الحفظ',
-                            description: data.message || `تم حفظ ${bulkStudents.length} سجل حضور`,
-                          })
+                          toast.success('تم الحفظ', { description: data.message || `تم حفظ ${bulkStudents.length} سجل حضور`, })
                           fetchRecords()
                           fetchRecentScans()
                         } catch {
-                          toast({ title: 'خطأ', description: 'فشل في حفظ الحضور الجماعي', variant: 'destructive' })
+                          toast.error('خطأ', { description: 'فشل في حفظ الحضور الجماعي' })
                         } finally {
                           setBulkSaving(false)
                         }

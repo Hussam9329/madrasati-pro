@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Plus, Edit, Trash2, BookOpen, Hash, Award, Target, Users, Flame
+  Plus, Edit, Trash2, BookOpen, Hash, Award, Target, Users, Flame,
+  Lightbulb,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -37,7 +38,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Checkbox } from '@/components/ui/checkbox'
-import { useToast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 
 // Types
 interface TeacherOption {
@@ -94,7 +95,6 @@ const SUBJECT_COLORS: Record<string, { bg: string; dot: string; icon: string }> 
 const DEFAULT_SUBJECT_COLOR = { bg: 'bg-gray-50 border-gray-200', dot: 'bg-gray-400', icon: 'text-gray-600' }
 
 export default function SubjectsPage() {
-  const { toast } = useToast()
   const [subjects, setSubjects] = useState<Subject[]>([])
   const [teachers, setTeachers] = useState<TeacherOption[]>([])
   const [classes, setClasses] = useState<ClassOption[]>([])
@@ -122,11 +122,11 @@ export default function SubjectsPage() {
       const data = await res.json()
       setSubjects(data || [])
     } catch {
-      toast({ title: 'خطأ', description: 'فشل في جلب بيانات المواد', variant: 'destructive' })
+      toast.error('خطأ', { description: 'فشل في جلب بيانات المواد' })
     } finally {
       setLoading(false)
     }
-  }, [toast])
+  }, [])
 
   const fetchTeachers = useCallback(async () => {
     try {
@@ -190,7 +190,7 @@ export default function SubjectsPage() {
 
   const handleSave = async () => {
     if (!form.name || !form.code) {
-      toast({ title: 'تنبيه', description: 'اسم المادة ورمزها مطلوبان', variant: 'destructive' })
+      toast.error('تنبيه', { description: 'اسم المادة ورمزها مطلوبان' })
       return
     }
 
@@ -216,7 +216,7 @@ export default function SubjectsPage() {
           const err = await res.json()
           throw new Error(err.error || 'Failed')
         }
-        toast({ title: 'تم التحديث', description: 'تم تحديث بيانات المادة بنجاح' })
+        toast.success('تم التحديث', { description: 'تم تحديث بيانات المادة بنجاح' })
       } else {
         const res = await fetch('/api/subjects', {
           method: 'POST',
@@ -236,16 +236,12 @@ export default function SubjectsPage() {
           const err = await res.json()
           throw new Error(err.error || 'Failed')
         }
-        toast({ title: 'تمت الإضافة', description: 'تم إضافة المادة بنجاح' })
+        toast.success('تمت الإضافة', { description: 'تم إضافة المادة بنجاح' })
       }
       setFormOpen(false)
       fetchSubjects()
     } catch (err) {
-      toast({
-        title: 'خطأ',
-        description: err instanceof Error ? err.message : 'فشل في حفظ البيانات',
-        variant: 'destructive',
-      })
+      toast.error('خطأ', { description: err instanceof Error ? err.message : 'فشل في حفظ البيانات' })
     } finally {
       setSaving(false)
     }
@@ -256,10 +252,10 @@ export default function SubjectsPage() {
     try {
       const res = await fetch(`/api/subjects/${deleteId}`, { method: 'DELETE' })
       if (!res.ok) throw new Error()
-      toast({ title: 'تم الحذف', description: 'تم حذف المادة بنجاح' })
+      toast.success('تم الحذف', { description: 'تم حذف المادة بنجاح' })
       fetchSubjects()
     } catch {
-      toast({ title: 'خطأ', description: 'فشل في حذف المادة', variant: 'destructive' })
+      toast.error('خطأ', { description: 'فشل في حذف المادة' })
     } finally {
       setDeleteId(null)
     }
@@ -285,18 +281,26 @@ export default function SubjectsPage() {
 
   return (
     <div className="space-y-6">
+      {/* Page Guidance Hint */}
+      <div className="hint-card p-3 flex items-start gap-3">
+        <Lightbulb className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
+        <div className="flex-1">
+          <p className="text-sm font-medium text-blue-800 dark:text-blue-300">المواد الدراسية</p>
+          <p className="text-xs text-blue-600 dark:text-blue-400">أضف المواد الدراسية وحدد رمز لكل مادة. المواد تظهر تلقائياً عند إدخال الدرجات وبناء الجدول.</p>
+        </div>
+      </div>
+
       {/* Top Bar */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div
-            className="flex h-10 w-10 items-center justify-center rounded-lg"
-            style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}
+            className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary"
           >
             <BookOpen className="h-5 w-5 text-white" />
           </div>
           <h1 className="text-2xl font-bold">إدارة المواد الدراسية</h1>
         </div>
-        <Button onClick={openAddForm} className="gap-2" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
+        <Button onClick={openAddForm} className="gap-2 bg-primary">
           <Plus className="h-4 w-4" />
           إضافة مادة
         </Button>
@@ -306,17 +310,17 @@ export default function SubjectsPage() {
       {!loading && subjects.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { label: 'إجمالي المواد', count: subjects.length, icon: BookOpen, color: '#0d9488', bg: 'bg-teal-50', iconBg: 'bg-teal-100', border: 'border-teal-200' },
-            { label: 'مواد أساسية', count: subjects.filter(s => s.type === 'أساسية').length, icon: Flame, color: '#059669', bg: 'bg-emerald-50', iconBg: 'bg-emerald-100', border: 'border-emerald-200' },
-            { label: 'مواد اختيارية', count: subjects.filter(s => s.type === 'اختيارية').length, icon: Target, color: '#d97706', bg: 'bg-amber-50', iconBg: 'bg-amber-100', border: 'border-amber-200' },
-            { label: 'المدرسون المرتبطون', count: new Set(subjects.flatMap(s => s.teachers.map(t => t.teacherId))).size, icon: Users, color: '#0891b2', bg: 'bg-cyan-50', iconBg: 'bg-cyan-100', border: 'border-cyan-200' },
+            { label: 'إجمالي المواد', count: subjects.length, icon: BookOpen, textClass: 'text-teal-600', bg: 'bg-teal-50', iconBg: 'bg-teal-100', border: 'border-teal-200' },
+            { label: 'مواد أساسية', count: subjects.filter(s => s.type === 'أساسية').length, icon: Flame, textClass: 'text-emerald-600', bg: 'bg-emerald-50', iconBg: 'bg-emerald-100', border: 'border-emerald-200' },
+            { label: 'مواد اختيارية', count: subjects.filter(s => s.type === 'اختيارية').length, icon: Target, textClass: 'text-amber-600', bg: 'bg-amber-50', iconBg: 'bg-amber-100', border: 'border-amber-200' },
+            { label: 'المدرسون المرتبطون', count: new Set(subjects.flatMap(s => s.teachers.map(t => t.teacherId))).size, icon: Users, textClass: 'text-cyan-600', bg: 'bg-cyan-50', iconBg: 'bg-cyan-100', border: 'border-cyan-200' },
           ].map(stat => (
             <div key={stat.label} className={`flex items-center gap-3 p-3 rounded-xl border ${stat.border} ${stat.bg}`}>
               <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${stat.iconBg}`}>
-                <stat.icon className="w-4 h-4" style={{ color: stat.color }} />
+                <stat.icon className={`w-4 h-4 ${stat.textClass}`} />
               </div>
               <div>
-                <p className="text-xl font-bold" style={{ color: stat.color }}>{stat.count}</p>
+                <p className={`text-xl font-bold ${stat.textClass}`}>{stat.count}</p>
                 <p className="text-xs text-muted-foreground">{stat.label}</p>
               </div>
             </div>
@@ -341,10 +345,14 @@ export default function SubjectsPage() {
           ))}
         </div>
       ) : subjects.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-          <BookOpen className="h-12 w-12 mb-4 opacity-30" />
-          <p className="text-lg font-medium">لا توجد مواد دراسية</p>
-          <p className="text-sm">قم بإضافة مواد جديدة للبدء</p>
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <BookOpen className="h-16 w-16 mb-4 text-muted-foreground/20" />
+          <h3 className="text-lg font-semibold text-muted-foreground">لا توجد مواد دراسية بعد</h3>
+          <p className="text-sm text-muted-foreground mt-1 max-w-sm">ابدأ بإضافة المواد الدراسية وتحديد رمز لكل مادة. ستظهر المواد تلقائياً عند إدخال الدرجات وبناء الجدول الدراسي.</p>
+          <Button className="mt-4 gap-2 bg-primary" onClick={openAddForm}>
+            <Plus className="h-4 w-4" />
+            إضافة مادة جديدة
+          </Button>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -358,7 +366,7 @@ export default function SubjectsPage() {
                 transition={{ delay: idx * 0.05 }}
               >
                 <Card className={`overflow-hidden hover:shadow-lg transition-all duration-300 group relative ${SUBJECT_COLORS[subject.name]?.bg || DEFAULT_SUBJECT_COLOR.bg}`}>
-                  <div className="absolute top-0 right-0 left-0 h-1 rounded-t-lg" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
+                  <div className="absolute top-0 right-0 left-0 h-1 rounded-t-lg bg-primary" />
                   <CardContent className="p-6 pt-5 relative">
                     {/* Header */}
                     <div className="flex items-start justify-between mb-3">

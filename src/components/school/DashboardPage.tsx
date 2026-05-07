@@ -17,6 +17,7 @@ import {
   TrendingUp,
   School,
   Activity,
+  Lightbulb,
 } from 'lucide-react';
 import { useAppStore, type PageKey } from '@/lib/store';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -47,7 +48,7 @@ import {
   Bar,
 } from 'recharts';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 interface DashboardData {
   totals: {
@@ -260,7 +261,7 @@ export default function DashboardPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
   const { setActivePage, auth } = useAppStore();
-  const { toast } = useToast();
+
 
   const fetchData = useCallback(async () => {
     try {
@@ -270,16 +271,16 @@ export default function DashboardPage() {
       const json = await res.json();
       setData(json);
       if (refreshing) {
-        toast({ title: 'تم التحديث', description: 'تم تحديث بيانات لوحة التحكم بنجاح' });
+        toast.success('تم التحديث', { description: 'تم تحديث بيانات لوحة التحكم بنجاح' });
       }
     } catch {
       setError('تعذر جلب بيانات لوحة التحكم');
-      toast({ title: 'خطأ في الاتصال', description: 'تعذر جلب بيانات لوحة التحكم، تحقق من الاتصال بالخادم', variant: 'destructive' });
+      toast.error('خطأ في الاتصال', { description: 'تعذر جلب بيانات لوحة التحكم، تحقق من الاتصال بالخادم' });
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [refreshing, toast]);
+  }, [refreshing]);
 
   useEffect(() => {
     fetchData();
@@ -288,7 +289,7 @@ export default function DashboardPage() {
   const handleRefresh = () => {
     setRefreshing(true);
     setLoading(true);
-    toast({ title: 'جاري التحديث...', description: 'يتم تحديث بيانات لوحة التحكم' });
+    toast.success('جاري التحديث...', { description: 'يتم تحديث بيانات لوحة التحكم' });
     fetchData();
   };
 
@@ -376,12 +377,20 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      {/* Page Guidance Hint */}
+      <div className="hint-card p-3 flex items-start gap-3">
+        <Lightbulb className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
+        <div className="flex-1">
+          <p className="text-sm font-medium text-blue-800 dark:text-blue-300">لوحة التحكم</p>
+          <p className="text-xs text-blue-600 dark:text-blue-400">لوحة التحكم تعرض ملخصاً شاملاً لأهم البيانات. استخدم أزرار الإجراءات السريعة للوصول المباشر للمهام الأكثر استخداماً.</p>
+        </div>
+      </div>
+
       {/* Welcome Header - Enhanced with Arabic date & system status */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative rounded-2xl overflow-hidden"
-        style={{ background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 60%, #1e40af 100%)' }}
+        className="relative rounded-2xl overflow-hidden bg-primary"
       >
         {/* Decorative circles */}
         <div className="absolute -top-8 -left-8 w-32 h-32 rounded-full bg-white/5" />
@@ -485,7 +494,7 @@ export default function DashboardPage() {
           transition={{ delay: 0.3 }}
         >
           <Card className="border-0 shadow-sm h-full overflow-hidden dark:bg-gray-900/50 dark:border dark:border-gray-700">
-            <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #2563eb, #1d4ed8)' }} />
+            <div className="h-1.5 bg-primary" />
             <CardHeader className="pb-2">
               <CardTitle className="text-base font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
                 <Activity className="w-4 h-4 text-teal-600" />
@@ -577,7 +586,7 @@ export default function DashboardPage() {
           className="lg:col-span-2"
         >
           <Card className="border-0 shadow-sm h-full overflow-hidden dark:bg-gray-900/50 dark:border dark:border-gray-700">
-            <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #2563eb, #1d4ed8)' }} />
+            <div className="h-1.5 bg-primary" />
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <div>
@@ -667,7 +676,7 @@ export default function DashboardPage() {
         transition={{ delay: 0.5 }}
       >
         <Card className="border-0 shadow-sm overflow-hidden dark:bg-gray-900/50 dark:border dark:border-gray-700">
-          <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #2563eb, #1d4ed8)' }} />
+          <div className="h-1.5 bg-primary" />
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-bold text-gray-800 dark:text-gray-200">
               نسبة إكمال الدرجات
@@ -692,7 +701,7 @@ export default function DashboardPage() {
                       <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                         {subject.subjectName}
                       </span>
-                      <span className="text-xs font-semibold" style={{ color: '#2563eb' }}>
+                      <span className="text-xs font-semibold text-primary">
                         {subject.completionPercentage}%
                       </span>
                     </div>
@@ -725,7 +734,7 @@ export default function DashboardPage() {
           transition={{ delay: 0.7 }}
         >
           <Card className="border-0 shadow-sm h-full overflow-hidden dark:bg-gray-900/50 dark:border dark:border-gray-700">
-            <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #2563eb, #1d4ed8)' }} />
+            <div className="h-1.5 bg-primary" />
             <CardHeader className="pb-2">
               <CardTitle className="text-base font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
                 <TrendingUp className="w-4 h-4 text-teal-600" />
@@ -785,7 +794,7 @@ export default function DashboardPage() {
           transition={{ delay: 0.8 }}
         >
           <Card className="border-0 shadow-sm h-full overflow-hidden dark:bg-gray-900/50 dark:border dark:border-gray-700">
-            <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #2563eb, #1d4ed8)' }} />
+            <div className="h-1.5 bg-primary" />
             <CardHeader className="pb-2">
               <CardTitle className="text-base font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
                 <GraduationCap className="w-4 h-4 text-teal-600" />
@@ -844,7 +853,7 @@ export default function DashboardPage() {
         transition={{ delay: 0.9 }}
       >
         <Card className="border-0 shadow-sm overflow-hidden dark:bg-gray-900/50 dark:border dark:border-gray-700">
-          <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #2563eb, #1d4ed8)' }} />
+          <div className="h-1.5 bg-primary" />
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-teal-600" />
@@ -954,7 +963,7 @@ export default function DashboardPage() {
         transition={{ delay: 1.0 }}
       >
         <Card className="border-0 shadow-sm overflow-hidden dark:bg-gray-900/50 dark:border dark:border-gray-700">
-          <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #2563eb, #1d4ed8)' }} />
+          <div className="h-1.5 bg-primary" />
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
               <BarChart3 className="w-4 h-4 text-teal-600" />

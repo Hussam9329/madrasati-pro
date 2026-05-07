@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Search, Plus, Edit, Trash2, Phone, Mail, BookOpen, GraduationCap,
-  UserCheck, UserX, ArrowRightLeft, Users, StickyNote
+  UserCheck, UserX, ArrowRightLeft, Users, StickyNote,
+  Lightbulb,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -40,7 +41,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Checkbox } from '@/components/ui/checkbox'
-import { useToast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 
 // Types
 interface SubjectItem {
@@ -73,7 +74,6 @@ const STATUS_COLORS: Record<string, string> = {
 }
 
 export default function TeachersPage() {
-  const { toast } = useToast()
   const [teachers, setTeachers] = useState<Teacher[]>([])
   const [subjects, setSubjects] = useState<SubjectItem[]>([])
   const [schoolId, setSchoolId] = useState<string>('')
@@ -118,11 +118,11 @@ export default function TeachersPage() {
       const data = await res.json()
       setTeachers(data || [])
     } catch {
-      toast({ title: 'خطأ', description: 'فشل في جلب بيانات المدرسين', variant: 'destructive' })
+      toast.error('خطأ', { description: 'فشل في جلب بيانات المدرسين' })
     } finally {
       setLoading(false)
     }
-  }, [search, filterStatus, toast])
+  }, [search, filterStatus])
 
   const fetchSubjects = useCallback(async () => {
     try {
@@ -174,12 +174,12 @@ export default function TeachersPage() {
 
   const handleSave = async () => {
     if (!form.fullName) {
-      toast({ title: 'تنبيه', description: 'اسم المدرس مطلوب', variant: 'destructive' })
+      toast.error('تنبيه', { description: 'اسم المدرس مطلوب' })
       return
     }
 
     if (!schoolId && !editingTeacher) {
-      toast({ title: 'خطأ', description: 'لم يتم العثور على بيانات المدرسة', variant: 'destructive' })
+      toast.error('خطأ', { description: 'لم يتم العثور على بيانات المدرسة' })
       return
     }
 
@@ -203,7 +203,7 @@ export default function TeachersPage() {
           console.error('Update teacher error:', errorData)
           throw new Error()
         }
-        toast({ title: 'تم التحديث', description: 'تم تحديث بيانات المدرس بنجاح' })
+        toast.success('تم التحديث', { description: 'تم تحديث بيانات المدرس بنجاح' })
       } else {
         const res = await fetch('/api/teachers', {
           method: 'POST',
@@ -223,12 +223,12 @@ export default function TeachersPage() {
           console.error('Create teacher error:', errorData)
           throw new Error()
         }
-        toast({ title: 'تمت الإضافة', description: 'تم إضافة المدرس بنجاح' })
+        toast.success('تمت الإضافة', { description: 'تم إضافة المدرس بنجاح' })
       }
       setFormOpen(false)
       fetchTeachers()
     } catch {
-      toast({ title: 'خطأ', description: 'فشل في حفظ البيانات', variant: 'destructive' })
+      toast.error('خطأ', { description: 'فشل في حفظ البيانات' })
     } finally {
       setSaving(false)
     }
@@ -239,10 +239,10 @@ export default function TeachersPage() {
     try {
       const res = await fetch(`/api/teachers/${deleteId}`, { method: 'DELETE' })
       if (!res.ok) throw new Error()
-      toast({ title: 'تم الحذف', description: 'تم حذف المدرس بنجاح' })
+      toast.success('تم الحذف', { description: 'تم حذف المدرس بنجاح' })
       fetchTeachers()
     } catch {
-      toast({ title: 'خطأ', description: 'فشل في حذف المدرس', variant: 'destructive' })
+      toast.error('خطأ', { description: 'فشل في حذف المدرس' })
     } finally {
       setDeleteId(null)
     }
@@ -265,19 +265,27 @@ export default function TeachersPage() {
 
   return (
     <div className="space-y-6">
+      {/* Page Guidance Hint */}
+      <div className="hint-card p-3 flex items-start gap-3">
+        <Lightbulb className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
+        <div className="flex-1">
+          <p className="text-sm font-medium text-blue-800 dark:text-blue-300">إدارة المدرسين</p>
+          <p className="text-xs text-blue-600 dark:text-blue-400">أضف المدرسين وحدد المواد التي يدرسونها. يمكنك تعديل بيانات أي مدرس بالضغط على زر التعديل في بطاقته.</p>
+        </div>
+      </div>
+
       {/* Top Bar */}
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div
-              className="flex h-10 w-10 items-center justify-center rounded-lg"
-              style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}
+              className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary"
             >
               <GraduationCap className="h-5 w-5 text-white" />
             </div>
             <h1 className="text-2xl font-bold">إدارة المدرسين</h1>
           </div>
-          <Button onClick={openAddForm} className="gap-2" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
+          <Button onClick={openAddForm} className="gap-2 bg-primary">
             <Plus className="h-4 w-4" />
             إضافة مدرس
           </Button>
@@ -354,10 +362,14 @@ export default function TeachersPage() {
           ))}
         </div>
       ) : filteredTeachers.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-          <GraduationCap className="h-12 w-12 mb-4 opacity-30" />
-          <p className="text-lg font-medium">لا يوجد مدرسين</p>
-          <p className="text-sm">قم بإضافة مدرسين جدد للبدء</p>
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <GraduationCap className="h-16 w-16 mb-4 text-muted-foreground/20" />
+          <h3 className="text-lg font-semibold text-muted-foreground">لم يتم تسجيل أي مدرس بعد</h3>
+          <p className="text-sm text-muted-foreground mt-1 max-w-sm">أضف المدرسين وحدد المواد التي يدرسونها لبدء إدارة الجدول والحصص.</p>
+          <Button variant="outline" className="mt-4 gap-2" onClick={openAddForm}>
+            <Plus className="h-4 w-4" />
+            إضافة أول مدرس
+          </Button>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   FileText, Calendar, Clock, XCircle, GraduationCap, Award,
   TrendingUp, Printer, Download, ArrowRight, BarChart3, PieChart as PieChartIcon,
-  Users, AlertTriangle, CheckCircle, Filter, Search, FileSpreadsheet, Activity, Hash, ArrowUpRight, ArrowDownRight
+  Users, AlertTriangle, CheckCircle, Filter, Search, FileSpreadsheet, Activity, Hash, ArrowUpRight, ArrowDownRight, Lightbulb
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -26,7 +26,7 @@ import {
   PieChart, Pie, Cell, Tooltip, Legend, BarChart, Bar, XAxis, YAxis,
   CartesianGrid, ResponsiveContainer, ScatterChart, Scatter, ZAxis
 } from 'recharts'
-import { useToast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 import { exportToCSV } from '@/lib/export-utils'
 
 // Types
@@ -96,7 +96,6 @@ const statusColors: Record<string, string> = {
 }
 
 export default function ReportsPage() {
-  const { toast } = useToast()
   const [selectedReport, setSelectedReport] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [classes, setClasses] = useState<ClassData[]>([])
@@ -171,7 +170,7 @@ export default function ReportsPage() {
         }
       }
     } catch {
-      toast({ title: 'خطأ', description: 'حدث خطأ في جلب بيانات التقرير', variant: 'destructive' })
+      toast.error('خطأ', { description: 'حدث خطأ في جلب بيانات التقرير' })
     } finally {
       setLoading(false)
     }
@@ -301,7 +300,7 @@ export default function ReportsPage() {
 
   const handleExportPDF = () => {
     window.print()
-    toast({ title: 'تصدير PDF', description: 'استخدم خيار الطباعة وحفظ كـ PDF' })
+    toast.success('تصدير PDF', { description: 'استخدم خيار الطباعة وحفظ كـ PDF' })
   }
 
   const handleExportCSV = () => {
@@ -331,7 +330,7 @@ export default function ReportsPage() {
       }))
       exportToCSV(data, `تقرير-${selectedReport}-${reportDate}`)
     }
-    toast({ title: 'تم التصدير', description: 'تم تصدير التقرير كملف CSV' })
+    toast.success('تم التصدير', { description: 'تم تصدير التقرير كملف CSV' })
   }
 
   // Render report content based on type
@@ -349,7 +348,7 @@ export default function ReportsPage() {
           {/* Summary */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <Card className="border-emerald-200 dark:border-emerald-800 overflow-hidden">
-              <div className="h-1" style={{ background: 'linear-gradient(90deg, #10b981, #059669)' }} />
+              <div className="h-1 bg-primary" />
               <CardContent className="p-4 text-center">
                 <CheckCircle className="h-5 w-5 mx-auto text-emerald-600 mb-1" />
                 <p className="text-xl font-bold text-emerald-700">{stats.present}</p>
@@ -357,7 +356,7 @@ export default function ReportsPage() {
               </CardContent>
             </Card>
             <Card className="border-amber-200 dark:border-amber-800 overflow-hidden">
-              <div className="h-1" style={{ background: 'linear-gradient(90deg, #f59e0b, #d97706)' }} />
+              <div className="h-1 bg-primary" />
               <CardContent className="p-4 text-center">
                 <Clock className="h-5 w-5 mx-auto text-amber-600 mb-1" />
                 <p className="text-xl font-bold text-amber-700">{stats.late}</p>
@@ -365,7 +364,7 @@ export default function ReportsPage() {
               </CardContent>
             </Card>
             <Card className="border-red-200 dark:border-red-800 overflow-hidden">
-              <div className="h-1" style={{ background: 'linear-gradient(90deg, #ef4444, #dc2626)' }} />
+              <div className="h-1 bg-primary" />
               <CardContent className="p-4 text-center">
                 <XCircle className="h-5 w-5 mx-auto text-red-600 mb-1" />
                 <p className="text-xl font-bold text-red-700">{stats.absent}</p>
@@ -373,7 +372,7 @@ export default function ReportsPage() {
               </CardContent>
             </Card>
             <Card className="border-sky-200 dark:border-sky-800 overflow-hidden">
-              <div className="h-1" style={{ background: 'linear-gradient(90deg, #3b82f6, #2563eb)' }} />
+              <div className="h-1 bg-primary" />
               <CardContent className="p-4 text-center">
                 <Users className="h-5 w-5 mx-auto text-sky-600 mb-1" />
                 <p className="text-xl font-bold text-sky-700">{stats.excused}</p>
@@ -381,7 +380,7 @@ export default function ReportsPage() {
               </CardContent>
             </Card>
             <Card className="border-orange-200 dark:border-orange-800 overflow-hidden">
-              <div className="h-1" style={{ background: 'linear-gradient(90deg, #f97316, #ea580c)' }} />
+              <div className="h-1 bg-primary" />
               <CardContent className="p-4 text-center">
                 <p className="text-xl font-bold text-orange-700">{stats.earlyExit}</p>
                 <p className="text-xs text-muted-foreground">خروج مبكر</p>
@@ -392,7 +391,7 @@ export default function ReportsPage() {
           {/* Pie Chart */}
           {totalAttendance > 0 && (
             <Card className="overflow-hidden dark:bg-gray-900/50 dark:border-gray-700">
-              <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
+              <div className="h-1.5 bg-primary" />
               <CardHeader className="pb-2">
                 <CardTitle className="text-base">توزيع الحضور</CardTitle>
               </CardHeader>
@@ -439,12 +438,13 @@ export default function ReportsPage() {
 
           {/* Table */}
           <Card className="overflow-hidden dark:bg-gray-900/50 dark:border-gray-700">
-            <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
+            <div className="h-1.5 bg-primary" />
             <CardContent className="p-0">
               {attendanceRecords.length === 0 ? (
                 <div className="text-center py-12">
-                  <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-                  <p className="text-muted-foreground">لا توجد بيانات حضور لهذا التاريخ</p>
+                  <Calendar className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
+                  <p className="text-lg font-medium text-muted-foreground mb-1">لا توجد بيانات حضور لهذا التاريخ</p>
+                  <p className="text-sm text-muted-foreground">جرّب تغيير التاريخ أو الصف المحدد للحصول على نتائج</p>
                 </div>
               ) : (
                 <ScrollArea className="max-h-[400px]">
@@ -490,7 +490,7 @@ export default function ReportsPage() {
       return (
         <div className="space-y-6">
           <Card className="overflow-hidden">
-            <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #f59e0b, #d97706)' }} />
+            <div className="h-1.5 bg-primary" />
             <CardContent className="p-6 text-center">
               <Clock className="h-10 w-10 mx-auto text-amber-600 mb-2" />
               <p className="text-3xl font-bold text-amber-700">{lateRecords.length}</p>
@@ -498,12 +498,13 @@ export default function ReportsPage() {
             </CardContent>
           </Card>
           <Card className="overflow-hidden dark:bg-gray-900/50 dark:border-gray-700">
-            <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
+            <div className="h-1.5 bg-primary" />
             <CardContent className="p-0">
               {lateRecords.length === 0 ? (
                 <div className="text-center py-12">
                   <CheckCircle className="h-12 w-12 mx-auto text-emerald-500 mb-3" />
-                  <p className="text-muted-foreground">لا توجد حالات تأخير</p>
+                  <p className="text-lg font-medium text-emerald-700 dark:text-emerald-400 mb-1">لا توجد حالات تأخير</p>
+                  <p className="text-sm text-muted-foreground">جميع الطلاب حضروا في الوقت المحدد</p>
                 </div>
               ) : (
                 <ScrollArea className="max-h-[400px]">
@@ -547,7 +548,7 @@ export default function ReportsPage() {
       return (
         <div className="space-y-6">
           <Card className="overflow-hidden">
-            <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #ef4444, #dc2626)' }} />
+            <div className="h-1.5 bg-primary" />
             <CardContent className="p-6 text-center">
               <XCircle className="h-10 w-10 mx-auto text-red-600 mb-2" />
               <p className="text-3xl font-bold text-red-700">{absentRecords.length}</p>
@@ -555,12 +556,13 @@ export default function ReportsPage() {
             </CardContent>
           </Card>
           <Card className="overflow-hidden dark:bg-gray-900/50 dark:border-gray-700">
-            <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
+            <div className="h-1.5 bg-primary" />
             <CardContent className="p-0">
               {absentRecords.length === 0 ? (
                 <div className="text-center py-12">
                   <CheckCircle className="h-12 w-12 mx-auto text-emerald-500 mb-3" />
-                  <p className="text-muted-foreground">لا توجد حالات غياب</p>
+                  <p className="text-lg font-medium text-emerald-700 dark:text-emerald-400 mb-1">لا توجد حالات غياب</p>
+                  <p className="text-sm text-muted-foreground">جميع الطلاب حاضرون في السجل المحدد</p>
                 </div>
               ) : (
                 <ScrollArea className="max-h-[400px]">
@@ -620,7 +622,7 @@ export default function ReportsPage() {
           {/* Scatter Chart */}
           {scatterData.length > 0 && (
             <Card className="overflow-hidden dark:bg-gray-900/50 dark:border-gray-700">
-              <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
+              <div className="h-1.5 bg-primary" />
               <CardHeader className="pb-2">
                 <CardTitle className="text-base flex items-center gap-2">
                   <Activity className="h-4 w-4 text-teal-600" />
@@ -652,7 +654,7 @@ export default function ReportsPage() {
           {/* Histogram */}
           {histogramData.length > 0 && (
             <Card className="overflow-hidden dark:bg-gray-900/50 dark:border-gray-700">
-              <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
+              <div className="h-1.5 bg-primary" />
               <CardHeader className="pb-2">
                 <CardTitle className="text-base flex items-center gap-2">
                   <BarChart3 className="h-4 w-4 text-teal-600" />
@@ -704,8 +706,9 @@ export default function ReportsPage() {
 
           {scatterData.length === 0 && (
             <div className="text-center py-12">
-              <BarChart3 className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-              <p className="text-muted-foreground">لا توجد بيانات درجات متاحة</p>
+              <BarChart3 className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
+              <p className="text-lg font-medium text-muted-foreground mb-1">لا توجد بيانات درجات متاحة</p>
+              <p className="text-sm text-muted-foreground">أدخل درجات الطلاب أولاً أو غيّر الفلتر لعرض النتائج</p>
             </div>
           )}
         </div>
@@ -717,8 +720,9 @@ export default function ReportsPage() {
       if (!gradeStats) {
         return (
           <div className="text-center py-12">
-            <BarChart3 className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-            <p className="text-muted-foreground">لا توجد بيانات درجات متاحة</p>
+            <BarChart3 className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
+            <p className="text-lg font-medium text-muted-foreground mb-1">لا توجد بيانات درجات متاحة</p>
+            <p className="text-sm text-muted-foreground">أدخل درجات الطلاب أولاً أو غيّر الفلتر لعرض النتائج</p>
           </div>
         )
       }
@@ -729,7 +733,7 @@ export default function ReportsPage() {
           <div className="space-y-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <Card className="overflow-hidden">
-                <div className="h-1" style={{ background: 'linear-gradient(90deg, #10b981, #059669)' }} />
+                <div className="h-1 bg-primary" />
                 <CardContent className="p-4 text-center">
                   <TrendingUp className="h-5 w-5 mx-auto text-emerald-600 mb-1" />
                   <p className="text-xl font-bold text-emerald-700">{gradeStats.passRate}%</p>
@@ -737,14 +741,14 @@ export default function ReportsPage() {
                 </CardContent>
               </Card>
               <Card className="overflow-hidden">
-                <div className="h-1" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
+                <div className="h-1 bg-primary" />
                 <CardContent className="p-4 text-center">
                   <p className="text-xl font-bold">{gradeStats.average.toFixed(1)}</p>
                   <p className="text-xs text-muted-foreground">المعدل العام</p>
                 </CardContent>
               </Card>
               <Card className="overflow-hidden">
-                <div className="h-1" style={{ background: 'linear-gradient(90deg, #10b981, #059669)' }} />
+                <div className="h-1 bg-primary" />
                 <CardContent className="p-4 text-center">
                   <Award className="h-5 w-5 mx-auto text-emerald-600 mb-1" />
                   <p className="text-xl font-bold text-emerald-700">{gradeStats.highest}</p>
@@ -752,7 +756,7 @@ export default function ReportsPage() {
                 </CardContent>
               </Card>
               <Card className="overflow-hidden">
-                <div className="h-1" style={{ background: 'linear-gradient(90deg, #ef4444, #dc2626)' }} />
+                <div className="h-1 bg-primary" />
                 <CardContent className="p-4 text-center">
                   <AlertTriangle className="h-5 w-5 mx-auto text-red-600 mb-1" />
                   <p className="text-xl font-bold text-red-700">{gradeStats.lowest}</p>
@@ -764,7 +768,7 @@ export default function ReportsPage() {
             {/* Bar Chart */}
             {gradeStats.passRateBySubject.length > 0 && (
               <Card className="overflow-hidden dark:bg-gray-900/50 dark:border-gray-700">
-                <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
+                <div className="h-1.5 bg-primary" />
                 <CardHeader className="pb-2">
                   <CardTitle className="text-base">نسب النجاح حسب المادة</CardTitle>
                 </CardHeader>
@@ -809,7 +813,7 @@ export default function ReportsPage() {
         return (
           <div className="space-y-6">
             <Card className="overflow-hidden dark:bg-gray-900/50 dark:border-gray-700">
-              <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #eab308, #ca8a04)' }} />
+              <div className="h-1.5 bg-primary" />
               <CardHeader className="pb-2">
                 <CardTitle className="text-base flex items-center gap-2">
                   <Award className="h-5 w-5 text-yellow-600" />
@@ -819,7 +823,8 @@ export default function ReportsPage() {
               <CardContent>
                 {sortedGrades.length === 0 ? (
                   <div className="text-center py-8">
-                    <p className="text-muted-foreground">لا توجد بيانات</p>
+                    <p className="text-lg font-medium text-muted-foreground mb-1">لا توجد بيانات</p>
+                    <p className="text-sm text-muted-foreground">لم يتم تسجيل أي درجات بعد</p>
                   </div>
                 ) : (
                   <ScrollArea className="max-h-[400px]">
@@ -880,7 +885,7 @@ export default function ReportsPage() {
         return (
           <div className="space-y-6">
             <Card className="overflow-hidden">
-              <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #ef4444, #dc2626)' }} />
+              <div className="h-1.5 bg-primary" />
               <CardContent className="p-6 text-center">
                 <AlertTriangle className="h-10 w-10 mx-auto text-red-600 mb-2" />
                 <p className="text-3xl font-bold text-red-700">{failedGrades.length}</p>
@@ -888,12 +893,13 @@ export default function ReportsPage() {
               </CardContent>
             </Card>
             <Card className="overflow-hidden dark:bg-gray-900/50 dark:border-gray-700">
-              <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
+              <div className="h-1.5 bg-primary" />
               <CardContent className="p-0">
                 {failedGrades.length === 0 ? (
                   <div className="text-center py-12">
                     <CheckCircle className="h-12 w-12 mx-auto text-emerald-500 mb-3" />
-                    <p className="text-muted-foreground">لا يوجد طلاب راسبون</p>
+                    <p className="text-lg font-medium text-emerald-700 dark:text-emerald-400 mb-1">لا يوجد طلاب راسبون</p>
+                    <p className="text-sm text-muted-foreground">جميع الطلاب تجاوزوا درجة النجاح</p>
                   </div>
                 ) : (
                   <ScrollArea className="max-h-[400px]">
@@ -957,14 +963,14 @@ export default function ReportsPage() {
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Card className="overflow-hidden">
-              <div className="h-1" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
+              <div className="h-1 bg-primary" />
               <CardContent className="p-4 text-center">
                 <p className="text-xl font-bold">{gradeStats.average.toFixed(1)}</p>
                 <p className="text-xs text-muted-foreground">المعدل</p>
               </CardContent>
             </Card>
             <Card className="overflow-hidden">
-              <div className="h-1" style={{ background: 'linear-gradient(90deg, #10b981, #059669)' }} />
+              <div className="h-1 bg-primary" />
               <CardContent className="p-4 text-center">
                 <Award className="h-5 w-5 mx-auto text-emerald-600 mb-1" />
                 <p className="text-xl font-bold text-emerald-700">{gradeStats.highest}</p>
@@ -972,14 +978,14 @@ export default function ReportsPage() {
               </CardContent>
             </Card>
             <Card className="overflow-hidden">
-              <div className="h-1" style={{ background: 'linear-gradient(90deg, #ef4444, #dc2626)' }} />
+              <div className="h-1 bg-primary" />
               <CardContent className="p-4 text-center">
                 <p className="text-xl font-bold text-red-700">{gradeStats.lowest}</p>
                 <p className="text-xs text-muted-foreground">أدنى درجة</p>
               </CardContent>
             </Card>
             <Card className="overflow-hidden">
-              <div className="h-1" style={{ background: 'linear-gradient(90deg, #10b981, #059669)' }} />
+              <div className="h-1 bg-primary" />
               <CardContent className="p-4 text-center">
                 <p className="text-xl font-bold text-emerald-700">{gradeStats.passRate}%</p>
                 <p className="text-xs text-muted-foreground">نسبة النجاح</p>
@@ -990,7 +996,7 @@ export default function ReportsPage() {
           {/* Bar Chart */}
           {gradeStats.passRateBySubject.length > 0 && (
             <Card className="overflow-hidden dark:bg-gray-900/50 dark:border-gray-700">
-              <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
+              <div className="h-1.5 bg-primary" />
               <CardHeader className="pb-2">
                 <CardTitle className="text-base">متوسط الدرجات حسب المادة</CardTitle>
               </CardHeader>
@@ -1022,7 +1028,7 @@ export default function ReportsPage() {
 
           {/* Table */}
           <Card className="overflow-hidden dark:bg-gray-900/50 dark:border-gray-700">
-            <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
+            <div className="h-1.5 bg-primary" />
             <CardContent className="p-0">
               <ScrollArea className="max-h-[400px]">
                 <Table>
@@ -1087,7 +1093,7 @@ export default function ReportsPage() {
             { label: 'خروج مبكر', value: stats.earlyExit, color: 'text-orange-700', gradFrom: '#f97316', gradTo: '#ea580c' },
           ].map((item, i) => (
             <Card key={i} className="overflow-hidden">
-              <div className="h-1" style={{ background: `linear-gradient(90deg, ${item.gradFrom}, ${item.gradTo})` }} />
+              <div className="h-1 bg-primary" />
               <CardContent className="p-4 text-center">
                 <p className={`text-xl font-bold ${item.color}`}>{item.value}</p>
                 <p className="text-xs text-muted-foreground">{item.label}</p>
@@ -1098,7 +1104,7 @@ export default function ReportsPage() {
 
         {totalAttendance > 0 && (
           <Card className="overflow-hidden dark:bg-gray-900/50 dark:border-gray-700">
-            <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
+            <div className="h-1.5 bg-primary" />
             <CardHeader className="pb-2">
               <CardTitle className="text-base">توزيع الحضور الشهري</CardTitle>
             </CardHeader>
@@ -1130,7 +1136,7 @@ export default function ReportsPage() {
         )}
 
         <Card className="overflow-hidden dark:bg-gray-900/50 dark:border-gray-700">
-          <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
+          <div className="h-1.5 bg-primary" />
           <CardContent className="p-0">
             <ScrollArea className="max-h-[400px]">
               <Table>
@@ -1164,9 +1170,16 @@ export default function ReportsPage() {
 
   return (
     <div className="space-y-6" dir="rtl">
+      <div className="hint-card p-3 flex items-start gap-3">
+        <Lightbulb className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
+        <div className="flex-1">
+          <p className="text-sm font-medium text-blue-800 dark:text-blue-300">التقارير</p>
+          <p className="text-xs text-blue-600 dark:text-blue-400">اختر نوع التقرير لعرض البيانات بشكل تفصيلي. يمكنك طباعة التقارير أو تصديرها بصيغ مختلفة.</p>
+        </div>
+      </div>
       {/* Header with gradient icon */}
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-lg" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-lg bg-primary">
           <FileText className="h-5 w-5" />
         </div>
         <div>
@@ -1191,8 +1204,8 @@ export default function ReportsPage() {
                 onClick={() => setSelectedReport(type.id)}
               >
                 {/* Animated gradient border on hover */}
-                <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-[2px]" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)', WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)', WebkitMaskComposite: 'xor', maskComposite: 'exclude' }} />
-                <div className="h-1 w-0 group-hover:w-full transition-all duration-500" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
+                <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-[2px] bg-primary" style={{ WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)', WebkitMaskComposite: 'xor', maskComposite: 'exclude' }} />
+                <div className="h-1 w-0 group-hover:w-full transition-all duration-500 bg-primary" />
                 <CardContent className="p-4 space-y-3">
                   <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-sm ${type.color.split(' ').slice(0, 1).join(' ')}`}>
                     <type.icon className={`h-6 w-6 ${type.color.split(' ')[1]}`} />
@@ -1232,7 +1245,7 @@ export default function ReportsPage() {
               </div>
             </div>
             <div className="flex gap-2 no-print">
-              <Button size="sm" onClick={handlePrint} className="gap-1.5 text-white shadow-md" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
+              <Button size="sm" onClick={handlePrint} className="gap-1.5 text-white shadow-md bg-primary">
                 <Printer className="h-3.5 w-3.5" />
                 طباعة
               </Button>
@@ -1240,7 +1253,7 @@ export default function ReportsPage() {
                 <Download className="h-3.5 w-3.5" />
                 تصدير PDF
               </Button>
-              <Button size="sm" onClick={handleExportCSV} className="gap-1.5 text-white shadow-md" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
+              <Button size="sm" onClick={handleExportCSV} className="gap-1.5 text-white shadow-md bg-primary">
                 <FileSpreadsheet className="h-3.5 w-3.5" />
                 تصدير التقرير
               </Button>
@@ -1276,7 +1289,7 @@ export default function ReportsPage() {
 
           {/* Filters */}
           <Card className="no-print overflow-hidden dark:bg-gray-900/50 dark:border-gray-700">
-            <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #0d9488, #059669)' }} />
+            <div className="h-1.5 bg-primary" />
             <CardContent className="p-4">
               <div className="flex flex-wrap gap-4 items-end">
                 {(selectedReport.includes('attendance') || selectedReport === 'lateness' || selectedReport === 'absence') && (
@@ -1342,7 +1355,7 @@ export default function ReportsPage() {
                   onClick={generateReport}
                   disabled={loading}
                   className="gap-2 text-white shadow-md"
-                  style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}
+                 
                 >
                   {loading ? (
                     <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />

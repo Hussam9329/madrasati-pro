@@ -21,8 +21,8 @@ import {
   Moon,
   Search,
   Keyboard,
-  Printer,
   Layers,
+  Lightbulb,
 } from 'lucide-react';
 import { useAppStore, type PageKey } from '@/lib/store';
 import { Button } from '@/components/ui/button';
@@ -30,6 +30,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import { useTheme } from 'next-themes';
 import { motion, AnimatePresence } from 'framer-motion';
 import CommandPalette from '@/components/school/CommandPalette';
@@ -38,6 +39,21 @@ import KeyboardShortcutsDialog from '@/components/school/KeyboardShortcutsDialog
 interface AppLayoutProps {
   children: React.ReactNode;
 }
+
+// Page descriptions for breadcrumb context
+const pageDescriptions: Record<PageKey, string> = {
+  dashboard: 'نظرة عامة على أداء المدرسة والإحصائيات',
+  students: 'إدارة بيانات الطلاب والتسجيل',
+  teachers: 'إدارة بيانات الأساتذة والمدرسين',
+  subjects: 'إدارة المواد الدراسية والمناهج',
+  classes: 'إدارة الصفوف والشعب الدراسية',
+  attendance: 'تتبع حضور الطلاب بالرمز QR',
+  grades: 'إدارة الدرجات والنتائج الدراسية',
+  schedule: 'تنظيم جدول الحصص الأسبوعي',
+  reports: 'تقارير وإحصائيات شاملة',
+  users: 'إدارة المستخدمين والصلاحيات',
+  settings: 'إعدادات النظام والتخصيص',
+};
 
 // Navigation groups - مدرستي School System
 const navGroups: { label: string; items: { key: PageKey; label: string; icon: React.ElementType; badge?: string }[] }[] = [
@@ -89,6 +105,12 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const [mounted, setMounted] = useState(false);
   const [commandOpen, setCommandOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [hintDismissed, setHintDismissed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('hint-banner-dismissed') === 'true';
+    }
+    return false;
+  });
 
   // Load collapsed state from localStorage
   useEffect(() => {
@@ -165,6 +187,11 @@ export default function AppLayout({ children }: AppLayoutProps) {
     localStorage.setItem('sidebar-collapsed', String(next));
   };
 
+  const dismissHint = () => {
+    setHintDismissed(true);
+    localStorage.setItem('hint-banner-dismissed', 'true');
+  };
+
   const userName = auth.user?.name || 'مستخدم';
   const userRole = auth.user?.role || '';
   const userInitials = userName
@@ -190,29 +217,28 @@ export default function AppLayout({ children }: AppLayoutProps) {
     return date.toLocaleDateString('ar-IQ', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
   };
 
+  // Current page info
+  const currentPageLabel = flatNavItems.find((i) => i.key === activePage)?.label || 'لوحة التحكم';
+  const currentPageDescription = pageDescriptions[activePage] || '';
+
   // Sidebar navigation content
   const sidebarNav = (
     <div className="flex flex-col h-full">
       {/* Logo Section */}
       <div className="p-4 pb-3 relative overflow-hidden shrink-0">
-        <div className="absolute inset-0 bg-gradient-to-l from-blue-50/50 to-transparent dark:from-blue-900/10 dark:to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-l from-primary/5 to-transparent dark:from-primary/10 dark:to-transparent" />
         <div className="flex items-center gap-3 relative z-10">
-          <div
-            className="flex items-center justify-center w-11 h-11 rounded-xl shrink-0 shadow-lg"
-            style={{
-              background: 'linear-gradient(135deg, #2563eb, #1d4ed8)',
-            }}
-          >
-            <School className="w-6 h-6 text-white" />
+          <div className="flex items-center justify-center w-11 h-11 rounded-xl shrink-0 shadow-lg bg-primary">
+            <School className="w-6 h-6 text-primary-foreground" />
           </div>
           {!sidebarCollapsed && (
             <div className="flex flex-col min-w-0">
-              <span className="font-bold text-base leading-tight" style={{ color: '#2563eb' }}>
+              <span className="font-bold text-base leading-tight text-primary">
                 مدرستي
               </span>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span className="text-[11px] text-muted-foreground truncate">نظام إدارة المدرسة</span>
-                <Badge className="text-[8px] px-1 py-0 h-3.5 bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700 font-medium">
+                <Badge className="text-[8px] px-1 py-0 h-3.5 bg-primary/10 text-primary border-primary/20 dark:bg-primary/20 dark:text-primary-foreground dark:border-primary/30 font-medium">
                   2026-2027
                 </Badge>
               </div>
@@ -236,7 +262,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
         <div className="px-4 py-2.5 bg-muted/30 shrink-0">
           <div className="flex items-center justify-between">
             <span className="text-[11px] text-muted-foreground">{formatDate(currentTime)}</span>
-            <span className="text-xs font-semibold" style={{ color: '#2563eb' }}>
+            <span className="text-xs font-semibold text-primary">
               {formatTime(currentTime)}
             </span>
           </div>
@@ -245,7 +271,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
       {mounted && sidebarCollapsed && (
         <div className="px-2 py-2 text-center shrink-0">
-          <span className="text-[10px] font-semibold block" style={{ color: '#2563eb' }}>
+          <span className="text-[10px] font-semibold block text-primary">
             {formatTime(currentTime)}
           </span>
         </div>
@@ -273,65 +299,71 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 const isActive = activePage === item.key;
                 const Icon = item.icon;
                 return (
-                  <motion.button
-                    key={item.key}
-                    onClick={() => {
-                      setActivePage(item.key);
-                      setSidebarOpen(false);
-                    }}
-                    className={`
-                      w-full flex items-center gap-3 rounded-xl text-sm font-medium
-                      transition-all duration-200 cursor-pointer relative overflow-hidden group
-                      ${sidebarCollapsed ? 'px-2 py-2.5 justify-center' : 'px-3 py-2.5'}
-                      ${
-                        isActive
-                          ? 'bg-blue-600/10 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300'
-                          : 'text-gray-600 dark:text-gray-300 hover:bg-gradient-to-l hover:from-blue-500/5 hover:to-indigo-500/5 dark:hover:bg-blue-900/20 hover:text-blue-700 dark:hover:text-blue-400'
-                      }
-                    `}
-                    whileHover={{ x: isActive ? 0 : -2 }}
-                    whileTap={{ scale: 0.98 }}
-                    title={sidebarCollapsed ? item.label : undefined}
-                  >
-                    {isActive && (
-                      <motion.div
-                        layoutId="activeIndicator"
-                        className="absolute right-0 top-1/2 -translate-y-1/2 w-0.5 h-6 rounded-l-full"
-                        style={{ background: 'linear-gradient(to bottom, #2563eb, #1d4ed8)' }}
-                        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                      />
-                    )}
-                    <div
-                      className={`flex items-center justify-center w-8 h-8 rounded-lg shrink-0 transition-all duration-200 ${
-                        isActive
-                          ? 'bg-blue-600/20 dark:bg-blue-500/30'
-                          : 'bg-transparent group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30'
-                      }`}
-                    >
-                      <motion.div whileHover={{ scale: 1.02 }}>
-                        <Icon className="w-[18px] h-[18px]" />
-                      </motion.div>
-                    </div>
-                    {!sidebarCollapsed && (
-                      <>
-                        <span className="flex-1 text-right">{item.label}</span>
-                        {item.badge && (
-                          <Badge
-                            className={`text-[9px] px-1.5 py-0 h-4 ${
+                  <TooltipProvider key={item.key} delayDuration={300}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <motion.button
+                          onClick={() => {
+                            setActivePage(item.key);
+                            setSidebarOpen(false);
+                          }}
+                          className={`
+                            w-full flex items-center gap-3 rounded-xl text-sm font-medium
+                            transition-all duration-200 cursor-pointer relative overflow-hidden group
+                            ${sidebarCollapsed ? 'px-2 py-2.5 justify-center' : 'px-3 py-2.5'}
+                            ${
                               isActive
-                                ? 'bg-blue-600/15 text-blue-700 dark:bg-blue-500/25 dark:text-blue-300 border-blue-600/20 dark:border-blue-500/30'
-                                : 'bg-emerald-100 text-emerald-700 border-emerald-200'
+                                ? 'bg-primary/10 dark:bg-primary/20 text-primary dark:text-primary-foreground'
+                                : 'text-gray-600 dark:text-gray-300 hover:bg-primary/5 dark:hover:bg-primary/10 hover:text-primary dark:hover:text-primary-foreground'
+                            }
+                          `}
+                          whileHover={{ x: isActive ? 0 : -2 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          {isActive && (
+                            <motion.div
+                              layoutId="activeIndicator"
+                              className="absolute right-0 top-1/2 -translate-y-1/2 w-0.5 h-6 rounded-l-full bg-primary"
+                              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                            />
+                          )}
+                          <div
+                            className={`flex items-center justify-center w-8 h-8 rounded-lg shrink-0 transition-all duration-200 ${
+                              isActive
+                                ? 'bg-primary/20 dark:bg-primary/30'
+                                : 'bg-transparent group-hover:bg-primary/10 dark:group-hover:bg-primary/20'
                             }`}
                           >
-                            {item.badge}
-                          </Badge>
-                        )}
-                      </>
-                    )}
-                    {sidebarCollapsed && item.badge && (
-                      <span className="absolute top-1 left-1 w-2 h-2 bg-emerald-500 rounded-full" />
-                    )}
-                  </motion.button>
+                            <motion.div whileHover={{ scale: 1.02 }}>
+                              <Icon className="w-[18px] h-[18px]" />
+                            </motion.div>
+                          </div>
+                          {!sidebarCollapsed && (
+                            <>
+                              <span className="flex-1 text-right">{item.label}</span>
+                              {item.badge && (
+                                <Badge
+                                  className={`text-[9px] px-1.5 py-0 h-4 ${
+                                    isActive
+                                      ? 'bg-primary/15 text-primary dark:bg-primary/25 dark:text-primary-foreground border-primary/20 dark:border-primary/30'
+                                      : 'bg-emerald-100 text-emerald-700 border-emerald-200'
+                                  }`}
+                                >
+                                  {item.badge}
+                                </Badge>
+                              )}
+                            </>
+                          )}
+                          {sidebarCollapsed && item.badge && (
+                            <span className="absolute top-1 left-1 w-2 h-2 bg-emerald-500 rounded-full" />
+                          )}
+                        </motion.button>
+                      </TooltipTrigger>
+                      <TooltipContent side="left" sideOffset={8}>
+                        <p>{item.label}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 );
               })}
             </React.Fragment>
@@ -362,15 +394,13 @@ export default function AppLayout({ children }: AppLayoutProps) {
     </div>
   );
 
-  const sidebarWidth = sidebarCollapsed ? 'w-16' : 'w-[260px]';
-
   return (
     <div dir="rtl" className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100/50 dark:from-gray-950 dark:to-gray-900/50 relative">
       {/* Background dot pattern */}
       <div
         className="absolute inset-0 opacity-[0.03] dark:opacity-[0.02] pointer-events-none"
         style={{
-          backgroundImage: 'radial-gradient(circle, #2563eb 1px, transparent 1px)',
+          backgroundImage: 'radial-gradient(circle, hsl(var(--primary)) 1px, transparent 1px)',
           backgroundSize: '24px 24px',
         }}
       />
@@ -441,12 +471,19 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 <Menu className="w-5 h-5" />
               </Button>
 
-              {/* Page title */}
-              <div className="flex items-center gap-2">
-                <ChevronLeft className="h-4 w-4 text-muted-foreground hidden md:block" />
-                <h1 className="text-lg font-bold text-gray-800 dark:text-gray-200">
-                  {flatNavItems.find((i) => i.key === activePage)?.label || 'لوحة التحكم'}
-                </h1>
+              {/* Page title and description */}
+              <div className="flex flex-col">
+                <div className="flex items-center gap-2">
+                  <ChevronLeft className="h-4 w-4 text-muted-foreground hidden md:block" />
+                  <h1 className="text-lg font-bold text-gray-800 dark:text-gray-200">
+                    {currentPageLabel}
+                  </h1>
+                </div>
+                {currentPageDescription && (
+                  <p className="text-[11px] text-muted-foreground mt-0.5 hidden sm:block">
+                    {currentPageDescription}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -521,11 +558,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
                   </Badge>
                 </div>
                 <div className="relative">
-                  <Avatar
-                    className="w-9 h-9 ring-2 ring-white dark:ring-gray-700 shadow-md"
-                    style={{ background: 'linear-gradient(135deg, #2563eb, #1d4ed8)' }}
-                  >
-                    <AvatarFallback className="text-white text-sm font-bold bg-transparent">
+                  <Avatar className="w-9 h-9 ring-2 ring-white dark:ring-gray-700 shadow-md bg-primary">
+                    <AvatarFallback className="text-primary-foreground text-sm font-bold bg-transparent">
                       {userInitials}
                     </AvatarFallback>
                   </Avatar>
@@ -548,6 +582,44 @@ export default function AppLayout({ children }: AppLayoutProps) {
             </div>
           </div>
         </header>
+
+        {/* Hint Banner */}
+        <AnimatePresence>
+          {mounted && !hintDismissed && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3, ease: 'easeInOut' }}
+              className="overflow-hidden"
+            >
+              <div className="bg-primary/5 dark:bg-primary/10 border-b border-primary/10 dark:border-primary/20 px-4 md:px-6 py-2.5">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <Lightbulb className="w-4 h-4 text-primary shrink-0" />
+                    <p className="text-xs text-muted-foreground">
+                      <span className="font-medium text-primary">تلميح:</span>{' '}
+                      استخدم{' '}
+                      <kbd className="bg-muted border border-border rounded px-1 py-0 text-[10px] font-mono">Ctrl+K</kbd>{' '}
+                      للبحث السريع،{' '}
+                      <kbd className="bg-muted border border-border rounded px-1 py-0 text-[10px] font-mono">Ctrl+/</kbd>{' '}
+                      لاختصارات لوحة المفاتيح
+                    </p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 shrink-0 text-muted-foreground hover:text-foreground"
+                    onClick={dismissHint}
+                    aria-label="إغلاق التلميح"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Main Content */}
         <main className="flex-1 p-4 md:p-6 lg:p-8 relative z-10">

@@ -6,7 +6,8 @@ import QRCode from 'qrcode'
 import {
   Search, Plus, Download, Eye, Edit, Trash2, Printer,
   ChevronLeft, ChevronRight, User, X, Users, ArrowRightLeft, CheckCircle2,
-  Camera, Phone, MapPin, GraduationCap, UserCircle
+  Camera, Phone, MapPin, GraduationCap, UserCircle,
+  Lightbulb,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -48,9 +49,10 @@ import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
-import { useToast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 import { exportToCSV } from '@/lib/export-utils'
 import { useAppStore } from '@/lib/store'
 
@@ -129,7 +131,6 @@ const ATTENDANCE_COLORS: Record<string, string> = {
 }
 
 export default function StudentsPage() {
-  const { toast } = useToast()
   const { setSelectedStudentId, setActivePage } = useAppStore()
   const [students, setStudents] = useState<Student[]>([])
   const [classes, setClasses] = useState<ClassItem[]>([])
@@ -190,11 +191,11 @@ export default function StudentsPage() {
       setTotal(data.total || 0)
       setTotalPages(data.totalPages || 1)
     } catch {
-      toast({ title: 'خطأ', description: 'فشل في جلب بيانات الطلاب', variant: 'destructive' })
+      toast.error('خطأ', { description: 'فشل في جلب بيانات الطلاب' })
     } finally {
       setLoading(false)
     }
-  }, [page, search, filterClass, filterStatus, toast])
+  }, [page, search, filterClass, filterStatus])
 
   const fetchClasses = useCallback(async () => {
     try {
@@ -225,7 +226,7 @@ export default function StudentsPage() {
         setQrCodeUrl(url)
       }
     } catch {
-      toast({ title: 'خطأ', description: 'فشل في جلب بيانات الطالب', variant: 'destructive' })
+      toast.error('خطأ', { description: 'فشل في جلب بيانات الطالب' })
     }
   }
 
@@ -272,7 +273,7 @@ export default function StudentsPage() {
 
   const handleSave = async () => {
     if (!form.fullName || !form.classId || !form.sectionId) {
-      toast({ title: 'تنبيه', description: 'الاسم والصف والشعبة مطلوبون', variant: 'destructive' })
+      toast.error('تنبيه', { description: 'الاسم والصف والشعبة مطلوبون' })
       return
     }
 
@@ -289,7 +290,7 @@ export default function StudentsPage() {
           body: JSON.stringify(form),
         })
         if (!res.ok) throw new Error()
-        toast({ title: 'تم التحديث', description: 'تم تحديث بيانات الطالب بنجاح' })
+        toast.success('تم التحديث', { description: 'تم تحديث بيانات الطالب بنجاح' })
       } else {
         const res = await fetch('/api/students', {
           method: 'POST',
@@ -297,12 +298,12 @@ export default function StudentsPage() {
           body: JSON.stringify({ ...form, schoolId }),
         })
         if (!res.ok) throw new Error()
-        toast({ title: 'تمت الإضافة', description: 'تم إضافة الطالب بنجاح' })
+        toast.success('تمت الإضافة', { description: 'تم إضافة الطالب بنجاح' })
       }
       setFormOpen(false)
       fetchStudents()
     } catch {
-      toast({ title: 'خطأ', description: 'فشل في حفظ البيانات', variant: 'destructive' })
+      toast.error('خطأ', { description: 'فشل في حفظ البيانات' })
     } finally {
       setSaving(false)
     }
@@ -316,10 +317,10 @@ export default function StudentsPage() {
         headers: { Authorization: 'Bearer dummy-token' },
       })
       if (!res.ok) throw new Error()
-      toast({ title: 'تم الحذف', description: 'تم حذف الطالب بنجاح' })
+      toast.success('تم الحذف', { description: 'تم حذف الطالب بنجاح' })
       fetchStudents()
     } catch {
-      toast({ title: 'خطأ', description: 'فشل في حذف الطالب', variant: 'destructive' })
+      toast.error('خطأ', { description: 'فشل في حذف الطالب' })
     } finally {
       setDeleteId(null)
     }
@@ -352,7 +353,7 @@ export default function StudentsPage() {
       }
       img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${cardEl.offsetWidth}" height="${cardEl.offsetHeight}"><foreignObject width="100%" height="100%">${data}</foreignObject></svg>`)
     } catch {
-      toast({ title: 'خطأ', description: 'فشل في تحميل البطاقة كصورة', variant: 'destructive' })
+      toast.error('خطأ', { description: 'فشل في تحميل البطاقة كصورة' })
     }
   }
 
@@ -370,9 +371,9 @@ export default function StudentsPage() {
         'الحالة': s.status,
       }))
       exportToCSV(csvData, 'الطلاب')
-      toast({ title: 'تم التصدير', description: 'تم تصدير بيانات الطلاب بنجاح' })
+      toast.success('تم التصدير', { description: 'تم تصدير بيانات الطلاب بنجاح' })
     } catch {
-      toast({ title: 'خطأ', description: 'فشل في تصدير البيانات', variant: 'destructive' })
+      toast.error('خطأ', { description: 'فشل في تصدير البيانات' })
     }
   }
 
@@ -382,11 +383,20 @@ export default function StudentsPage() {
 
   return (
     <div className="space-y-6">
+      {/* Page Guidance Hint */}
+      <div className="hint-card p-3 flex items-start gap-3">
+        <Lightbulb className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
+        <div className="flex-1">
+          <p className="text-sm font-medium text-blue-800 dark:text-blue-300">إدارة الطلاب</p>
+          <p className="text-xs text-blue-600 dark:text-blue-400">يمكنك البحث عن طالب بالاسم أو الرقم، وتصفية القائمة حسب الصف والحالة. اضغط على صف الطالب لعرض ملفه الكامل.</p>
+        </div>
+      </div>
+
       {/* Top Bar */}
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg shadow-lg" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg shadow-lg bg-primary">
               <Users className="h-5 w-5 text-white" />
             </div>
             <div>
@@ -395,7 +405,7 @@ export default function StudentsPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button onClick={openAddForm} className="gap-2" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
+            <Button onClick={openAddForm} className="gap-2 bg-primary">
               <Plus className="h-4 w-4" />
               إضافة طالب
             </Button>
@@ -474,10 +484,14 @@ export default function StudentsPage() {
               ))}
             </div>
           ) : students.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-              <Users className="h-12 w-12 mb-4 opacity-30" />
-              <p className="text-lg font-medium">لا يوجد طلاب</p>
-              <p className="text-sm">قم بإضافة طلاب جدد للبدء</p>
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <Users className="h-16 w-16 mb-4 text-muted-foreground/20" />
+              <h3 className="text-lg font-semibold text-muted-foreground">لم يتم تسجيل أي طالب بعد</h3>
+              <p className="text-sm text-muted-foreground mt-1 max-w-sm">ابدأ بإضافة الطلاب لإدارة بياناتهم وحضورهم ودرجاتهم. يمكنك أيضاً تصدير واستيراد البيانات.</p>
+              <Button variant="outline" className="mt-4 gap-2" onClick={openAddForm}>
+                <Plus className="h-4 w-4" />
+                إضافة أول طالب
+              </Button>
             </div>
           ) : (
             <>
@@ -543,21 +557,46 @@ export default function StudentsPage() {
                           </TableCell>
                           <TableCell className="text-center">
                             <div className="flex items-center justify-center gap-1" onClick={(e) => e.stopPropagation()}>
-                              <Button size="icon" variant="ghost" className="h-8 w-8 text-teal-600 dark:text-teal-400" onClick={() => navigateToProfile(student.id)} title="عرض الملف">
-                                <UserCircle className="h-4 w-4" />
-                              </Button>
-                              <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openProfile(student.id)}>
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEditForm(student)}>
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => setDeleteId(student.id)}>
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                              <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openProfile(student.id)}>
-                                <Printer className="h-4 w-4" />
-                              </Button>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button size="icon" variant="ghost" className="h-8 w-8 text-teal-600 dark:text-teal-400" onClick={() => navigateToProfile(student.id)}>
+                                    <UserCircle className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>عرض الملف</TooltipContent>
+                              </Tooltip>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openProfile(student.id)}>
+                                    <Eye className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>عرض التفاصيل</TooltipContent>
+                              </Tooltip>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEditForm(student)}>
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>تعديل</TooltipContent>
+                              </Tooltip>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => setDeleteId(student.id)}>
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>حذف</TooltipContent>
+                              </Tooltip>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openProfile(student.id)}>
+                                    <Printer className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>طباعة البطاقة</TooltipContent>
+                              </Tooltip>
                             </div>
                           </TableCell>
                         </motion.tr>
@@ -734,7 +773,7 @@ export default function StudentsPage() {
           </div>
           <div className="flex justify-end gap-2 pt-4 border-t">
             <Button variant="outline" onClick={() => setFormOpen(false)}>إلغاء</Button>
-            <Button onClick={handleSave} disabled={saving} style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
+            <Button onClick={handleSave} disabled={saving} className="bg-primary">
               {saving ? 'جاري الحفظ...' : editingStudent ? 'تحديث' : 'إضافة'}
             </Button>
           </div>
@@ -895,8 +934,7 @@ export default function StudentsPage() {
                     >
                       {/* Top Section: Teal gradient header */}
                       <div
-                        className="p-4 text-center relative overflow-hidden"
-                        style={{ background: 'linear-gradient(135deg, #0d9488 0%, #059669 60%, #047857 100%)' }}
+                        className="p-4 text-center relative overflow-hidden bg-primary"
                       >
                         <div className="absolute -top-4 -right-4 w-20 h-20 rounded-full bg-white/10" />
                         <div className="absolute -bottom-3 -left-3 w-16 h-16 rounded-full bg-white/10" />
@@ -943,7 +981,7 @@ export default function StudentsPage() {
                             </div>
                             <div>
                               <p className="text-[10px] text-muted-foreground">الرقم المدرسي</p>
-                              <p className="text-xs font-mono font-bold" style={{ color: '#0d9488' }}>{selectedStudent.studentNumber}</p>
+                              <p className="text-xs font-mono font-bold text-primary">{selectedStudent.studentNumber}</p>
                             </div>
                           </div>
                         </div>
@@ -972,7 +1010,7 @@ export default function StudentsPage() {
 
                   {/* Action Buttons */}
                   <div className="flex items-center gap-3 no-print">
-                    <Button onClick={printCard} className="gap-2" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
+                    <Button onClick={printCard} className="gap-2 bg-primary">
                       <Printer className="h-4 w-4" />
                       طباعة البطاقة
                     </Button>
@@ -1132,7 +1170,7 @@ export default function StudentsPage() {
               <Button
                 onClick={() => setTransferConfirm(true)}
                 disabled={!transferForm.studentId || !transferForm.newClassId || !transferForm.newSectionId}
-                style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}
+                className="bg-primary"
               >
                 متابعة
               </Button>
@@ -1147,17 +1185,17 @@ export default function StudentsPage() {
                       body: JSON.stringify(transferForm),
                     })
                     if (!res.ok) throw new Error()
-                    toast({ title: 'تم النقل', description: 'تم نقل الطالب بنجاح' })
+                    toast.success('تم النقل', { description: 'تم نقل الطالب بنجاح' })
                     setTransferOpen(false)
                     fetchStudents()
                   } catch {
-                    toast({ title: 'خطأ', description: 'فشل في نقل الطالب', variant: 'destructive' })
+                    toast.error('خطأ', { description: 'فشل في نقل الطالب' })
                   } finally {
                     setTransferSaving(false)
                   }
                 }}
                 disabled={transferSaving}
-                style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}
+                className="bg-primary"
               >
                 {transferSaving ? 'جاري النقل...' : 'تأكيد النقل'}
               </Button>

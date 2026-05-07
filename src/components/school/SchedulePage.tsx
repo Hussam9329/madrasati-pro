@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Calendar, Clock, BookOpen, Users, ChevronLeft, Printer,
-  Plus, Trash2, AlertTriangle, CheckCircle, GraduationCap, User, Layers
+  Plus, Trash2, AlertTriangle, CheckCircle, GraduationCap, User, Layers, Lightbulb
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -66,7 +66,6 @@ const SUBJECT_COLORS: Record<string, { bg: string; text: string; border: string 
 const DEFAULT_COLOR = { bg: 'bg-blue-50 dark:bg-blue-900/30', text: 'text-blue-700 dark:text-blue-300', border: 'border-blue-200 dark:border-blue-700' };
 
 export default function SchedulePage() {
-  const { toast } = useToast();
   const [viewMode, setViewMode] = useState<'class' | 'teacher'>('class');
   const [slots, setSlots] = useState<ScheduleSlot[]>([]);
   const [classes, setClasses] = useState<ClassItem[]>([]);
@@ -158,17 +157,13 @@ export default function SchedulePage() {
       const data = await res.json();
       if (!res.ok) {
         if (data.conflictType) {
-          toast({
-            title: 'تضارب في الجدول!',
-            description: data.error,
-            variant: 'destructive',
-          });
+          toast.error('تضارب في الجدول!', { description: data.error });
         } else {
-          toast({ title: 'خطأ', description: data.error, variant: 'destructive' });
+          toast.error('خطأ', { description: data.error });
         }
         return;
       }
-      toast({ title: 'تمت الإضافة', description: 'تمت إضافة الحصة بنجاح' });
+      toast.success('تمت الإضافة', { description: 'تمت إضافة الحصة بنجاح' });
       setAddDialogOpen(false);
       setNewSlot({ day: 'الأحد', period: 1, subjectId: '', teacherId: '', classId: '', room: '' });
       // Refresh schedule
@@ -178,7 +173,7 @@ export default function SchedulePage() {
       const refreshRes = await fetch(`/api/schedule?${params}`);
       if (refreshRes.ok) setSlots(await refreshRes.json());
     } catch {
-      toast({ title: 'خطأ', description: 'حدث خطأ في إضافة الحصة', variant: 'destructive' });
+      toast.error('خطأ', { description: 'حدث خطأ في إضافة الحصة' });
     }
   };
 
@@ -188,13 +183,13 @@ export default function SchedulePage() {
     try {
       const res = await fetch(`/api/schedule?id=${deleteSlotId}`, { method: 'DELETE' });
       if (res.ok) {
-        toast({ title: 'تم الحذف', description: 'تم حذف الحصة بنجاح' });
+        toast.success('تم الحذف', { description: 'تم حذف الحصة بنجاح' });
         setSlots(prev => prev.filter(s => s.id !== deleteSlotId));
       } else {
-        toast({ title: 'خطأ', description: 'فشل في حذف الحصة', variant: 'destructive' });
+        toast.error('خطأ', { description: 'فشل في حذف الحصة' });
       }
     } catch {
-      toast({ title: 'خطأ', description: 'حدث خطأ في حذف الحصة', variant: 'destructive' });
+      toast.error('خطأ', { description: 'حدث خطأ في حذف الحصة' });
     } finally {
       setDeleteSlotId(null);
     }
@@ -209,14 +204,20 @@ export default function SchedulePage() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
     >
+      <div className="hint-card p-3 flex items-start gap-3">
+        <Lightbulb className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
+        <div className="flex-1">
+          <p className="text-sm font-medium text-blue-800 dark:text-blue-300">جدول الحصص</p>
+          <p className="text-xs text-blue-600 dark:text-blue-400">أنشئ جدول الحصص لكل صف. النظام يكتشف التضاربات تلقائياً بين الحصص والمدرسين والقاعات.</p>
+        </div>
+      </div>
       {/* Header */}
       <motion.div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div
-            className="flex items-center justify-center w-11 h-11 rounded-xl shadow-lg"
-            style={{ background: 'linear-gradient(135deg, #2563eb, #1d4ed8)' }}
+            className="flex items-center justify-center w-11 h-11 rounded-xl shadow-lg bg-primary text-white"
           >
-            <Calendar className="h-5 w-5 text-white" />
+            <Calendar className="h-5 w-5" />
           </div>
           <div>
             <h1 className="text-2xl font-bold dark:text-gray-200">جدول الحصص</h1>
@@ -228,8 +229,7 @@ export default function SchedulePage() {
           <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
             <DialogTrigger asChild>
               <Button
-                className="gap-2"
-                style={{ background: 'linear-gradient(135deg, #2563eb, #1d4ed8)' }}
+                className="gap-2 bg-primary text-white"
               >
                 <Plus className="h-4 w-4" />
                 إضافة حصة
@@ -238,7 +238,7 @@ export default function SchedulePage() {
             <DialogContent className="max-w-md" dir="rtl">
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
-                  <Plus className="h-5 w-5" style={{ color: '#2563eb' }} />
+                  <Plus className="h-5 w-5 text-primary" />
                   إضافة حصة جديدة
                 </DialogTitle>
               </DialogHeader>
@@ -300,8 +300,7 @@ export default function SchedulePage() {
                 </div>
                 <Button
                   onClick={handleAddSlot}
-                  className="w-full"
-                  style={{ background: 'linear-gradient(135deg, #2563eb, #1d4ed8)' }}
+                  className="w-full bg-primary text-white"
                   disabled={!newSlot.subjectId || !newSlot.teacherId || !newSlot.classId}
                 >
                   إضافة الحصة
@@ -324,7 +323,7 @@ export default function SchedulePage() {
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <Card className="border-border/50 dark:bg-gray-900/50 dark:border-gray-700 overflow-hidden relative">
-          <div className="absolute top-0 right-0 left-0 h-1" style={{ background: 'linear-gradient(90deg, #2563eb, #3b82f6)' }} />
+          <div className="absolute top-0 right-0 left-0 h-1 bg-primary" />
           <CardContent className="p-4 flex items-center gap-3">
             <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-blue-50 dark:bg-blue-900/40">
               <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-400" />
@@ -336,7 +335,7 @@ export default function SchedulePage() {
           </CardContent>
         </Card>
         <Card className="border-border/50 dark:bg-gray-900/50 dark:border-gray-700 overflow-hidden relative">
-          <div className="absolute top-0 right-0 left-0 h-1" style={{ background: 'linear-gradient(90deg, #1d4ed8, #2563eb)' }} />
+          <div className="absolute top-0 right-0 left-0 h-1 bg-primary" />
           <CardContent className="p-4 flex items-center gap-3">
             <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-indigo-50 dark:bg-indigo-900/40">
               <Clock className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
@@ -348,7 +347,7 @@ export default function SchedulePage() {
           </CardContent>
         </Card>
         <Card className="border-border/50 dark:bg-gray-900/50 dark:border-gray-700 overflow-hidden relative">
-          <div className="absolute top-0 right-0 left-0 h-1" style={{ background: 'linear-gradient(90deg, #2563eb, #3b82f6)' }} />
+          <div className="absolute top-0 right-0 left-0 h-1 bg-primary" />
           <CardContent className="p-4 flex items-center gap-3">
             <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-sky-50 dark:bg-sky-900/40">
               <BookOpen className="h-4 w-4 text-sky-600 dark:text-sky-400" />
@@ -360,7 +359,7 @@ export default function SchedulePage() {
           </CardContent>
         </Card>
         <Card className="border-border/50 dark:bg-gray-900/50 dark:border-gray-700 overflow-hidden relative">
-          <div className="absolute top-0 right-0 left-0 h-1" style={{ background: 'linear-gradient(90deg, #1d4ed8, #2563eb)' }} />
+          <div className="absolute top-0 right-0 left-0 h-1 bg-primary" />
           <CardContent className="p-4 flex items-center gap-3">
             <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-amber-50 dark:bg-amber-900/40">
               <Users className="h-4 w-4 text-amber-600 dark:text-amber-400" />
@@ -411,14 +410,14 @@ export default function SchedulePage() {
 
       {/* Timetable Grid */}
       <Card className="dark:bg-gray-900/50 dark:border-gray-700 overflow-hidden relative">
-        <div className="absolute top-0 right-0 left-0 h-1" style={{ background: 'linear-gradient(90deg, #2563eb, #1d4ed8)' }} />
+        <div className="absolute top-0 right-0 left-0 h-1 bg-primary" />
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2 dark:text-gray-200">
               {viewMode === 'class' ? (
-                <><GraduationCap className="h-4 w-4" style={{ color: '#2563eb' }} />جدول حصص: {selectedClassName}</>
+                <><GraduationCap className="h-4 w-4 text-primary" />جدول حصص: {selectedClassName}</>
               ) : (
-                <><User className="h-4 w-4" style={{ color: '#2563eb' }} />جدول الأستاذ: {selectedTeacherName}</>
+                <><User className="h-4 w-4 text-primary" />جدول الأستاذ: {selectedTeacherName}</>
               )}
             </CardTitle>
             <Badge variant="outline" className="text-xs dark:border-gray-600">العام الدراسي 2026-2027</Badge>
@@ -440,7 +439,7 @@ export default function SchedulePage() {
                   <TableRow key={period.num} className="border-b hover:bg-muted/20 dark:hover:bg-gray-800/30 transition-colors">
                     <TableCell className="text-center bg-muted/10 dark:bg-gray-800/30">
                       <div className="flex flex-col items-center gap-0.5">
-                        <span className="font-bold text-sm" style={{ color: '#2563eb' }}>الحصة {period.num}</span>
+                        <span className="font-bold text-sm text-primary">الحصة {period.num}</span>
                         <span className="text-[10px] text-muted-foreground flex items-center gap-1">
                           <Clock className="h-3 w-3" />{period.time}
                         </span>
@@ -505,11 +504,10 @@ export default function SchedulePage() {
           <CardContent className="text-center py-12">
             <Calendar className="h-16 w-16 mx-auto text-muted-foreground/30 mb-4" />
             <h3 className="text-lg font-semibold text-muted-foreground mb-2">الجدول فارغ</h3>
-            <p className="text-sm text-muted-foreground mb-4">ابدأ بإضافة الحصص لبناء جدول المدرسة</p>
+            <p className="text-sm text-muted-foreground mb-4">لم يتم إضافة أي حصص بعد. ابدأ ببناء جدول الحصص للمدرسة.</p>
             <Button
               onClick={() => setAddDialogOpen(true)}
-              className="gap-2"
-              style={{ background: 'linear-gradient(135deg, #2563eb, #1d4ed8)' }}
+              className="gap-2 bg-primary text-white"
             >
               <Plus className="h-4 w-4" />
               إضافة حصة أولى
