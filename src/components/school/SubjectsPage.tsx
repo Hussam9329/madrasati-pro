@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Plus, Edit, Trash2, BookOpen, Hash, Award, Target, Users, Flame,
-  Lightbulb,
+  Lightbulb, CheckCircle,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -103,6 +103,7 @@ export default function SubjectsPage() {
   const [editingSubject, setEditingSubject] = useState<Subject | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [formStep, setFormStep] = useState(0)
 
   // Form state
   const [form, setForm] = useState({
@@ -171,6 +172,7 @@ export default function SubjectsPage() {
       selectedTeachers: [],
       selectedClasses: [],
     })
+    setFormStep(0)
     setFormOpen(true)
   }
 
@@ -185,7 +187,23 @@ export default function SubjectsPage() {
       selectedTeachers: subject.teachers.map(t => t.teacherId),
       selectedClasses: subject.classes.map(c => c.classId),
     })
+    setFormStep(0)
     setFormOpen(true)
+  }
+
+  const validateSubjectStep = (step: number): boolean => {
+    if (step === 0) {
+      if (!form.name.trim()) {
+        toast.error('تنبيه', { description: 'يرجى إدخال اسم المادة' })
+        return false
+      }
+      if (!form.code.trim()) {
+        toast.error('تنبيه', { description: 'يرجى إدخال رمز المادة' })
+        return false
+      }
+      return true
+    }
+    return true
   }
 
   const handleSave = async () => {
@@ -476,138 +494,212 @@ export default function SubjectsPage() {
         </div>
       )}
 
-      {/* Add/Edit Subject Dialog */}
+      {/* Add/Edit Subject Dialog - 3 Step Guided Form */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingSubject ? 'تعديل المادة' : 'إضافة مادة جديدة'}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div>
-              <Label>اسم المادة *</Label>
-              <Input
-                id="subjectName"
-                name="subjectName"
-                autoComplete="off"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="أدخل اسم المادة"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>رمز المادة *</Label>
-                <Input
-                  id="subjectCode"
-                  name="subjectCode"
-                  autoComplete="off"
-                  value={form.code}
-                  onChange={(e) => setForm({ ...form, code: e.target.value })}
-                  placeholder="مثال: MAT"
-                  dir="ltr"
-                />
+          
+          {/* Step Indicators */}
+          <div className="flex items-center gap-2 py-2">
+            {[
+              { num: 1, label: 'المعلومات الأساسية' },
+              { num: 2, label: 'الدرجات' },
+              { num: 3, label: 'الربط' },
+            ].map((step, idx) => (
+              <div key={step.num} className="flex items-center gap-2 flex-1">
+                <div className={cn(
+                  "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 transition-colors",
+                  formStep > idx ? "bg-emerald-500 text-white" :
+                  formStep === idx ? "bg-primary text-white" :
+                  "bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
+                )}>
+                  {formStep > idx ? <CheckCircle className="h-4 w-4" /> : step.num}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className={cn("text-xs font-medium truncate", formStep === idx ? "text-primary" : "text-muted-foreground")}>{step.label}</p>
+                  {idx < 2 && (
+                    <div className={cn("h-1 rounded mt-1", formStep > idx ? "bg-emerald-500" : "bg-gray-200 dark:bg-gray-700")} />
+                  )}
+                </div>
               </div>
-              <div>
-                <Label>النوع</Label>
-                <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: v })}>
-                  <SelectTrigger id="subjectType"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="أساسية">أساسية</SelectItem>
-                    <SelectItem value="اختيارية">اختيارية</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>الدرجة الكاملة</Label>
-                <Input
-                  id="maxScore"
-                  name="maxScore"
-                  autoComplete="off"
-                  type="number"
-                  value={form.maxScore}
-                  onChange={(e) => setForm({ ...form, maxScore: e.target.value })}
-                  placeholder="100"
-                />
-              </div>
-              <div>
-                <Label>درجة النجاح</Label>
-                <Input
-                  id="passScore"
-                  name="passScore"
-                  autoComplete="off"
-                  type="number"
-                  value={form.passScore}
-                  onChange={(e) => setForm({ ...form, passScore: e.target.value })}
-                  placeholder="50"
-                />
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Teachers Multi-select */}
-            <div>
-              <Label className="mb-3 block">المدرسون</Label>
-              <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto p-1">
-                {teachers.map(teacher => (
-                  <label
-                    key={teacher.id}
-                    className={cn(
-                      'flex items-center gap-2 rounded-lg border p-3 cursor-pointer transition-colors',
-                      form.selectedTeachers.includes(teacher.id)
-                        ? 'border-primary bg-primary/5'
-                        : 'border-border hover:bg-muted/50'
-                    )}
-                  >
-                    <Checkbox
-                      checked={form.selectedTeachers.includes(teacher.id)}
-                      onCheckedChange={() => toggleTeacher(teacher.id)}
-                    />
-                    <span className="text-sm truncate">{teacher.fullName}</span>
-                  </label>
-                ))}
-              </div>
-              {teachers.length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-4">لا يوجد مدرسين مسجلين</p>
-              )}
-            </div>
-
-            <Separator />
-
-            {/* Classes Multi-select */}
-            <div>
-              <Label className="mb-3 block">الصفوف</Label>
-              <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto p-1">
-                {classes.map(cls => (
-                  <label
-                    key={cls.id}
-                    className={cn(
-                      'flex items-center gap-2 rounded-lg border p-3 cursor-pointer transition-colors',
-                      form.selectedClasses.includes(cls.id)
-                        ? 'border-primary bg-primary/5'
-                        : 'border-border hover:bg-muted/50'
-                    )}
-                  >
-                    <Checkbox
-                      checked={form.selectedClasses.includes(cls.id)}
-                      onCheckedChange={() => toggleClass(cls.id)}
-                    />
-                    <span className="text-sm">{cls.name}</span>
-                  </label>
-                ))}
-              </div>
-              {classes.length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-4">لا توجد صفوف مسجلة</p>
-              )}
-            </div>
+            ))}
           </div>
-          <div className="flex justify-end gap-2 pt-4 border-t">
-            <Button variant="outline" onClick={() => setFormOpen(false)}>إلغاء</Button>
-            <Button onClick={handleSave} disabled={saving}>
-              {saving ? 'جاري الحفظ...' : editingSubject ? 'تحديث' : 'إضافة'}
-            </Button>
+
+          {/* Step Content */}
+          <div className="py-4">
+            {/* Step 1: Basic Info */}
+            {formStep === 0 && (
+              <div className="space-y-4">
+                <div>
+                  <Label>اسم المادة *</Label>
+                  <Input
+                    id="subjectName"
+                    name="subjectName"
+                    autoComplete="off"
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    placeholder="أدخل اسم المادة"
+                    className="mt-1"
+                  />
+                  <p className="text-[11px] text-muted-foreground mt-1">أدخل اسم المادة بالعربية، مثل: الرياضيات، الفيزياء</p>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>رمز المادة *</Label>
+                    <Input
+                      id="subjectCode"
+                      name="subjectCode"
+                      autoComplete="off"
+                      value={form.code}
+                      onChange={(e) => setForm({ ...form, code: e.target.value })}
+                      placeholder="مثال: MAT"
+                      dir="ltr"
+                      className="mt-1"
+                    />
+                    <p className="text-[11px] text-muted-foreground mt-1">رمز مختصر بالإنجليزية، مثل: MAT للرياضيات</p>
+                  </div>
+                  <div>
+                    <Label>النوع</Label>
+                    <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: v })}>
+                      <SelectTrigger id="subjectType" className="mt-1"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="أساسية">أساسية</SelectItem>
+                        <SelectItem value="اختيارية">اختيارية</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-[11px] text-muted-foreground mt-1">مواد أساسية = إجبارية لجميع الطلاب</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Step 2: Scores */}
+            {formStep === 1 && (
+              <div className="space-y-4">
+                <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700">
+                  <p className="text-xs text-blue-700 dark:text-blue-300">حدد الدرجة الكاملة للمادة ودرجة النجاح الدنيا. هذه القيم تُستخدم في حساب نتائج الطلاب.</p>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>الدرجة الكاملة</Label>
+                    <Input
+                      id="maxScore"
+                      name="maxScore"
+                      autoComplete="off"
+                      type="number"
+                      value={form.maxScore}
+                      onChange={(e) => setForm({ ...form, maxScore: e.target.value })}
+                      placeholder="100"
+                      className="mt-1"
+                    />
+                    <p className="text-[11px] text-muted-foreground mt-1">الدرجة العظمى للمادة، عادةً 100</p>
+                  </div>
+                  <div>
+                    <Label>درجة النجاح</Label>
+                    <Input
+                      id="passScore"
+                      name="passScore"
+                      autoComplete="off"
+                      type="number"
+                      value={form.passScore}
+                      onChange={(e) => setForm({ ...form, passScore: e.target.value })}
+                      placeholder="50"
+                      className="mt-1"
+                    />
+                    <p className="text-[11px] text-muted-foreground mt-1">الحد الأدنى للنجاح، عادةً 50</p>
+                </div>
+                </div>
+              </div>
+            )}
+
+            {/* Step 3: Linking */}
+            {formStep === 2 && (
+              <div className="space-y-4">
+                <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700">
+                  <p className="text-xs text-blue-700 dark:text-blue-300">يمكنك ربط المادة بالمدرسين والصفوف الآن أو لاحقاً من صفحة التعديل.</p>
+                </div>
+                <div>
+                  <Label className="mb-3 block">المدرسون</Label>
+                  {teachers.length > 0 ? (
+                    <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto p-1">
+                      {teachers.map(teacher => (
+                        <label
+                          key={teacher.id}
+                          className={cn(
+                            'flex items-center gap-2 rounded-lg border p-2.5 cursor-pointer transition-colors',
+                            form.selectedTeachers.includes(teacher.id)
+                              ? 'border-primary bg-primary/5'
+                              : 'border-border hover:bg-muted/50'
+                          )}
+                        >
+                          <Checkbox
+                            checked={form.selectedTeachers.includes(teacher.id)}
+                            onCheckedChange={() => toggleTeacher(teacher.id)}
+                          />
+                          <span className="text-sm truncate">{teacher.fullName}</span>
+                        </label>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-4 text-center border rounded-lg border-dashed">
+                      <p className="text-sm text-muted-foreground">لا يوجد مدرسين مسجلين بعد</p>
+                      <p className="text-xs text-muted-foreground mt-1">أضف المدرسين أولاً من صفحة الأساتذة</p>
+                    </div>
+                  )}
+                </div>
+                <Separator />
+                <div>
+                  <Label className="mb-3 block">الصفوف</Label>
+                  {classes.length > 0 ? (
+                    <div className="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto p-1">
+                      {classes.map(cls => (
+                        <label
+                          key={cls.id}
+                          className={cn(
+                            'flex items-center gap-2 rounded-lg border p-2.5 cursor-pointer transition-colors',
+                            form.selectedClasses.includes(cls.id)
+                              ? 'border-primary bg-primary/5'
+                              : 'border-border hover:bg-muted/50'
+                          )}
+                        >
+                          <Checkbox
+                            checked={form.selectedClasses.includes(cls.id)}
+                            onCheckedChange={() => toggleClass(cls.id)}
+                          />
+                          <span className="text-sm">{cls.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-4 text-center border rounded-lg border-dashed">
+                      <p className="text-sm text-muted-foreground">لا توجد صفوف مسجلة بعد</p>
+                      <p className="text-xs text-muted-foreground mt-1">أضف الصفوف أولاً من صفحة الصفوف والشعب</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Navigation Buttons */}
+          <div className="flex justify-between gap-2 pt-4 border-t">
+            {formStep > 0 ? (
+              <Button variant="outline" onClick={() => setFormStep(prev => prev - 1)}>السابق</Button>
+            ) : (
+              <Button variant="outline" onClick={() => setFormOpen(false)}>إلغاء</Button>
+            )}
+            <div className="flex-1" />
+            {formStep < 2 ? (
+              <Button onClick={() => { if (validateSubjectStep(formStep)) setFormStep(prev => prev + 1) }} className="bg-primary">
+                التالي
+              </Button>
+            ) : (
+              <Button onClick={handleSave} disabled={saving} className="bg-primary">
+                {saving ? 'جاري الحفظ...' : editingSubject ? 'تحديث' : 'إضافة'}
+              </Button>
+            )}
           </div>
         </DialogContent>
       </Dialog>

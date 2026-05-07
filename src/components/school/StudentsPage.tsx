@@ -4,10 +4,10 @@ import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import QRCode from 'qrcode'
 import {
-  Search, Plus, Download, Eye, Edit, Trash2, Printer,
+  Search, Plus, Download, Edit, Trash2, Printer,
   ChevronLeft, ChevronRight, User, X, Users, ArrowRightLeft, CheckCircle2,
   Camera, Phone, MapPin, GraduationCap, UserCircle,
-  Lightbulb,
+  Lightbulb, CheckCircle,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -148,6 +148,7 @@ export default function StudentsPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('')
   const [saving, setSaving] = useState(false)
+  const [formStep, setFormStep] = useState(0)
   const [transferOpen, setTransferOpen] = useState(false)
   const [transferSaving, setTransferSaving] = useState(false)
   const [transferConfirm, setTransferConfirm] = useState(false)
@@ -237,6 +238,7 @@ export default function StudentsPage() {
 
   const openAddForm = () => {
     setEditingStudent(null)
+    setFormStep(0)
     setForm({
       fullName: '',
       gender: 'ذكر',
@@ -255,6 +257,7 @@ export default function StudentsPage() {
 
   const openEditForm = (student: Student) => {
     setEditingStudent(student)
+    setFormStep(0)
     setForm({
       fullName: student.fullName,
       gender: student.gender,
@@ -269,6 +272,28 @@ export default function StudentsPage() {
       guardianRelation: student.guardianRelation || 'أب',
     })
     setFormOpen(true)
+  }
+
+  const validateStep = (step: number): boolean => {
+    if (step === 0) {
+      if (!form.fullName.trim()) {
+        toast.error('تنبيه', { description: 'يرجى إدخال اسم الطالب الرباعي' })
+        return false
+      }
+      return true
+    }
+    if (step === 1) {
+      if (!form.classId) {
+        toast.error('تنبيه', { description: 'يرجى اختيار الصف الدراسي' })
+        return false
+      }
+      if (!form.sectionId) {
+        toast.error('تنبيه', { description: 'يرجى اختيار الشعبة' })
+        return false
+      }
+      return true
+    }
+    return true
   }
 
   const handleSave = async () => {
@@ -408,18 +433,6 @@ export default function StudentsPage() {
             <Button onClick={openAddForm} className="gap-2 bg-primary">
               <Plus className="h-4 w-4" />
               إضافة طالب
-            </Button>
-            <Button
-              variant="outline"
-              className="gap-2 border-teal-300 text-teal-700 hover:bg-teal-50 dark:border-teal-700 dark:text-teal-400 dark:hover:bg-teal-900/20"
-              onClick={() => {
-                setTransferForm({ studentId: '', newClassId: '', newSectionId: '', reason: '' })
-                setTransferConfirm(false)
-                setTransferOpen(true)
-              }}
-            >
-              <ArrowRightLeft className="h-4 w-4" />
-              نقل طالب
             </Button>
             <Button variant="outline" className="gap-2 border-teal-300 text-teal-700 hover:bg-teal-50 dark:border-teal-700 dark:text-teal-400 dark:hover:bg-teal-900/20" onClick={handleExportCSV}>
               <Download className="h-4 w-4" />
@@ -567,14 +580,6 @@ export default function StudentsPage() {
                               </Tooltip>
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openProfile(student.id)}>
-                                    <Eye className="h-4 w-4" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>عرض التفاصيل</TooltipContent>
-                              </Tooltip>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
                                   <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEditForm(student)}>
                                     <Edit className="h-4 w-4" />
                                   </Button>
@@ -588,14 +593,6 @@ export default function StudentsPage() {
                                   </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>حذف</TooltipContent>
-                              </Tooltip>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openProfile(student.id)}>
-                                    <Printer className="h-4 w-4" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>طباعة البطاقة</TooltipContent>
                               </Tooltip>
                             </div>
                           </TableCell>
@@ -636,146 +633,234 @@ export default function StudentsPage() {
         </CardContent>
       </Card>
 
-      {/* Add/Edit Student Dialog */}
+      {/* Add/Edit Student Dialog - 3 Step Guided Form */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto dark:bg-gray-900">
           <DialogHeader>
             <DialogTitle className="dark:text-gray-200">{editingStudent ? 'تعديل بيانات الطالب' : 'إضافة طالب جديد'}</DialogTitle>
           </DialogHeader>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
-            <div className="sm:col-span-2">
-              <Label>الاسم الرباعي *</Label>
-              <Input
-                id="fullName"
-                name="fullName"
-                autoComplete="name"
-                value={form.fullName}
-                onChange={(e) => setForm({ ...form, fullName: e.target.value })}
-                placeholder="أدخل الاسم الرباعي"
-              />
-            </div>
-            <div>
-              <Label>الجنس</Label>
-              <Select value={form.gender} onValueChange={(v) => setForm({ ...form, gender: v })}>
-                <SelectTrigger id="gender"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ذكر">ذكر</SelectItem>
-                  <SelectItem value="أنثى">أنثى</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>تاريخ الميلاد</Label>
-              <Input
-                id="dateOfBirth"
-                name="dateOfBirth"
-                autoComplete="bday"
-                type="date"
-                value={form.dateOfBirth}
-                onChange={(e) => setForm({ ...form, dateOfBirth: e.target.value })}
-              />
-            </div>
-            <div>
-              <Label>رقم الهوية</Label>
-              <Input
-                id="nationalId"
-                name="nationalId"
-                autoComplete="off"
-                value={form.nationalId}
-                onChange={(e) => setForm({ ...form, nationalId: e.target.value })}
-                placeholder="رقم الهوية الوطنية"
-              />
-            </div>
-            <div>
-              <Label>الهاتف</Label>
-              <Input
-                id="phone"
-                name="phone"
-                autoComplete="tel"
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                placeholder="رقم الهاتف"
-              />
-            </div>
-            <div>
-              <Label>الصف *</Label>
-              <Select value={form.classId} onValueChange={(v) => setForm({ ...form, classId: v, sectionId: '' })}>
-                <SelectTrigger id="classId"><SelectValue placeholder="اختر الصف" /></SelectTrigger>
-                <SelectContent>
-                  {classes.map(c => (
-                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>الشعبة *</Label>
-              <Select value={form.sectionId} onValueChange={(v) => setForm({ ...form, sectionId: v })}>
-                <SelectTrigger id="sectionId"><SelectValue placeholder="اختر الشعبة" /></SelectTrigger>
-                <SelectContent>
-                  {filteredSections.map(s => (
-                    <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="sm:col-span-2">
-              <Label>العنوان</Label>
-              <Input
-                id="address"
-                name="address"
-                autoComplete="street-address"
-                value={form.address}
-                onChange={(e) => setForm({ ...form, address: e.target.value })}
-                placeholder="العنوان"
-              />
-            </div>
-            <Separator className="sm:col-span-2" />
-            <div className="sm:col-span-2">
-              <h3 className="font-semibold text-sm mb-2 dark:text-gray-200">معلومات ولي الأمر</h3>
-            </div>
-            <div>
-              <Label>اسم ولي الأمر</Label>
-              <Input
-                id="guardianName"
-                name="guardianName"
-                autoComplete="name"
-                value={form.guardianName}
-                onChange={(e) => setForm({ ...form, guardianName: e.target.value })}
-                placeholder="اسم ولي الأمر"
-              />
-            </div>
-            <div>
-              <Label>رقم ولي الأمر</Label>
-              <Input
-                id="guardianPhone"
-                name="guardianPhone"
-                autoComplete="tel"
-                value={form.guardianPhone}
-                onChange={(e) => setForm({ ...form, guardianPhone: e.target.value })}
-                placeholder="رقم هاتف ولي الأمر"
-              />
-            </div>
-            <div>
-              <Label>صلة القرابة</Label>
-              <Select value={form.guardianRelation} onValueChange={(v) => setForm({ ...form, guardianRelation: v })}>
-                <SelectTrigger id="guardianRelation"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="أب">أب</SelectItem>
-                  <SelectItem value="أم">أم</SelectItem>
-                  <SelectItem value="أخ">أخ</SelectItem>
-                  <SelectItem value="عم">عم</SelectItem>
-                  <SelectItem value="خال">خال</SelectItem>
-                  <SelectItem value="أخرى">أخرى</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          
+          {/* Step Indicators */}
+          <div className="flex items-center gap-2 py-2">
+            {[
+              { num: 1, label: 'المعلومات الأساسية' },
+              { num: 2, label: 'الصف والشعبة' },
+              { num: 3, label: 'معلومات ولي الأمر' },
+            ].map((step, idx) => (
+              <div key={step.num} className="flex items-center gap-2 flex-1">
+                <div className={cn(
+                  "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 transition-colors",
+                  formStep > idx ? "bg-emerald-500 text-white" :
+                  formStep === idx ? "bg-primary text-white" :
+                  "bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
+                )}>
+                  {formStep > idx ? <CheckCircle className="h-4 w-4" /> : step.num}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className={cn("text-xs font-medium truncate", formStep === idx ? "text-primary" : "text-muted-foreground")}>{step.label}</p>
+                  {idx < 2 && (
+                    <div className={cn("h-1 rounded mt-1", formStep > idx ? "bg-emerald-500" : "bg-gray-200 dark:bg-gray-700")} />
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
-          <div className="flex justify-end gap-2 pt-4 border-t">
-            <Button variant="outline" onClick={() => setFormOpen(false)}>إلغاء</Button>
-            <Button onClick={handleSave} disabled={saving} className="bg-primary">
-              {saving ? 'جاري الحفظ...' : editingStudent ? 'تحديث' : 'إضافة'}
-            </Button>
+
+          {/* Step Content */}
+          <div className="py-4">
+            {/* Step 1: Basic Info */}
+            {formStep === 0 && (
+              <div className="space-y-4">
+                <div>
+                  <Label>الاسم الرباعي *</Label>
+                  <Input
+                    id="fullName"
+                    name="fullName"
+                    autoComplete="name"
+                    value={form.fullName}
+                    onChange={(e) => setForm({ ...form, fullName: e.target.value })}
+                    placeholder="أدخل الاسم الرباعي"
+                    className="mt-1"
+                  />
+                  <p className="text-[11px] text-muted-foreground mt-1">أدخل الاسم الرباعي للطالب كما هو في الهوية</p>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>الجنس</Label>
+                    <Select value={form.gender} onValueChange={(v) => setForm({ ...form, gender: v })}>
+                      <SelectTrigger id="gender" className="mt-1"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ذكر">ذكر</SelectItem>
+                        <SelectItem value="أنثى">أنثى</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-[11px] text-muted-foreground mt-1">اختر جنس الطالب</p>
+                  </div>
+                  <div>
+                    <Label>تاريخ الميلاد</Label>
+                    <Input
+                      id="dateOfBirth"
+                      name="dateOfBirth"
+                      autoComplete="bday"
+                      type="date"
+                      value={form.dateOfBirth}
+                      onChange={(e) => setForm({ ...form, dateOfBirth: e.target.value })}
+                      className="mt-1"
+                    />
+                    <p className="text-[11px] text-muted-foreground mt-1">أدخل تاريخ الميلاد بالتقويم الميلادي</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>رقم الهوية</Label>
+                    <Input
+                      id="nationalId"
+                      name="nationalId"
+                      autoComplete="off"
+                      value={form.nationalId}
+                      onChange={(e) => setForm({ ...form, nationalId: e.target.value })}
+                      placeholder="رقم الهوية الوطنية"
+                      className="mt-1"
+                    />
+                    <p className="text-[11px] text-muted-foreground mt-1">رقم الهوية الوطنية - اختياري</p>
+                  </div>
+                  <div>
+                    <Label>الهاتف</Label>
+                    <Input
+                      id="phone"
+                      name="phone"
+                      autoComplete="tel"
+                      value={form.phone}
+                      onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                      placeholder="رقم الهاتف"
+                      className="mt-1"
+                    />
+                    <p className="text-[11px] text-muted-foreground mt-1">رقم هاتف للتواصل</p>
+                  </div>
+                </div>
+                <div>
+                  <Label>العنوان</Label>
+                  <Input
+                    id="address"
+                    name="address"
+                    autoComplete="street-address"
+                    value={form.address}
+                    onChange={(e) => setForm({ ...form, address: e.target.value })}
+                    placeholder="العنوان"
+                    className="mt-1"
+                  />
+                  <p className="text-[11px] text-muted-foreground mt-1">عنوان سكن الطالب - اختياري</p>
+                </div>
+              </div>
+            )}
+
+            {/* Step 2: Class & Section */}
+            {formStep === 1 && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>الصف *</Label>
+                    <Select value={form.classId} onValueChange={(v) => setForm({ ...form, classId: v, sectionId: '' })}>
+                      <SelectTrigger id="classId" className="mt-1"><SelectValue placeholder="اختر الصف" /></SelectTrigger>
+                      <SelectContent>
+                        {classes.map(c => (
+                          <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-[11px] text-muted-foreground mt-1">اختر الصف الدراسي للطالب</p>
+                  </div>
+                  <div>
+                    <Label>الشعبة *</Label>
+                    <Select value={form.sectionId} onValueChange={(v) => setForm({ ...form, sectionId: v })}>
+                      <SelectTrigger id="sectionId" className="mt-1"><SelectValue placeholder="اختر الشعبة" /></SelectTrigger>
+                      <SelectContent>
+                        {filteredSections.map(s => (
+                          <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-[11px] text-muted-foreground mt-1">الشعبة تتغير حسب الصف المختار</p>
+                  </div>
+                </div>
+                {form.classId && filteredSections.length === 0 && (
+                  <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700">
+                    <p className="text-xs text-amber-700 dark:text-amber-300">لا توجد شعب في هذا الصف. تأكد من إضافة شعب للصف أولاً.</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Step 3: Guardian Info */}
+            {formStep === 2 && (
+              <div className="space-y-4">
+                <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700">
+                  <p className="text-xs text-blue-700 dark:text-blue-300">معلومات ولي الأمر اختيارية ويمكن إضافتها أو تعديلها لاحقاً</p>
+                </div>
+                <div>
+                  <Label>اسم ولي الأمر</Label>
+                  <Input
+                    id="guardianName"
+                    name="guardianName"
+                    autoComplete="name"
+                    value={form.guardianName}
+                    onChange={(e) => setForm({ ...form, guardianName: e.target.value })}
+                    placeholder="اسم ولي الأمر"
+                    className="mt-1"
+                  />
+                  <p className="text-[11px] text-muted-foreground mt-1">اسم ولي الأمر المسؤول عن الطالب</p>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>رقم هاتف ولي الأمر</Label>
+                    <Input
+                      id="guardianPhone"
+                      name="guardianPhone"
+                      autoComplete="tel"
+                      value={form.guardianPhone}
+                      onChange={(e) => setForm({ ...form, guardianPhone: e.target.value })}
+                      placeholder="رقم هاتف ولي الأمر"
+                      className="mt-1"
+                    />
+                    <p className="text-[11px] text-muted-foreground mt-1">رقم للتواصل في الحالات الطارئة</p>
+                  </div>
+                  <div>
+                    <Label>صلة القرابة</Label>
+                    <Select value={form.guardianRelation} onValueChange={(v) => setForm({ ...form, guardianRelation: v })}>
+                      <SelectTrigger id="guardianRelation" className="mt-1"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="أب">أب</SelectItem>
+                        <SelectItem value="أم">أم</SelectItem>
+                        <SelectItem value="أخ">أخ</SelectItem>
+                        <SelectItem value="عم">عم</SelectItem>
+                        <SelectItem value="خال">خال</SelectItem>
+                        <SelectItem value="أخرى">أخرى</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-[11px] text-muted-foreground mt-1">العلاقة بين ولي الأمر والطالب</p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Navigation Buttons */}
+          <div className="flex justify-between gap-2 pt-4 border-t">
+            {formStep > 0 ? (
+              <Button variant="outline" onClick={() => setFormStep(prev => prev - 1)}>السابق</Button>
+            ) : (
+              <Button variant="outline" onClick={() => setFormOpen(false)}>إلغاء</Button>
+            )}
+            <div className="flex-1" />
+            {formStep < 2 ? (
+              <Button onClick={() => { if (validateStep(formStep)) setFormStep(prev => prev + 1) }} className="bg-primary">
+                التالي
+              </Button>
+            ) : (
+              <Button onClick={handleSave} disabled={saving} className="bg-primary">
+                {saving ? 'جاري الحفظ...' : editingStudent ? 'تحديث' : 'إضافة'}
+              </Button>
+            )}
           </div>
         </DialogContent>
       </Dialog>

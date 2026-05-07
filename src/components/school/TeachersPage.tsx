@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Search, Plus, Edit, Trash2, Phone, Mail, BookOpen, GraduationCap,
   UserCheck, UserX, ArrowRightLeft, Users, StickyNote,
-  Lightbulb,
+  Lightbulb, CheckCircle,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -84,6 +84,7 @@ export default function TeachersPage() {
   const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [formStep, setFormStep] = useState(0)
 
   // Form state
   const [form, setForm] = useState({
@@ -148,6 +149,7 @@ export default function TeachersPage() {
 
   const openAddForm = () => {
     setEditingTeacher(null)
+    setFormStep(0)
     setForm({
       fullName: '',
       phone: '',
@@ -161,6 +163,7 @@ export default function TeachersPage() {
 
   const openEditForm = (teacher: Teacher) => {
     setEditingTeacher(teacher)
+    setFormStep(0)
     setForm({
       fullName: teacher.fullName,
       phone: teacher.phone || '',
@@ -255,6 +258,17 @@ export default function TeachersPage() {
         ? prev.selectedSubjects.filter(id => id !== subjectId)
         : [...prev.selectedSubjects, subjectId],
     }))
+  }
+
+  const validateTeacherStep = (step: number): boolean => {
+    if (step === 0) {
+      if (!form.fullName.trim()) {
+        toast.error('تنبيه', { description: 'يرجى إدخال اسم الأستاذ' })
+        return false
+      }
+      return true
+    }
+    return true
   }
 
   // Filter teachers by status
@@ -466,108 +480,172 @@ export default function TeachersPage() {
         </div>
       )}
 
-      {/* Add/Edit Teacher Dialog */}
+      {/* Add/Edit Teacher Dialog - 2 Step Guided Form */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingTeacher ? 'تعديل بيانات المدرس' : 'إضافة مدرس جديد'}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div>
-              <Label>الاسم الرباعي *</Label>
-              <Input
-                id="fullName"
-                name="fullName"
-                autoComplete="name"
-                value={form.fullName}
-                onChange={(e) => setForm({ ...form, fullName: e.target.value })}
-                placeholder="أدخل الاسم الرباعي"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>الهاتف</Label>
-                <Input
-                  id="phone"
-                  name="phone"
-                  autoComplete="tel"
-                  value={form.phone}
-                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  placeholder="رقم الهاتف"
-                  dir="ltr"
-                />
+          
+          {/* Step Indicators */}
+          <div className="flex items-center gap-2 py-2">
+            {[
+              { num: 1, label: 'المعلومات الشخصية' },
+              { num: 2, label: 'المواد الدراسية' },
+            ].map((step, idx) => (
+              <div key={step.num} className="flex items-center gap-2 flex-1">
+                <div className={cn(
+                  "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 transition-colors",
+                  formStep > idx ? "bg-emerald-500 text-white" :
+                  formStep === idx ? "bg-primary text-white" :
+                  "bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
+                )}>
+                  {formStep > idx ? <CheckCircle className="h-4 w-4" /> : step.num}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className={cn("text-xs font-medium truncate", formStep === idx ? "text-primary" : "text-muted-foreground")}>{step.label}</p>
+                  {idx < 1 && (
+                    <div className={cn("h-1 rounded mt-1", formStep > idx ? "bg-emerald-500" : "bg-gray-200 dark:bg-gray-700")} />
+                  )}
+                </div>
               </div>
-              <div>
-                <Label>البريد الإلكتروني</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  autoComplete="email"
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  placeholder="البريد الإلكتروني"
-                  dir="ltr"
-                />
-              </div>
-            </div>
-            <div>
-              <Label>الحالة</Label>
-              <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
-                <SelectTrigger id="status"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="نشط">نشط</SelectItem>
-                  <SelectItem value="إجازة">إجازة</SelectItem>
-                  <SelectItem value="منقول">منقول</SelectItem>
-                  <SelectItem value="متقاعد">متقاعد</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>ملاحظات</Label>
-              <Textarea
-                id="notes"
-                name="notes"
-                autoComplete="off"
-                value={form.notes}
-                onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                placeholder="أضف ملاحظات عن المدرس..."
-                rows={3}
-              />
-            </div>
-
-            <Separator />
-
-            <div>
-              <Label className="mb-3 block">المواد الدراسية</Label>
-              <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto p-1">
-                {subjects.map(subject => (
-                  <label
-                    key={subject.id}
-                    className={cn(
-                      'flex items-center gap-2 rounded-lg border p-3 cursor-pointer transition-colors',
-                      form.selectedSubjects.includes(subject.id)
-                        ? 'border-primary bg-primary/5'
-                        : 'border-border hover:bg-muted/50'
-                    )}
-                  >
-                    <Checkbox
-                      checked={form.selectedSubjects.includes(subject.id)}
-                      onCheckedChange={() => toggleSubject(subject.id)}
-                    />
-                    <span className="text-sm">{subject.name}</span>
-                  </label>
-                ))}
-              </div>
-              {subjects.length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-4">لا توجد مواد مسجلة</p>
-              )}
-            </div>
+            ))}
           </div>
-          <div className="flex justify-end gap-2 pt-4 border-t">
-            <Button variant="outline" onClick={() => setFormOpen(false)}>إلغاء</Button>
-            <Button onClick={handleSave} disabled={saving}>
-              {saving ? 'جاري الحفظ...' : editingTeacher ? 'تحديث' : 'إضافة'}
-            </Button>
+
+          {/* Step Content */}
+          <div className="py-4">
+            {/* Step 1: Personal Info */}
+            {formStep === 0 && (
+              <div className="space-y-4">
+                <div>
+                  <Label>الاسم الرباعي *</Label>
+                  <Input
+                    id="fullName"
+                    name="fullName"
+                    autoComplete="name"
+                    value={form.fullName}
+                    onChange={(e) => setForm({ ...form, fullName: e.target.value })}
+                    placeholder="أدخل الاسم الرباعي"
+                    className="mt-1"
+                  />
+                  <p className="text-[11px] text-muted-foreground mt-1">أدخل الاسم الرباعي للأستاذ كما في الهوية</p>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>الهاتف</Label>
+                    <Input
+                      id="phone"
+                      name="phone"
+                      autoComplete="tel"
+                      value={form.phone}
+                      onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                      placeholder="رقم الهاتف"
+                      dir="ltr"
+                      className="mt-1"
+                    />
+                    <p className="text-[11px] text-muted-foreground mt-1">رقم هاتف للتواصل</p>
+                  </div>
+                  <div>
+                    <Label>البريد الإلكتروني</Label>
+                    <Input
+                      id="email"
+                      name="email"
+                      autoComplete="email"
+                      value={form.email}
+                      onChange={(e) => setForm({ ...form, email: e.target.value })}
+                      placeholder="البريد الإلكتروني"
+                      dir="ltr"
+                      className="mt-1"
+                    />
+                    <p className="text-[11px] text-muted-foreground mt-1">البريد الإلكتروني - اختياري</p>
+                  </div>
+                </div>
+                <div>
+                  <Label>الحالة</Label>
+                  <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
+                    <SelectTrigger id="status" className="mt-1"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="نشط">نشط</SelectItem>
+                      <SelectItem value="إجازة">إجازة</SelectItem>
+                      <SelectItem value="منقول">منقول</SelectItem>
+                      <SelectItem value="متقاعد">متقاعد</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-[11px] text-muted-foreground mt-1">الحالة الوظيفية للأستاذ</p>
+                </div>
+                <div>
+                  <Label>ملاحظات</Label>
+                  <Textarea
+                    id="notes"
+                    name="notes"
+                    autoComplete="off"
+                    value={form.notes}
+                    onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                    placeholder="أضف ملاحظات عن المدرس..."
+                    rows={3}
+                    className="mt-1"
+                  />
+                  <p className="text-[11px] text-muted-foreground mt-1">أي ملاحظات إضافية - اختياري</p>
+                </div>
+              </div>
+            )}
+
+            {/* Step 2: Subjects */}
+            {formStep === 1 && (
+              <div className="space-y-4">
+                <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700">
+                  <p className="text-xs text-blue-700 dark:text-blue-300">اختر المواد التي يدرسها هذا الأستاذ. يمكنك تعديلها لاحقاً.</p>
+                </div>
+                <div>
+                  <Label className="mb-3 block">المواد الدراسية</Label>
+                  {subjects.length > 0 ? (
+                    <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto p-1">
+                      {subjects.map(subject => (
+                        <label
+                          key={subject.id}
+                          className={cn(
+                            'flex items-center gap-2 rounded-lg border p-3 cursor-pointer transition-colors',
+                            form.selectedSubjects.includes(subject.id)
+                              ? 'border-primary bg-primary/5'
+                              : 'border-border hover:bg-muted/50'
+                          )}
+                        >
+                          <Checkbox
+                            checked={form.selectedSubjects.includes(subject.id)}
+                            onCheckedChange={() => toggleSubject(subject.id)}
+                          />
+                          <span className="text-sm">{subject.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-4 text-center border rounded-lg border-dashed">
+                      <p className="text-sm text-muted-foreground">لا توجد مواد مسجلة بعد</p>
+                      <p className="text-xs text-muted-foreground mt-1">أضف المواد أولاً من صفحة المواد الدراسية</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Navigation Buttons */}
+          <div className="flex justify-between gap-2 pt-4 border-t">
+            {formStep > 0 ? (
+              <Button variant="outline" onClick={() => setFormStep(prev => prev - 1)}>السابق</Button>
+            ) : (
+              <Button variant="outline" onClick={() => setFormOpen(false)}>إلغاء</Button>
+            )}
+            <div className="flex-1" />
+            {formStep < 1 ? (
+              <Button onClick={() => { if (validateTeacherStep(formStep)) setFormStep(prev => prev + 1) }} className="bg-primary">
+                التالي
+              </Button>
+            ) : (
+              <Button onClick={handleSave} disabled={saving} className="bg-primary">
+                {saving ? 'جاري الحفظ...' : editingTeacher ? 'تحديث' : 'إضافة'}
+              </Button>
+            )}
           </div>
         </DialogContent>
       </Dialog>

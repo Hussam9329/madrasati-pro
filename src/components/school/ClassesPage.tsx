@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Layers, Plus, Trash2, Edit, Users, BookOpen, GraduationCap,
-  Lightbulb,
+  Lightbulb, CheckCircle,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -139,6 +139,7 @@ export default function ClassesPage() {
   const [assignOpen, setAssignOpen] = useState(false)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [formStep, setFormStep] = useState(0)
 
   // Assign teacher state
   const [assignTarget, setAssignTarget] = useState<{ classId: string; sectionId?: string } | null>(null)
@@ -227,7 +228,26 @@ export default function ClassesPage() {
       branch: '',
       selectedSections: ['أ'],
     })
+    setFormStep(0)
     setFormOpen(true)
+  }
+
+  const validateClassStep = (step: number): boolean => {
+    if (step === 0) {
+      if (!form.name.trim()) {
+        toast.error('تنبيه', { description: 'يرجى إدخال اسم الصف' })
+        return false
+      }
+      return true
+    }
+    if (step === 1) {
+      if (form.selectedSections.length === 0) {
+        toast.error('تنبيه', { description: 'يرجى اختيار شعبة واحدة على الأقل' })
+        return false
+      }
+      return true
+    }
+    return true
   }
 
   const handleSave = async () => {
@@ -576,95 +596,149 @@ export default function ClassesPage() {
         </div>
       )}
 
-      {/* ─── Add Class Dialog ──────────────────────────────────── */}
+      {/* ─── Add Class Dialog - 2 Step Guided Form ───────────────── */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>إضافة صف جديد</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div>
-              <Label>اسم الصف *</Label>
-              <Input
-                id="className"
-                name="className"
-                autoComplete="off"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="مثال: الأولى إعدادي"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>المستوى *</Label>
-                <Select value={form.level} onValueChange={(v) => setForm({ ...form, level: v })}>
-                  <SelectTrigger id="level"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {LEVELS.map(l => (
-                      <SelectItem key={l} value={l}>{l}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+          
+          {/* Step Indicators */}
+          <div className="flex items-center gap-2 py-2">
+            {[
+              { num: 1, label: 'معلومات الصف' },
+              { num: 2, label: 'الشعب' },
+            ].map((step, idx) => (
+              <div key={step.num} className="flex items-center gap-2 flex-1">
+                <div className={cn(
+                  "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 transition-colors",
+                  formStep > idx ? "bg-emerald-500 text-white" :
+                  formStep === idx ? "bg-primary text-white" :
+                  "bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
+                )}>
+                  {formStep > idx ? <CheckCircle className="h-4 w-4" /> : step.num}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className={cn("text-xs font-medium truncate", formStep === idx ? "text-primary" : "text-muted-foreground")}>{step.label}</p>
+                  {idx < 1 && (
+                    <div className={cn("h-1 rounded mt-1", formStep > idx ? "bg-emerald-500" : "bg-gray-200 dark:bg-gray-700")} />
+                  )}
+                </div>
               </div>
-              <div>
-                <Label>المرحلة *</Label>
-                <Select value={form.stage} onValueChange={(v) => setForm({ ...form, stage: v })}>
-                  <SelectTrigger id="stage"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {STAGES.map(s => (
-                      <SelectItem key={s} value={s}>{s}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div>
-              <Label>الفرع (اختياري)</Label>
-              <Select value={form.branch} onValueChange={(v) => setForm({ ...form, branch: v === 'بدون فرع' ? '' : v })}>
-                <SelectTrigger id="branch"><SelectValue placeholder="اختر الفرع" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="بدون فرع">بدون فرع</SelectItem>
-                  {BRANCHES.map(b => (
-                    <SelectItem key={b} value={b}>{b}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <Separator />
-
-            {/* Sections Multi-select */}
-            <div>
-              <Label className="mb-3 block">الشعب *</Label>
-              <div className="grid grid-cols-5 gap-2">
-                {SECTION_OPTIONS.map(secName => (
-                  <label
-                    key={secName}
-                    className={cn(
-                      'flex items-center justify-center gap-1 rounded-lg border p-3 cursor-pointer transition-colors text-sm font-bold',
-                      form.selectedSections.includes(secName)
-                        ? `border-blue-400 bg-blue-50 text-blue-700`
-                        : 'border-border hover:bg-muted/50'
-                    )}
-                  >
-                    <Checkbox
-                      checked={form.selectedSections.includes(secName)}
-                      onCheckedChange={() => toggleSection(secName)}
-                      className="sr-only"
-                    />
-                    {secName}
-                  </label>
-                ))}
-              </div>
-            </div>
+            ))}
           </div>
-          <div className="flex justify-end gap-2 pt-4 border-t">
-            <Button variant="outline" onClick={() => setFormOpen(false)}>إلغاء</Button>
-            <Button onClick={handleSave} disabled={saving} className="bg-primary">
-              {saving ? 'جاري الحفظ...' : 'إضافة'}
-            </Button>
+
+          {/* Step Content */}
+          <div className="py-4">
+            {/* Step 1: Class Info */}
+            {formStep === 0 && (
+              <div className="space-y-4">
+                <div>
+                  <Label>اسم الصف *</Label>
+                  <Input
+                    id="className"
+                    name="className"
+                    autoComplete="off"
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    placeholder="مثال: الأولى إعدادي"
+                    className="mt-1"
+                  />
+                  <p className="text-[11px] text-muted-foreground mt-1">أدخل اسماً واضحاً للصف مثل: الأولى إعدادي، الثاني متوسط</p>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>المستوى *</Label>
+                    <Select value={form.level} onValueChange={(v) => setForm({ ...form, level: v })}>
+                      <SelectTrigger id="level" className="mt-1"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {LEVELS.map(l => (
+                          <SelectItem key={l} value={l}>{l}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-[11px] text-muted-foreground mt-1">اختر المستوى التعليمي</p>
+                  </div>
+                  <div>
+                    <Label>المرحلة *</Label>
+                    <Select value={form.stage} onValueChange={(v) => setForm({ ...form, stage: v })}>
+                      <SelectTrigger id="stage" className="mt-1"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {STAGES.map(s => (
+                          <SelectItem key={s} value={s}>{s}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-[11px] text-muted-foreground mt-1">اختر المرحلة الدراسية</p>
+                  </div>
+                </div>
+                <div>
+                  <Label>الفرع (اختياري)</Label>
+                  <Select value={form.branch} onValueChange={(v) => setForm({ ...form, branch: v === 'بدون فرع' ? '' : v })}>
+                    <SelectTrigger id="branch" className="mt-1"><SelectValue placeholder="اختر الفرع" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="بدون فرع">بدون فرع</SelectItem>
+                      {BRANCHES.map(b => (
+                        <SelectItem key={b} value={b}>{b}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-[11px] text-muted-foreground mt-1">الفرع متاح فقط للمرحلة الإعدادية</p>
+                </div>
+              </div>
+            )}
+
+            {/* Step 2: Sections */}
+            {formStep === 1 && (
+              <div className="space-y-4">
+                <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700">
+                  <p className="text-xs text-blue-700 dark:text-blue-300">اختر الشعب لهذا الصف. كل شعبة يمكن أن تحتوي على طلاب مستقلين ويمكن تعيين أستاذ مختلف لكل شعبة.</p>
+                </div>
+                <div>
+                  <Label className="mb-3 block">الشعب *</Label>
+                  <div className="grid grid-cols-5 gap-2">
+                    {SECTION_OPTIONS.map(secName => (
+                      <label
+                        key={secName}
+                        className={cn(
+                          'flex items-center justify-center gap-1 rounded-lg border p-3 cursor-pointer transition-colors text-sm font-bold',
+                          form.selectedSections.includes(secName)
+                            ? `border-blue-400 bg-blue-50 text-blue-700`
+                            : 'border-border hover:bg-muted/50'
+                        )}
+                      >
+                        <Checkbox
+                          checked={form.selectedSections.includes(secName)}
+                          onCheckedChange={() => toggleSection(secName)}
+                          className="sr-only"
+                        />
+                        {secName}
+                      </label>
+                    ))}
+                  </div>
+                  <p className="text-[11px] text-muted-foreground mt-2">سيتم إنشاء {form.selectedSections.length} شعبة: {form.selectedSections.join('، ')}</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Navigation Buttons */}
+          <div className="flex justify-between gap-2 pt-4 border-t">
+            {formStep > 0 ? (
+              <Button variant="outline" onClick={() => setFormStep(prev => prev - 1)}>السابق</Button>
+            ) : (
+              <Button variant="outline" onClick={() => setFormOpen(false)}>إلغاء</Button>
+            )}
+            <div className="flex-1" />
+            {formStep < 1 ? (
+              <Button onClick={() => { if (validateClassStep(formStep)) setFormStep(prev => prev + 1) }} className="bg-primary">
+                التالي
+              </Button>
+            ) : (
+              <Button onClick={handleSave} disabled={saving} className="bg-primary">
+                {saving ? 'جاري الحفظ...' : 'إضافة'}
+              </Button>
+            )}
           </div>
         </DialogContent>
       </Dialog>

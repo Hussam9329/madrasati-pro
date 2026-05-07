@@ -2346,3 +2346,87 @@ Unresolved Issues / Next Phase Priorities:
 - Add behavior/discipline tracking module
 - Consider adding multi-school support for district-level management
 - Add automated email/SMS notification system
+
+---
+Task ID: 3-c
+Agent: Feature Enhancement Agent
+Task: Add step indicators to GradesPage and Quick Setup Guide to DashboardPage
+
+Work Log:
+- **GradesPage.tsx - Step Indicators in Filter Card**:
+  - Added `ChevronLeft` and `cn` imports
+  - Removed the standalone step indicators section (was between header and filter card)
+  - Added step indicators INSIDE the filter card CardHeader, after CardTitle and CardDescription
+  - 3 steps with numbered circles: 1) اختر الصف 2) اختر المادة والامتحان 3) أدخل الدرجات
+  - Steps show CheckCircle icon when done (emerald color), active state (primary color), or inactive (gray)
+  - Steps connected with ChevronLeft icons
+  - Step done state: selectedClassId, selectedExamTypeId, isShowingStudents
+- **GradesPage.tsx - Simplified Grade Entry Table**:
+  - Added `className="w-12"` to # column header
+  - Removed mini score percentage indicator (absolute positioned % badge) from score cell
+  - Removed help text "أدخل الدرجة من {maxScore}" below score input
+  - Kept the core Input with color-coded border styling (emerald for pass, red for fail)
+- **GradesPage.tsx - Simplified Stats Panel**:
+  - Removed the "Grade Distribution Visual" card (animated bars for ممتاز/مقبول/راسب)
+  - Kept the summary stats cards (المعدل, أعلى درجة, أدنى درجة, نسبة النجاح, إجمالي)
+- **GradesPage.tsx - Guidance Message**:
+  - Updated empty state text to "تأكد من اتباع الخطوات: 1) اختر الصف 2) اختر المادة 3) اختر نوع الامتحان 4) اضغط عرض الطلاب"
+- **DashboardPage.tsx - Quick Setup Guide**:
+  - Added `cn` import from `@/lib/utils`
+  - Added Quick Setup Guide card between hint card and welcome header
+  - Only shown when not all setup steps are complete (classes, subjects, teachers, students, grades)
+  - Card has gradient top strip, Lightbulb icon, and "دليل الإعداد السريع" title
+  - 5 steps with numbered circles: 1) إضافة الصفوف الدراسية 2) إضافة المواد الدراسية 3) إضافة الأساتذة 4) إضافة الطلاب 5) إدخال الدرجات
+  - Completed steps show CheckCircle icon (emerald) with "تم" badge and strikethrough text
+  - Incomplete steps show "ابدأ الآن" button that navigates to the relevant page
+  - Uses IIFE pattern to check all setup conditions and return null if all done
+  - framer-motion animation (opacity 0→1, y -5→0)
+- Build: Successful production build with no errors
+- Lint: Clean for changed files (only pre-existing errors in slides/ and AttendancePage)
+
+Stage Summary:
+- GradesPage now has integrated step indicators inside the filter card header
+- Grade entry table simplified (removed % indicator and help text)
+- Stats panel simplified (removed distribution visual bars)
+- Better empty state guidance message
+- DashboardPage now shows Quick Setup Guide for new/incomplete setups
+- All changes are RTL Arabic, consistent with project design language
+- No API or backend changes
+
+---
+Task ID: 3-b
+Agent: Guided Forms Enhancement Agent
+Task: Add guided multi-step forms to ClassesPage and SubjectsPage
+
+Work Log:
+- **ClassesPage.tsx** (`/src/components/school/ClassesPage.tsx`):
+  - Renamed `validateStep` to `validateClassStep` with same logic (step 0: name required, step 1: sections required)
+  - Removed `handleNextStep` helper (replaced by inline validation in button onClick)
+  - Removed unused `Info` import from lucide-react
+  - Replaced Add Class Dialog content with enhanced guided multi-step form:
+    - Step indicators with 3-state styling: emerald-500 (completed with CheckCircle), primary (current), gray (pending)
+    - Progress bars between steps (emerald-500 for completed, gray for pending)
+    - Step 1 (معلومات الصف): Input with `className="mt-1"`, descriptive hint text without emoji prefix, SelectTriggers with `className="mt-1"`
+    - Step 2 (الشعب): Blue info box with guidance text, section count summary below grid without Info icon
+    - Navigation: inline `validateClassStep` call in "التالي" button onClick
+- **SubjectsPage.tsx** (`/src/components/school/SubjectsPage.tsx`):
+  - Renamed `validateStep` to `validateSubjectStep` with enhanced validation (step 0: separate checks for name and code with individual error messages)
+  - Removed `handleNextStep` helper (replaced by inline validation in button onClick)
+  - Replaced Add/Edit Subject Dialog content with enhanced guided multi-step form:
+    - Step indicators with 3-state styling: emerald-500 (completed with CheckCircle), primary (current), gray (pending)
+    - Progress bars between steps (emerald-500 for completed, gray for pending)
+    - Step 1 (المعلومات الأساسية): Inputs with `className="mt-1"`, descriptive hint text without emoji prefix
+    - Step 2 (الدرجات): Blue info box explaining score usage, Inputs with `className="mt-1"`
+    - Step 3 (الربط): Blue info box explaining linking can be done later, dashed-border empty states with sub-hints for teachers and classes, larger padding (p-2.5) on checkbox labels, max-h-40 for scroll areas
+    - Navigation: inline `validateSubjectStep` call in "التالي" button onClick
+- Lint check: No new errors in changed files (only pre-existing slides/ and AttendancePage errors)
+- Dev server: Compiling successfully
+
+Stage Summary:
+- Both ClassesPage and SubjectsPage now have enhanced guided multi-step forms
+- Step indicators use emerald-500 for completed steps with CheckCircle icon
+- Step validation with specific error messages per field
+- Blue info boxes provide contextual guidance in each step
+- Improved empty states with dashed borders and sub-hints
+- Consistent styling with `className="mt-1"` on all form inputs
+- No API or backend changes

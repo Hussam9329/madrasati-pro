@@ -49,6 +49,7 @@ import {
 } from 'recharts';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 interface DashboardData {
   totals: {
@@ -385,6 +386,64 @@ export default function DashboardPage() {
           <p className="text-xs text-blue-600 dark:text-blue-400">لوحة التحكم تعرض ملخصاً شاملاً لأهم البيانات. استخدم أزرار الإجراءات السريعة للوصول المباشر للمهام الأكثر استخداماً.</p>
         </div>
       </div>
+
+      {/* Quick Setup Guide */}
+      {!loading && data && (
+        (() => {
+          const hasClasses = data.totals.classes > 0
+          const hasSubjects = data.totals.subjects > 0
+          const hasTeachers = data.totals.teachers > 0
+          const hasStudents = data.totals.students > 0
+          const hasGrades = data.gradeCompletion && data.gradeCompletion.some((g: { completionPercentage: number }) => g.completionPercentage > 0)
+          const allDone = hasClasses && hasSubjects && hasTeachers && hasStudents && hasGrades
+          
+          if (allDone) return null
+          
+          return (
+            <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }}>
+              <Card className="border-primary/20 bg-primary/5 dark:bg-primary/10 overflow-hidden">
+                <div className="h-1 bg-primary" />
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Lightbulb className="h-5 w-5 text-primary" />
+                    <h3 className="font-bold text-primary">دليل الإعداد السريع</h3>
+                    <span className="text-xs text-muted-foreground">اتبع هذه الخطوات بالترتيب لإعداد النظام</span>
+                  </div>
+                  <div className="space-y-2">
+                    {[
+                      { step: 1, label: 'إضافة الصفوف الدراسية', done: hasClasses, page: 'classes' as PageKey },
+                      { step: 2, label: 'إضافة المواد الدراسية', done: hasSubjects, page: 'subjects' as PageKey },
+                      { step: 3, label: 'إضافة الأساتذة', done: hasTeachers, page: 'teachers' as PageKey },
+                      { step: 4, label: 'إضافة الطلاب', done: hasStudents, page: 'students' as PageKey },
+                      { step: 5, label: 'إدخال الدرجات', done: hasGrades, page: 'grades' as PageKey },
+                    ].map((item) => (
+                      <div key={item.step} className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/50 dark:hover:bg-gray-800/50 transition-colors">
+                        <div className={cn(
+                          "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0",
+                          item.done ? "bg-emerald-500 text-white" : "bg-gray-200 dark:bg-gray-700 text-gray-500"
+                        )}>
+                          {item.done ? <CheckCircle className="h-4 w-4" /> : item.step}
+                        </div>
+                        <span className={cn("flex-1 text-sm", item.done ? "text-emerald-700 dark:text-emerald-400 line-through" : "font-medium")}>{item.label}</span>
+                        {!item.done && (
+                          <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => setActivePage(item.page)}>
+                            ابدأ الآن
+                          </Button>
+                        )}
+                        {item.done && (
+                          <Badge variant="outline" className="text-[10px] bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-700">
+                            تم
+                          </Badge>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )
+        })()
+      )}
 
       {/* Welcome Header - Enhanced with Arabic date & system status */}
       <motion.div

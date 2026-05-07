@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   GraduationCap, Save, CheckCircle, XCircle, AlertTriangle,
-  BookOpen, Award, BarChart3, Lock, FileCheck, Search, Users, TrendingUp, Target, Lightbulb
+  BookOpen, Award, BarChart3, Lock, FileCheck, Search, Users, TrendingUp, Target, Lightbulb, Info, ChevronLeft
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -22,6 +22,7 @@ import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Progress } from '@/components/ui/progress'
 import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
 
 // Types
 interface ClassData {
@@ -399,6 +400,8 @@ export default function GradesPage() {
         </div>
       </div>
 
+
+
       {/* Filters */}
       <Card className="overflow-hidden">
         <div className="h-1 bg-primary" />
@@ -408,6 +411,27 @@ export default function GradesPage() {
             اختيار الصف والمادة
           </CardTitle>
           <CardDescription>حدد الصف والشعبة والمادة ونوع الامتحان لعرض الطلاب</CardDescription>
+          {/* Step Indicators */}
+          <div className="flex items-center gap-2 mt-3">
+            {[
+              { num: 1, label: 'اختر الصف', done: !!selectedClassId },
+              { num: 2, label: 'اختر المادة والامتحان', done: !!selectedExamTypeId },
+              { num: 3, label: 'أدخل الدرجات', done: isShowingStudents },
+            ].map((step, idx) => (
+              <div key={step.num} className="flex items-center gap-1.5">
+                <div className={cn(
+                  "w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-colors",
+                  step.done ? "bg-emerald-500 text-white" :
+                  (idx === 0 && !selectedClassId) || (idx === 1 && selectedClassId && !selectedExamTypeId) || (idx === 2 && selectedExamTypeId) ? "bg-primary text-white" :
+                  "bg-gray-200 dark:bg-gray-700 text-gray-500"
+                )}>
+                  {step.done ? <CheckCircle className="h-3 w-3" /> : step.num}
+                </div>
+                <span className={cn("text-[11px] font-medium", step.done ? "text-emerald-600" : "text-muted-foreground")}>{step.label}</span>
+                {idx < 2 && <ChevronLeft className="h-3 w-3 text-muted-foreground mx-1" />}
+              </div>
+            ))}
+          </div>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-4 items-end">
@@ -552,65 +576,7 @@ export default function GradesPage() {
               </Card>
             </div>
 
-            {/* Grade Distribution Visual */}
-            <Card className="overflow-hidden">
-              <div className="h-1 bg-primary" />
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <BarChart3 className="h-4 w-4 text-teal-600" />
-                  توزيع الدرجات
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {/* Excellent (≥80%) */}
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs font-medium w-24 text-emerald-700 dark:text-emerald-400">ممتاز (≥80%)</span>
-                    <div className="flex-1 h-8 bg-emerald-50 dark:bg-emerald-900/10 rounded-full overflow-hidden relative">
-                      <motion.div
-                        className="h-full bg-gradient-to-l from-emerald-400 to-emerald-500 rounded-full flex items-center justify-end px-2"
-                        initial={{ width: 0 }}
-                        animate={{ width: `${stats.total > 0 ? (stats.excellent / stats.total) * 100 : 0}%` }}
-                        transition={{ duration: 0.8, ease: 'easeOut' }}
-                      >
-                        <span className="text-xs text-white font-bold">{stats.excellent}</span>
-                      </motion.div>
-                    </div>
-                    <span className="text-xs text-muted-foreground w-16 text-left">{stats.total > 0 ? Math.round((stats.excellent / stats.total) * 100) : 0}%</span>
-                  </div>
-                  {/* Good (50-79%) */}
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs font-medium w-24 text-amber-700 dark:text-amber-400">مقبول (50-79%)</span>
-                    <div className="flex-1 h-8 bg-amber-50 dark:bg-amber-900/10 rounded-full overflow-hidden relative">
-                      <motion.div
-                        className="h-full bg-gradient-to-l from-amber-400 to-amber-500 rounded-full flex items-center justify-end px-2"
-                        initial={{ width: 0 }}
-                        animate={{ width: `${stats.total > 0 ? (stats.good / stats.total) * 100 : 0}%` }}
-                        transition={{ duration: 0.8, ease: 'easeOut', delay: 0.1 }}
-                      >
-                        <span className="text-xs text-white font-bold">{stats.good}</span>
-                      </motion.div>
-                    </div>
-                    <span className="text-xs text-muted-foreground w-16 text-left">{stats.total > 0 ? Math.round((stats.good / stats.total) * 100) : 0}%</span>
-                  </div>
-                  {/* Fail (<50%) */}
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs font-medium w-24 text-red-700 dark:text-red-400">راسب (&lt;50%)</span>
-                    <div className="flex-1 h-8 bg-red-50 dark:bg-red-900/10 rounded-full overflow-hidden relative">
-                      <motion.div
-                        className="h-full bg-gradient-to-l from-red-400 to-red-500 rounded-full flex items-center justify-end px-2"
-                        initial={{ width: 0 }}
-                        animate={{ width: `${stats.total > 0 ? (stats.fail / stats.total) * 100 : 0}%` }}
-                        transition={{ duration: 0.8, ease: 'easeOut', delay: 0.2 }}
-                      >
-                        <span className="text-xs text-white font-bold">{stats.fail}</span>
-                      </motion.div>
-                    </div>
-                    <span className="text-xs text-muted-foreground w-16 text-left">{stats.total > 0 ? Math.round((stats.fail / stats.total) * 100) : 0}%</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+
           </motion.div>
         )}
       </AnimatePresence>
@@ -696,7 +662,7 @@ export default function GradesPage() {
                   <div className="text-center py-12">
                     <Search className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
                     <p className="text-lg font-medium text-muted-foreground mb-1">لا يوجد طلاب في الصف المحدد</p>
-                    <p className="text-sm text-muted-foreground mb-4">تأكد من اختيار الصف والشعبة الصحيحة أو قم بتسجيل طلاب في النظام أولاً</p>
+                    <p className="text-sm text-muted-foreground mb-4">تأكد من اتباع الخطوات: 1) اختر الصف 2) اختر المادة 3) اختر نوع الامتحان 4) اضغط عرض الطلاب</p>
                     <Button variant="outline" size="sm" onClick={() => setIsShowingStudents(false)} className="gap-2">
                       <Search className="h-4 w-4" />
                       تعديل الفلتر
@@ -712,8 +678,6 @@ export default function GradesPage() {
                           <TableHead>الشعبة</TableHead>
                           <TableHead className="w-40">الدرجة</TableHead>
                           <TableHead>الحالة</TableHead>
-                          <TableHead className="w-32">التوزيع</TableHead>
-                          <TableHead className="w-24">إجراءات</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -762,16 +726,6 @@ export default function GradesPage() {
                                           : 'dark:bg-gray-800/50'
                                     }`}
                                   />
-                                  {/* Mini score indicator */}
-                                  {scoreNum !== null && (
-                                    <span className={`absolute -top-1.5 -right-1 text-[9px] font-bold px-1 rounded ${
-                                      scorePct >= 80 ? 'text-emerald-600 dark:text-emerald-400' :
-                                      scorePct >= 50 ? 'text-amber-600 dark:text-amber-400' :
-                                      'text-red-600 dark:text-red-400'
-                                    }`}>
-                                      {scorePct}%
-                                    </span>
-                                  )}
                                 </div>
                               </TableCell>
                               <TableCell>
@@ -780,32 +734,6 @@ export default function GradesPage() {
                                   {passInfo.status === 'راسب' && <XCircle className="h-3 w-3" />}
                                   {passInfo.label}
                                 </Badge>
-                              </TableCell>
-                              <TableCell>
-                                {/* Mini progress bar showing score distribution */}
-                                {scoreNum !== null && (
-                                  <div className="w-24">
-                                    <div className="w-full h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-                                      <motion.div
-                                        className={`h-full rounded-full ${
-                                          scorePct >= 80 ? 'bg-emerald-500' :
-                                          scorePct >= 50 ? 'bg-amber-500' :
-                                          'bg-red-500'
-                                        }`}
-                                        initial={{ width: 0 }}
-                                        animate={{ width: `${scorePct}%` }}
-                                        transition={{ duration: 0.5, ease: 'easeOut' }}
-                                      />
-                                    </div>
-                                  </div>
-                                )}
-                              </TableCell>
-                              <TableCell>
-                                {entry.existingScore !== undefined && entry.existingScore !== null && (
-                                  <Badge variant="outline" className="text-xs dark:border-gray-600">
-                                    سابقاً: {entry.existingScore}
-                                  </Badge>
-                                )}
                               </TableCell>
                             </TableRow>
                           )
