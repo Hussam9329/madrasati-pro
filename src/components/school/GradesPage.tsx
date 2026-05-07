@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   GraduationCap, Save, CheckCircle, XCircle, AlertTriangle,
-  BookOpen, Award, BarChart3, Lock, FileCheck, Search, Users, TrendingUp, Target, Lightbulb, Info, ChevronLeft
+  BookOpen, Award, BarChart3, Lock, FileCheck, Search, Users, TrendingUp, Target, Lightbulb, Info, ChevronLeft, ClipboardList
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -23,6 +23,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Progress } from '@/components/ui/progress'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { useAppStore } from '@/lib/store'
 
 // Types
 interface ClassData {
@@ -104,6 +105,7 @@ function getScoreColor(score: number, maxScore: number): { bg: string; text: str
 }
 
 export default function GradesPage() {
+  const { setActivePage } = useAppStore()
 
   // Filter state
   const [classes, setClasses] = useState<ClassData[]>([])
@@ -386,7 +388,10 @@ export default function GradesPage() {
         <Lightbulb className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
         <div className="flex-1">
           <p className="text-sm font-medium text-blue-800 dark:text-blue-300">نظام الدرجات</p>
-          <p className="text-xs text-blue-600 dark:text-blue-400">اختر الصف والمادة ونوع الامتحان لإدخال درجات الطلاب. يمكنك حفظ الدرجات كمسودة ثم اعتمادها لاحقاً.</p>
+          <p className="text-xs text-blue-600 dark:text-blue-400">
+            المسار الصحيح: أولاً أنشئ أنواع الامتحانات من صفحة الامتحانات ← ثم اختر الصف والمادة ونوع الامتحان هنا ← أدخل الدرجات.
+            يمكنك حفظ الدرجات كمسودة ثم اعتمادها لاحقاً.
+          </p>
         </div>
       </div>
       {/* Header with gradient icon */}
@@ -492,16 +497,31 @@ export default function GradesPage() {
             {/* Exam Type */}
             <div className="space-y-1 flex-1 min-w-[160px]">
               <Label className="text-xs font-medium">نوع الامتحان *</Label>
-              <Select value={selectedExamTypeId} onValueChange={setSelectedExamTypeId} disabled={!selectedSubjectId}>
-                <SelectTrigger id="gradeExamType">
-                  <SelectValue placeholder="اختر نوع الامتحان" />
-                </SelectTrigger>
-                <SelectContent>
-                  {selectedSubject?.examTypes.map(exam => (
-                    <SelectItem key={exam.id} value={exam.id}>{exam.name} ({exam.maxScore} درجة)</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {selectedSubjectId && selectedSubject && selectedSubject.examTypes.length === 0 ? (
+                <div className="p-2 rounded-md border border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/10">
+                  <p className="text-xs text-amber-700 dark:text-amber-300 font-medium mb-1">لا توجد امتحانات لهذه المادة</p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-1.5 text-xs h-7 border-amber-300 dark:border-amber-600 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/30"
+                    onClick={() => setActivePage('exams')}
+                  >
+                    <ClipboardList className="h-3 w-3" />
+                    إضافة امتحانات
+                  </Button>
+                </div>
+              ) : (
+                <Select value={selectedExamTypeId} onValueChange={setSelectedExamTypeId} disabled={!selectedSubjectId}>
+                  <SelectTrigger id="gradeExamType">
+                    <SelectValue placeholder="اختر نوع الامتحان" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {selectedSubject?.examTypes.map(exam => (
+                      <SelectItem key={exam.id} value={exam.id}>{exam.name} ({exam.maxScore} درجة)</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
 
             {/* Show Students Button */}

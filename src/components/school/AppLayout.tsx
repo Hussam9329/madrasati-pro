@@ -23,6 +23,7 @@ import {
   Keyboard,
   Layers,
   Lightbulb,
+  ClipboardList,
 } from 'lucide-react';
 import { useAppStore, type PageKey } from '@/lib/store';
 import { Button } from '@/components/ui/button';
@@ -46,6 +47,7 @@ const pageDescriptions: Record<PageKey, string> = {
   students: 'إدارة بيانات الطلاب والتسجيل',
   teachers: 'إدارة بيانات الأساتذة والمدرسين',
   subjects: 'إدارة المواد الدراسية والمناهج',
+  exams: 'إنشاء وإدارة أنواع الامتحانات',
   classes: 'إدارة الصفوف والشعب الدراسية',
   attendance: 'تتبع حضور الطلاب بالرمز QR',
   grades: 'إدارة الدرجات والنتائج الدراسية',
@@ -70,6 +72,7 @@ const navGroups: { label: string; items: { key: PageKey; label: string; icon: Re
     label: 'الأكاديمية',
     items: [
       { key: 'classes', label: 'الصفوف والشعب', icon: Layers },
+      { key: 'exams', label: 'الامتحانات', icon: ClipboardList },
       { key: 'attendance', label: 'الحضور QR', icon: ScanLine, badge: 'مباشر' },
       { key: 'grades', label: 'الدرجات', icon: FileText },
       { key: 'schedule', label: 'جدول الحصص', icon: Calendar },

@@ -14,6 +14,7 @@ import ReportsPage from '@/components/school/ReportsPage';
 import SettingsPage from '@/components/school/SettingsPage';
 import SchedulePage from '@/components/school/SchedulePage';
 import ClassesPage from '@/components/school/ClassesPage';
+import ExamsPage from '@/components/school/ExamsPage';
 import StudentProfilePage from '@/components/school/StudentProfilePage';
 
 function PageRenderer({ page }: { page: PageKey }) {
@@ -29,6 +30,8 @@ function PageRenderer({ page }: { page: PageKey }) {
       return <SubjectsPage />;
     case 'attendance':
       return <AttendancePage />;
+    case 'exams':
+      return <ExamsPage />;
     case 'grades':
       return <GradesPage />;
     case 'classes':

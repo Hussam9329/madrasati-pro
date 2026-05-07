@@ -6,6 +6,7 @@ export type PageKey =
   | 'students' 
   | 'teachers' 
   | 'subjects' 
+  | 'exams'
   | 'attendance' 
   | 'grades' 
   | 'classes'
