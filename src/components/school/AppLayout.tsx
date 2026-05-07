@@ -39,7 +39,7 @@ interface AppLayoutProps {
   children: React.ReactNode;
 }
 
-// Navigation groups - مارينا School System
+// Navigation groups - مدرستي School System
 const navGroups: { label: string; items: { key: PageKey; label: string; icon: React.ElementType; badge?: string }[] }[] = [
   {
     label: 'الرئيسية',
@@ -208,7 +208,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
           {!sidebarCollapsed && (
             <div className="flex flex-col min-w-0">
               <span className="font-bold text-base leading-tight" style={{ color: '#2563eb' }}>
-                مارينا
+                مدرستي
               </span>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span className="text-[11px] text-muted-foreground truncate">نظام إدارة المدرسة</span>
@@ -345,7 +345,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
         {!sidebarCollapsed ? (
           <div className="flex items-center justify-between">
             <div className="text-center flex-1">
-              <p className="text-[10px] text-muted-foreground/70">مدرسة مارينا</p>
+              <p className="text-[10px] text-muted-foreground/70">مدرسة مدرستي</p>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -568,7 +568,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
         <footer className="mt-auto border-t border-gray-200/60 dark:border-gray-700/50 px-4 py-3 bg-white/50 dark:bg-gray-900/50 relative z-10">
           <div className="flex items-center justify-between">
             <p className="text-[11px] text-muted-foreground">
-              مارينا © {new Date().getFullYear()} — نظام إدارة المدرسة
+              مدرستي © {new Date().getFullYear()} — نظام إدارة المدرسة
             </p>
             <div className="flex items-center gap-3">
               <span className="text-[10px] text-muted-foreground/50 hidden sm:inline">

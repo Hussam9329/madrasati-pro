@@ -7,10 +7,10 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ==================== SCHOOL (مارينا - Single School) ====================
+// ==================== SCHOOL (مدرستي - Single School) ====================
 model School {
   id              String   @id @default(cuid())
-  name            String   @default("مارينا")
+  name            String   @default("مدرستي")
   logo            String?
   address         String?
   phone           String?

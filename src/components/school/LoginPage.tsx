@@ -149,7 +149,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             <div className="w-24 h-24 rounded-2xl mx-auto mb-8 flex items-center justify-center bg-white/15 backdrop-blur-sm shadow-xl border border-white/20">
               <School className="w-12 h-12 text-white" />
             </div>
-            <h1 className="text-5xl font-bold mb-4 tracking-tight">مارينا</h1>
+            <h1 className="text-5xl font-bold mb-4 tracking-tight">مدرستي</h1>
             {/* Typing animation for welcome text */}
             <div className="h-10 flex items-center justify-center mb-4">
               <span className="text-2xl font-light text-white/90">
@@ -235,7 +235,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             >
               <School className="w-8 h-8 text-white" />
             </div>
-            <h2 className="text-2xl font-bold" style={{ color: '#2563eb' }}>مارينا</h2>
+            <h2 className="text-2xl font-bold" style={{ color: '#2563eb' }}>مدرستي</h2>
             <p className="text-sm text-muted-foreground mt-1">نظام إدارة المدرسة</p>
           </div>
 
@@ -399,7 +399,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
               >
                 <p className="text-xs text-muted-foreground mb-1">من تطوير</p>
                 <p className="text-base font-extrabold tracking-[0.2em]" style={{ color: '#2563eb' }}>
-                  مارينا
+                  مدرستي
                 </p>
               </motion.div>
             </CardContent>
