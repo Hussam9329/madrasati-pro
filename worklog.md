@@ -2430,3 +2430,52 @@ Stage Summary:
 - Improved empty states with dashed borders and sub-hints
 - Consistent styling with `className="mt-1"` on all form inputs
 - No API or backend changes
+
+---
+Task ID: 3-a
+Agent: Feature Enhancement Agent
+Task: Add guided multi-step forms to StudentsPage and TeachersPage
+
+Work Log:
+- **StudentsPage.tsx - Multi-step Guided Form Enhancement**:
+  - Verified CheckCircle import already present from lucide-react
+  - Moved `setFormStep(0)` to immediately after `setEditingStudent(null)` in `openAddForm` (before `setForm`)
+  - Moved `setFormStep(0)` to immediately after `setEditingStudent(student)` in `openEditForm` (before `setForm`)
+  - Updated `validateStep` function:
+    - Changed step 0 error message from 'يرجى إدخال اسم الطالب' to 'يرجى إدخال اسم الطالب الرباعي'
+    - Split step 1 combined validation into separate checks for classId and sectionId with individual toast messages
+  - Replaced entire Add/Edit Student Dialog content with new 3-step guided form:
+    - Step indicators with emerald-500 completed state, primary active state, gray inactive state
+    - Progress bars between steps (emerald when completed)
+    - Step 1 (المعلومات الأساسية): Full name, gender, DOB, national ID, phone, address - reorganized layout with grid-cols-2 for compact display
+    - Step 2 (الصف والشعبة): Class and section selectors with amber warning when no sections exist for selected class
+    - Step 3 (معلومات ولي الأمر): Guardian info with blue info box noting fields are optional
+    - Navigation buttons: إلغاء/السابق/التالي/إضافة with inline validation on "التالي" click
+  - Replaced Eye icon with UserCircle icon in table action buttons, changed tooltip from "عرض" to "عرض الملف"
+  - Removed unused `Eye` import and `handleNextStep` function
+  - "نقل طالب" button was already absent from top bar (verified no ArrowRightLeft button exists in header)
+  - ArrowRightLeft import retained as it's used in transfer dialog
+
+- **TeachersPage.tsx - Multi-step Guided Form Enhancement**:
+  - Verified `formStep` state and `CheckCircle` import already present
+  - Moved `setFormStep(0)` to immediately after `setEditingTeacher(null)` in `openAddForm` (before `setForm`)
+  - Moved `setFormStep(0)` to immediately after `setEditingTeacher(teacher)` in `openEditForm` (before `setForm`)
+  - Removed old `validateStep` and `handleNextStep` functions
+  - Added new `validateTeacherStep` function after `toggleSubject` function
+  - Replaced entire Add/Edit Teacher Dialog content with new 2-step guided form:
+    - Step indicators with emerald-500 completed state, primary active state, gray inactive state
+    - Progress bar between steps (emerald when completed)
+    - Step 1 (المعلومات الشخصية): Full name, phone, email, status, notes - with className="mt-1" spacing
+    - Step 2 (المواد الدراسية): Subject selection with blue info box, checkbox grid, empty state message
+    - Navigation buttons: إلغاء/السابق/التالي/إضافة with inline validation on "التالي" click using `validateTeacherStep`
+
+- Build: Successful production build with no errors
+- Pushed to GitHub with commit message "إضافة نماذج إرشادية خطوة بخطوة للطلاب والأساتذة"
+
+Stage Summary:
+- StudentsPage: 3-step guided form with emerald progress indicators, separate validation per step, reorganized field layout
+- TeachersPage: 2-step guided form with emerald progress indicators, validateTeacherStep function, improved subject selection
+- Both forms now have: completed step emerald-500 checkmarks, active step primary highlight, progress bars, inline validation
+- Unused code cleaned up (Eye import, handleNextStep functions)
+- All UI text in Arabic, RTL layout preserved
+- Build passes, dev server running without errors
