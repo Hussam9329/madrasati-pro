@@ -24,6 +24,7 @@ import {
   Layers,
   Lightbulb,
   ClipboardList,
+  Wallet,
 } from 'lucide-react';
 import { useAppStore, type PageKey } from '@/lib/store';
 import { Button } from '@/components/ui/button';
@@ -49,6 +50,7 @@ const pageDescriptions: Record<PageKey, string> = {
   subjects: 'إدارة المواد الدراسية والمناهج',
   exams: 'إنشاء وإدارة أنواع الامتحانات',
   classes: 'إدارة الصفوف والشعب الدراسية',
+  payments: 'إدارة الأقساط والدفعات المالية',
   attendance: 'تتبع حضور الطلاب بالرمز QR',
   grades: 'إدارة الدرجات والنتائج الدراسية',
   schedule: 'تنظيم جدول الحصص الأسبوعي',
@@ -73,6 +75,7 @@ const navGroups: { label: string; items: { key: PageKey; label: string; icon: Re
     items: [
       { key: 'classes', label: 'الصفوف والشعب', icon: Layers },
       { key: 'exams', label: 'الامتحانات', icon: ClipboardList },
+      { key: 'payments', label: 'الأقساط', icon: Wallet },
       { key: 'attendance', label: 'الحضور QR', icon: ScanLine, badge: 'مباشر' },
       { key: 'grades', label: 'الدرجات', icon: FileText },
       { key: 'schedule', label: 'جدول الحصص', icon: Calendar },

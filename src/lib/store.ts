@@ -10,6 +10,7 @@ export type PageKey =
   | 'attendance' 
   | 'grades' 
   | 'classes'
+  | 'payments'
   | 'schedule'
   | 'reports' 
   | 'settings'

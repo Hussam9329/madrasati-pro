@@ -24,6 +24,7 @@ import {
   UserPlus,
   ClipboardCheck,
   ClipboardList,
+  Wallet,
   Moon,
   Layers,
 } from 'lucide-react';
@@ -41,6 +42,7 @@ const pageItems: { key: PageKey; label: string; icon: React.ElementType; group: 
   { key: 'teachers', label: 'الأساتذة', icon: Users, group: 'الرئيسية' },
   { key: 'subjects', label: 'المواد', icon: BookOpen, group: 'الرئيسية' },
   { key: 'exams', label: 'الامتحانات', icon: ClipboardList, group: 'الأكاديمية' },
+  { key: 'payments', label: 'الأقساط', icon: Wallet, group: 'الأكاديمية' },
   { key: 'classes', label: 'الصفوف والشعب', icon: Layers, group: 'الأكاديمية' },
   { key: 'attendance', label: 'الحضور QR', icon: ScanLine, group: 'الأكاديمية' },
   { key: 'grades', label: 'الدرجات', icon: FileText, group: 'الأكاديمية' },
@@ -53,6 +55,7 @@ const pageItems: { key: PageKey; label: string; icon: React.ElementType; group: 
 const quickActions = [
   { id: 'add-student', label: 'إضافة طالب', icon: UserPlus, page: 'students' as PageKey },
   { id: 'add-exam', label: 'إضافة امتحان', icon: ClipboardList, page: 'exams' as PageKey },
+  { id: 'add-payment', label: 'تسجيل دفعة', icon: Wallet, page: 'payments' as PageKey },
   { id: 'record-attendance', label: 'تسجيل حضور', icon: ClipboardCheck, page: 'attendance' as PageKey },
   { id: 'toggle-dark', label: 'تبديل الوضع الداكن', icon: Moon, page: null },
 ];

@@ -33,6 +33,8 @@ model School {
   sections      Section[]
   attendance    AttendanceRecord[]
   grades        Grade[]
+  feePlans      FeePlan[]
+  installments  Installment[]
   scheduleSlots ScheduleSlot[]
 }
 
@@ -53,6 +55,8 @@ model Class {
   subjects      SubjectClass[]
   scheduleSlots ScheduleSlot[]
   teacherAssignments TeacherClass[]
+  feePlans      FeePlan[]
+  installments  Installment[]
 }
 
 model Section {
@@ -99,6 +103,8 @@ model Student {
   school     School             @relation(fields: [schoolId], references: [id])
   attendance AttendanceRecord[]
   grades     Grade[]
+  installments Installment[]
+  payments   Payment[]
 }
 
 // ==================== TEACHERS ====================
@@ -228,6 +234,73 @@ model Grade {
   school       School   @relation(fields: [schoolId], references: [id])
 
   @@unique([studentId, subjectId, examTypeId])
+}
+
+// ==================== INSTALLMENTS & PAYMENTS (الأقساط والدفعات) ====================
+
+// Fee Plan - خطة الرسوم لكل صف
+model FeePlan {
+  id              String   @id @default(cuid())
+  name            String                    // اسم الخطة، مثل: القسط الأول، القسط الثاني
+  amount          Int                       // المبلغ بالدينار العراقي
+  classId         String                    // الصف المرتبط
+  schoolId        String
+  dueDate         String?                   // تاريخ الاستحقاق
+  description     String?                   // وصف اختياري
+  sortOrder       Int      @default(0)      // ترتيب الأقساط
+  active          Boolean  @default(true)   // مفعل أو لا
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  class           Class        @relation(fields: [classId], references: [id])
+  school          School       @relation(fields: [schoolId], references: [id])
+  installments    Installment[]
+}
+
+// Installment - قسط الطالب (ربط الطالب بخطة الرسوم)
+model Installment {
+  id              String   @id @default(cuid())
+  studentId       String
+  feePlanId       String
+  classId         String
+  schoolId        String
+  totalAmount     Int                       // المبلغ الإجمالي للقسط (بالدينار)
+  paidAmount      Int      @default(0)      // المبلغ المدفوع
+  remainingAmount Int                       // المبلغ المتبقي
+  discountType    String   @default("none") // نوع الخصم: none, percentage, fixed, free
+  discountValue   Int      @default(0)      // قيمة الخصم (نسبة مئوية أو مبلغ ثابت)
+  discountNotes   String?                   // ملاحظات الخصم
+  status          String   @default("غير مدفوع") // حالة القسط: غير مدفوع، مدفوع جزئياً، مدفوع بالكامل
+  dueDate         String?                   // تاريخ الاستحقاق
+  notes           String?                   // ملاحظات
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  student         Student   @relation(fields: [studentId], references: [id])
+  feePlan         FeePlan   @relation(fields: [feePlanId], references: [id])
+  class           Class     @relation(fields: [classId], references: [id])
+  school          School    @relation(fields: [schoolId], references: [id])
+  payments        Payment[]
+
+  @@unique([studentId, feePlanId])
+}
+
+// Payment - الدفعة (دفعة مالية ضمن قسط)
+model Payment {
+  id              String   @id @default(cuid())
+  installmentId   String
+  studentId       String
+  amount          Int                       // مبلغ الدفعة بالدينار العراقي
+  paymentDate     String                    // تاريخ الدفع
+  paymentMethod   String   @default("نقدي") // طريقة الدفع: نقدي، تحويل، شيك
+  receiptNumber   String?                   // رقم الوصل
+  notes           String?                   // ملاحظات
+  recordedBy      String?                   // من سجل الدفعة
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  installment     Installment @relation(fields: [installmentId], references: [id])
+  student         Student     @relation(fields: [studentId], references: [id])
 }
 
 // ==================== SCHEDULE ====================

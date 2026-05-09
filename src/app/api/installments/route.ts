@@ -1,0 +1,175 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { db } from '@/lib/db'
+
+// GET /api/installments — List installments (filter by studentId, classId)
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const studentId = searchParams.get('studentId')
+    const classId = searchParams.get('classId')
+    const status = searchParams.get('status')
+
+    const where: Record<string, unknown> = {}
+    if (studentId) where.studentId = studentId
+    if (classId) where.classId = classId
+    if (status) where.status = status
+
+    const installments = await db.installment.findMany({
+      where,
+      include: {
+        student: { select: { id: true, fullName: true, studentNumber: true } },
+        feePlan: { select: { id: true, name: true, amount: true } },
+        class: { select: { id: true, name: true } },
+        payments: { orderBy: { createdAt: 'desc' } }
+      },
+      orderBy: { createdAt: 'desc' }
+    })
+
+    return NextResponse.json(installments)
+  } catch (error) {
+    console.error('Error fetching installments:', error)
+    return NextResponse.json({ error: 'فشل في جلب الأقساط' }, { status: 500 })
+  }
+}
+
+// POST /api/installments — Create installments for a student (from fee plans)
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json()
+    const { studentId, feePlanId, discountType, discountValue, discountNotes, notes } = body
+
+    if (!studentId) {
+      return NextResponse.json({ error: 'يرجى اختيار الطالب' }, { status: 400 })
+    }
+    if (!feePlanId) {
+      return NextResponse.json({ error: 'يرجى اختيار خطة الرسوم' }, { status: 400 })
+    }
+
+    // Get student
+    const student = await db.student.findUnique({
+      where: { id: studentId },
+      include: { class: true }
+    })
+    if (!student) {
+      return NextResponse.json({ error: 'الطالب غير موجود' }, { status: 404 })
+    }
+
+    // Get fee plan
+    const feePlan = await db.feePlan.findUnique({ where: { id: feePlanId } })
+    if (!feePlan) {
+      return NextResponse.json({ error: 'خطة الرسوم غير موجودة' }, { status: 404 })
+    }
+
+    // Check if installment already exists for this student + feePlan
+    const existing = await db.installment.findUnique({
+      where: { studentId_feePlanId: { studentId, feePlanId } }
+    })
+    if (existing) {
+      return NextResponse.json({ error: 'هذا القسط مسجل بالفعل لهذا الطالب' }, { status: 400 })
+    }
+
+    // Calculate amount with discount
+    let totalAmount = feePlan.amount
+    const dType = discountType || 'none'
+    const dValue = discountValue || 0
+
+    if (dType === 'percentage' && dValue > 0) {
+      totalAmount = Math.round(feePlan.amount * (1 - dValue / 100))
+    } else if (dType === 'fixed' && dValue > 0) {
+      totalAmount = Math.max(0, feePlan.amount - dValue)
+    } else if (dType === 'free') {
+      totalAmount = 0
+    }
+
+    const installment = await db.installment.create({
+      data: {
+        studentId,
+        feePlanId,
+        classId: student.classId,
+        schoolId: student.schoolId,
+        totalAmount,
+        paidAmount: 0,
+        remainingAmount: totalAmount,
+        discountType: dType,
+        discountValue: dValue,
+        discountNotes: discountNotes || null,
+        status: 'غير مدفوع',
+        dueDate: feePlan.dueDate,
+        notes: notes || null,
+      },
+      include: {
+        student: { select: { id: true, fullName: true, studentNumber: true } },
+        feePlan: { select: { id: true, name: true, amount: true } },
+        class: { select: { id: true, name: true } },
+      }
+    })
+
+    return NextResponse.json(installment, { status: 201 })
+  } catch (error) {
+    console.error('Error creating installment:', error)
+    return NextResponse.json({ error: 'فشل في إنشاء القسط' }, { status: 500 })
+  }
+}
+
+// PUT /api/installments — Update installment (discount, notes)
+export async function PUT(request: NextRequest) {
+  try {
+    const body = await request.json()
+    const { id, discountType, discountValue, discountNotes, notes } = body
+
+    if (!id) {
+      return NextResponse.json({ error: 'معرف القسط مطلوب' }, { status: 400 })
+    }
+
+    const existing = await db.installment.findUnique({
+      where: { id },
+      include: { feePlan: true, payments: true }
+    })
+
+    if (!existing) {
+      return NextResponse.json({ error: 'القسط غير موجود' }, { status: 404 })
+    }
+
+    // Recalculate with new discount
+    const dType = discountType || existing.discountType
+    const dValue = discountValue ?? existing.discountValue
+    let totalAmount = existing.feePlan.amount
+
+    if (dType === 'percentage' && dValue > 0) {
+      totalAmount = Math.round(existing.feePlan.amount * (1 - dValue / 100))
+    } else if (dType === 'fixed' && dValue > 0) {
+      totalAmount = Math.max(0, existing.feePlan.amount - dValue)
+    } else if (dType === 'free') {
+      totalAmount = 0
+    }
+
+    // Ensure paid amount doesn't exceed new total
+    const paidAmount = Math.min(existing.paidAmount, totalAmount)
+    const remainingAmount = Math.max(0, totalAmount - paidAmount)
+    const status = paidAmount === 0 ? 'غير مدفوع' : paidAmount >= totalAmount ? 'مدفوع بالكامل' : 'مدفوع جزئياً'
+
+    const installment = await db.installment.update({
+      where: { id },
+      data: {
+        totalAmount,
+        paidAmount,
+        remainingAmount,
+        discountType: dType,
+        discountValue: dValue,
+        discountNotes: discountNotes !== undefined ? discountNotes : existing.discountNotes,
+        notes: notes !== undefined ? notes : existing.notes,
+        status,
+      },
+      include: {
+        student: { select: { id: true, fullName: true, studentNumber: true } },
+        feePlan: { select: { id: true, name: true, amount: true } },
+        class: { select: { id: true, name: true } },
+      }
+    })
+
+    return NextResponse.json(installment)
+  } catch (error) {
+    console.error('Error updating installment:', error)
+    return NextResponse.json({ error: 'فشل في تحديث القسط' }, { status: 500 })
+  }
+}
