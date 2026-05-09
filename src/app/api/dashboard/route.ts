@@ -4,17 +4,13 @@ import { db } from '@/lib/db';
 export async function GET() {
   try {
     // Total counts
-    const [
-      totalStudents,
-      totalTeachers,
-      totalSubjects,
-      totalClasses,
-    ] = await Promise.all([
-      db.student.count(),
-      db.teacher.count(),
-      db.subject.count(),
-      db.class.count(),
-    ]);
+    const totalStudents = await db.student.count();
+    const totalTeachers = await db.teacher.count();
+    const totalSubjects = await db.subject.count();
+    const totalClasses = await db.class.count();
+
+    // Active students count (for attendance % calculation)
+    const activeStudents = await db.student.count({ where: { status: 'مستمر' } });
 
     // Today's attendance statistics
     const today = new Date().toISOString().split('T')[0];
@@ -143,15 +139,25 @@ export async function GET() {
       };
     });
 
-    // Weekly attendance trend (last 7 days)
+    // Weekly attendance trend - fetch all records for last 7 days in ONE query
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 6);
+    const weekAgoStr = weekAgo.toISOString().split('T')[0];
+
+    const weekRecords = await db.attendanceRecord.findMany({
+      where: {
+        date: { gte: weekAgoStr },
+      },
+      select: {
+        date: true,
+        status: true,
+      },
+    });
+
+    // Group by date
     const dayNames: Record<string, string> = {
-      'Sun': 'الأحد',
-      'Mon': 'الإثنين',
-      'Tue': 'الثلاثاء',
-      'Wed': 'الأربعاء',
-      'Thu': 'الخميس',
-      'Fri': 'الجمعة',
-      'Sat': 'السبت',
+      'Sun': 'الأحد', 'Mon': 'الإثنين', 'Tue': 'الثلاثاء',
+      'Wed': 'الأربعاء', 'Thu': 'الخميس', 'Fri': 'الجمعة', 'Sat': 'السبت',
     };
 
     const weeklyTrend: Array<{ date: string; day: string; attendance: number; late: number; absent: number }> = [];
@@ -163,20 +169,14 @@ export async function GET() {
       const dayShort = d.toLocaleDateString('en', { weekday: 'short' });
       const dayAr = dayNames[dayShort] || dayShort;
 
-      const dayRecords = await db.attendanceRecord.findMany({
-        where: { date: dateStr },
-        select: { status: true },
-      });
-
-      const totalStudents = await db.student.count({ where: { status: 'مستمر' } });
-
+      const dayRecords = weekRecords.filter((r) => r.date === dateStr);
       const presentCount = dayRecords.filter((r) => r.status === 'حاضر').length;
       const lateCount = dayRecords.filter((r) => r.status === 'متأخر').length;
       const absentCount = dayRecords.filter((r) => r.status === 'غائب').length;
 
-      const attendancePercentage = totalStudents > 0
-        ? Math.round(((presentCount + lateCount) / totalStudents) * 100)
-        : (dayRecords.length > 0 ? Math.round(((presentCount + lateCount) / dayRecords.length) * 100) : 0);
+      const attendancePercentage = activeStudents > 0
+        ? Math.round(((presentCount + lateCount) / activeStudents) * 100)
+        : 0;
 
       weeklyTrend.push({
         date: dateStr,
@@ -187,8 +187,8 @@ export async function GET() {
       });
     }
 
-    // Class performance comparison (average grades per class)
-    const classesWithGrades = await db.class.findMany({
+    // Class performance comparison - fetch in ONE query
+    const allClasses = await db.class.findMany({
       include: {
         students: {
           where: { status: 'مستمر' },
@@ -201,10 +201,10 @@ export async function GET() {
       },
     });
 
-    const classPerformance = classesWithGrades
+    const classPerformance = allClasses
       .map((cls) => {
         const allGrades = cls.students.flatMap((s) => s.grades);
-        const totalScore = allGrades.reduce((sum, g) => sum + g.score, 0);
+        const totalScore = allGrades.reduce((sum, g) => sum + (g.score || 0), 0);
         const totalMax = allGrades.reduce((sum, g) => sum + g.maxScore, 0);
         const avgGrade = totalMax > 0 ? Math.round((totalScore / totalMax) * 100) : 0;
 

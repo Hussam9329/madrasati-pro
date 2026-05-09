@@ -339,7 +339,6 @@ export default function StudentsPage() {
     try {
       const res = await fetch(`/api/students/${deleteId}`, {
         method: 'DELETE',
-        headers: { Authorization: 'Bearer dummy-token' },
       })
       if (!res.ok) throw new Error()
       toast.success('تم الحذف', { description: 'تم حذف الطالب بنجاح' })
@@ -1028,8 +1027,8 @@ export default function StudentsPage() {
                             <GraduationCap className="h-5 w-5 text-white" />
                           </div>
                           <div>
-                            <h3 className="text-white text-lg font-bold">مدرستي</h3>
-                            <p className="text-white/80 text-xs">ثانوية الحسين للبنين</p>
+                            <h3 className="text-white text-lg font-bold">ثانوية مارينا</h3>
+                            <p className="text-white/80 text-xs">زيونة - الشارع الخدمي لدار الازياء</p>
                           </div>
                         </div>
                         <p className="text-white/70 text-[10px] mt-1">العام الدراسي 2025-2026</p>

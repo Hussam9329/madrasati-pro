@@ -1,10 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import QRCode from 'qrcode';
 import {
-  ArrowRight,
   Printer,
   Download,
   MessageSquare,
@@ -30,81 +29,62 @@ import {
   UserCircle,
   Star,
   BarChart3,
+  Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { useAppStore } from '@/lib/store';
 import { useToast } from '@/hooks/use-toast';
 
-// Mock student profile data
-const MOCK_PROFILE = {
-  id: '1',
-  studentNumber: 'STU-2025-001',
-  fullName: 'أحمد محمد عبدالله الحسيني',
-  gender: 'ذكر',
-  dateOfBirth: '2008-03-15',
-  nationalId: '12345678901',
-  phone: '0770-123-4567',
-  address: 'بغداد - الكرخ - شارع المدينة',
-  status: 'مستمر',
-  qrCode: 'STU-2025-001',
-  classId: '1',
-  sectionId: '1',
-  className: 'السادس الإعدادي',
-  sectionName: 'أ - علمي',
-  guardianName: 'محمد عبدالله الحسيني',
-  guardianPhone: '0771-987-6543',
-  guardianRelation: 'أب',
+interface StudentProfile {
+  id: string;
+  studentNumber: string;
+  fullName: string;
+  gender: string;
+  dateOfBirth: string;
+  nationalId: string;
+  phone: string;
+  address: string;
+  status: string;
+  qrCode: string;
+  classId: string;
+  sectionId: string;
+  className: string;
+  sectionName: string;
+  guardianName: string;
+  guardianPhone: string;
+  guardianRelation: string;
   attendance: {
-    present: 85,
-    absent: 8,
-    late: 5,
-    excused: 2,
-    total: 100,
-    percentage: 85,
-    monthly: [
-      { month: 'يناير', percentage: 88 },
-      { month: 'فبراير', percentage: 82 },
-      { month: 'مارس', percentage: 85 },
-    ],
-  },
+    present: number;
+    absent: number;
+    late: number;
+    excused: number;
+    total: number;
+    percentage: number;
+    monthly: Array<{ month: string; percentage: number }>;
+  };
   grades: {
-    average: 78.5,
-    rank: 5,
-    totalStudents: 30,
-    passCount: 6,
-    failCount: 1,
-    subjects: [
-      { name: 'الرياضيات', score: 85, maxScore: 100, grade: 'جيد جداً' },
-      { name: 'الفيزياء', score: 72, maxScore: 100, grade: 'جيد' },
-      { name: 'الكيمياء', score: 90, maxScore: 100, grade: 'ممتاز' },
-      { name: 'اللغة العربية', score: 78, maxScore: 100, grade: 'جيد' },
-      { name: 'اللغة الإنجليزية', score: 65, maxScore: 100, grade: 'مقبول' },
-      { name: 'التربية الإسلامية', score: 88, maxScore: 100, grade: 'جيد جداً' },
-      { name: 'التاريخ', score: 71, maxScore: 100, grade: 'جيد' },
-    ],
-  },
+    average: number;
+    rank: number;
+    totalStudents: number;
+    passCount: number;
+    failCount: number;
+    subjects: Array<{ name: string; score: number; maxScore: number; grade: string }>;
+  };
   payment: {
-    totalFees: 1500000,
-    paid: 1000000,
-    remaining: 500000,
-    status: 'جزئي',
-    lastPaymentDate: '2025-02-15',
-    lastPaymentAmount: 500000,
-  },
-  activities: [
-    { id: 1, type: 'attendance', message: 'تم تسجيل حضور الطالب', date: '2025-03-04 08:05', icon: 'check' },
-    { id: 2, type: 'grade', message: 'تم رفع درجة الرياضيات - 85/100', date: '2025-03-03 10:30', icon: 'grade' },
-    { id: 3, type: 'late', message: 'تأخر 15 دقيقة', date: '2025-03-02 08:15', icon: 'clock' },
-    { id: 4, type: 'payment', message: 'تم استلام دفعة - 500,000 د.ع', date: '2025-02-15 09:00', icon: 'wallet' },
-    { id: 5, type: 'attendance', message: 'تم تسجيل حضور الطالب', date: '2025-02-14 07:55', icon: 'check' },
-  ],
-};
+    totalFees: number;
+    paid: number;
+    remaining: number;
+    status: string;
+    lastPaymentDate: string;
+    lastPaymentAmount: number;
+  };
+  activities: Array<{ id: string; type: string; message: string; date: string; icon: string }>;
+}
 
 interface StudentProfilePageProps {
   studentId?: string;
@@ -180,7 +160,7 @@ function CircularProgressRing({
 
 // Subject grade bar component
 function SubjectGradeBar({ name, score, maxScore, grade }: { name: string; score: number; maxScore: number; grade: string }) {
-  const percentage = (score / maxScore) * 100;
+  const percentage = maxScore > 0 ? (score / maxScore) * 100 : 0;
   const barColor =
     percentage >= 80 ? 'from-teal-400 to-emerald-500' :
     percentage >= 60 ? 'from-amber-400 to-amber-500' :
@@ -215,7 +195,7 @@ function SubjectGradeBar({ name, score, maxScore, grade }: { name: string; score
 }
 
 // Activity timeline item component
-function ActivityItem({ activity, index }: { activity: typeof MOCK_PROFILE.activities[0]; index: number }) {
+function ActivityItem({ activity, index }: { activity: StudentProfile['activities'][0]; index: number }) {
   const iconMap: Record<string, { icon: React.ElementType; color: string; bg: string }> = {
     check: { icon: CheckCircle2, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-100 dark:bg-emerald-900/30' },
     grade: { icon: FileText, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-100 dark:bg-amber-900/30' },
@@ -251,47 +231,212 @@ export default function StudentProfilePage({ studentId }: StudentProfilePageProp
   const { setActivePage, setSelectedStudentId } = useAppStore();
   const { toast } = useToast();
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
-  const [student, setStudent] = useState(MOCK_PROFILE);
+  const [student, setStudent] = useState<StudentProfile | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Fetch student data if studentId provided
+  // Fetch student data from API
   useEffect(() => {
-    if (studentId) {
-      const fetchStudent = async () => {
-        try {
-          const res = await fetch(`/api/students/${studentId}`);
-          if (res.ok) {
-            const data = await res.json();
-            // Merge API data with mock profile data for display
-            setStudent({
-              ...MOCK_PROFILE,
-              id: data.id,
-              studentNumber: data.studentNumber || MOCK_PROFILE.studentNumber,
-              fullName: data.fullName || MOCK_PROFILE.fullName,
-              gender: data.gender || MOCK_PROFILE.gender,
-              dateOfBirth: data.dateOfBirth || MOCK_PROFILE.dateOfBirth,
-              nationalId: data.nationalId || MOCK_PROFILE.nationalId,
-              phone: data.phone || MOCK_PROFILE.phone,
-              address: data.address || MOCK_PROFILE.address,
-              status: data.status || MOCK_PROFILE.status,
-              qrCode: data.qrCode || MOCK_PROFILE.qrCode,
-              className: data.class?.name || MOCK_PROFILE.className,
-              sectionName: data.section?.name || MOCK_PROFILE.sectionName,
-              guardianName: data.guardianName || MOCK_PROFILE.guardianName,
-              guardianPhone: data.guardianPhone || MOCK_PROFILE.guardianPhone,
-              guardianRelation: data.guardianRelation || MOCK_PROFILE.guardianRelation,
-            });
-          }
-        } catch {
-          toast({ title: 'خطأ', description: 'فشل في تحميل بيانات الطالب، يتم عرض بيانات تجريبية', variant: 'destructive' });
-          // Fall back to mock data
-        }
-      };
-      fetchStudent();
+    if (!studentId) {
+      setLoading(false);
+      return;
     }
+
+    const fetchStudentProfile = async () => {
+      try {
+        setLoading(true);
+        // Fetch basic student info
+        const studentRes = await fetch(`/api/students/${studentId}`);
+        if (!studentRes.ok) throw new Error('فشل جلب بيانات الطالب');
+        const studentData = await studentRes.json();
+
+        // Fetch attendance for this student
+        const attendanceRes = await fetch(`/api/attendance?studentId=${studentId}&limit=999`);
+        const attendanceData = attendanceRes.ok ? await attendanceRes.json() : { records: [] };
+        const records = attendanceData.records || attendanceData || [];
+
+        // Calculate attendance stats
+        const presentCount = records.filter((r: any) => r.status === 'حاضر').length;
+        const absentCount = records.filter((r: any) => r.status === 'غائب').length;
+        const lateCount = records.filter((r: any) => r.status === 'متأخر').length;
+        const excusedCount = records.filter((r: any) => r.status === 'مستأذن').length;
+        const totalCount = records.length;
+        const attPercentage = totalCount > 0 ? Math.round(((presentCount + lateCount) / totalCount) * 100) : 0;
+
+        // Calculate monthly attendance (last 3 months)
+        const monthNames = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+        const monthlyAttendance: Array<{ month: string; percentage: number }> = [];
+        for (let m = 2; m >= 0; m--) {
+          const d = new Date();
+          d.setMonth(d.getMonth() - m);
+          const monthStr = d.toISOString().slice(0, 7); // YYYY-MM
+          const monthRecords = records.filter((r: any) => r.date && r.date.startsWith(monthStr));
+          const mPresent = monthRecords.filter((r: any) => r.status === 'حاضر' || r.status === 'متأخر').length;
+          const mTotal = monthRecords.length;
+          monthlyAttendance.push({
+            month: monthNames[d.getMonth()],
+            percentage: mTotal > 0 ? Math.round((mPresent / mTotal) * 100) : 0,
+          });
+        }
+
+        // Fetch grades for this student
+        const gradesRes = await fetch(`/api/grades?studentId=${studentId}`);
+        const gradesData = gradesRes.ok ? await gradesRes.json() : [];
+        const studentGrades = Array.isArray(gradesData) ? gradesData : (gradesData.grades || []);
+
+        // Calculate grade stats
+        const validGrades = studentGrades.filter((g: any) => g.score !== null && g.score !== undefined);
+        const totalScore = validGrades.reduce((sum: number, g: any) => sum + (g.score || 0), 0);
+        const totalMax = validGrades.reduce((sum: number, g: any) => sum + (g.maxScore || 100), 0);
+        const avgGrade = totalMax > 0 ? Math.round((totalScore / totalMax) * 100) : 0;
+
+        // Group grades by subject
+        const subjectMap = new Map<string, { name: string; score: number; maxScore: number }>();
+        for (const g of validGrades) {
+          const subjectName = g.subject?.name || g.subjectName || 'غير محدد';
+          const existing = subjectMap.get(subjectName);
+          if (existing) {
+            existing.score += g.score || 0;
+            existing.maxScore += g.maxScore || 100;
+          } else {
+            subjectMap.set(subjectName, { name: subjectName, score: g.score || 0, maxScore: g.maxScore || 100 });
+          }
+        }
+
+        const gradeLabel = (pct: number) =>
+          pct >= 90 ? 'ممتاز' : pct >= 80 ? 'جيد جداً' : pct >= 70 ? 'جيد' : pct >= 50 ? 'مقبول' : 'راسب';
+
+        const subjectsList = Array.from(subjectMap.values()).map(s => ({
+          name: s.name,
+          score: s.score,
+          maxScore: s.maxScore,
+          grade: gradeLabel(s.maxScore > 0 ? (s.score / s.maxScore) * 100 : 0),
+        }));
+
+        // Fetch payment/installment info
+        const installRes = await fetch(`/api/installments?studentId=${studentId}`);
+        const installData = installRes.ok ? await installRes.json() : [];
+        const installments = Array.isArray(installData) ? installData : (installData.installments || []);
+
+        const totalFees = installments.reduce((sum: number, i: any) => sum + (i.totalAmount || 0), 0);
+        const paidAmount = installments.reduce((sum: number, i: any) => sum + (i.paidAmount || 0), 0);
+        const remainingAmount = installments.reduce((sum: number, i: any) => sum + (i.remainingAmount || 0), 0);
+        const paymentStatus = totalFees === 0 ? 'غير محدد' :
+          remainingAmount <= 0 ? 'مدفوع' :
+          paidAmount > 0 ? 'جزئي' : 'غير مدفوع';
+
+        // Get last payment
+        const payRes = await fetch(`/api/payments?studentId=${studentId}&limit=1`);
+        const payData = payRes.ok ? await payRes.json() : [];
+        const payments = Array.isArray(payData) ? payData : (payData.payments || []);
+        const lastPayment = payments.length > 0 ? payments[0] : null;
+
+        // Build activities timeline from recent records
+        const activities: Array<{ id: string; type: string; message: string; date: string; icon: string }> = [];
+
+        // Recent attendance records
+        const recentAtt = records.slice(0, 5);
+        for (const r of recentAtt) {
+          const statusMap: Record<string, { msg: string; icon: string }> = {
+            'حاضر': { msg: 'تم تسجيل حضور الطالب', icon: 'check' },
+            'غائب': { msg: 'الطالب غائب', icon: 'alert' },
+            'متأخر': { msg: `تأخر ${r.lateMinutes || ''} دقيقة`, icon: 'clock' },
+            'مستأذن': { msg: 'الطالب مستأذن', icon: 'check' },
+            'خروج مبكر': { msg: 'خروج مبكر', icon: 'clock' },
+          };
+          const info = statusMap[r.status] || { msg: r.status, icon: 'check' };
+          activities.push({
+            id: `att-${r.id}`,
+            type: 'attendance',
+            message: info.msg,
+            date: `${r.date} ${r.checkIn || ''}`,
+            icon: info.icon,
+          });
+        }
+
+        // Recent grades
+        for (const g of validGrades.slice(0, 3)) {
+          activities.push({
+            id: `grade-${g.id}`,
+            type: 'grade',
+            message: `تم رفع درجة ${g.subject?.name || g.subjectName || ''} - ${g.score}/${g.maxScore}`,
+            date: new Date(g.createdAt).toLocaleString('ar-IQ'),
+            icon: 'grade',
+          });
+        }
+
+        // Recent payments
+        for (const p of payments.slice(0, 2)) {
+          activities.push({
+            id: `pay-${p.id}`,
+            type: 'payment',
+            message: `تم استلام دفعة - ${new Intl.NumberFormat('ar-IQ').format(p.amount)} د.ع`,
+            date: p.paymentDate || '',
+            icon: 'wallet',
+          });
+        }
+
+        // Sort activities by date (most recent first)
+        activities.sort((a, b) => b.date.localeCompare(a.date));
+
+        setStudent({
+          id: studentData.id,
+          studentNumber: studentData.studentNumber || '',
+          fullName: studentData.fullName || '',
+          gender: studentData.gender || 'ذكر',
+          dateOfBirth: studentData.dateOfBirth || '',
+          nationalId: studentData.nationalId || '',
+          phone: studentData.phone || '',
+          address: studentData.address || '',
+          status: studentData.status || 'مستمر',
+          qrCode: studentData.qrCode || studentData.studentNumber || '',
+          classId: studentData.classId || '',
+          sectionId: studentData.sectionId || '',
+          className: studentData.class?.name || '',
+          sectionName: studentData.section?.name || '',
+          guardianName: studentData.guardianName || '',
+          guardianPhone: studentData.guardianPhone || '',
+          guardianRelation: studentData.guardianRelation || '',
+          attendance: {
+            present: presentCount,
+            absent: absentCount,
+            late: lateCount,
+            excused: excusedCount,
+            total: totalCount,
+            percentage: attPercentage,
+            monthly: monthlyAttendance,
+          },
+          grades: {
+            average: avgGrade,
+            rank: 0,
+            totalStudents: 0,
+            passCount: 0,
+            failCount: 0,
+            subjects: subjectsList,
+          },
+          payment: {
+            totalFees,
+            paid: paidAmount,
+            remaining: remainingAmount,
+            status: paymentStatus,
+            lastPaymentDate: lastPayment?.paymentDate || '',
+            lastPaymentAmount: lastPayment?.amount || 0,
+          },
+          activities: activities.slice(0, 10),
+        });
+      } catch (error) {
+        console.error('Error loading student profile:', error);
+        toast({ title: 'خطأ', description: 'فشل في تحميل بيانات الطالب', variant: 'destructive' });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStudentProfile();
   }, [studentId]);
 
   // Generate QR code
   useEffect(() => {
+    if (!student) return;
     const generateQR = async () => {
       try {
         const url = await QRCode.toDataURL(student.qrCode || student.studentNumber, {
@@ -301,18 +446,18 @@ export default function StudentProfilePage({ studentId }: StudentProfilePageProp
         });
         setQrCodeUrl(url);
       } catch {
-        toast({ title: 'تنبيه', description: 'فشل في توليد رمز QR' });
         // QR generation failed
       }
     };
     generateQR();
-  }, [student.qrCode, student.studentNumber]);
+  }, [student?.qrCode, student?.studentNumber]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('ar-IQ').format(amount) + ' د.ع';
   };
 
   const formatDate = (dateStr: string) => {
+    if (!dateStr) return '—';
     try {
       return new Date(dateStr).toLocaleDateString('ar-IQ', {
         year: 'numeric',
@@ -336,7 +481,33 @@ export default function StudentProfilePage({ studentId }: StudentProfilePageProp
     'مدفوع': 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
     'جزئي': 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
     'غير مدفوع': 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+    'غير محدد': 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400',
   };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-10 h-10 animate-spin text-teal-600" />
+          <p className="text-muted-foreground">جاري تحميل بيانات الطالب...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // No student selected
+  if (!student) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="flex flex-col items-center gap-4">
+          <User className="w-16 h-16 text-muted-foreground/30" />
+          <p className="text-muted-foreground">لم يتم تحديد طالب</p>
+          <Button variant="outline" onClick={() => setActivePage('students')}>العودة لقائمة الطلاب</Button>
+        </div>
+      </div>
+    );
+  }
 
   const attendanceColor = student.attendance.percentage >= 90 ? '#059669' :
     student.attendance.percentage >= 75 ? '#f59e0b' : '#ef4444';
@@ -345,7 +516,7 @@ export default function StudentProfilePage({ studentId }: StudentProfilePageProp
     student.grades.average >= 60 ? 'text-amber-600 dark:text-amber-400' :
     'text-red-600 dark:text-red-400';
 
-  const initials = student.fullName.split(' ').map(w => w[0]).join('').slice(0, 2);
+  const initials = student.fullName.charAt(0);
 
   return (
     <motion.div
@@ -376,7 +547,6 @@ export default function StudentProfilePage({ studentId }: StudentProfilePageProp
             className="relative p-6 text-white overflow-hidden"
             style={{ background: 'linear-gradient(135deg, #0d9488 0%, #059669 60%, #047857 100%)' }}
           >
-            {/* Decorative circles */}
             <div className="absolute -top-8 -left-8 w-32 h-32 rounded-full bg-white/10" />
             <div className="absolute -bottom-6 -right-6 w-24 h-24 rounded-full bg-white/10" />
             <div className="absolute top-4 left-1/3 w-16 h-16 rounded-full bg-white/5" />
@@ -398,7 +568,7 @@ export default function StudentProfilePage({ studentId }: StudentProfilePageProp
                 <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mt-2">
                   <span className="text-white/80 text-sm font-mono">{student.studentNumber}</span>
                   <span className="text-white/40">|</span>
-                  <span className="text-white/80 text-sm">{student.className} - {student.sectionName}</span>
+                  <span className="text-white/80 text-sm">{student.className} {student.sectionName && `- ${student.sectionName}`}</span>
                   <Badge className={cn('text-xs', statusColors[student.status] || 'bg-white/20 text-white border-white/30')}>
                     {student.status}
                   </Badge>
@@ -498,38 +668,47 @@ export default function StudentProfilePage({ studentId }: StudentProfilePageProp
                   </Badge>
                 </div>
 
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">المبلغ المدفوع</span>
-                    <span className="font-semibold text-emerald-600 dark:text-emerald-400">{formatCurrency(student.payment.paid)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">المبلغ المتبقي</span>
-                    <span className="font-semibold text-red-600 dark:text-red-400">{formatCurrency(student.payment.remaining)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">إجمالي الرسوم</span>
-                    <span className="font-bold dark:text-gray-200">{formatCurrency(student.payment.totalFees)}</span>
-                  </div>
-                </div>
+                {student.payment.totalFees > 0 ? (
+                  <>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">المبلغ المدفوع</span>
+                        <span className="font-semibold text-emerald-600 dark:text-emerald-400">{formatCurrency(student.payment.paid)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">المبلغ المتبقي</span>
+                        <span className="font-semibold text-red-600 dark:text-red-400">{formatCurrency(student.payment.remaining)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">إجمالي الرسوم</span>
+                        <span className="font-bold dark:text-gray-200">{formatCurrency(student.payment.totalFees)}</span>
+                      </div>
+                    </div>
 
-                {/* Payment progress */}
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>نسبة السداد</span>
-                    <span>{Math.round((student.payment.paid / student.payment.totalFees) * 100)}%</span>
-                  </div>
-                  <Progress
-                    value={(student.payment.paid / student.payment.totalFees) * 100}
-                    className="h-2.5"
-                  />
-                </div>
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>نسبة السداد</span>
+                        <span>{Math.round((student.payment.paid / student.payment.totalFees) * 100)}%</span>
+                      </div>
+                      <Progress
+                        value={(student.payment.paid / student.payment.totalFees) * 100}
+                        className="h-2.5"
+                      />
+                    </div>
 
-                <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3 text-xs">
-                  <p className="text-muted-foreground">آخر دفعة</p>
-                  <p className="font-semibold mt-0.5 dark:text-gray-200">{formatDate(student.payment.lastPaymentDate)}</p>
-                  <p className="text-emerald-600 dark:text-emerald-400 font-medium">{formatCurrency(student.payment.lastPaymentAmount)}</p>
-                </div>
+                    {student.payment.lastPaymentDate && (
+                      <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3 text-xs">
+                        <p className="text-muted-foreground">آخر دفعة</p>
+                        <p className="font-semibold mt-0.5 dark:text-gray-200">{formatDate(student.payment.lastPaymentDate)}</p>
+                        <p className="text-emerald-600 dark:text-emerald-400 font-medium">{formatCurrency(student.payment.lastPaymentAmount)}</p>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="text-center py-4 text-muted-foreground text-sm">
+                    لا توجد بيانات أقساط مسجلة
+                  </div>
+                )}
               </CardContent>
             </Card>
           </motion.div>
@@ -552,52 +731,57 @@ export default function StudentProfilePage({ studentId }: StudentProfilePageProp
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {/* Circular Progress */}
-                  <div className="flex justify-center relative">
-                    <CircularProgressRing
-                      percentage={student.attendance.percentage}
-                      size={120}
-                      strokeWidth={10}
-                      color={attendanceColor}
-                      label="نسبة الحضور"
-                      sublabel={`${student.attendance.present} من ${student.attendance.total}`}
-                    />
-                  </div>
-
-                  {/* Stats */}
-                  <div className="grid grid-cols-2 gap-2">
-                    <StatChip label="حاضر" value={student.attendance.present} color="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" />
-                    <StatChip label="غائب" value={student.attendance.absent} color="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" />
-                    <StatChip label="متأخر" value={student.attendance.late} color="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" />
-                    <StatChip label="مستأذن" value={student.attendance.excused} color="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" />
-                  </div>
-
-                  {/* Monthly mini chart */}
-                  <div className="space-y-2">
-                    <p className="text-xs font-medium text-muted-foreground">الحضور الشهري (آخر 3 أشهر)</p>
-                    <div className="flex items-end gap-3 justify-center">
-                      {student.attendance.monthly.map((m, i) => (
-                        <div key={i} className="flex flex-col items-center gap-1">
-                          <motion.div
-                            initial={{ height: 0 }}
-                            animate={{ height: `${m.percentage * 0.6}px` }}
-                            transition={{ duration: 0.6, delay: i * 0.15 }}
-                            className="w-10 rounded-t-md"
-                            style={{
-                              background: m.percentage >= 85
-                                ? 'linear-gradient(to top, #0d9488, #059669)'
-                                : m.percentage >= 70
-                                ? 'linear-gradient(to top, #f59e0b, #fbbf24)'
-                                : 'linear-gradient(to top, #ef4444, #f87171)',
-                              minHeight: '4px',
-                            }}
-                          />
-                          <span className="text-[10px] text-muted-foreground">{m.month}</span>
-                          <span className="text-[10px] font-semibold">{m.percentage}%</span>
+                  {student.attendance.total > 0 ? (
+                    <>
+                      <div className="flex justify-center relative">
+                        <CircularProgressRing
+                          percentage={student.attendance.percentage}
+                          size={120}
+                          strokeWidth={10}
+                          color={attendanceColor}
+                          label="نسبة الحضور"
+                          sublabel={`${student.attendance.present} من ${student.attendance.total}`}
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <StatChip label="حاضر" value={student.attendance.present} color="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" />
+                        <StatChip label="غائب" value={student.attendance.absent} color="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" />
+                        <StatChip label="متأخر" value={student.attendance.late} color="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" />
+                        <StatChip label="مستأذن" value={student.attendance.excused} color="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" />
+                      </div>
+                      {student.attendance.monthly.some(m => m.percentage > 0) && (
+                        <div className="space-y-2">
+                          <p className="text-xs font-medium text-muted-foreground">الحضور الشهري (آخر 3 أشهر)</p>
+                          <div className="flex items-end gap-3 justify-center">
+                            {student.attendance.monthly.map((m, i) => (
+                              <div key={i} className="flex flex-col items-center gap-1">
+                                <motion.div
+                                  initial={{ height: 0 }}
+                                  animate={{ height: `${m.percentage * 0.6}px` }}
+                                  transition={{ duration: 0.6, delay: i * 0.15 }}
+                                  className="w-10 rounded-t-md"
+                                  style={{
+                                    background: m.percentage >= 85
+                                      ? 'linear-gradient(to top, #0d9488, #059669)'
+                                      : m.percentage >= 70
+                                      ? 'linear-gradient(to top, #f59e0b, #fbbf24)'
+                                      : 'linear-gradient(to top, #ef4444, #f87171)',
+                                    minHeight: '4px',
+                                  }}
+                                />
+                                <span className="text-[10px] text-muted-foreground">{m.month}</span>
+                                <span className="text-[10px] font-semibold">{m.percentage}%</span>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      ))}
+                      )}
+                    </>
+                  ) : (
+                    <div className="flex items-center justify-center h-40 text-muted-foreground text-sm">
+                      لا توجد سجلات حضور
                     </div>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
             </motion.div>
@@ -615,35 +799,33 @@ export default function StudentProfilePage({ studentId }: StudentProfilePageProp
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {/* Average Score */}
-                  <div className="text-center">
-                    <div className="flex items-center justify-center gap-2">
-                      <Star className="w-5 h-5 text-amber-500" />
-                      <span className={cn('text-3xl font-bold', gradeAvgColor)}>{student.grades.average}</span>
-                      <span className="text-sm text-muted-foreground">/ 100</span>
+                  {student.grades.subjects.length > 0 ? (
+                    <>
+                      <div className="text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <Star className="w-5 h-5 text-amber-500" />
+                          <span className={cn('text-3xl font-bold', gradeAvgColor)}>{student.grades.average}</span>
+                          <span className="text-sm text-muted-foreground">/ 100</span>
+                        </div>
+                      </div>
+                      <Separator className="dark:bg-gray-700" />
+                      <div className="space-y-0.5 max-h-64 overflow-y-auto">
+                        {student.grades.subjects.map((subject, i) => (
+                          <SubjectGradeBar
+                            key={i}
+                            name={subject.name}
+                            score={subject.score}
+                            maxScore={subject.maxScore}
+                            grade={subject.grade}
+                          />
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex items-center justify-center h-40 text-muted-foreground text-sm">
+                      لا توجد درجات مسجلة
                     </div>
-                    <div className="flex items-center justify-center gap-3 mt-1 text-xs text-muted-foreground">
-                      <span>الترتيب: <strong className="dark:text-gray-200">{student.grades.rank}</strong> من {student.grades.totalStudents}</span>
-                      <span>|</span>
-                      <span className="text-emerald-600 dark:text-emerald-400">ناجح: {student.grades.passCount}</span>
-                      <span className="text-red-600 dark:text-red-400">راسب: {student.grades.failCount}</span>
-                    </div>
-                  </div>
-
-                  <Separator className="dark:bg-gray-700" />
-
-                  {/* Subject grades list */}
-                  <div className="space-y-0.5 max-h-64 overflow-y-auto">
-                    {student.grades.subjects.map((subject, i) => (
-                      <SubjectGradeBar
-                        key={i}
-                        name={subject.name}
-                        score={subject.score}
-                        maxScore={subject.maxScore}
-                        grade={subject.grade}
-                      />
-                    ))}
-                  </div>
+                  )}
                 </CardContent>
               </Card>
             </motion.div>
@@ -662,11 +844,17 @@ export default function StudentProfilePage({ studentId }: StudentProfilePageProp
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-0">
-                  {student.activities.map((activity, i) => (
-                    <ActivityItem key={activity.id} activity={activity} index={i} />
-                  ))}
-                </div>
+                {student.activities.length > 0 ? (
+                  <div className="space-y-0">
+                    {student.activities.map((activity, i) => (
+                      <ActivityItem key={activity.id} activity={activity} index={i} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">
+                    لا توجد نشاطات مسجلة
+                  </div>
+                )}
               </CardContent>
             </Card>
           </motion.div>

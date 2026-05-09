@@ -200,11 +200,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
   const userName = auth.user?.name || 'مستخدم';
   const userRole = auth.user?.role || '';
-  const userInitials = userName
-    .split(' ')
-    .map((w) => w[0])
-    .join('')
-    .slice(0, 2);
+  const userInitials = userName.charAt(0);
 
   const roleBadgeColor: Record<string, string> = {
     'مدير': 'bg-emerald-100 text-emerald-700 border-emerald-200',
@@ -240,7 +236,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
           {!sidebarCollapsed && (
             <div className="flex flex-col min-w-0">
               <span className="font-bold text-base leading-tight text-primary">
-                مدرستي
+                ثانوية مارينا
               </span>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span className="text-[11px] text-muted-foreground truncate">نظام إدارة المدرسة</span>
@@ -383,7 +379,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
         {!sidebarCollapsed ? (
           <div className="flex items-center justify-between">
             <div className="text-center flex-1">
-              <p className="text-[10px] text-muted-foreground/70">مدرسة مدرستي</p>
+              <p className="text-[10px] text-muted-foreground/70">ثانوية مارينا</p>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -646,7 +642,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
         <footer className="mt-auto border-t border-gray-200/60 dark:border-gray-700/50 px-4 py-3 bg-white/50 dark:bg-gray-900/50 relative z-10">
           <div className="flex items-center justify-between">
             <p className="text-[11px] text-muted-foreground">
-              مدرستي © {new Date().getFullYear()} — نظام إدارة المدرسة
+              ثانوية مارينا © {new Date().getFullYear()} — نظام إدارة المدرسة
             </p>
             <div className="flex items-center gap-3">
               <span className="text-[10px] text-muted-foreground/50 hidden sm:inline">
