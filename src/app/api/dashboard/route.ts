@@ -143,6 +143,81 @@ export async function GET() {
       };
     });
 
+    // Weekly attendance trend (last 7 days)
+    const dayNames: Record<string, string> = {
+      'Sun': 'الأحد',
+      'Mon': 'الإثنين',
+      'Tue': 'الثلاثاء',
+      'Wed': 'الأربعاء',
+      'Thu': 'الخميس',
+      'Fri': 'الجمعة',
+      'Sat': 'السبت',
+    };
+
+    const weeklyTrend: Array<{ date: string; day: string; attendance: number; late: number; absent: number }> = [];
+
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().split('T')[0];
+      const dayShort = d.toLocaleDateString('en', { weekday: 'short' });
+      const dayAr = dayNames[dayShort] || dayShort;
+
+      const dayRecords = await db.attendanceRecord.findMany({
+        where: { date: dateStr },
+        select: { status: true },
+      });
+
+      const totalStudents = await db.student.count({ where: { status: 'مستمر' } });
+
+      const presentCount = dayRecords.filter((r) => r.status === 'حاضر').length;
+      const lateCount = dayRecords.filter((r) => r.status === 'متأخر').length;
+      const absentCount = dayRecords.filter((r) => r.status === 'غائب').length;
+
+      const attendancePercentage = totalStudents > 0
+        ? Math.round(((presentCount + lateCount) / totalStudents) * 100)
+        : (dayRecords.length > 0 ? Math.round(((presentCount + lateCount) / dayRecords.length) * 100) : 0);
+
+      weeklyTrend.push({
+        date: dateStr,
+        day: dayAr,
+        attendance: attendancePercentage,
+        late: lateCount,
+        absent: absentCount,
+      });
+    }
+
+    // Class performance comparison (average grades per class)
+    const classesWithGrades = await db.class.findMany({
+      include: {
+        students: {
+          where: { status: 'مستمر' },
+          include: {
+            grades: {
+              select: { score: true, maxScore: true },
+            },
+          },
+        },
+      },
+    });
+
+    const classPerformance = classesWithGrades
+      .map((cls) => {
+        const allGrades = cls.students.flatMap((s) => s.grades);
+        const totalScore = allGrades.reduce((sum, g) => sum + g.score, 0);
+        const totalMax = allGrades.reduce((sum, g) => sum + g.maxScore, 0);
+        const avgGrade = totalMax > 0 ? Math.round((totalScore / totalMax) * 100) : 0;
+
+        return {
+          classId: cls.id,
+          className: cls.name,
+          avgGrade,
+          studentCount: cls.students.length,
+          gradeCount: allGrades.length,
+        };
+      })
+      .filter((cls) => cls.gradeCount > 0);
+
     // School info
     const school = await db.school.findFirst();
 
@@ -162,6 +237,8 @@ export async function GET() {
         count: s._count.status,
       })),
       classAttendanceStats,
+      weeklyAttendanceTrend: weeklyTrend,
+      classPerformance,
     });
   } catch (error) {
     console.error('Dashboard error:', error);

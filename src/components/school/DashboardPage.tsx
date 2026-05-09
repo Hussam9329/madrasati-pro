@@ -105,6 +105,20 @@ interface DashboardData {
     absent: number;
     attendancePercentage: number;
   }>;
+  weeklyAttendanceTrend: Array<{
+    date: string;
+    day: string;
+    attendance: number;
+    late: number;
+    absent: number;
+  }>;
+  classPerformance: Array<{
+    classId: string;
+    className: string;
+    avgGrade: number;
+    studentCount: number;
+    gradeCount: number;
+  }>;
 }
 
 const statusBadgeMap: Record<string, { label: string; className: string }> = {
@@ -130,26 +144,7 @@ const statusRowBorder: Record<string, string> = {
 
 const PIE_COLORS = ['#10b981', '#ef4444', '#f59e0b', '#f97316', '#06b6d4', '#8b5cf6', '#ec4899', '#6b7280'];
 
-// Mock data for weekly attendance trend
-const weeklyAttendanceTrend = [
-  { day: 'الأحد', attendance: 92, late: 3, absent: 5 },
-  { day: 'الإثنين', attendance: 88, late: 5, absent: 7 },
-  { day: 'الثلاثاء', attendance: 95, late: 2, absent: 3 },
-  { day: 'الأربعاء', attendance: 90, late: 4, absent: 6 },
-  { day: 'الخميس', attendance: 85, late: 6, absent: 9 },
-  { day: 'السبت', attendance: 78, late: 8, absent: 14 },
-  { day: 'الأحد*', attendance: 91, late: 3, absent: 6 },
-];
-
-// Mock data for class performance comparison
-const classPerformanceData = [
-  { className: 'الأول المتوسط', avgGrade: 78 },
-  { className: 'الثاني المتوسط', avgGrade: 72 },
-  { className: 'الثالث المتوسط', avgGrade: 81 },
-  { className: 'الرابع الإعدادي', avgGrade: 68 },
-  { className: 'الخامس الإعدادي', avgGrade: 74 },
-  { className: 'السادس الإعدادي', avgGrade: 85 },
-];
+// Data now comes from the API (weeklyAttendanceTrend and classPerformance)
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -921,96 +916,106 @@ export default function DashboardPage() {
             <CardDescription>نسبة الحضور وعدد المتأخرين والغائبين خلال آخر 7 أيام</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-72">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={weeklyAttendanceTrend} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-                  <XAxis
-                    dataKey="day"
-                    tick={{ fontSize: 12, fill: '#6b7280' }}
-                    axisLine={{ stroke: '#e5e7eb' }}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    yAxisId="left"
-                    tick={{ fontSize: 12, fill: '#6b7280' }}
-                    axisLine={{ stroke: '#e5e7eb' }}
-                    tickLine={false}
-                    domain={[60, 100]}
-                    label={{ value: 'نسبة الحضور %', angle: -90, position: 'insideLeft', style: { fontSize: 11, fill: '#9ca3af' } }}
-                  />
-                  <YAxis
-                    yAxisId="right"
-                    orientation="left"
-                    tick={{ fontSize: 12, fill: '#6b7280' }}
-                    axisLine={{ stroke: '#e5e7eb' }}
-                    tickLine={false}
-                    domain={[0, 'auto']}
-                    label={{ value: 'عدد الطلاب', angle: 90, position: 'insideRight', style: { fontSize: 11, fill: '#9ca3af' } }}
-                  />
-                  <RechartsTooltip
-                    contentStyle={{
-                      borderRadius: '8px',
-                      border: 'none',
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                      fontFamily: 'inherit',
-                      direction: 'rtl',
-                    }}
-                    formatter={(value: number, name: string) => {
-                      const labels: Record<string, string> = {
-                        attendance: 'نسبة الحضور',
-                        late: 'المتأخرون',
-                        absent: 'الغائبون',
-                      };
-                      return [
-                        name === 'attendance' ? `${value}%` : value,
-                        labels[name] || name,
-                      ];
-                    }}
-                  />
-                  <Legend
-                    verticalAlign="top"
-                    iconType="circle"
-                    iconSize={8}
-                    formatter={(value: string) => {
-                      const labels: Record<string, string> = {
-                        attendance: 'نسبة الحضور',
-                        late: 'المتأخرون',
-                        absent: 'الغائبون',
-                      };
-                      return <span style={{ fontSize: '12px', color: '#6b7280' }}>{labels[value] || value}</span>;
-                    }}
-                  />
-                  <Line
-                    yAxisId="left"
-                    type="monotone"
-                    dataKey="attendance"
-                    stroke="#2563eb"
-                    strokeWidth={3}
-                    dot={{ fill: '#2563eb', r: 4, strokeWidth: 2, stroke: '#fff' }}
-                    activeDot={{ r: 6 }}
-                  />
-                  <Line
-                    yAxisId="right"
-                    type="monotone"
-                    dataKey="late"
-                    stroke="#f59e0b"
-                    strokeWidth={2}
-                    dot={{ fill: '#f59e0b', r: 3, strokeWidth: 2, stroke: '#fff' }}
-                    activeDot={{ r: 5 }}
-                  />
-                  <Line
-                    yAxisId="right"
-                    type="monotone"
-                    dataKey="absent"
-                    stroke="#ef4444"
-                    strokeWidth={2}
-                    dot={{ fill: '#ef4444', r: 3, strokeWidth: 2, stroke: '#fff' }}
-                    activeDot={{ r: 5 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+            {loading ? (
+              <div className="flex items-center justify-center h-72">
+                <Loader2 className="w-8 h-8 animate-spin text-teal-500" />
+              </div>
+            ) : data?.weeklyAttendanceTrend && data.weeklyAttendanceTrend.some((d) => d.attendance > 0 || d.late > 0 || d.absent > 0) ? (
+              <div className="h-72">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={data.weeklyAttendanceTrend} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                    <XAxis
+                      dataKey="day"
+                      tick={{ fontSize: 12, fill: '#6b7280' }}
+                      axisLine={{ stroke: '#e5e7eb' }}
+                      tickLine={false}
+                    />
+                    <YAxis
+                      yAxisId="left"
+                      tick={{ fontSize: 12, fill: '#6b7280' }}
+                      axisLine={{ stroke: '#e5e7eb' }}
+                      tickLine={false}
+                      domain={[0, 100]}
+                      label={{ value: 'نسبة الحضور %', angle: -90, position: 'insideLeft', style: { fontSize: 11, fill: '#9ca3af' } }}
+                    />
+                    <YAxis
+                      yAxisId="right"
+                      orientation="left"
+                      tick={{ fontSize: 12, fill: '#6b7280' }}
+                      axisLine={{ stroke: '#e5e7eb' }}
+                      tickLine={false}
+                      domain={[0, 'auto']}
+                      label={{ value: 'عدد الطلاب', angle: 90, position: 'insideRight', style: { fontSize: 11, fill: '#9ca3af' } }}
+                    />
+                    <RechartsTooltip
+                      contentStyle={{
+                        borderRadius: '8px',
+                        border: 'none',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                        fontFamily: 'inherit',
+                        direction: 'rtl',
+                      }}
+                      formatter={(value: number, name: string) => {
+                        const labels: Record<string, string> = {
+                          attendance: 'نسبة الحضور',
+                          late: 'المتأخرون',
+                          absent: 'الغائبون',
+                        };
+                        return [
+                          name === 'attendance' ? `${value}%` : value,
+                          labels[name] || name,
+                        ];
+                      }}
+                    />
+                    <Legend
+                      verticalAlign="top"
+                      iconType="circle"
+                      iconSize={8}
+                      formatter={(value: string) => {
+                        const labels: Record<string, string> = {
+                          attendance: 'نسبة الحضور',
+                          late: 'المتأخرون',
+                          absent: 'الغائبون',
+                        };
+                        return <span style={{ fontSize: '12px', color: '#6b7280' }}>{labels[value] || value}</span>;
+                      }}
+                    />
+                    <Line
+                      yAxisId="left"
+                      type="monotone"
+                      dataKey="attendance"
+                      stroke="#2563eb"
+                      strokeWidth={3}
+                      dot={{ fill: '#2563eb', r: 4, strokeWidth: 2, stroke: '#fff' }}
+                      activeDot={{ r: 6 }}
+                    />
+                    <Line
+                      yAxisId="right"
+                      type="monotone"
+                      dataKey="late"
+                      stroke="#f59e0b"
+                      strokeWidth={2}
+                      dot={{ fill: '#f59e0b', r: 3, strokeWidth: 2, stroke: '#fff' }}
+                      activeDot={{ r: 5 }}
+                    />
+                    <Line
+                      yAxisId="right"
+                      type="monotone"
+                      dataKey="absent"
+                      stroke="#ef4444"
+                      strokeWidth={2}
+                      dot={{ fill: '#ef4444', r: 3, strokeWidth: 2, stroke: '#fff' }}
+                      activeDot={{ r: 5 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-72 text-muted-foreground text-sm">
+                لا توجد بيانات حضور أسبوعية
+              </div>
+            )}
           </CardContent>
         </Card>
       </motion.div>
@@ -1031,32 +1036,42 @@ export default function DashboardPage() {
             <CardDescription>متوسط الدرجات لكل صف دراسي</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={classPerformanceData} layout="vertical" margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
-                  <defs>
-                    <linearGradient id="classPerfGrad" x1="0" y1="0" x2="1" y2="0">
-                      <stop offset="0%" stopColor="#1d4ed8" />
-                      <stop offset="100%" stopColor="#10b981" />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-                  <XAxis type="number" domain={[0, 100]} tickFormatter={(v) => `${v}%`} tick={{ fontSize: 11 }} />
-                  <YAxis dataKey="className" type="category" width={120} tick={{ fontSize: 12 }} />
-                  <RechartsTooltip
-                    formatter={(value: number) => [`${value}%`, 'متوسط الدرجات']}
-                    contentStyle={{
-                      borderRadius: '8px',
-                      border: 'none',
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                      fontFamily: 'inherit',
-                      direction: 'rtl',
-                    }}
-                  />
-                  <Bar dataKey="avgGrade" name="متوسط الدرجات" radius={[0, 6, 6, 0]} fill="url(#classPerfGrad)" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            {loading ? (
+              <div className="flex items-center justify-center h-64">
+                <Loader2 className="w-8 h-8 animate-spin text-teal-500" />
+              </div>
+            ) : data?.classPerformance && data.classPerformance.length > 0 ? (
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={data.classPerformance} layout="vertical" margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                    <defs>
+                      <linearGradient id="classPerfGrad" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stopColor="#1d4ed8" />
+                        <stop offset="100%" stopColor="#10b981" />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                    <XAxis type="number" domain={[0, 100]} tickFormatter={(v) => `${v}%`} tick={{ fontSize: 11 }} />
+                    <YAxis dataKey="className" type="category" width={120} tick={{ fontSize: 12 }} />
+                    <RechartsTooltip
+                      formatter={(value: number) => [`${value}%`, 'متوسط الدرجات']}
+                      contentStyle={{
+                        borderRadius: '8px',
+                        border: 'none',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                        fontFamily: 'inherit',
+                        direction: 'rtl',
+                      }}
+                    />
+                    <Bar dataKey="avgGrade" name="متوسط الدرجات" radius={[0, 6, 6, 0]} fill="url(#classPerfGrad)" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-64 text-muted-foreground text-sm">
+                لا توجد بيانات أداء للصفوف
+              </div>
+            )}
           </CardContent>
         </Card>
       </motion.div>
