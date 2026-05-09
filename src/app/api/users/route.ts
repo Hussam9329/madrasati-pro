@@ -39,11 +39,11 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { username, password, name, role, active } = body;
+    const { username, name, role, active } = body;
 
-    if (!username || !password || !name) {
+    if (!username || !name) {
       return NextResponse.json(
-        { error: 'اسم المستخدم وكلمة المرور والاسم مطلوبون' },
+        { error: 'اسم المستخدم والاسم مطلوبان' },
         { status: 400 }
       );
     }
@@ -57,7 +57,8 @@ export async function POST(request: Request) {
       );
     }
 
-    const hashedPassword = hashPassword(password);
+    // كلمة مرور افتراضية = اسم المستخدم (لا يوجد تسجيل بكلمة مرور)
+    const hashedPassword = hashPassword(username);
 
     const user = await db.user.create({
       data: {

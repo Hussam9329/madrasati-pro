@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { GraduationCap, Eye, EyeOff, Loader2, Shield, School, Sparkles, Lightbulb, Info, AlertCircle } from 'lucide-react';
+import { GraduationCap, Loader2, Shield, School, Sparkles } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,14 +15,11 @@ interface LoginPageProps {
 
 export default function LoginPage({ onLogin }: LoginPageProps) {
   const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [typedText, setTypedText] = useState('');
   const welcomeText = 'مرحباً بك';
 
-  // Typing animation for welcome text
   useEffect(() => {
     let index = 0;
     const timer = setInterval(() => {
@@ -45,7 +42,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username }),
       });
 
       const data = await res.json();
@@ -73,7 +70,6 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
     }
   };
 
-  // Floating shapes data
   const floatingShapes = [
     { type: 'circle', size: 60, x: '10%', y: '15%', delay: 0, duration: 8 },
     { type: 'square', size: 40, x: '85%', y: '20%', delay: 1, duration: 10 },
@@ -91,21 +87,18 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
       <div
         className="hidden lg:flex lg:w-1/2 relative overflow-hidden items-center justify-center p-12 bg-gradient-to-br from-primary via-primary to-primary/80"
       >
-        {/* Gradient mesh background */}
         <div className="absolute inset-0">
           <div className="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full opacity-20" style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%)' }} />
           <div className="absolute top-1/4 -left-20 w-[400px] h-[400px] rounded-full opacity-15" style={{ background: 'radial-gradient(circle, rgba(52,211,153,0.4) 0%, transparent 70%)' }} />
           <div className="absolute -bottom-20 right-1/4 w-[350px] h-[350px] rounded-full opacity-10" style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%)' }} />
           <div className="absolute top-10 left-1/3 w-[200px] h-[200px] rounded-full opacity-15" style={{ background: 'radial-gradient(circle, rgba(110,231,183,0.3) 0%, transparent 70%)' }} />
           <div className="absolute bottom-1/3 right-10 w-[250px] h-[250px] rounded-full opacity-10" style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%)' }} />
-          {/* Grid pattern overlay */}
           <div className="absolute inset-0 opacity-5" style={{
             backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)',
             backgroundSize: '30px 30px',
           }} />
         </div>
 
-        {/* Floating geometric shapes */}
         {floatingShapes.map((shape, i) => (
           <motion.div
             key={i}
@@ -149,8 +142,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             <div className="w-24 h-24 rounded-2xl mx-auto mb-8 flex items-center justify-center bg-white/15 backdrop-blur-sm shadow-xl border border-white/20">
               <School className="w-12 h-12 text-white" />
             </div>
-            <h1 className="text-5xl font-bold mb-4 tracking-tight">مدرستي</h1>
-            {/* Typing animation for welcome text */}
+            <h1 className="text-5xl font-bold mb-4 tracking-tight">ثانوية مارينا</h1>
             <div className="h-10 flex items-center justify-center mb-4">
               <span className="text-2xl font-light text-white/90">
                 {typedText}
@@ -164,7 +156,6 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             <p className="text-lg text-white/70 mb-8 leading-relaxed">
               حضور ذكي بالـ QR · درجات دقيقة · جدول بدون تضاربات
             </p>
-            {/* Glassmorphism feature badges */}
             <div className="flex items-center justify-center gap-4 text-sm">
               <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 shadow-lg">
                 <span className="relative flex h-2 w-2">
@@ -195,16 +186,13 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
         </div>
       </div>
 
-      {/* Right login form panel - with gradient mesh background */}
+      {/* Right login form panel */}
       <div className="flex-1 flex items-center justify-center p-6 relative overflow-hidden bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
-        {/* Gradient mesh behind login card */}
         <div className="absolute inset-0">
           <div className="absolute top-0 right-0 w-[400px] h-[400px] opacity-30 dark:opacity-10" style={{ background: 'radial-gradient(circle, rgba(37,99,235,0.15) 0%, transparent 70%)' }} />
           <div className="absolute bottom-0 left-0 w-[350px] h-[350px] opacity-25 dark:opacity-10" style={{ background: 'radial-gradient(circle, rgba(29,78,216,0.12) 0%, transparent 70%)' }} />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] opacity-20 dark:opacity-5" style={{ background: 'radial-gradient(circle, rgba(37,99,235,0.08) 0%, transparent 60%)' }} />
         </div>
 
-        {/* Floating shapes on right panel */}
         <motion.div
           className="absolute top-[15%] right-[10%] w-16 h-16 rounded-full border border-blue-200/30 dark:border-blue-700/20"
           animate={{ y: [0, -15, 0], rotate: [0, 90, 0] }}
@@ -215,11 +203,6 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           animate={{ y: [0, 12, 0], rotate: [0, -45, 0] }}
           transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
         />
-        <motion.div
-          className="absolute top-[60%] right-[5%] w-8 h-8 rounded-full bg-blue-100/20 dark:bg-blue-900/10"
-          animate={{ y: [0, -8, 0], scale: [1, 1.1, 1] }}
-          transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
-        />
 
         <motion.div
           initial={{ opacity: 0, y: 40, scale: 0.95 }}
@@ -229,20 +212,16 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
         >
           {/* Mobile logo */}
           <div className="lg:hidden text-center mb-8">
-            <div
-              className="mx-auto mb-4 flex items-center justify-center w-16 h-16 rounded-xl shadow-lg bg-primary"
-            >
+            <div className="mx-auto mb-4 flex items-center justify-center w-16 h-16 rounded-xl shadow-lg bg-primary">
               <School className="w-8 h-8 text-white" />
             </div>
-            <h2 className="text-2xl font-bold text-primary">مدرستي</h2>
+            <h2 className="text-2xl font-bold text-primary">ثانوية مارينا</h2>
             <p className="text-sm text-muted-foreground mt-1">نظام إدارة المدرسة</p>
           </div>
 
           <Card className="shadow-2xl border-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl relative overflow-hidden">
-            {/* Gradient top accent */}
             <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-primary via-primary to-primary" />
 
-            {/* Shimmer effect */}
             <motion.div
               initial={{ x: '-100%' }}
               animate={{ x: '200%' }}
@@ -269,7 +248,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                 transition={{ delay: 0.3 }}
               >
                 <CardDescription className="text-base mt-1 dark:text-gray-400">
-                  أدخل بياناتك للوصول إلى النظام
+                  أدخل اسم المستخدم للوصول إلى النظام
                 </CardDescription>
               </motion.div>
             </CardHeader>
@@ -289,11 +268,10 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                     className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3"
                   >
                     <div className="flex items-center gap-2 mb-1.5">
-                      <AlertCircle className="w-4 h-4 text-red-500 dark:text-red-400 shrink-0" />
+                      <svg className="w-4 h-4 text-red-500 dark:text-red-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                       <span className="text-sm font-semibold text-red-700 dark:text-red-400">فشل تسجيل الدخول</span>
                     </div>
                     <p className="text-sm text-red-600 dark:text-red-400/80 mr-6">{error}</p>
-                    <p className="text-xs text-red-500 dark:text-red-400/60 mr-6 mt-1">يرجى التحقق من بيانات الدخول والمحاولة مرة أخرى</p>
                   </motion.div>
                 )}
 
@@ -314,6 +292,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                       required
                       disabled={loading}
                       dir="rtl"
+                      autoFocus
                     />
                     <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500">
                       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
@@ -321,50 +300,6 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="text-gray-700 dark:text-gray-300 font-medium text-sm">
-                    كلمة المرور
-                  </Label>
-                  <div className="relative">
-                    <Input
-                      id="password"
-                      name="password"
-                      autoComplete="current-password"
-                      type={showPassword ? 'text' : 'password'}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="أدخل كلمة المرور"
-                      className="h-12 text-base border-gray-200 dark:border-gray-700 focus:border-primary focus:ring-primary/20 rounded-xl pr-4 pl-12 dark:bg-gray-800/50 dark:text-gray-100"
-                      required
-                      disabled={loading}
-                      dir="rtl"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
-                      tabIndex={-1}
-                    >
-                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
-                  </div>
-                  {/* Info hint below password */}
-                  <div className="flex items-start gap-1.5 mt-1.5">
-                    <Info className="w-3.5 h-3.5 text-muted-foreground/60 mt-0.5 shrink-0" />
-                    <p className="text-xs text-muted-foreground/70">تأكد من إدخال بيانات الدخول الصحيحة الخاصة بك</p>
-                  </div>
-                  {/* Forgot password link */}
-                  <div className="flex justify-start mt-1">
-                    <button
-                      type="button"
-                      className="text-xs font-medium text-primary/80 hover:text-primary transition-colors hover:underline underline-offset-2"
-                    >
-                      نسيت كلمة المرور؟
-                    </button>
-                  </div>
-                </div>
-
-                {/* Enhanced login button with shimmer */}
                 <div className="relative overflow-hidden rounded-xl">
                   <Button
                     type="submit"
@@ -377,9 +312,8 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                         جاري تسجيل الدخول...
                       </span>
                     ) : (
-                      <span className="relative z-10">تسجيل الدخول</span>
+                      <span className="relative z-10">دخول</span>
                     )}
-                    {/* Shimmer/loading effect on button */}
                     {loading && (
                       <motion.div
                         className="absolute inset-0"
@@ -394,18 +328,6 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                     )}
                   </Button>
                 </div>
-
-                {/* Quick access hints */}
-                <div className="mt-4 p-3 bg-blue-50/50 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-800/30">
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <Lightbulb className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-                    <p className="text-xs text-blue-700 dark:text-blue-400 font-medium">للتجربة السريعة — استخدم هذه البيانات:</p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-xs text-blue-600 dark:text-blue-400">
-                    <div>المدير: <code className="bg-blue-100 dark:bg-blue-900/30 px-1.5 py-0.5 rounded text-blue-800 dark:text-blue-300">admin</code></div>
-                    <div>كلمة المرور: <code className="bg-blue-100 dark:bg-blue-900/30 px-1.5 py-0.5 rounded text-blue-800 dark:text-blue-300">admin123</code></div>
-                  </div>
-                </div>
               </motion.form>
 
               <motion.div
@@ -416,7 +338,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
               >
                 <p className="text-xs text-muted-foreground mb-1">من تطوير</p>
                 <p className="text-base font-extrabold tracking-[0.2em] text-primary">
-                  مدرستي
+                  ثانوية مارينا
                 </p>
               </motion.div>
             </CardContent>

@@ -1,9 +1,14 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 
+// قيم ثابتة غير قابلة للتغيير
+const FIXED_SCHOOL_NAME = 'ثانوية مارينا';
+const FIXED_SCHOOL_ADDRESS = 'زيونة - الشارع الخدمي لدار الازياء';
+
 export async function GET() {
   try {
-    const schools = await db.school.findMany({
+    // إذا لا توجد مدرسة، أنشئها تلقائيًا بالقيم الثابتة
+    let schools = await db.school.findMany({
       include: {
         _count: {
           select: {
@@ -16,9 +21,54 @@ export async function GET() {
       },
     });
 
-    // Return first (or only) school as the main school info
     if (schools.length === 0) {
-      return NextResponse.json({ school: null });
+      const school = await db.school.create({
+        data: {
+          name: FIXED_SCHOOL_NAME,
+          address: FIXED_SCHOOL_ADDRESS,
+          academicYear: '2026-2027',
+          schoolType: 'ثانوية اعتيادية',
+          shiftType: 'صباحي',
+          startTime: '08:00',
+          endTime: '13:30',
+          lateThreshold: 10,
+          weekendDays: '5,6',
+        },
+        include: {
+          _count: {
+            select: {
+              students: true,
+              teachers: true,
+              subjects: true,
+              classes: true,
+            },
+          },
+        },
+      });
+      return NextResponse.json({ school, schools: [school] });
+    }
+
+    // تأكد من أن الاسم والعنوان ثابتان دائمًا
+    if (schools[0].name !== FIXED_SCHOOL_NAME || schools[0].address !== FIXED_SCHOOL_ADDRESS) {
+      await db.school.update({
+        where: { id: schools[0].id },
+        data: {
+          name: FIXED_SCHOOL_NAME,
+          address: FIXED_SCHOOL_ADDRESS,
+        },
+      });
+      schools = await db.school.findMany({
+        include: {
+          _count: {
+            select: {
+              students: true,
+              teachers: true,
+              subjects: true,
+              classes: true,
+            },
+          },
+        },
+      });
     }
 
     return NextResponse.json({ school: schools[0], schools });
@@ -35,25 +85,25 @@ export async function PUT(request: Request) {
   try {
     const body = await request.json();
 
-    // Find existing school or create if none exists
     const existingSchools = await db.school.findMany();
 
     let school;
     if (existingSchools.length > 0) {
+      // تحديث مع تجاهل الاسم والعنوان (قيم ثابتة)
       school = await db.school.update({
         where: { id: existingSchools[0].id },
         data: {
-          name: body.name,
+          name: FIXED_SCHOOL_NAME,           // ثابت — لا يُغيَّر
+          address: FIXED_SCHOOL_ADDRESS,     // ثابت — لا يُغيَّر
           logo: body.logo,
-          address: body.address,
           phone: body.phone,
           email: body.email,
           principalName: body.principalName,
           academicYear: body.academicYear,
           schoolType: body.schoolType,
-          shiftType: body.shiftType,
-          startTime: body.startTime,
-          endTime: body.endTime,
+          shiftType: body.shiftType,         // configurable — يحدده المدير
+          startTime: body.startTime,         // configurable — يحدده المدير
+          endTime: body.endTime,             // configurable — يحدده المدير
           lateThreshold: body.lateThreshold,
           weekendDays: body.weekendDays,
         },
@@ -61,9 +111,9 @@ export async function PUT(request: Request) {
     } else {
       school = await db.school.create({
         data: {
-          name: body.name || 'مدرستي',
+          name: FIXED_SCHOOL_NAME,
+          address: FIXED_SCHOOL_ADDRESS,
           logo: body.logo,
-          address: body.address,
           phone: body.phone,
           email: body.email,
           principalName: body.principalName,

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { hashPassword, verifyToken } from '@/lib/auth';
+import { verifyToken } from '@/lib/auth';
 
 export async function PUT(
   request: Request,
@@ -18,16 +18,11 @@ export async function PUT(
       );
     }
 
-    // If updating password, hash it
     const data: Record<string, unknown> = {
       name: body.name,
       role: body.role,
       active: body.active,
     };
-
-    if (body.password) {
-      data.password = hashPassword(body.password);
-    }
 
     // If updating username, check uniqueness
     if (body.username && body.username !== existingUser.username) {

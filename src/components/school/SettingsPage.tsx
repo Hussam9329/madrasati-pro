@@ -86,8 +86,12 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
   const [school, setSchool] = useState<SchoolData | null>(null)
   const [loadingSchool, setLoadingSchool] = useState(true)
   const [savingSchool, setSavingSchool] = useState(false)
+  // اسم المدرسة والعنوان ثابتان غير قابلين للتغيير
+  const FIXED_SCHOOL_NAME = 'ثانوية مارينا'
+  const FIXED_SCHOOL_ADDRESS = 'زيونة - الشارع الخدمي لدار الازياء'
+
   const [schoolForm, setSchoolForm] = useState({
-    name: '', address: '', phone: '', email: '', principalName: '',
+    name: FIXED_SCHOOL_NAME, address: FIXED_SCHOOL_ADDRESS, phone: '', email: '', principalName: '',
     academicYear: '2026-2027', schoolType: 'ثانوية اعتيادية',
     shiftType: 'صباحي', startTime: '08:00', endTime: '13:30',
     lateThreshold: '10', weekendDays: '5,6',
@@ -98,7 +102,7 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
   const [loadingUsers, setLoadingUsers] = useState(false)
   const [userDialogOpen, setUserDialogOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<UserData | null>(null)
-  const [userForm, setUserForm] = useState({ username: '', password: '', name: '', role: 'موظف تسجيل', active: true })
+  const [userForm, setUserForm] = useState({ username: '', name: '', role: 'موظف تسجيل', active: true })
   const [savingUser, setSavingUser] = useState(false)
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null)
 
@@ -112,8 +116,8 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
         if (data.school) {
           setSchool(data.school)
           setSchoolForm({
-            name: data.school.name || '',
-            address: data.school.address || '',
+            name: FIXED_SCHOOL_NAME,
+            address: FIXED_SCHOOL_ADDRESS,
             phone: data.school.phone || '',
             email: data.school.email || '',
             principalName: data.school.principalName || '',
@@ -186,14 +190,13 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
       setEditingUser(user)
       setUserForm({
         username: user.username,
-        password: '',
         name: user.name,
         role: user.role,
         active: user.active,
       })
     } else {
       setEditingUser(null)
-      setUserForm({ username: '', password: '', name: '', role: 'موظف تسجيل', active: true })
+      setUserForm({ username: '', name: '', role: 'موظف تسجيل', active: true })
     }
     setUserDialogOpen(true)
   }
@@ -204,10 +207,7 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
       return
     }
 
-    if (!editingUser && !userForm.password) {
-      toast.error('خطأ', { description: 'كلمة المرور مطلوبة للمستخدم الجديد' })
-      return
-    }
+
 
     setSavingUser(true)
     try {
@@ -218,7 +218,6 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
           role: userForm.role,
           active: userForm.active,
         }
-        if (userForm.password) body.password = userForm.password
         if (userForm.username !== editingUser.username) body.username = userForm.username
 
         const res = await fetch(`/api/users/${editingUser.id}`, {
@@ -359,15 +358,15 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
                       <Label className="flex items-center gap-1.5 text-gray-700">
                         <School className="h-3.5 w-3.5 text-teal-600" />
                         اسم المدرسة
+                        <span className="text-xs text-muted-foreground mr-1">(ثابت)</span>
                       </Label>
                       <Input
                         id="schoolName"
                         name="schoolName"
                         autoComplete="organization"
                         value={schoolForm.name}
-                        onChange={(e) => setSchoolForm({ ...schoolForm, name: e.target.value })}
-                        placeholder="اسم المدرسة"
-                        className="border-gray-200 focus:border-teal-500 focus:ring-teal-500/20"
+                        disabled
+                        className="border-gray-200 bg-gray-50 dark:bg-gray-800 cursor-not-allowed"
                       />
                     </div>
                     <div className="space-y-2">
@@ -389,15 +388,15 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
                       <Label className="flex items-center gap-1.5 text-gray-700">
                         <MapPin className="h-3.5 w-3.5 text-teal-600" />
                         العنوان
+                        <span className="text-xs text-muted-foreground mr-1">(ثابت)</span>
                       </Label>
                       <Input
                         id="address"
                         name="address"
                         autoComplete="street-address"
                         value={schoolForm.address}
-                        onChange={(e) => setSchoolForm({ ...schoolForm, address: e.target.value })}
-                        placeholder="عنوان المدرسة"
-                        className="border-gray-200 focus:border-teal-500 focus:ring-teal-500/20"
+                        disabled
+                        className="border-gray-200 bg-gray-50 dark:bg-gray-800 cursor-not-allowed"
                       />
                     </div>
                     <div className="space-y-2">
@@ -634,18 +633,7 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
                       dir="ltr"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label>{editingUser ? 'كلمة المرور الجديدة (اتركها فارغة للإبقاء)' : 'كلمة المرور'}</Label>
-                    <Input
-                      id="password"
-                      name="password"
-                      autoComplete="new-password"
-                      type="password"
-                      value={userForm.password}
-                      onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
-                      placeholder={editingUser ? 'اتركها فارغة للإبقاء' : 'أدخل كلمة المرور'}
-                    />
-                  </div>
+
                   <div className="space-y-2">
                     <Label>الدور</Label>
                     <Select value={userForm.role} onValueChange={(v) => setUserForm({ ...userForm, role: v })}>

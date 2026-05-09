@@ -1,15 +1,15 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { comparePassword, generateToken, type AuthUser } from '@/lib/auth';
+import { generateToken, type AuthUser } from '@/lib/auth';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { username, password } = body;
+    const { username } = body;
 
-    if (!username || !password) {
+    if (!username) {
       return NextResponse.json(
-        { error: 'اسم المستخدم وكلمة المرور مطلوبان' },
+        { error: 'اسم المستخدم مطلوب' },
         { status: 400 }
       );
     }
@@ -20,7 +20,7 @@ export async function POST(request: Request) {
 
     if (!user) {
       return NextResponse.json(
-        { error: 'اسم المستخدم أو كلمة المرور غير صحيحة' },
+        { error: 'اسم المستخدم غير موجود' },
         { status: 401 }
       );
     }
@@ -29,14 +29,6 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: 'هذا الحساب معطل. تواصل مع المسؤول' },
         { status: 403 }
-      );
-    }
-
-    const isValid = comparePassword(password, user.password);
-    if (!isValid) {
-      return NextResponse.json(
-        { error: 'اسم المستخدم أو كلمة المرور غير صحيحة' },
-        { status: 401 }
       );
     }
 
