@@ -48,6 +48,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { toast } from 'sonner'
+import { extractApiData } from '@/services/api'
 import { EmptyState } from '@/components/ui/empty-state'
 
 // ─── Types ───────────────────────────────────────────────────────
@@ -114,7 +115,7 @@ export default function ClassesPage() {
   const fetchClasses = useCallback(async () => {
     try {
       const res = await fetch('/api/classes')
-      const data = await res.json()
+      const data = extractApiData(await res.json())
       setClasses(data || [])
     } catch {
       toast.error('خطأ', { description: 'تعذر تحميل بيانات الصفوف. حاول مرة أخرى.' })
@@ -124,7 +125,7 @@ export default function ClassesPage() {
   const fetchTeachers = useCallback(async () => {
     try {
       const res = await fetch('/api/teachers')
-      const data = await res.json()
+      const data = extractApiData(await res.json())
       setTeachers((data || []).map((t: { id: string; fullName: string; notes?: string | null; subjects?: { subject: { name: string } }[] }) => ({
         id: t.id,
         fullName: t.fullName,
@@ -139,7 +140,7 @@ export default function ClassesPage() {
   const fetchSchool = useCallback(async () => {
     try {
       const res = await fetch('/api/school')
-      const data = await res.json()
+      const data = extractApiData(await res.json())
       if (data.school?.id) setSchoolId(data.school.id)
     } catch {
       // silent
@@ -149,7 +150,7 @@ export default function ClassesPage() {
   const fetchAssignments = useCallback(async () => {
     try {
       const res = await fetch('/api/teacher-classes')
-      const data = await res.json()
+      const data = extractApiData(await res.json())
       setTeacherAssignments(data || [])
     } catch {
       // silent

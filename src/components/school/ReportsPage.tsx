@@ -27,6 +27,7 @@ import {
   CartesianGrid, ResponsiveContainer, ScatterChart, Scatter, ZAxis
 } from 'recharts'
 import { toast } from 'sonner'
+import { extractApiData } from '@/services/api'
 import { EmptyState } from '@/components/ui/empty-state'
 import { exportToCSV } from '@/lib/export-utils'
 
@@ -80,9 +81,9 @@ export default function ReportsPage() {
           fetch('/api/classes'),
           fetch('/api/subjects'),
         ])
-        if (classesRes.ok) setClasses(await classesRes.json())
+        if (classesRes.ok) setClasses(extractApiData(await classesRes.json()))
         if (subjectsRes.ok) {
-          const subs = await subjectsRes.json()
+          const subs = extractApiData(await subjectsRes.json())
           setSubjects(subs.map((s: { id: string; name: string; code: string; passScore: number; maxScore: number }) => ({
             id: s.id, name: s.name, code: s.code, passScore: s.passScore, maxScore: s.maxScore,
           })))
@@ -109,7 +110,7 @@ export default function ReportsPage() {
 
         const res = await fetch(`/api/attendance?${params}`)
         if (res.ok) {
-          const data = await res.json()
+          const data = extractApiData(await res.json())
           setAttendanceRecords(data.records || [])
         }
       } else if (selectedReport?.includes('grade') || selectedReport === 'pass-rate' || selectedReport === 'top-students' || selectedReport === 'failed-students') {
@@ -119,7 +120,7 @@ export default function ReportsPage() {
 
         const res = await fetch(`/api/grades?${params}`)
         if (res.ok) {
-          const data = await res.json()
+          const data = extractApiData(await res.json())
           setGradeRecords(data.grades || [])
         }
       }

@@ -43,6 +43,7 @@ import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
+import { extractApiData } from '@/services/api'
 
 // Types
 import type { Teacher, SubjectItem } from '@/types'
@@ -76,7 +77,7 @@ export default function TeachersPage() {
   const fetchSchoolId = useCallback(async () => {
     try {
       const res = await fetch('/api/school')
-      const data = await res.json()
+      const data = extractApiData(await res.json())
       if (data.school?.id) {
         setSchoolId(data.school.id)
       }
@@ -93,7 +94,7 @@ export default function TeachersPage() {
       if (filterStatus !== 'all') params.set('status', filterStatus)
 
       const res = await fetch(`/api/teachers?${params}`)
-      const data = await res.json()
+      const data = extractApiData(await res.json())
       setTeachers(data || [])
     } catch {
       toast.error('خطأ', { description: 'تعذر تحميل بيانات المدرسين. حاول مرة أخرى.' })
@@ -105,7 +106,7 @@ export default function TeachersPage() {
   const fetchSubjects = useCallback(async () => {
     try {
       const res = await fetch('/api/subjects')
-      const data = await res.json()
+      const data = extractApiData(await res.json())
       setSubjects(data || [])
     } catch {
       // silent

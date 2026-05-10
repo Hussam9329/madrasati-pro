@@ -26,6 +26,7 @@ import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Progress } from '@/components/ui/progress'
 import { toast } from 'sonner'
+import { extractApiData } from '@/services/api'
 import { EmptyState } from '@/components/ui/empty-state'
 
 // Types
@@ -99,9 +100,9 @@ export default function PaymentsPage() {
         fetch('/api/fee-plans'),
         fetch('/api/installments'),
       ])
-      if (classesRes.ok) setClasses(await classesRes.json())
-      if (feePlansRes.ok) setFeePlans(await feePlansRes.json())
-      if (installmentsRes.ok) setInstallments(await installmentsRes.json())
+      if (classesRes.ok) setClasses(extractApiData(await classesRes.json()))
+      if (feePlansRes.ok) setFeePlans(extractApiData(await feePlansRes.json()))
+      if (installmentsRes.ok) setInstallments(extractApiData(await installmentsRes.json()))
     } catch {
       toast.error('خطأ', { description: 'تعذر تحميل البيانات. حاول مرة أخرى.' })
     } finally {
@@ -152,7 +153,7 @@ export default function PaymentsPage() {
       const params = new URLSearchParams({ limit: '200' })
       if (selectedClassId) params.set('classId', selectedClassId)
       const res = await fetch(`/api/students?${params}`)
-      const data = await res.json()
+      const data = extractApiData(await res.json())
       setStudents(data.students || [])
     } catch { setStudents([]) }
     setAssignFormOpen(true)

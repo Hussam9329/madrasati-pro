@@ -22,6 +22,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+import { extractApiData } from '@/services/api';
 import { EmptyState } from '@/components/ui/empty-state';
 import {
   AlertDialog,
@@ -74,23 +75,23 @@ export default function SchedulePage() {
           fetch('/api/subjects'),
         ]);
         if (schoolRes.ok) {
-          const sData = await schoolRes.json();
+          const sData = extractApiData(await schoolRes.json());
           if (sData.school) {
             setSchoolId(sData.school.id);
             setSelectedClassId(sData.school.id ? '' : '');
           }
         }
         if (classesRes.ok) {
-          const cData = await classesRes.json();
+          const cData = extractApiData(await classesRes.json());
           setClasses(cData);
           if (cData.length > 0) setSelectedClassId(cData[0].id);
         }
         if (teachersRes.ok) {
-          setTeachers(await teachersRes.json());
-          const tData = await teachersRes.json();
+          const tData = extractApiData(await teachersRes.json());
+          setTeachers(tData);
           if (tData.length > 0) setSelectedTeacherId(tData[0].id);
         }
-        if (subjectsRes.ok) setSubjects(await subjectsRes.json());
+        if (subjectsRes.ok) setSubjects(extractApiData(await subjectsRes.json()));
       } catch (err) {
         console.error('Failed to fetch data', err);
       }
@@ -110,7 +111,7 @@ export default function SchedulePage() {
 
         const res = await fetch(`/api/schedule?${params}`);
         if (res.ok) {
-          setSlots(await res.json());
+          setSlots(extractApiData(await res.json()));
         }
       } catch (err) {
         console.error('Failed to fetch schedule', err);
@@ -155,7 +156,7 @@ export default function SchedulePage() {
       if (viewMode === 'class' && selectedClassId) params.set('classId', selectedClassId);
       if (viewMode === 'teacher' && selectedTeacherId) params.set('teacherId', selectedTeacherId);
       const refreshRes = await fetch(`/api/schedule?${params}`);
-      if (refreshRes.ok) setSlots(await refreshRes.json());
+      if (refreshRes.ok) setSlots(extractApiData(await refreshRes.json()));
     } catch {
       toast.error('خطأ', { description: 'تعذر إضافة الحصة. حاول مرة أخرى.' });
     }

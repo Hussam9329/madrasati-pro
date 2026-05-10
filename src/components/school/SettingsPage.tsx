@@ -28,6 +28,7 @@ import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Switch } from '@/components/ui/switch'
 import { toast } from 'sonner'
+import { extractApiData } from '@/services/api'
 import { EmptyState } from '@/components/ui/empty-state'
 import {
   AlertDialog,
@@ -80,7 +81,7 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
     try {
       const res = await fetch('/api/school')
       if (res.ok) {
-        const data = await res.json()
+        const data = extractApiData(await res.json())
         if (data.school) {
           setSchool(data.school)
           setSchoolForm({
@@ -111,7 +112,7 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
     try {
       const res = await fetch('/api/users')
       if (res.ok) {
-        const data = await res.json()
+        const data = extractApiData(await res.json())
         setUsers(data)
       }
     } catch {

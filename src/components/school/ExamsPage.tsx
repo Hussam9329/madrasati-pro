@@ -25,6 +25,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
+import { extractApiData } from '@/services/api'
 import { EmptyState } from '@/components/ui/empty-state'
 
 // Types
@@ -65,7 +66,7 @@ export default function ExamsPage() {
     setLoading(true)
     try {
       const res = await fetch('/api/subjects')
-      const data = await res.json()
+      const data = extractApiData(await res.json())
       setSubjects(data || [])
       // Auto-select first subject if none selected
       if (data && data.length > 0 && !selectedSubjectId) {

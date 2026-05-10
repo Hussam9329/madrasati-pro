@@ -253,7 +253,9 @@ export default function DashboardPage() {
       const res = await fetch('/api/dashboard');
       if (!res.ok) throw new Error('فشل جلب البيانات');
       const json = await res.json();
-      setData(json);
+      // API returns { success: true, data: {...} } - extract the actual data
+      const dashboardData = json.data ?? json;
+      setData(dashboardData);
       if (refreshing) {
         toast.success('تم التحديث', { description: 'تم تحديث بيانات لوحة التحكم بنجاح' });
       }
@@ -294,7 +296,7 @@ export default function DashboardPage() {
     : [], [attendance]);
 
   // Stat cards config - memoized to avoid re-creating on every render
-  const statCards = useMemo(() => data
+  const statCards = useMemo(() => data?.totals
     ? [
         {
           title: 'إجمالي الطلاب',
@@ -371,10 +373,10 @@ export default function DashboardPage() {
       {/* Quick Setup Guide */}
       {!loading && data && (
         (() => {
-          const hasClasses = data.totals.classes > 0
-          const hasSubjects = data.totals.subjects > 0
-          const hasTeachers = data.totals.teachers > 0
-          const hasStudents = data.totals.students > 0
+          const hasClasses = (data.totals?.classes ?? 0) > 0
+          const hasSubjects = (data.totals?.subjects ?? 0) > 0
+          const hasTeachers = (data.totals?.teachers ?? 0) > 0
+          const hasStudents = (data.totals?.students ?? 0) > 0
           const hasGrades = data.gradeCompletion && data.gradeCompletion.some((g: { completionPercentage: number }) => g.completionPercentage > 0)
           const allDone = hasClasses && hasSubjects && hasTeachers && hasStudents && hasGrades
           

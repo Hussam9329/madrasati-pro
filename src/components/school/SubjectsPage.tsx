@@ -39,6 +39,7 @@ import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
+import { extractApiData } from '@/services/api'
 import { EmptyState } from '@/components/ui/empty-state'
 
 // Types
@@ -71,7 +72,7 @@ export default function SubjectsPage() {
     setLoading(true)
     try {
       const res = await fetch('/api/subjects')
-      const data = await res.json()
+      const data = extractApiData(await res.json())
       setSubjects(data || [])
     } catch {
       toast.error('خطأ', { description: 'تعذر تحميل بيانات المواد. حاول مرة أخرى.' })
@@ -83,7 +84,7 @@ export default function SubjectsPage() {
   const fetchTeachers = useCallback(async () => {
     try {
       const res = await fetch('/api/teachers')
-      const data = await res.json()
+      const data = extractApiData(await res.json())
       setTeachers((data || []).map((t: { id: string; fullName: string }) => ({
         id: t.id,
         fullName: t.fullName,
@@ -96,7 +97,7 @@ export default function SubjectsPage() {
   const fetchClasses = useCallback(async () => {
     try {
       const res = await fetch('/api/classes')
-      const data = await res.json()
+      const data = extractApiData(await res.json())
       setClasses(data || [])
     } catch {
       // silent

@@ -42,6 +42,7 @@ import { useAppStore } from '@/lib/store';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingState } from '@/components/ui/loading-state'
 import { EmptyState } from '@/components/ui/empty-state'
+import { extractApiData } from '@/services/api'
 
 interface StudentProfile {
   id: string;
@@ -250,11 +251,11 @@ export default function StudentProfilePage({ studentId }: StudentProfilePageProp
         // Fetch basic student info
         const studentRes = await fetch(`/api/students/${studentId}`);
         if (!studentRes.ok) throw new Error('فشل جلب بيانات الطالب');
-        const studentData = await studentRes.json();
+        const studentData = extractApiData(await studentRes.json());
 
         // Fetch attendance for this student
         const attendanceRes = await fetch(`/api/attendance?studentId=${studentId}&limit=999`);
-        const attendanceData = attendanceRes.ok ? await attendanceRes.json() : { records: [] };
+        const attendanceData = attendanceRes.ok ? extractApiData(await attendanceRes.json()) : { records: [] };
         const records = attendanceData.records || attendanceData || [];
 
         // Calculate attendance stats
@@ -283,7 +284,7 @@ export default function StudentProfilePage({ studentId }: StudentProfilePageProp
 
         // Fetch grades for this student
         const gradesRes = await fetch(`/api/grades?studentId=${studentId}`);
-        const gradesData = gradesRes.ok ? await gradesRes.json() : [];
+        const gradesData = gradesRes.ok ? extractApiData(await gradesRes.json()) : [];
         const studentGrades = Array.isArray(gradesData) ? gradesData : (gradesData.grades || []);
 
         // Calculate grade stats
@@ -317,7 +318,7 @@ export default function StudentProfilePage({ studentId }: StudentProfilePageProp
 
         // Fetch payment/installment info
         const installRes = await fetch(`/api/installments?studentId=${studentId}`);
-        const installData = installRes.ok ? await installRes.json() : [];
+        const installData = installRes.ok ? extractApiData(await installRes.json()) : [];
         const installments = Array.isArray(installData) ? installData : (installData.installments || []);
 
         const totalFees = installments.reduce((sum: number, i: any) => sum + (i.totalAmount || 0), 0);
@@ -329,7 +330,7 @@ export default function StudentProfilePage({ studentId }: StudentProfilePageProp
 
         // Get last payment
         const payRes = await fetch(`/api/payments?studentId=${studentId}&limit=1`);
-        const payData = payRes.ok ? await payRes.json() : [];
+        const payData = payRes.ok ? extractApiData(await payRes.json()) : [];
         const payments = Array.isArray(payData) ? payData : (payData.payments || []);
         const lastPayment = payments.length > 0 ? payments[0] : null;
 

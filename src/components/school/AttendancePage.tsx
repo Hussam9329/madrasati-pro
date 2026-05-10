@@ -24,6 +24,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
+import { extractApiData } from '@/services/api'
 import { EmptyState } from '@/components/ui/empty-state'
 
 // Types
@@ -115,7 +116,7 @@ export default function AttendancePage() {
     try {
       const res = await fetch('/api/classes')
       if (res.ok) {
-        const data = await res.json()
+        const data = extractApiData(await res.json())
         setClasses(data)
       }
     } catch {
@@ -130,7 +131,7 @@ export default function AttendancePage() {
       const today = new Date().toISOString().split('T')[0]
       const res = await fetch(`/api/attendance?date=${today}&limit=10`)
       if (res.ok) {
-        const data = await res.json()
+        const data = extractApiData(await res.json())
         setRecentScans(data.records || [])
       }
     } catch {
@@ -150,7 +151,7 @@ export default function AttendancePage() {
 
       const res = await fetch(`/api/attendance?${params}`)
       if (res.ok) {
-        const data = await res.json()
+        const data = extractApiData(await res.json())
         setRecords(data.records || [])
       }
     } catch {
@@ -186,7 +187,8 @@ export default function AttendancePage() {
         body: JSON.stringify({ qrCode: qrInput.trim(), type: scanMode }),
       })
 
-      const data = await res.json()
+      const raw = await res.json()
+      const data = res.ok ? extractApiData(raw) : raw
 
       if (!res.ok) {
         // Handle duplicate check-in/check-out (409 status)
@@ -951,7 +953,7 @@ export default function AttendancePage() {
                       try {
                         const res = await fetch(`/api/students?classId=${v}&limit=100`)
                         if (res.ok) {
-                          const data = await res.json()
+                          const data = extractApiData(await res.json())
                           setBulkStudents((data.students || []).map((s: { id: string; fullName: string; studentNumber: string; schoolId: string }) => ({
                             id: s.id,
                             fullName: s.fullName,
@@ -1136,7 +1138,7 @@ export default function AttendancePage() {
                             }),
                           })
                           if (!res.ok) throw new Error()
-                          const data = await res.json()
+                          const data = extractApiData(await res.json())
                           toast.success('تم الحفظ', { description: data.message || `تم حفظ ${bulkStudents.length} سجل حضور`, })
                           fetchRecords()
                           fetchRecentScans()

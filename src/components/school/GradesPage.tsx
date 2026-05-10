@@ -22,6 +22,7 @@ import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Progress } from '@/components/ui/progress'
 import { toast } from 'sonner'
+import { extractApiData } from '@/services/api'
 import { EmptyState } from '@/components/ui/empty-state'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/lib/store'
@@ -79,8 +80,8 @@ export default function GradesPage() {
           fetch('/api/classes'),
           fetch('/api/subjects'),
         ])
-        if (classesRes.ok) setClasses(await classesRes.json())
-        if (subjectsRes.ok) setSubjects(await subjectsRes.json())
+        if (classesRes.ok) setClasses(extractApiData(await classesRes.json()))
+        if (subjectsRes.ok) setSubjects(extractApiData(await subjectsRes.json()))
       } catch {
         console.error('Failed to fetch initial data')
       } finally {
@@ -120,7 +121,7 @@ export default function GradesPage() {
       if (selectedSectionId && selectedSectionId !== 'all') studentsParams.set('sectionId', selectedSectionId)
 
       const studentsRes = await fetch(`/api/students?${studentsParams}`)
-      const studentsData = await studentsRes.json()
+      const studentsData = extractApiData(await studentsRes.json())
 
       // Fetch existing grades
       const gradesParams = new URLSearchParams({
@@ -131,7 +132,7 @@ export default function GradesPage() {
       if (selectedClassId) gradesParams.set('classId', selectedClassId)
 
       const gradesRes = await fetch(`/api/grades?${gradesParams}`)
-      const gradesData = await gradesRes.json()
+      const gradesData = extractApiData(await gradesRes.json())
 
       const fetchedStudents: StudentData[] = studentsData.students || []
       const fetchedGrades: GradeData[] = gradesData.grades || []
@@ -266,7 +267,8 @@ export default function GradesPage() {
         body: JSON.stringify({ gradeIds, approvedBy: 'المدير' }),
       })
 
-      const data = await res.json()
+      const raw = await res.json()
+      const data = res.ok ? extractApiData(raw) : raw
 
       if (res.ok) {
         toast.success('تم الاعتماد', { description: data.message })

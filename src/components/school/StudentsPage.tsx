@@ -59,6 +59,7 @@ import { useAppStore } from '@/lib/store'
 import { EmptyState } from '@/components/ui/empty-state'
 import { ErrorState } from '@/components/ui/error-state'
 import { getUserMessage } from '@/utils/errors'
+import { extractApiData } from '@/services/api'
 
 // Types
 import type { Student, ClassItem, SectionItem } from '@/types'
@@ -124,7 +125,7 @@ export default function StudentsPage() {
       if (filterStatus !== 'all') params.set('status', filterStatus)
 
       const res = await fetch(`/api/students?${params}`)
-      const data = await res.json()
+      const data = extractApiData(await res.json())
       setStudents(data.students || [])
       setTotal(data.total || 0)
       setTotalPages(data.totalPages || 1)
@@ -138,7 +139,7 @@ export default function StudentsPage() {
   const fetchClasses = useCallback(async () => {
     try {
       const res = await fetch('/api/classes')
-      const data = await res.json()
+      const data = extractApiData(await res.json())
       setClasses(data || [])
     } catch {
       // silent fail for classes
@@ -156,7 +157,7 @@ export default function StudentsPage() {
   const openProfile = async (studentId: string) => {
     try {
       const res = await fetch(`/api/students/${studentId}`)
-      const data = await res.json()
+      const data = extractApiData(await res.json())
       setSelectedStudent(data)
       setProfileOpen(true)
       if (data.qrCode) {
@@ -321,7 +322,7 @@ export default function StudentsPage() {
   const handleExportCSV = async () => {
     try {
       const res = await fetch('/api/students?limit=1000')
-      const data = await res.json()
+      const data = extractApiData(await res.json())
       const allStudents: Student[] = data.students || []
       const csvData = allStudents.map(s => ({
         'الرقم': s.studentNumber,

@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { extractApiData } from '@/services/api';
 
 interface LoginPageProps {
   onLogin: (user: { id: string; username: string; name: string; role: string }, token: string) => void;
@@ -45,7 +46,8 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
         body: JSON.stringify({ username }),
       });
 
-      const data = await res.json();
+      const raw = await res.json();
+      const data = res.ok ? extractApiData(raw) : raw;
 
       if (!res.ok) {
         setError(data.error || 'حدث خطأ في تسجيل الدخول');

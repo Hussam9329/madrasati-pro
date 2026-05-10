@@ -56,13 +56,30 @@ export async function apiFetch<T = unknown>(
       return { data: null, error: message, ok: false };
     }
 
-    const data = await response.json() as T;
-    return { data, error: null, ok: true };
+    const result = await response.json();
+    // API responses are wrapped in { success: true, data: T } format
+    // Extract the actual data payload
+    const data = (result.success === true && result.data !== undefined) ? result.data : result;
+    return { data: data as T, error: null, ok: true };
   } catch (err) {
     const message = errorMessage || 'خطأ في الاتصال بالخادم';
     if (showToast) toast.error(message);
     return { data: null, error: message, ok: false };
   }
+}
+
+/**
+ * Extract data from API response that wraps results in { success, data } format.
+ * Use this when calling fetch() directly instead of apiFetch().
+ *
+ * API returns: { success: true, data: { ... } }
+ * This function extracts: { ... }
+ */
+export function extractApiData<T = unknown>(response: { success?: boolean; data?: T } | T): T {
+  if (response && typeof response === 'object' && 'success' in response && 'data' in response) {
+    return (response as { success: boolean; data: T }).data;
+  }
+  return response as T;
 }
 
 /**
