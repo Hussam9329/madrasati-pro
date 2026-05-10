@@ -1,5 +1,6 @@
-import { checkDb, successResponse, errorResponse, requirePermission, requireAnyPermission } from '@/services/api-response';
+import { checkDb, successResponse, errorResponse, validationErrorResponse, requirePermission, requireAnyPermission } from '@/services/api-response';
 import { db } from '@/lib/db';
+import { studentUpdateSchema } from '@/lib/validations';
 
 export async function GET(
   request: Request,
@@ -59,29 +60,36 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json();
 
+    // Validate input with Zod
+    const result = studentUpdateSchema.safeParse(body);
+    if (!result.success) {
+      return validationErrorResponse(result.error);
+    }
+
+    const data = result.data;
+
     const existingStudent = await db.student.findUnique({ where: { id } });
     if (!existingStudent) {
       return errorResponse('الطالب غير موجود', 404);
     }
 
+    // Only update fields that were provided (partial update)
+    const updateData: Record<string, unknown> = {};
+    const allowedFields = [
+      'fullName', 'gender', 'dateOfBirth', 'nationalId', 'phone',
+      'address', 'photo', 'status', 'classId', 'sectionId',
+      'guardianName', 'guardianPhone', 'guardianRelation', 'cardStatus',
+    ] as const;
+
+    for (const field of allowedFields) {
+      if ((data as Record<string, unknown>)[field] !== undefined) {
+        updateData[field] = (data as Record<string, unknown>)[field];
+      }
+    }
+
     const student = await db.student.update({
       where: { id },
-      data: {
-        fullName: body.fullName,
-        gender: body.gender,
-        dateOfBirth: body.dateOfBirth,
-        nationalId: body.nationalId,
-        phone: body.phone,
-        address: body.address,
-        photo: body.photo,
-        status: body.status,
-        classId: body.classId,
-        sectionId: body.sectionId,
-        guardianName: body.guardianName,
-        guardianPhone: body.guardianPhone,
-        guardianRelation: body.guardianRelation,
-        cardStatus: body.cardStatus,
-      },
+      data: updateData,
       include: {
         class: true,
         section: true,
@@ -114,12 +122,18 @@ export async function DELETE(
       return errorResponse('الطالب غير موجود', 404);
     }
 
-    // Delete related records first
-    await db.attendanceRecord.deleteMany({ where: { studentId: id } });
-    await db.grade.deleteMany({ where: { studentId: id } });
-    await db.student.delete({ where: { id } });
+    if (existingStudent.deletedAt) {
+      return errorResponse('هذا الطالب محذوف مسبقاً', 409);
+    }
 
-    return successResponse(null, 'تم حذف الطالب بنجاح');
+    // Soft delete — تعليم السجل كمحذوف بدلاً من حذفه فعلياً
+    // يمكن استرجاع البيانات لاحقاً إذا حُذفت بالخطأ
+    await db.student.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
+
+    return successResponse(null, 'تم حذف الطالب بنجاح. يمكن استرجاعه لاحقاً.');
   } catch (error) {
     console.error('Delete student error:', error);
     return errorResponse('حدث خطأ في حذف الطالب', 500);

@@ -39,7 +39,7 @@ import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
-import { extractApiData } from '@/services/api'
+import { extractApiData, fetchWithAuth } from '@/services/api'
 import { EmptyState } from '@/components/ui/empty-state'
 
 // Types
@@ -71,7 +71,7 @@ export default function SubjectsPage() {
   const fetchSubjects = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetch('/api/subjects')
+      const res = await fetchWithAuth('/api/subjects')
       const data = extractApiData(await res.json())
       setSubjects(data || [])
     } catch {
@@ -83,7 +83,7 @@ export default function SubjectsPage() {
 
   const fetchTeachers = useCallback(async () => {
     try {
-      const res = await fetch('/api/teachers')
+      const res = await fetchWithAuth('/api/teachers')
       const data = extractApiData(await res.json())
       setTeachers((data || []).map((t: { id: string; fullName: string }) => ({
         id: t.id,
@@ -96,7 +96,7 @@ export default function SubjectsPage() {
 
   const fetchClasses = useCallback(async () => {
     try {
-      const res = await fetch('/api/classes')
+      const res = await fetchWithAuth('/api/classes')
       const data = extractApiData(await res.json())
       setClasses(data || [])
     } catch {
@@ -169,7 +169,7 @@ export default function SubjectsPage() {
       const schoolId = subjects[0]?.schoolId || ''
 
       if (editingSubject) {
-        const res = await fetch(`/api/subjects/${editingSubject.id}`, {
+        const res = await fetchWithAuth(`/api/subjects/${editingSubject.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -188,7 +188,7 @@ export default function SubjectsPage() {
         }
         toast.success('تم التحديث', { description: 'تم تحديث بيانات المادة بنجاح' })
       } else {
-        const res = await fetch('/api/subjects', {
+        const res = await fetchWithAuth('/api/subjects', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -220,7 +220,7 @@ export default function SubjectsPage() {
   const handleDelete = async () => {
     if (!deleteId) return
     try {
-      const res = await fetch(`/api/subjects/${deleteId}`, { method: 'DELETE' })
+      const res = await fetchWithAuth(`/api/subjects/${deleteId}`, { method: 'DELETE' })
       if (!res.ok) throw new Error()
       toast.success('تم الحذف', { description: 'تم حذف المادة بنجاح' })
       fetchSubjects()

@@ -95,6 +95,8 @@ model Student {
   guardianPhone   String?
   guardianRelation String?
 
+  deletedAt       DateTime?  // Soft delete — الحذف الناعم (null = غير محذوف)
+
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -116,6 +118,9 @@ model Teacher {
   notes       String?
   status      String   @default("نشط")
   photo       String?
+
+  deletedAt   DateTime?  // Soft delete — الحذف الناعم (null = غير محذوف)
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

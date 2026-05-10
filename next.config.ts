@@ -81,6 +81,41 @@ const nextConfig: NextConfig = {
             key: "Referrer-Policy",
             value: "strict-origin-when-cross-origin",
           },
+          {
+            // HSTS — إجبار المتصفح على استخدام HTTPS
+            // max-age=63072000 = سنتان
+            // includeSubDomains = يشمل جميع النطاقات الفرعية
+            // preload = يمكن إضافته لقائمة HSTS preload
+            key: "Strict-Transport-Security",
+            value: "max-age=63072000; includeSubDomains; preload",
+          },
+          {
+            // Content-Security-Policy — منع XSS وحقن الكود الخبيث
+            // default-src 'self' = السماح فقط من نفس النطاق
+            // script-src 'self' 'unsafe-eval' 'unsafe-inline' = Next.js يحتاج eval و inline
+            // style-src = السماح بالأنماط المحلية و inline (مطلوب لـ Tailwind/shadcn)
+            // img-src = السماح بالصور المحلية + data: URIs + Cloudinary
+            // font-src = السماح بالخطوط المحلية
+            // connect-src = السماح بالاتصال بنفس النطاق + Neon WebSocket
+            // frame-ancestors 'none' = منع التضمين في iframe (مثل X-Frame-Options)
+            key: "Content-Security-Policy",
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data: blob: https://res.cloudinary.com",
+              "font-src 'self' data:",
+              "connect-src 'self' https://*.neon.tech wss://*.neon.tech",
+              "frame-ancestors 'none'",
+              "base-uri 'self'",
+              "form-action 'self'",
+            ].join("; "),
+          },
+          {
+            // منع كشف معلومات التقنيات المستخدمة
+            key: "X-Powered-By",
+            value: "",
+          },
         ],
       },
     ];

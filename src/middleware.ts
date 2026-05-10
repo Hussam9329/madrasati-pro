@@ -1,14 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
+import { apiRateLimiter, getClientIp } from '@/lib/rate-limit';
 
 /**
- * Middleware to protect API routes from unauthorized access.
+ * Middleware لحماية مسارات API والتحقق من المصادقة والصلاحيات.
  *
- * Public routes (no auth required):
+ * المسارات العامة (لا تتطلب مصادقة):
  *   - GET /api              (health check)
  *   - POST /api/auth/login  (login)
  *
- * All other /api/* routes require a valid Bearer token.
+ * جميع مسارات /api/* الأخرى تتطلب Bearer token صالح.
+ *
+ * ميزات إضافية:
+ *   - Rate limiting لمنع إساءة الاستخدام
+ *   - التحقق من صحة JWT قبل الوصول لأي مسار محمي
  */
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -16,6 +21,21 @@ export function middleware(request: NextRequest) {
   // Only protect /api routes
   if (!pathname.startsWith('/api/')) {
     return NextResponse.next();
+  }
+
+  // Rate limiting على جميع مسارات API
+  const clientIp = getClientIp(request);
+  const rateLimitResult = apiRateLimiter.check(clientIp);
+  if (!rateLimitResult.success) {
+    return NextResponse.json(
+      { success: false, error: 'طلبات كثيرة جداً. حاول بعد قليل.' },
+      {
+        status: 429,
+        headers: {
+          'Retry-After': String(Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000)),
+        },
+      }
+    );
   }
 
   // Public routes — no auth required

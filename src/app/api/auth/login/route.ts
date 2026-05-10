@@ -2,10 +2,19 @@ import { checkDb, successResponse, errorResponse, validationErrorResponse } from
 import { db } from '@/lib/db';
 import { generateToken, comparePassword, type AuthUser } from '@/lib/auth';
 import { loginSchema } from '@/lib/validations';
+import { loginRateLimiter, getClientIp } from '@/lib/rate-limit';
 
 export async function POST(request: Request) {
   const dbError = checkDb();
   if (dbError) return dbError;
+
+  // Rate limiting — منع هجمات القوة الغاشمة
+  const clientIp = getClientIp(request);
+  const rateLimitResult = loginRateLimiter.check(clientIp);
+  if (!rateLimitResult.success) {
+    const message = loginRateLimiter.getErrorMessage(clientIp);
+    return errorResponse(message, 429);
+  }
 
   try {
     const body = await request.json();
@@ -37,6 +46,9 @@ export async function POST(request: Request) {
       // Same generic message — don't reveal which part is wrong
       return errorResponse('اسم المستخدم أو كلمة المرور غير صحيحة', 401);
     }
+
+    // تسجيل دخول ناجح — إعادة تعيين عداد Rate Limit
+    loginRateLimiter.reset(clientIp);
 
     const authUser: AuthUser = {
       id: user.id,

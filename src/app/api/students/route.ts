@@ -19,7 +19,7 @@ export async function GET(request: Request) {
     const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '50')));
 
-    const where: Record<string, unknown> = {};
+    const where: Record<string, unknown> = { deletedAt: null };
 
     if (classId) where.classId = classId;
     if (sectionId) where.sectionId = sectionId;

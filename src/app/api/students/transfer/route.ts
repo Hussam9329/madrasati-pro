@@ -1,5 +1,6 @@
-import { checkDb, successResponse, errorResponse, requirePermission } from '@/services/api-response';
+import { checkDb, successResponse, errorResponse, validationErrorResponse, requirePermission } from '@/services/api-response';
 import { db } from '@/lib/db';
+import { studentTransferSchema } from '@/lib/validations';
 
 export async function PUT(request: Request) {
   const dbError = checkDb();
@@ -11,11 +12,14 @@ export async function PUT(request: Request) {
 
   try {
     const body = await request.json();
-    const { studentId, newClassId, newSectionId, reason } = body;
 
-    if (!studentId || !newClassId || !newSectionId) {
-      return errorResponse('معرف الطالب والصف الجديد والشعبة الجديدة مطلوبون', 400);
+    // Validate input with Zod
+    const result = studentTransferSchema.safeParse(body);
+    if (!result.success) {
+      return validationErrorResponse(result.error);
     }
+
+    const { studentId, newClassId, newSectionId, reason } = result.data;
 
     // Find the student
     const student = await db.student.findUnique({

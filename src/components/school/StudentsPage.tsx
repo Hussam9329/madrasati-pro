@@ -59,7 +59,7 @@ import { useAppStore } from '@/lib/store'
 import { EmptyState } from '@/components/ui/empty-state'
 import { ErrorState } from '@/components/ui/error-state'
 import { getUserMessage } from '@/utils/errors'
-import { extractApiData } from '@/services/api'
+import { extractApiData, fetchWithAuth } from '@/services/api'
 
 // Types
 import type { Student, ClassItem, SectionItem } from '@/types'
@@ -124,7 +124,7 @@ export default function StudentsPage() {
       if (filterClass !== 'all') params.set('classId', filterClass)
       if (filterStatus !== 'all') params.set('status', filterStatus)
 
-      const res = await fetch(`/api/students?${params}`)
+      const res = await fetchWithAuth(`/api/students?${params}`)
       const data = extractApiData(await res.json())
       setStudents(data.students || [])
       setTotal(data.total || 0)
@@ -138,7 +138,7 @@ export default function StudentsPage() {
 
   const fetchClasses = useCallback(async () => {
     try {
-      const res = await fetch('/api/classes')
+      const res = await fetchWithAuth('/api/classes')
       const data = extractApiData(await res.json())
       setClasses(data || [])
     } catch {
@@ -156,7 +156,7 @@ export default function StudentsPage() {
 
   const openProfile = async (studentId: string) => {
     try {
-      const res = await fetch(`/api/students/${studentId}`)
+      const res = await fetchWithAuth(`/api/students/${studentId}`)
       const data = extractApiData(await res.json())
       setSelectedStudent(data)
       setProfileOpen(true)
@@ -247,7 +247,7 @@ export default function StudentsPage() {
       const schoolId = selectedClass?.schoolId || ''
 
       if (editingStudent) {
-        const res = await fetch(`/api/students/${editingStudent.id}`, {
+        const res = await fetchWithAuth(`/api/students/${editingStudent.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(form),
@@ -255,7 +255,7 @@ export default function StudentsPage() {
         if (!res.ok) throw new Error()
         toast.success('تم التحديث', { description: 'تم تحديث بيانات الطالب بنجاح' })
       } else {
-        const res = await fetch('/api/students', {
+        const res = await fetchWithAuth('/api/students', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ...form, schoolId }),
@@ -275,7 +275,7 @@ export default function StudentsPage() {
   const handleDelete = async () => {
     if (!deleteId) return
     try {
-      const res = await fetch(`/api/students/${deleteId}`, {
+      const res = await fetchWithAuth(`/api/students/${deleteId}`, {
         method: 'DELETE',
       })
       if (!res.ok) throw new Error()
@@ -321,7 +321,7 @@ export default function StudentsPage() {
 
   const handleExportCSV = async () => {
     try {
-      const res = await fetch('/api/students?limit=1000')
+      const res = await fetchWithAuth('/api/students?limit=1000')
       const data = extractApiData(await res.json())
       const allStudents: Student[] = data.students || []
       const csvData = allStudents.map(s => ({
@@ -1199,7 +1199,7 @@ export default function StudentsPage() {
                 onClick={async () => {
                   setTransferSaving(true)
                   try {
-                    const res = await fetch('/api/students/transfer', {
+                    const res = await fetchWithAuth('/api/students/transfer', {
                       method: 'PUT',
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify(transferForm),

@@ -1,5 +1,6 @@
-import { checkDb, successResponse, errorResponse, requirePermission, requireAnyPermission } from '@/services/api-response';
+import { checkDb, successResponse, errorResponse, validationErrorResponse, requirePermission, requireAnyPermission } from '@/services/api-response';
 import { db } from '@/lib/db';
+import { attendanceCreateSchema } from '@/lib/validations';
 
 export async function GET(request: Request) {
   const dbError = checkDb();
@@ -70,6 +71,13 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
+
+    // Validate input with Zod
+    const result = attendanceCreateSchema.safeParse(body);
+    if (!result.success) {
+      return validationErrorResponse(result.error);
+    }
+
     const {
       studentId,
       schoolId,
@@ -81,11 +89,7 @@ export async function POST(request: Request) {
       earlyExitReason,
       earlyExitApproved,
       modifiedBy,
-    } = body;
-
-    if (!studentId || !schoolId || !date) {
-      return errorResponse('معرف الطالب والمدرسة والتاريخ مطلوبون', 400);
-    }
+    } = result.data;
 
     // Check if record already exists for this student on this date
     const existingRecord = await db.attendanceRecord.findFirst({

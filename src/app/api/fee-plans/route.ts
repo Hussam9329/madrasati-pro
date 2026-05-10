@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { checkDb, successResponse, errorResponse, validationErrorResponse, forbiddenResponse } from '@/services/api-response';
+import { checkDb, successResponse, errorResponse, validationErrorResponse, forbiddenResponse, requireAnyPermission } from '@/services/api-response';
 import { db } from '@/lib/db';
 import { feePlanCreateSchema } from '@/lib/validations';
 import { hasPermission } from '@/lib/auth';
@@ -7,6 +7,10 @@ import { hasPermission } from '@/lib/auth';
 export async function GET(request: NextRequest) {
   const dbError = checkDb();
   if (dbError) return dbError;
+
+  // عرض خطط الرسوم يتطلب صلاحية مناسبة
+  const authError = requireAnyPermission(request, ['students', 'payments_view']);
+  if (authError) return authError;
 
   try {
     const { searchParams } = new URL(request.url);

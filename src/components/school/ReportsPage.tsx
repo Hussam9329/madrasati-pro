@@ -27,7 +27,7 @@ import {
   CartesianGrid, ResponsiveContainer, ScatterChart, Scatter, ZAxis
 } from 'recharts'
 import { toast } from 'sonner'
-import { extractApiData } from '@/services/api'
+import { extractApiData, fetchWithAuth } from '@/services/api'
 import { EmptyState } from '@/components/ui/empty-state'
 import { exportToCSV } from '@/lib/export-utils'
 
@@ -78,8 +78,8 @@ export default function ReportsPage() {
     const fetchData = async () => {
       try {
         const [classesRes, subjectsRes] = await Promise.all([
-          fetch('/api/classes'),
-          fetch('/api/subjects'),
+          fetchWithAuth('/api/classes'),
+          fetchWithAuth('/api/subjects'),
         ])
         if (classesRes.ok) setClasses(extractApiData(await classesRes.json()))
         if (subjectsRes.ok) {
@@ -108,7 +108,7 @@ export default function ReportsPage() {
         }
         if (reportClassId !== 'all') params.set('classId', reportClassId)
 
-        const res = await fetch(`/api/attendance?${params}`)
+        const res = await fetchWithAuth(`/api/attendance?${params}`)
         if (res.ok) {
           const data = extractApiData(await res.json())
           setAttendanceRecords(data.records || [])
@@ -118,7 +118,7 @@ export default function ReportsPage() {
         if (reportSubjectId !== 'all') params.set('subjectId', reportSubjectId)
         if (reportClassId !== 'all') params.set('classId', reportClassId)
 
-        const res = await fetch(`/api/grades?${params}`)
+        const res = await fetchWithAuth(`/api/grades?${params}`)
         if (res.ok) {
           const data = extractApiData(await res.json())
           setGradeRecords(data.grades || [])

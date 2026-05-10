@@ -26,7 +26,7 @@ import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Progress } from '@/components/ui/progress'
 import { toast } from 'sonner'
-import { extractApiData } from '@/services/api'
+import { extractApiData, fetchWithAuth } from '@/services/api'
 import { EmptyState } from '@/components/ui/empty-state'
 
 // Types
@@ -96,9 +96,9 @@ export default function PaymentsPage() {
     setLoading(true)
     try {
       const [classesRes, feePlansRes, installmentsRes] = await Promise.all([
-        fetch('/api/classes'),
-        fetch('/api/fee-plans'),
-        fetch('/api/installments'),
+        fetchWithAuth('/api/classes'),
+        fetchWithAuth('/api/fee-plans'),
+        fetchWithAuth('/api/installments'),
       ])
       if (classesRes.ok) setClasses(extractApiData(await classesRes.json()))
       if (feePlansRes.ok) setFeePlans(extractApiData(await feePlansRes.json()))
@@ -120,7 +120,7 @@ export default function PaymentsPage() {
 
     setSavingFeePlan(true)
     try {
-      const res = await fetch('/api/fee-plans', {
+      const res = await fetchWithAuth('/api/fee-plans', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -152,7 +152,7 @@ export default function PaymentsPage() {
     try {
       const params = new URLSearchParams({ limit: '200' })
       if (selectedClassId) params.set('classId', selectedClassId)
-      const res = await fetch(`/api/students?${params}`)
+      const res = await fetchWithAuth(`/api/students?${params}`)
       const data = extractApiData(await res.json())
       setStudents(data.students || [])
     } catch { setStudents([]) }
@@ -169,7 +169,7 @@ export default function PaymentsPage() {
     let skipCount = 0
     try {
       for (const studentId of selectedStudents) {
-        const res = await fetch('/api/installments', {
+        const res = await fetchWithAuth('/api/installments', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -207,7 +207,7 @@ export default function PaymentsPage() {
 
     setSavingPayment(true)
     try {
-      const res = await fetch('/api/payments', {
+      const res = await fetchWithAuth('/api/payments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -233,7 +233,7 @@ export default function PaymentsPage() {
   const handleDeletePayment = async () => {
     if (!deletePaymentId) return
     try {
-      const res = await fetch(`/api/payments?id=${deletePaymentId}`, { method: 'DELETE' })
+      const res = await fetchWithAuth(`/api/payments?id=${deletePaymentId}`, { method: 'DELETE' })
       if (!res.ok) throw new Error()
       toast.success('تم الحذف', { description: 'تم حذف الدفعة بنجاح' })
       fetchData()

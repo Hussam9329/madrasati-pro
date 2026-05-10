@@ -28,7 +28,7 @@ import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Switch } from '@/components/ui/switch'
 import { toast } from 'sonner'
-import { extractApiData } from '@/services/api'
+import { extractApiData, fetchWithAuth } from '@/services/api'
 import { EmptyState } from '@/components/ui/empty-state'
 import {
   AlertDialog,
@@ -79,7 +79,7 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
   const fetchSchool = useCallback(async () => {
     setLoadingSchool(true)
     try {
-      const res = await fetch('/api/school')
+      const res = await fetchWithAuth('/api/school')
       if (res.ok) {
         const data = extractApiData(await res.json())
         if (data.school) {
@@ -110,7 +110,7 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
   const fetchUsers = useCallback(async () => {
     setLoadingUsers(true)
     try {
-      const res = await fetch('/api/users')
+      const res = await fetchWithAuth('/api/users')
       if (res.ok) {
         const data = extractApiData(await res.json())
         setUsers(data)
@@ -130,7 +130,7 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
   const handleSaveSchool = async () => {
     setSavingSchool(true)
     try {
-      const res = await fetch('/api/school', {
+      const res = await fetchWithAuth('/api/school', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -189,7 +189,7 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
         }
         if (userForm.username !== editingUser.username) body.username = userForm.username
 
-        const res = await fetch(`/api/users/${editingUser.id}`, {
+        const res = await fetchWithAuth(`/api/users/${editingUser.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
@@ -205,7 +205,7 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
         }
       } else {
         // Create user
-        const res = await fetch('/api/users', {
+        const res = await fetchWithAuth('/api/users', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(userForm),
@@ -230,7 +230,7 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
   const handleDeleteUser = async () => {
     if (!deleteUserId) return
     try {
-      const res = await fetch(`/api/users/${deleteUserId}`, { method: 'DELETE' })
+      const res = await fetchWithAuth(`/api/users/${deleteUserId}`, { method: 'DELETE' })
       if (res.ok) {
         toast.success('تم الحذف', { description: 'تم حذف المستخدم بنجاح' })
         fetchUsers()

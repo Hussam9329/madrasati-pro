@@ -1,5 +1,6 @@
-import { checkDb, successResponse, errorResponse, requirePermission, requireAnyPermission } from '@/services/api-response';
+import { checkDb, successResponse, errorResponse, validationErrorResponse, requirePermission, requireAnyPermission } from '@/services/api-response';
 import { db } from '@/lib/db';
+import { teacherCreateSchema } from '@/lib/validations';
 
 export async function GET(request: Request) {
   const dbError = checkDb();
@@ -15,7 +16,7 @@ export async function GET(request: Request) {
     const search = searchParams.get('search');
     const schoolId = searchParams.get('schoolId');
 
-    const where: Record<string, unknown> = {};
+    const where: Record<string, unknown> = { deletedAt: null };
     if (status) where.status = status;
     if (schoolId) where.schoolId = schoolId;
     if (search) {
@@ -59,6 +60,13 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
+
+    // Validate input with Zod
+    const result = teacherCreateSchema.safeParse(body);
+    if (!result.success) {
+      return validationErrorResponse(result.error);
+    }
+
     const {
       fullName,
       phone,
@@ -69,11 +77,7 @@ export async function POST(request: Request) {
       schoolId,
       subjectIds,
       classIds,
-    } = body;
-
-    if (!fullName || !schoolId) {
-      return errorResponse('اسم المعلم والمدرسة مطلوبان', 400);
-    }
+    } = result.data;
 
     const teacher = await db.teacher.create({
       data: {

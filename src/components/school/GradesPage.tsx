@@ -22,7 +22,7 @@ import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Progress } from '@/components/ui/progress'
 import { toast } from 'sonner'
-import { extractApiData } from '@/services/api'
+import { extractApiData, fetchWithAuth } from '@/services/api'
 import { EmptyState } from '@/components/ui/empty-state'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/lib/store'
@@ -77,8 +77,8 @@ export default function GradesPage() {
       setLoadingSubjects(true)
       try {
         const [classesRes, subjectsRes] = await Promise.all([
-          fetch('/api/classes'),
-          fetch('/api/subjects'),
+          fetchWithAuth('/api/classes'),
+          fetchWithAuth('/api/subjects'),
         ])
         if (classesRes.ok) setClasses(extractApiData(await classesRes.json()))
         if (subjectsRes.ok) setSubjects(extractApiData(await subjectsRes.json()))
@@ -120,7 +120,7 @@ export default function GradesPage() {
       if (selectedClassId) studentsParams.set('classId', selectedClassId)
       if (selectedSectionId && selectedSectionId !== 'all') studentsParams.set('sectionId', selectedSectionId)
 
-      const studentsRes = await fetch(`/api/students?${studentsParams}`)
+      const studentsRes = await fetchWithAuth(`/api/students?${studentsParams}`)
       const studentsData = extractApiData(await studentsRes.json())
 
       // Fetch existing grades
@@ -131,7 +131,7 @@ export default function GradesPage() {
       })
       if (selectedClassId) gradesParams.set('classId', selectedClassId)
 
-      const gradesRes = await fetch(`/api/grades?${gradesParams}`)
+      const gradesRes = await fetchWithAuth(`/api/grades?${gradesParams}`)
       const gradesData = extractApiData(await gradesRes.json())
 
       const fetchedStudents: StudentData[] = studentsData.students || []
@@ -221,7 +221,7 @@ export default function GradesPage() {
 
       for (const grade of gradesToSave) {
         try {
-          const res = await fetch('/api/grades', {
+          const res = await fetchWithAuth('/api/grades', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(grade),
@@ -261,7 +261,7 @@ export default function GradesPage() {
         return
       }
 
-      const res = await fetch('/api/grades/approve', {
+      const res = await fetchWithAuth('/api/grades/approve', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ gradeIds, approvedBy: 'المدير' }),

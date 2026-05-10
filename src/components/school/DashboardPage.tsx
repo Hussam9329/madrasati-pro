@@ -50,6 +50,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { fetchWithAuth } from '@/services/api';
 import { CHART_COLORS, containerVariants, itemVariants } from '@/lib/constants';
 import { ErrorState } from '@/components/ui/error-state';
 import { getUserMessage } from '@/utils/errors';
@@ -250,7 +251,7 @@ export default function DashboardPage() {
   const fetchData = useCallback(async () => {
     try {
       setError('');
-      const res = await fetch('/api/dashboard');
+      const res = await fetchWithAuth('/api/dashboard');
       if (!res.ok) throw new Error('فشل جلب البيانات');
       const json = await res.json();
       // API returns { success: true, data: {...} } - extract the actual data

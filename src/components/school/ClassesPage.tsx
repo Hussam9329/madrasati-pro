@@ -48,7 +48,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { toast } from 'sonner'
-import { extractApiData } from '@/services/api'
+import { extractApiData, fetchWithAuth } from '@/services/api'
 import { EmptyState } from '@/components/ui/empty-state'
 
 // ─── Types ───────────────────────────────────────────────────────
@@ -114,7 +114,7 @@ export default function ClassesPage() {
   // ─── Fetchers ─────────────────────────────────────────────────
   const fetchClasses = useCallback(async () => {
     try {
-      const res = await fetch('/api/classes')
+      const res = await fetchWithAuth('/api/classes')
       const data = extractApiData(await res.json())
       setClasses(data || [])
     } catch {
@@ -124,7 +124,7 @@ export default function ClassesPage() {
 
   const fetchTeachers = useCallback(async () => {
     try {
-      const res = await fetch('/api/teachers')
+      const res = await fetchWithAuth('/api/teachers')
       const data = extractApiData(await res.json())
       setTeachers((data || []).map((t: { id: string; fullName: string; notes?: string | null; subjects?: { subject: { name: string } }[] }) => ({
         id: t.id,
@@ -139,7 +139,7 @@ export default function ClassesPage() {
 
   const fetchSchool = useCallback(async () => {
     try {
-      const res = await fetch('/api/school')
+      const res = await fetchWithAuth('/api/school')
       const data = extractApiData(await res.json())
       if (data.school?.id) setSchoolId(data.school.id)
     } catch {
@@ -149,7 +149,7 @@ export default function ClassesPage() {
 
   const fetchAssignments = useCallback(async () => {
     try {
-      const res = await fetch('/api/teacher-classes')
+      const res = await fetchWithAuth('/api/teacher-classes')
       const data = extractApiData(await res.json())
       setTeacherAssignments(data || [])
     } catch {
@@ -223,7 +223,7 @@ export default function ClassesPage() {
 
     setSaving(true)
     try {
-      const res = await fetch('/api/classes', {
+      const res = await fetchWithAuth('/api/classes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -253,7 +253,7 @@ export default function ClassesPage() {
   const handleDelete = async () => {
     if (!deleteId) return
     try {
-      const res = await fetch(`/api/classes/${deleteId}`, { method: 'DELETE' })
+      const res = await fetchWithAuth(`/api/classes/${deleteId}`, { method: 'DELETE' })
       if (!res.ok) throw new Error()
       toast.success('تم الحذف', { description: 'تم حذف الصف بنجاح' })
       fetchClasses()
@@ -279,7 +279,7 @@ export default function ClassesPage() {
 
     setSaving(true)
     try {
-      const res = await fetch('/api/teacher-classes', {
+      const res = await fetchWithAuth('/api/teacher-classes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -304,7 +304,7 @@ export default function ClassesPage() {
 
   const handleRemoveAssignment = async (assignmentId: string) => {
     try {
-      const res = await fetch(`/api/teacher-classes?id=${assignmentId}`, { method: 'DELETE' })
+      const res = await fetchWithAuth(`/api/teacher-classes?id=${assignmentId}`, { method: 'DELETE' })
       if (!res.ok) throw new Error()
       toast.success('تم الإلغاء', { description: 'تم إلغاء تعيين الأستاذ بنجاح' })
       fetchAssignments()

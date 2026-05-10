@@ -1,5 +1,6 @@
-import { checkDb, successResponse, errorResponse, requirePermission, requireAnyPermission } from '@/services/api-response';
+import { checkDb, successResponse, errorResponse, validationErrorResponse, requirePermission, requireAnyPermission } from '@/services/api-response';
 import { db } from '@/lib/db';
+import { subjectUpdateSchema } from '@/lib/validations';
 
 export async function GET(
   request: Request,
@@ -69,18 +70,38 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json();
 
+    // Validate input with Zod
+    const result = subjectUpdateSchema.safeParse(body);
+    if (!result.success) {
+      return validationErrorResponse(result.error);
+    }
+
+    const data = result.data;
+
     const existingSubject = await db.subject.findUnique({ where: { id } });
     if (!existingSubject) {
       return errorResponse('المادة غير موجودة', 404);
     }
 
-    const { teacherIds, classIds, ...data } = body;
+    // Extract relation fields and basic fields
+    const { teacherIds, classIds, ...basicData } = data;
+
+    // Only update basic fields that were provided
+    const updateData: Record<string, unknown> = {};
+    const allowedFields = ['name', 'code', 'type', 'maxScore', 'passScore'] as const;
+    for (const field of allowedFields) {
+      if ((basicData as Record<string, unknown>)[field] !== undefined) {
+        updateData[field] = (basicData as Record<string, unknown>)[field];
+      }
+    }
 
     // Update basic info
-    await db.subject.update({
-      where: { id },
-      data,
-    });
+    if (Object.keys(updateData).length > 0) {
+      await db.subject.update({
+        where: { id },
+        data: updateData,
+      });
+    }
 
     // Update teachers if provided
     if (teacherIds) {

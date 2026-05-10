@@ -25,7 +25,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
-import { extractApiData } from '@/services/api'
+import { extractApiData, fetchWithAuth } from '@/services/api'
 import { EmptyState } from '@/components/ui/empty-state'
 
 // Types
@@ -65,7 +65,7 @@ export default function ExamsPage() {
   const fetchSubjects = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetch('/api/subjects')
+      const res = await fetchWithAuth('/api/subjects')
       const data = extractApiData(await res.json())
       setSubjects(data || [])
       // Auto-select first subject if none selected
@@ -134,7 +134,7 @@ export default function ExamsPage() {
     setSaving(true)
     try {
       if (editingExam) {
-        const res = await fetch(`/api/exam-types/${editingExam.id}`, {
+        const res = await fetchWithAuth(`/api/exam-types/${editingExam.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -148,7 +148,7 @@ export default function ExamsPage() {
         }
         toast.success('تم التحديث', { description: 'تم تحديث نوع الامتحان بنجاح' })
       } else {
-        const res = await fetch('/api/exam-types', {
+        const res = await fetchWithAuth('/api/exam-types', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -176,7 +176,7 @@ export default function ExamsPage() {
   const handleDelete = async () => {
     if (!deleteId) return
     try {
-      const res = await fetch(`/api/exam-types/${deleteId}`, { method: 'DELETE' })
+      const res = await fetchWithAuth(`/api/exam-types/${deleteId}`, { method: 'DELETE' })
       if (!res.ok) {
         const err = await res.json()
         throw new Error(err.error || 'فشل الحذف')

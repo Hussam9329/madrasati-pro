@@ -22,7 +22,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { extractApiData } from '@/services/api';
+import { extractApiData, fetchWithAuth } from '@/services/api';
 import { EmptyState } from '@/components/ui/empty-state';
 import {
   AlertDialog,
@@ -69,10 +69,10 @@ export default function SchedulePage() {
     const fetchData = async () => {
       try {
         const [schoolRes, classesRes, teachersRes, subjectsRes] = await Promise.all([
-          fetch('/api/school'),
-          fetch('/api/classes'),
-          fetch('/api/teachers'),
-          fetch('/api/subjects'),
+          fetchWithAuth('/api/school'),
+          fetchWithAuth('/api/classes'),
+          fetchWithAuth('/api/teachers'),
+          fetchWithAuth('/api/subjects'),
         ]);
         if (schoolRes.ok) {
           const sData = extractApiData(await schoolRes.json());
@@ -109,7 +109,7 @@ export default function SchedulePage() {
         if (viewMode === 'class' && selectedClassId) params.set('classId', selectedClassId);
         if (viewMode === 'teacher' && selectedTeacherId) params.set('teacherId', selectedTeacherId);
 
-        const res = await fetch(`/api/schedule?${params}`);
+        const res = await fetchWithAuth(`/api/schedule?${params}`);
         if (res.ok) {
           setSlots(extractApiData(await res.json()));
         }
@@ -134,7 +134,7 @@ export default function SchedulePage() {
   // Add new slot
   const handleAddSlot = async () => {
     try {
-      const res = await fetch('/api/schedule', {
+      const res = await fetchWithAuth('/api/schedule', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...newSlot, schoolId }),
@@ -155,7 +155,7 @@ export default function SchedulePage() {
       const params = new URLSearchParams({ schoolId });
       if (viewMode === 'class' && selectedClassId) params.set('classId', selectedClassId);
       if (viewMode === 'teacher' && selectedTeacherId) params.set('teacherId', selectedTeacherId);
-      const refreshRes = await fetch(`/api/schedule?${params}`);
+      const refreshRes = await fetchWithAuth(`/api/schedule?${params}`);
       if (refreshRes.ok) setSlots(extractApiData(await refreshRes.json()));
     } catch {
       toast.error('خطأ', { description: 'تعذر إضافة الحصة. حاول مرة أخرى.' });
@@ -166,7 +166,7 @@ export default function SchedulePage() {
   const handleDeleteSlot = async () => {
     if (!deleteSlotId) return;
     try {
-      const res = await fetch(`/api/schedule?id=${deleteSlotId}`, { method: 'DELETE' });
+      const res = await fetchWithAuth(`/api/schedule?id=${deleteSlotId}`, { method: 'DELETE' });
       if (res.ok) {
         toast.success('تم الحذف', { description: 'تم حذف الحصة بنجاح' });
         setSlots(prev => prev.filter(s => s.id !== deleteSlotId));

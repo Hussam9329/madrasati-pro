@@ -43,7 +43,7 @@ import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
-import { extractApiData } from '@/services/api'
+import { extractApiData, fetchWithAuth } from '@/services/api'
 
 // Types
 import type { Teacher, SubjectItem } from '@/types'
@@ -76,7 +76,7 @@ export default function TeachersPage() {
 
   const fetchSchoolId = useCallback(async () => {
     try {
-      const res = await fetch('/api/school')
+      const res = await fetchWithAuth('/api/school')
       const data = extractApiData(await res.json())
       if (data.school?.id) {
         setSchoolId(data.school.id)
@@ -93,7 +93,7 @@ export default function TeachersPage() {
       if (search) params.set('search', search)
       if (filterStatus !== 'all') params.set('status', filterStatus)
 
-      const res = await fetch(`/api/teachers?${params}`)
+      const res = await fetchWithAuth(`/api/teachers?${params}`)
       const data = extractApiData(await res.json())
       setTeachers(data || [])
     } catch {
@@ -105,7 +105,7 @@ export default function TeachersPage() {
 
   const fetchSubjects = useCallback(async () => {
     try {
-      const res = await fetch('/api/subjects')
+      const res = await fetchWithAuth('/api/subjects')
       const data = extractApiData(await res.json())
       setSubjects(data || [])
     } catch {
@@ -167,7 +167,7 @@ export default function TeachersPage() {
     setSaving(true)
     try {
       if (editingTeacher) {
-        const res = await fetch(`/api/teachers/${editingTeacher.id}`, {
+        const res = await fetchWithAuth(`/api/teachers/${editingTeacher.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -186,7 +186,7 @@ export default function TeachersPage() {
         }
         toast.success('تم التحديث', { description: 'تم تحديث بيانات المدرس بنجاح' })
       } else {
-        const res = await fetch('/api/teachers', {
+        const res = await fetchWithAuth('/api/teachers', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -218,7 +218,7 @@ export default function TeachersPage() {
   const handleDelete = async () => {
     if (!deleteId) return
     try {
-      const res = await fetch(`/api/teachers/${deleteId}`, { method: 'DELETE' })
+      const res = await fetchWithAuth(`/api/teachers/${deleteId}`, { method: 'DELETE' })
       if (!res.ok) throw new Error()
       toast.success('تم الحذف', { description: 'تم حذف المدرس بنجاح' })
       fetchTeachers()

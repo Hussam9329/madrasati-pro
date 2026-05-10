@@ -1,5 +1,6 @@
-import { checkDb, successResponse, errorResponse, requirePermission, requireAnyPermission } from '@/services/api-response';
+import { checkDb, successResponse, errorResponse, validationErrorResponse, requirePermission, requireAnyPermission } from '@/services/api-response';
 import { db } from '@/lib/db';
+import { teacherUpdateSchema } from '@/lib/validations';
 
 export async function GET(
   request: Request,
@@ -55,17 +56,35 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json();
 
+    // Validate input with Zod
+    const result = teacherUpdateSchema.safeParse(body);
+    if (!result.success) {
+      return validationErrorResponse(result.error);
+    }
+
+    const data = result.data;
+
     const existingTeacher = await db.teacher.findUnique({ where: { id } });
     if (!existingTeacher) {
       return errorResponse('المعلم غير موجود', 404);
     }
 
-    const { subjectIds, classIds, ...data } = body;
+    // Extract relation fields and basic fields
+    const { subjectIds, classIds, ...basicData } = data;
+
+    // Only update basic fields that were provided
+    const updateData: Record<string, unknown> = {};
+    const allowedFields = ['fullName', 'phone', 'email', 'notes', 'status', 'photo'] as const;
+    for (const field of allowedFields) {
+      if ((basicData as Record<string, unknown>)[field] !== undefined) {
+        updateData[field] = (basicData as Record<string, unknown>)[field];
+      }
+    }
 
     // Update teacher basic info
     const teacher = await db.teacher.update({
       where: { id },
-      data,
+      data: updateData,
       include: {
         subjects: {
           include: {
@@ -141,14 +160,17 @@ export async function DELETE(
       return errorResponse('المعلم غير موجود', 404);
     }
 
-    // Delete related records
-    await db.teacherSubject.deleteMany({ where: { teacherId: id } });
-    await db.teacherClass.deleteMany({ where: { teacherId: id } });
-    await db.scheduleSlot.deleteMany({ where: { teacherId: id } });
+    if (existingTeacher.deletedAt) {
+      return errorResponse('هذا المعلم محذوف مسبقاً', 409);
+    }
 
-    await db.teacher.delete({ where: { id } });
+    // Soft delete — تعليم السجل كمحذوف بدلاً من حذفه فعلياً
+    await db.teacher.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
 
-    return successResponse(null, 'تم حذف المعلم بنجاح');
+    return successResponse(null, 'تم حذف المعلم بنجاح. يمكن استرجاعه لاحقاً.');
   } catch (error) {
     console.error('Delete teacher error:', error);
     return errorResponse('حدث خطأ في حذف المعلم', 500);

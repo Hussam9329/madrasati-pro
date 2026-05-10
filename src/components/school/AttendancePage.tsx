@@ -24,7 +24,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
-import { extractApiData } from '@/services/api'
+import { extractApiData, fetchWithAuth } from '@/services/api'
 import { EmptyState } from '@/components/ui/empty-state'
 
 // Types
@@ -114,7 +114,7 @@ export default function AttendancePage() {
 
   const fetchClasses = async () => {
     try {
-      const res = await fetch('/api/classes')
+      const res = await fetchWithAuth('/api/classes')
       if (res.ok) {
         const data = extractApiData(await res.json())
         setClasses(data)
@@ -129,7 +129,7 @@ export default function AttendancePage() {
     setLoadingRecent(true)
     try {
       const today = new Date().toISOString().split('T')[0]
-      const res = await fetch(`/api/attendance?date=${today}&limit=10`)
+      const res = await fetchWithAuth(`/api/attendance?date=${today}&limit=10`)
       if (res.ok) {
         const data = extractApiData(await res.json())
         setRecentScans(data.records || [])
@@ -149,7 +149,7 @@ export default function AttendancePage() {
       if (filterClassId && filterClassId !== 'all') params.set('classId', filterClassId)
       if (filterStatus && filterStatus !== 'all') params.set('status', filterStatus)
 
-      const res = await fetch(`/api/attendance?${params}`)
+      const res = await fetchWithAuth(`/api/attendance?${params}`)
       if (res.ok) {
         const data = extractApiData(await res.json())
         setRecords(data.records || [])
@@ -181,7 +181,7 @@ export default function AttendancePage() {
     setScanResult(null)
 
     try {
-      const res = await fetch('/api/attendance/scan', {
+      const res = await fetchWithAuth('/api/attendance/scan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ qrCode: qrInput.trim(), type: scanMode }),
@@ -951,7 +951,7 @@ export default function AttendancePage() {
                     setBulkClassId(v)
                     if (v && v !== 'all') {
                       try {
-                        const res = await fetch(`/api/students?classId=${v}&limit=100`)
+                        const res = await fetchWithAuth(`/api/students?classId=${v}&limit=100`)
                         if (res.ok) {
                           const data = extractApiData(await res.json())
                           setBulkStudents((data.students || []).map((s: { id: string; fullName: string; studentNumber: string; schoolId: string }) => ({
@@ -1125,7 +1125,7 @@ export default function AttendancePage() {
                       onClick={async () => {
                         setBulkSaving(true)
                         try {
-                          const res = await fetch('/api/attendance/bulk', {
+                          const res = await fetchWithAuth('/api/attendance/bulk', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
