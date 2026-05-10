@@ -1,8 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
+import { NextRequest } from 'next/server';
+import { checkDb, successResponse, errorResponse } from '@/services/api-response';
+import { db } from '@/lib/db';
 
 // GET /api/installments — List installments (filter by studentId, classId)
 export async function GET(request: NextRequest) {
+  const dbError = checkDb();
+  if (dbError) return dbError;
+
   try {
     const { searchParams } = new URL(request.url)
     const studentId = searchParams.get('studentId')
@@ -25,24 +29,27 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'desc' }
     })
 
-    return NextResponse.json(installments)
+    return successResponse(installments)
   } catch (error) {
     console.error('Error fetching installments:', error)
-    return NextResponse.json({ error: 'فشل في جلب الأقساط' }, { status: 500 })
+    return errorResponse('فشل في جلب الأقساط', 500)
   }
 }
 
 // POST /api/installments — Create installments for a student (from fee plans)
 export async function POST(request: NextRequest) {
+  const dbError = checkDb();
+  if (dbError) return dbError;
+
   try {
     const body = await request.json()
     const { studentId, feePlanId, discountType, discountValue, discountNotes, notes } = body
 
     if (!studentId) {
-      return NextResponse.json({ error: 'يرجى اختيار الطالب' }, { status: 400 })
+      return errorResponse('يرجى اختيار الطالب', 400)
     }
     if (!feePlanId) {
-      return NextResponse.json({ error: 'يرجى اختيار خطة الرسوم' }, { status: 400 })
+      return errorResponse('يرجى اختيار خطة الرسوم', 400)
     }
 
     // Get student
@@ -51,13 +58,13 @@ export async function POST(request: NextRequest) {
       include: { class: true }
     })
     if (!student) {
-      return NextResponse.json({ error: 'الطالب غير موجود' }, { status: 404 })
+      return errorResponse('الطالب غير موجود', 404)
     }
 
     // Get fee plan
     const feePlan = await db.feePlan.findUnique({ where: { id: feePlanId } })
     if (!feePlan) {
-      return NextResponse.json({ error: 'خطة الرسوم غير موجودة' }, { status: 404 })
+      return errorResponse('خطة الرسوم غير موجودة', 404)
     }
 
     // Check if installment already exists for this student + feePlan
@@ -65,7 +72,7 @@ export async function POST(request: NextRequest) {
       where: { studentId_feePlanId: { studentId, feePlanId } }
     })
     if (existing) {
-      return NextResponse.json({ error: 'هذا القسط مسجل بالفعل لهذا الطالب' }, { status: 400 })
+      return errorResponse('هذا القسط مسجل بالفعل لهذا الطالب', 400)
     }
 
     // Calculate amount with discount
@@ -104,21 +111,24 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    return NextResponse.json(installment, { status: 201 })
+    return successResponse(installment, undefined, 201)
   } catch (error) {
     console.error('Error creating installment:', error)
-    return NextResponse.json({ error: 'فشل في إنشاء القسط' }, { status: 500 })
+    return errorResponse('فشل في إنشاء القسط', 500)
   }
 }
 
 // PUT /api/installments — Update installment (discount, notes)
 export async function PUT(request: NextRequest) {
+  const dbError = checkDb();
+  if (dbError) return dbError;
+
   try {
     const body = await request.json()
     const { id, discountType, discountValue, discountNotes, notes } = body
 
     if (!id) {
-      return NextResponse.json({ error: 'معرف القسط مطلوب' }, { status: 400 })
+      return errorResponse('معرف القسط مطلوب', 400)
     }
 
     const existing = await db.installment.findUnique({
@@ -127,7 +137,7 @@ export async function PUT(request: NextRequest) {
     })
 
     if (!existing) {
-      return NextResponse.json({ error: 'القسط غير موجود' }, { status: 404 })
+      return errorResponse('القسط غير موجود', 404)
     }
 
     // Recalculate with new discount
@@ -167,9 +177,9 @@ export async function PUT(request: NextRequest) {
       }
     })
 
-    return NextResponse.json(installment)
+    return successResponse(installment)
   } catch (error) {
     console.error('Error updating installment:', error)
-    return NextResponse.json({ error: 'فشل في تحديث القسط' }, { status: 500 })
+    return errorResponse('فشل في تحديث القسط', 500)
   }
 }

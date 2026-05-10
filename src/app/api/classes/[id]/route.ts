@@ -1,10 +1,13 @@
-import { NextResponse } from 'next/server';
+import { checkDb, successResponse, errorResponse } from '@/services/api-response';
 import { db } from '@/lib/db';
 
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const dbError = checkDb();
+  if (dbError) return dbError;
+
   try {
     const { id } = await params;
 
@@ -41,12 +44,9 @@ export async function DELETE(
     // Finally delete the class
     await db.class.delete({ where: { id } });
 
-    return NextResponse.json({ message: 'تم حذف الصف بنجاح' });
+    return successResponse(null, 'تم حذف الصف بنجاح');
   } catch (error) {
     console.error('Delete class error:', error);
-    return NextResponse.json(
-      { error: 'حدث خطأ في حذف الصف' },
-      { status: 500 }
-    );
+    return errorResponse('حدث خطأ في حذف الصف', 500);
   }
 }

@@ -1,8 +1,11 @@
-import { NextResponse } from 'next/server';
+import { checkDb, successResponse, errorResponse } from '@/services/api-response';
 import { db } from '@/lib/db';
 
 // GET - Fetch teacher-class assignments
 export async function GET(request: Request) {
+  const dbError = checkDb();
+  if (dbError) return dbError;
+
   try {
     const { searchParams } = new URL(request.url);
     const classId = searchParams.get('classId');
@@ -20,24 +23,24 @@ export async function GET(request: Request) {
       orderBy: { id: 'desc' },
     });
 
-    return NextResponse.json(assignments);
+    return successResponse(assignments);
   } catch (error) {
     console.error('Get teacher-class assignments error:', error);
-    return NextResponse.json(
-      { error: 'حدث خطأ في جلب بيانات التعيينات' },
-      { status: 500 }
-    );
+    return errorResponse('حدث خطأ في جلب بيانات التعيينات', 500);
   }
 }
 
 // POST - Assign teacher to class/section
 export async function POST(request: Request) {
+  const dbError = checkDb();
+  if (dbError) return dbError;
+
   try {
     const body = await request.json();
     const { teacherId, classId, sectionId } = body;
 
     if (!teacherId || !classId) {
-      return NextResponse.json({ error: 'معرف الأستاذ والصف مطلوبان' }, { status: 400 });
+      return errorResponse('معرف الأستاذ والصف مطلوبان', 400);
     }
 
     // Check if already assigned
@@ -52,9 +55,9 @@ export async function POST(request: Request) {
           where: { id: existing.id },
           data: { sectionId }
         });
-        return NextResponse.json(updated);
+        return successResponse(updated);
       }
-      return NextResponse.json({ error: 'الأستاذ معين بالفعل على هذا الصف' }, { status: 409 });
+      return errorResponse('الأستاذ معين بالفعل على هذا الصف', 409);
     }
 
     const assignment = await db.teacherClass.create({
@@ -64,27 +67,30 @@ export async function POST(request: Request) {
       }
     });
 
-    return NextResponse.json(assignment, { status: 201 });
+    return successResponse(assignment, undefined, 201);
   } catch (error) {
     console.error('Assign teacher error:', error);
-    return NextResponse.json({ error: 'حدث خطأ في تعيين الأستاذ' }, { status: 500 });
+    return errorResponse('حدث خطأ في تعيين الأستاذ', 500);
   }
 }
 
 // DELETE - Remove teacher from class
 export async function DELETE(request: Request) {
+  const dbError = checkDb();
+  if (dbError) return dbError;
+
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 
     if (!id) {
-      return NextResponse.json({ error: 'المعرف مطلوب' }, { status: 400 });
+      return errorResponse('المعرف مطلوب', 400);
     }
 
     await db.teacherClass.delete({ where: { id } });
-    return NextResponse.json({ message: 'تم إلغاء تعيين الأستاذ بنجاح' });
+    return successResponse(null, 'تم إلغاء تعيين الأستاذ بنجاح');
   } catch (error) {
     console.error('Remove teacher assignment error:', error);
-    return NextResponse.json({ error: 'حدث خطأ في إلغاء التعيين' }, { status: 500 });
+    return errorResponse('حدث خطأ في إلغاء التعيين', 500);
   }
 }

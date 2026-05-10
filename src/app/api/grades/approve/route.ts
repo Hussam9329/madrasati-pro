@@ -1,35 +1,29 @@
-import { NextResponse } from 'next/server';
+import { checkDb, successResponse, errorResponse } from '@/services/api-response';
 import { db } from '@/lib/db';
 import { verifyToken } from '@/lib/auth';
 
 export async function POST(request: Request) {
+  const dbError = checkDb();
+  if (dbError) return dbError;
+
   try {
     const body = await request.json();
     const { gradeIds, approvedBy } = body;
 
     if (!gradeIds || !Array.isArray(gradeIds) || gradeIds.length === 0) {
-      return NextResponse.json(
-        { error: 'قائمة معرفات الدرجات مطلوبة' },
-        { status: 400 }
-      );
+      return errorResponse('قائمة معرفات الدرجات مطلوبة', 400);
     }
 
     // Verify authorization
     const authHeader = request.headers.get('authorization');
     if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { error: 'غير مصرح بهذا الإجراء' },
-        { status: 401 }
-      );
+      return errorResponse('غير مصرح بهذا الإجراء', 401);
     }
 
     const token = authHeader.split(' ')[1];
     const user = verifyToken(token);
     if (!user || (user.role !== 'مدير' && user.role !== 'مسؤول نظام' && user.role !== 'معاون')) {
-      return NextResponse.json(
-        { error: 'غير مصرح بالاعتماد. يتطلب صلاحيات مدير أو معاون' },
-        { status: 403 }
-      );
+      return errorResponse('غير مصرح بالاعتماد. يتطلب صلاحيات مدير أو معاون', 403);
     }
 
     // Approve grades - lock them from editing
@@ -44,15 +38,12 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json({
-      message: `تم اعتماد ${result.count} درجة بنجاح`,
-      approvedCount: result.count,
-    });
+    return successResponse(
+      { approvedCount: result.count },
+      `تم اعتماد ${result.count} درجة بنجاح`
+    );
   } catch (error) {
     console.error('Approve grades error:', error);
-    return NextResponse.json(
-      { error: 'حدث خطأ في اعتماد الدرجات' },
-      { status: 500 }
-    );
+    return errorResponse('حدث خطأ في اعتماد الدرجات', 500);
   }
 }

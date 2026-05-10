@@ -1,7 +1,10 @@
-import { NextResponse } from 'next/server';
+import { checkDb, successResponse, errorResponse } from '@/services/api-response';
 import { db } from '@/lib/db';
 
 export async function GET(request: Request) {
+  const dbError = checkDb();
+  if (dbError) return dbError;
+
   try {
     const { searchParams } = new URL(request.url);
     const studentId = searchParams.get('studentId');
@@ -44,7 +47,7 @@ export async function GET(request: Request) {
       db.grade.count({ where }),
     ]);
 
-    return NextResponse.json({
+    return successResponse({
       grades,
       total,
       page,
@@ -53,14 +56,14 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     console.error('Get grades error:', error);
-    return NextResponse.json(
-      { error: 'حدث خطأ في جلب الدرجات' },
-      { status: 500 }
-    );
+    return errorResponse('حدث خطأ في جلب الدرجات', 500);
   }
 }
 
 export async function POST(request: Request) {
+  const dbError = checkDb();
+  if (dbError) return dbError;
+
   try {
     const body = await request.json();
     const {
@@ -73,10 +76,7 @@ export async function POST(request: Request) {
     } = body;
 
     if (!studentId || !subjectId || !examTypeId || !schoolId) {
-      return NextResponse.json(
-        { error: 'معرف الطالب والمادة ونوع الامتحان والمدرسة مطلوبون' },
-        { status: 400 }
-      );
+      return errorResponse('معرف الطالب والمادة ونوع الامتحان والمدرسة مطلوبون', 400);
     }
 
     // Check if grade already exists for this student/subject/examType combination
@@ -93,10 +93,7 @@ export async function POST(request: Request) {
     if (existingGrade) {
       // Check if grade is approved/locked
       if (existingGrade.approved) {
-        return NextResponse.json(
-          { error: 'لا يمكن تعديل درجة مقفلة. الدرجات المعتمدة لا يمكن تعديلها' },
-          { status: 403 }
-        );
+        return errorResponse('لا يمكن تعديل درجة مقفلة. الدرجات المعتمدة لا يمكن تعديلها', 403);
       }
 
       // Update grade
@@ -119,7 +116,7 @@ export async function POST(request: Request) {
         },
       });
 
-      return NextResponse.json(grade);
+      return successResponse(grade);
     }
 
     // Create new grade
@@ -145,12 +142,9 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json(grade, { status: 201 });
+    return successResponse(grade, undefined, 201);
   } catch (error) {
     console.error('Create grade error:', error);
-    return NextResponse.json(
-      { error: 'حدث خطأ في تسجيل الدرجة' },
-      { status: 500 }
-    );
+    return errorResponse('حدث خطأ في تسجيل الدرجة', 500);
   }
 }

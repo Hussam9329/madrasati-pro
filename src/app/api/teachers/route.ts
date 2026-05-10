@@ -1,7 +1,10 @@
-import { NextResponse } from 'next/server';
+import { checkDb, successResponse, errorResponse } from '@/services/api-response';
 import { db } from '@/lib/db';
 
 export async function GET(request: Request) {
+  const dbError = checkDb();
+  if (dbError) return dbError;
+
   try {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
@@ -35,17 +38,17 @@ export async function GET(request: Request) {
       orderBy: { createdAt: 'desc' },
     });
 
-    return NextResponse.json(teachers);
+    return successResponse(teachers);
   } catch (error) {
     console.error('Get teachers error:', error);
-    return NextResponse.json(
-      { error: 'حدث خطأ في جلب بيانات المعلمين' },
-      { status: 500 }
-    );
+    return errorResponse('حدث خطأ في جلب بيانات المعلمين', 500);
   }
 }
 
 export async function POST(request: Request) {
+  const dbError = checkDb();
+  if (dbError) return dbError;
+
   try {
     const body = await request.json();
     const {
@@ -61,10 +64,7 @@ export async function POST(request: Request) {
     } = body;
 
     if (!fullName || !schoolId) {
-      return NextResponse.json(
-        { error: 'اسم المعلم والمدرسة مطلوبان' },
-        { status: 400 }
-      );
+      return errorResponse('اسم المعلم والمدرسة مطلوبان', 400);
     }
 
     const teacher = await db.teacher.create({
@@ -101,12 +101,9 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json(teacher, { status: 201 });
+    return successResponse(teacher, undefined, 201);
   } catch (error) {
     console.error('Create teacher error:', error);
-    return NextResponse.json(
-      { error: 'حدث خطأ في إنشاء المعلم' },
-      { status: 500 }
-    );
+    return errorResponse('حدث خطأ في إنشاء المعلم', 500);
   }
 }

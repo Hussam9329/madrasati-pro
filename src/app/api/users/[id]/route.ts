@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { checkDb, successResponse, errorResponse } from '@/services/api-response';
 import { db } from '@/lib/db';
 import { verifyToken } from '@/lib/auth';
 
@@ -6,16 +6,16 @@ export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const dbError = checkDb();
+  if (dbError) return dbError;
+
   try {
     const { id } = await params;
     const body = await request.json();
 
     const existingUser = await db.user.findUnique({ where: { id } });
     if (!existingUser) {
-      return NextResponse.json(
-        { error: 'المستخدم غير موجود' },
-        { status: 404 }
-      );
+      return errorResponse('المستخدم غير موجود', 404);
     }
 
     const data: Record<string, unknown> = {
@@ -30,10 +30,7 @@ export async function PUT(
         where: { username: body.username },
       });
       if (usernameTaken) {
-        return NextResponse.json(
-          { error: 'اسم المستخدم مستخدم بالفعل' },
-          { status: 409 }
-        );
+        return errorResponse('اسم المستخدم مستخدم بالفعل', 409);
       }
       data.username = body.username;
     }
@@ -52,13 +49,10 @@ export async function PUT(
       },
     });
 
-    return NextResponse.json(user);
+    return successResponse(user);
   } catch (error) {
     console.error('Update user error:', error);
-    return NextResponse.json(
-      { error: 'حدث خطأ في تحديث بيانات المستخدم' },
-      { status: 500 }
-    );
+    return errorResponse('حدث خطأ في تحديث بيانات المستخدم', 500);
   }
 }
 
@@ -66,51 +60,39 @@ export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const dbError = checkDb();
+  if (dbError) return dbError;
+
   try {
     const { id } = await params;
 
     // Check authorization
     const authHeader = request.headers.get('authorization');
     if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { error: 'غير مصرح بهذا الإجراء' },
-        { status: 401 }
-      );
+      return errorResponse('غير مصرح بهذا الإجراء', 401);
     }
 
     const token = authHeader.split(' ')[1];
     const user = verifyToken(token);
     if (!user || (user.role !== 'مدير' && user.role !== 'مسؤول نظام')) {
-      return NextResponse.json(
-        { error: 'غير مصرح بهذا الإجراء. يتطلب صلاحيات مدير أو مسؤول نظام' },
-        { status: 403 }
-      );
+      return errorResponse('غير مصرح بهذا الإجراء. يتطلب صلاحيات مدير أو مسؤول نظام', 403);
     }
 
     const existingUser = await db.user.findUnique({ where: { id } });
     if (!existingUser) {
-      return NextResponse.json(
-        { error: 'المستخدم غير موجود' },
-        { status: 404 }
-      );
+      return errorResponse('المستخدم غير موجود', 404);
     }
 
     // Prevent deleting yourself
     if (existingUser.id === user.id) {
-      return NextResponse.json(
-        { error: 'لا يمكنك حذف حسابك الخاص' },
-        { status: 400 }
-      );
+      return errorResponse('لا يمكنك حذف حسابك الخاص', 400);
     }
 
     await db.user.delete({ where: { id } });
 
-    return NextResponse.json({ message: 'تم حذف المستخدم بنجاح' });
+    return successResponse(null, 'تم حذف المستخدم بنجاح');
   } catch (error) {
     console.error('Delete user error:', error);
-    return NextResponse.json(
-      { error: 'حدث خطأ في حذف المستخدم' },
-      { status: 500 }
-    );
+    return errorResponse('حدث خطأ في حذف المستخدم', 500);
   }
 }

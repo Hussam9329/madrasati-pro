@@ -1,5 +1,8 @@
-import { NextResponse } from "next/server";
+import { checkDb, successResponse } from '@/services/api-response';
 
 export async function GET() {
-  return NextResponse.json({ message: "Hello, world!" });
+  const dbError = checkDb();
+  if (dbError) return dbError;
+
+  return successResponse(null, "Hello, world!");
 }

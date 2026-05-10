@@ -1,7 +1,10 @@
-import { NextResponse } from 'next/server';
+import { checkDb, successResponse, errorResponse } from '@/services/api-response';
 import { db } from '@/lib/db';
 
 export async function GET(request: Request) {
+  const dbError = checkDb();
+  if (dbError) return dbError;
+
   try {
     const { searchParams } = new URL(request.url);
     const classId = searchParams.get('classId');
@@ -39,7 +42,7 @@ export async function GET(request: Request) {
       db.student.count({ where }),
     ]);
 
-    return NextResponse.json({
+    return successResponse({
       students,
       total,
       page,
@@ -48,14 +51,14 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     console.error('Get students error:', error);
-    return NextResponse.json(
-      { error: 'حدث خطأ في جلب بيانات الطلاب' },
-      { status: 500 }
-    );
+    return errorResponse('حدث خطأ في جلب بيانات الطلاب', 500);
   }
 }
 
 export async function POST(request: Request) {
+  const dbError = checkDb();
+  if (dbError) return dbError;
+
   try {
     const body = await request.json();
     const {
@@ -76,10 +79,7 @@ export async function POST(request: Request) {
     } = body;
 
     if (!fullName || !classId || !sectionId || !schoolId) {
-      return NextResponse.json(
-        { error: 'الاسم والصف والشعبة والمدرسة مطلوبون' },
-        { status: 400 }
-      );
+      return errorResponse('الاسم والصف والشعبة والمدرسة مطلوبون', 400);
     }
 
     // Auto-generate student number: STU-2026-XXXXX
@@ -126,12 +126,9 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json(student, { status: 201 });
+    return successResponse(student, undefined, 201);
   } catch (error) {
     console.error('Create student error:', error);
-    return NextResponse.json(
-      { error: 'حدث خطأ في إنشاء الطالب' },
-      { status: 500 }
-    );
+    return errorResponse('حدث خطأ في إنشاء الطالب', 500);
   }
 }

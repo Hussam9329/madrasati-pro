@@ -1,8 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
+import { NextRequest } from 'next/server';
+import { checkDb, successResponse, errorResponse } from '@/services/api-response';
+import { db } from '@/lib/db';
 
 // GET /api/fee-plans — List fee plans (optionally filter by classId)
 export async function GET(request: NextRequest) {
+  const dbError = checkDb();
+  if (dbError) return dbError;
+
   try {
     const { searchParams } = new URL(request.url)
     const classId = searchParams.get('classId')
@@ -18,33 +22,36 @@ export async function GET(request: NextRequest) {
       orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }]
     })
 
-    return NextResponse.json(feePlans)
+    return successResponse(feePlans)
   } catch (error) {
     console.error('Error fetching fee plans:', error)
-    return NextResponse.json({ error: 'فشل في جلب خطط الرسوم' }, { status: 500 })
+    return errorResponse('فشل في جلب خطط الرسوم', 500)
   }
 }
 
 // POST /api/fee-plans — Create a fee plan
 export async function POST(request: NextRequest) {
+  const dbError = checkDb();
+  if (dbError) return dbError;
+
   try {
     const body = await request.json()
     const { name, amount, classId, schoolId, dueDate, description, sortOrder } = body
 
     if (!name || !name.trim()) {
-      return NextResponse.json({ error: 'اسم خطة الرسوم مطلوب' }, { status: 400 })
+      return errorResponse('اسم خطة الرسوم مطلوب', 400)
     }
     if (!amount || amount <= 0) {
-      return NextResponse.json({ error: 'المبلغ يجب أن يكون أكبر من صفر' }, { status: 400 })
+      return errorResponse('المبلغ يجب أن يكون أكبر من صفر', 400)
     }
     if (!classId) {
-      return NextResponse.json({ error: 'يرجى اختيار الصف' }, { status: 400 })
+      return errorResponse('يرجى اختيار الصف', 400)
     }
 
     // Verify class exists
     const classExists = await db.class.findUnique({ where: { id: classId } })
     if (!classExists) {
-      return NextResponse.json({ error: 'الصف غير موجود' }, { status: 404 })
+      return errorResponse('الصف غير موجود', 404)
     }
 
     const schoolIdFinal = schoolId || classExists.schoolId
@@ -64,9 +71,9 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    return NextResponse.json(feePlan, { status: 201 })
+    return successResponse(feePlan, undefined, 201)
   } catch (error) {
     console.error('Error creating fee plan:', error)
-    return NextResponse.json({ error: 'فشل في إنشاء خطة الرسوم' }, { status: 500 })
+    return errorResponse('فشل في إنشاء خطة الرسوم', 500)
   }
 }

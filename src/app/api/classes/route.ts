@@ -1,7 +1,10 @@
-import { NextResponse } from 'next/server';
+import { checkDb, successResponse, errorResponse } from '@/services/api-response';
 import { db } from '@/lib/db';
 
 export async function GET(request: Request) {
+  const dbError = checkDb();
+  if (dbError) return dbError;
+
   try {
     const { searchParams } = new URL(request.url);
     const schoolId = searchParams.get('schoolId');
@@ -33,26 +36,23 @@ export async function GET(request: Request) {
       orderBy: [{ level: 'asc' }, { stage: 'asc' }],
     });
 
-    return NextResponse.json(classes);
+    return successResponse(classes);
   } catch (error) {
     console.error('Get classes error:', error);
-    return NextResponse.json(
-      { error: 'حدث خطأ في جلب بيانات الصفوف' },
-      { status: 500 }
-    );
+    return errorResponse('حدث خطأ في جلب بيانات الصفوف', 500);
   }
 }
 
 export async function POST(request: Request) {
+  const dbError = checkDb();
+  if (dbError) return dbError;
+
   try {
     const body = await request.json();
     const { name, level, stage, branch, schoolId, sections } = body;
 
     if (!name || !level || !stage || !schoolId) {
-      return NextResponse.json(
-        { error: 'اسم الصف والمستوى والمرحلة والمدرسة مطلوبون' },
-        { status: 400 }
-      );
+      return errorResponse('اسم الصف والمستوى والمرحلة والمدرسة مطلوبون', 400);
     }
 
     const newClass = await db.class.create({
@@ -78,12 +78,9 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json(newClass, { status: 201 });
+    return successResponse(newClass, undefined, 201);
   } catch (error) {
     console.error('Create class error:', error);
-    return NextResponse.json(
-      { error: 'حدث خطأ في إنشاء الصف' },
-      { status: 500 }
-    );
+    return errorResponse('حدث خطأ في إنشاء الصف', 500);
   }
 }

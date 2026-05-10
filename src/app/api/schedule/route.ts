@@ -1,8 +1,11 @@
-import { NextResponse } from 'next/server';
+import { checkDb, successResponse, errorResponse } from '@/services/api-response';
 import { db } from '@/lib/db';
 
 // GET /api/schedule - Get schedule slots
 export async function GET(request: Request) {
+  const dbError = checkDb();
+  if (dbError) return dbError;
+
   try {
     const { searchParams } = new URL(request.url);
     const schoolId = searchParams.get('schoolId');
@@ -26,27 +29,24 @@ export async function GET(request: Request) {
       orderBy: [{ day: 'asc' }, { period: 'asc' }],
     });
 
-    return NextResponse.json(slots);
+    return successResponse(slots);
   } catch (error) {
     console.error('Get schedule error:', error);
-    return NextResponse.json(
-      { error: 'حدث خطأ في جلب جدول الحصص' },
-      { status: 500 }
-    );
+    return errorResponse('حدث خطأ في جلب جدول الحصص', 500);
   }
 }
 
 // POST /api/schedule - Create a schedule slot with conflict detection
 export async function POST(request: Request) {
+  const dbError = checkDb();
+  if (dbError) return dbError;
+
   try {
     const body = await request.json();
     const { day, period, subjectId, teacherId, classId, sectionId, schoolId, room } = body;
 
     if (!day || !period || !subjectId || !teacherId || !classId || !schoolId) {
-      return NextResponse.json(
-        { error: 'جميع الحقول مطلوبة (اليوم، الحصة، المادة، الأستاذ، الصف، المدرسة)' },
-        { status: 400 }
-      );
+      return errorResponse('جميع الحقول مطلوبة (اليوم، الحصة، المادة، الأستاذ، الصف، المدرسة)', 400);
     }
 
     // Check for teacher conflict - same teacher can't be in two places at same time
@@ -64,13 +64,9 @@ export async function POST(request: Request) {
     });
 
     if (teacherConflict) {
-      return NextResponse.json(
-        {
-          error: `تضارب: الأستاذ مشغول في ${day} الحصة ${period} بمادة "${teacherConflict.subject.name}" في صف "${teacherConflict.class.name}"`,
-          conflictType: 'teacher',
-          conflict: teacherConflict,
-        },
-        { status: 409 }
+      return errorResponse(
+        `تضارب: الأستاذ مشغول في ${day} الحصة ${period} بمادة "${teacherConflict.subject.name}" في صف "${teacherConflict.class.name}"`,
+        409
       );
     }
 
@@ -90,13 +86,9 @@ export async function POST(request: Request) {
     });
 
     if (classConflict) {
-      return NextResponse.json(
-        {
-          error: `تضارب: الصف لديه حصة "${classConflict.subject.name}" مع الأستاذ "${classConflict.teacher.fullName}" في ${day} الحصة ${period}`,
-          conflictType: 'class',
-          conflict: classConflict,
-        },
-        { status: 409 }
+      return errorResponse(
+        `تضارب: الصف لديه حصة "${classConflict.subject.name}" مع الأستاذ "${classConflict.teacher.fullName}" في ${day} الحصة ${period}`,
+        409
       );
     }
 
@@ -118,52 +110,46 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json(slot, { status: 201 });
+    return successResponse(slot, undefined, 201);
   } catch (error) {
     console.error('Create schedule slot error:', error);
-    return NextResponse.json(
-      { error: 'حدث خطأ في إنشاء حصة الجدول' },
-      { status: 500 }
-    );
+    return errorResponse('حدث خطأ في إنشاء حصة الجدول', 500);
   }
 }
 
 // DELETE /api/schedule - Delete a schedule slot
 export async function DELETE(request: Request) {
+  const dbError = checkDb();
+  if (dbError) return dbError;
+
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 
     if (!id) {
-      return NextResponse.json(
-        { error: 'معرف الحصة مطلوب' },
-        { status: 400 }
-      );
+      return errorResponse('معرف الحصة مطلوب', 400);
     }
 
     await db.scheduleSlot.delete({ where: { id } });
 
-    return NextResponse.json({ message: 'تم حذف الحصة بنجاح' });
+    return successResponse(null, 'تم حذف الحصة بنجاح');
   } catch (error) {
     console.error('Delete schedule slot error:', error);
-    return NextResponse.json(
-      { error: 'حدث خطأ في حذف الحصة' },
-      { status: 500 }
-    );
+    return errorResponse('حدث خطأ في حذف الحصة', 500);
   }
 }
 
 // PUT /api/schedule - Update a schedule slot
 export async function PUT(request: Request) {
+  const dbError = checkDb();
+  if (dbError) return dbError;
+
   try {
     const body = await request.json();
     const { id, day, period, subjectId, teacherId, classId, sectionId, room } = body;
 
     if (!id) {
-      return NextResponse.json(
-        { error: 'معرف الحصة مطلوب' },
-        { status: 400 }
-      );
+      return errorResponse('معرف الحصة مطلوب', 400);
     }
 
     // Check for teacher conflict (excluding current slot)
@@ -178,10 +164,7 @@ export async function PUT(request: Request) {
       });
 
       if (teacherConflict) {
-        return NextResponse.json(
-          { error: 'تضارب: الأستاذ مشغول في هذا الوقت', conflictType: 'teacher' },
-          { status: 409 }
-        );
+        return errorResponse('تضارب: الأستاذ مشغول في هذا الوقت', 409);
       }
 
       // Check for class conflict (excluding current slot)
@@ -196,10 +179,7 @@ export async function PUT(request: Request) {
       });
 
       if (classConflict) {
-        return NextResponse.json(
-          { error: 'تضارب: الصف لديه حصة أخرى في هذا الوقت', conflictType: 'class' },
-          { status: 409 }
-        );
+        return errorResponse('تضارب: الصف لديه حصة أخرى في هذا الوقت', 409);
       }
     }
 
@@ -221,12 +201,9 @@ export async function PUT(request: Request) {
       },
     });
 
-    return NextResponse.json(slot);
+    return successResponse(slot);
   } catch (error) {
     console.error('Update schedule slot error:', error);
-    return NextResponse.json(
-      { error: 'حدث خطأ في تحديث حصة الجدول' },
-      { status: 500 }
-    );
+    return errorResponse('حدث خطأ في تحديث حصة الجدول', 500);
   }
 }

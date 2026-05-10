@@ -1,7 +1,10 @@
-import { NextResponse } from 'next/server';
+import { checkDb, successResponse, errorResponse } from '@/services/api-response';
 import { db } from '@/lib/db';
 
 export async function GET(request: Request) {
+  const dbError = checkDb();
+  if (dbError) return dbError;
+
   try {
     const { searchParams } = new URL(request.url);
     const type = searchParams.get('type');
@@ -34,17 +37,17 @@ export async function GET(request: Request) {
       orderBy: { name: 'asc' },
     });
 
-    return NextResponse.json(subjects);
+    return successResponse(subjects);
   } catch (error) {
     console.error('Get subjects error:', error);
-    return NextResponse.json(
-      { error: 'حدث خطأ في جلب بيانات المواد' },
-      { status: 500 }
-    );
+    return errorResponse('حدث خطأ في جلب بيانات المواد', 500);
   }
 }
 
 export async function POST(request: Request) {
+  const dbError = checkDb();
+  if (dbError) return dbError;
+
   try {
     const body = await request.json();
     const {
@@ -59,19 +62,13 @@ export async function POST(request: Request) {
     } = body;
 
     if (!name || !code || !schoolId) {
-      return NextResponse.json(
-        { error: 'اسم المادة ورمزها والمدرسة مطلوبون' },
-        { status: 400 }
-      );
+      return errorResponse('اسم المادة ورمزها والمدرسة مطلوبون', 400);
     }
 
     // Check for unique code
     const existingSubject = await db.subject.findUnique({ where: { code } });
     if (existingSubject) {
-      return NextResponse.json(
-        { error: 'رمز المادة مستخدم بالفعل' },
-        { status: 409 }
-      );
+      return errorResponse('رمز المادة مستخدم بالفعل', 409);
     }
 
     const subject = await db.subject.create({
@@ -113,12 +110,9 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json(subject, { status: 201 });
+    return successResponse(subject, undefined, 201);
   } catch (error) {
     console.error('Create subject error:', error);
-    return NextResponse.json(
-      { error: 'حدث خطأ في إنشاء المادة' },
-      { status: 500 }
-    );
+    return errorResponse('حدث خطأ في إنشاء المادة', 500);
   }
 }

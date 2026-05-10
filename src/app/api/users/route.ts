@@ -1,8 +1,11 @@
-import { NextResponse } from 'next/server';
+import { checkDb, successResponse, errorResponse } from '@/services/api-response';
 import { db } from '@/lib/db';
 import { hashPassword } from '@/lib/auth';
 
 export async function GET(request: Request) {
+  const dbError = checkDb();
+  if (dbError) return dbError;
+
   try {
     const { searchParams } = new URL(request.url);
     const role = searchParams.get('role');
@@ -26,35 +29,29 @@ export async function GET(request: Request) {
       orderBy: { createdAt: 'desc' },
     });
 
-    return NextResponse.json(users);
+    return successResponse(users);
   } catch (error) {
     console.error('Get users error:', error);
-    return NextResponse.json(
-      { error: 'حدث خطأ في جلب بيانات المستخدمين' },
-      { status: 500 }
-    );
+    return errorResponse('حدث خطأ في جلب بيانات المستخدمين', 500);
   }
 }
 
 export async function POST(request: Request) {
+  const dbError = checkDb();
+  if (dbError) return dbError;
+
   try {
     const body = await request.json();
     const { username, name, role, active } = body;
 
     if (!username || !name) {
-      return NextResponse.json(
-        { error: 'اسم المستخدم والاسم مطلوبان' },
-        { status: 400 }
-      );
+      return errorResponse('اسم المستخدم والاسم مطلوبان', 400);
     }
 
     // Check if username already exists
     const existingUser = await db.user.findUnique({ where: { username } });
     if (existingUser) {
-      return NextResponse.json(
-        { error: 'اسم المستخدم مستخدم بالفعل' },
-        { status: 409 }
-      );
+      return errorResponse('اسم المستخدم مستخدم بالفعل', 409);
     }
 
     // كلمة مرور افتراضية = اسم المستخدم (لا يوجد تسجيل بكلمة مرور)
@@ -79,12 +76,9 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json(user, { status: 201 });
+    return successResponse(user, undefined, 201);
   } catch (error) {
     console.error('Create user error:', error);
-    return NextResponse.json(
-      { error: 'حدث خطأ في إنشاء المستخدم' },
-      { status: 500 }
-    );
+    return errorResponse('حدث خطأ في إنشاء المستخدم', 500);
   }
 }

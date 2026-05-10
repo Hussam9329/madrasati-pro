@@ -1,17 +1,17 @@
-import { NextResponse } from 'next/server';
+import { checkDb, successResponse, errorResponse } from '@/services/api-response';
 import { db } from '@/lib/db';
 import { generateToken, type AuthUser } from '@/lib/auth';
 
 export async function POST(request: Request) {
+  const dbError = checkDb();
+  if (dbError) return dbError;
+
   try {
     const body = await request.json();
     const { username } = body;
 
     if (!username) {
-      return NextResponse.json(
-        { error: 'اسم المستخدم مطلوب' },
-        { status: 400 }
-      );
+      return errorResponse('اسم المستخدم مطلوب', 400);
     }
 
     const user = await db.user.findUnique({
@@ -19,17 +19,11 @@ export async function POST(request: Request) {
     });
 
     if (!user) {
-      return NextResponse.json(
-        { error: 'اسم المستخدم غير موجود' },
-        { status: 401 }
-      );
+      return errorResponse('اسم المستخدم غير موجود', 401);
     }
 
     if (!user.active) {
-      return NextResponse.json(
-        { error: 'هذا الحساب معطل. تواصل مع المسؤول' },
-        { status: 403 }
-      );
+      return errorResponse('هذا الحساب معطل. تواصل مع المسؤول', 403);
     }
 
     const authUser: AuthUser = {
@@ -41,7 +35,7 @@ export async function POST(request: Request) {
 
     const token = generateToken(authUser);
 
-    return NextResponse.json({
+    return successResponse({
       token,
       user: {
         id: user.id,
@@ -53,9 +47,6 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error('Login error:', error);
-    return NextResponse.json(
-      { error: 'حدث خطأ في تسجيل الدخول' },
-      { status: 500 }
-    );
+    return errorResponse('حدث خطأ في تسجيل الدخول', 500);
   }
 }

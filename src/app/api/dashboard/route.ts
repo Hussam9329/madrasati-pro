@@ -1,24 +1,58 @@
-import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { db, isDbAvailable } from '@/lib/db';
+import { successResponse, errorResponse, checkDb } from '@/services/api-response';
 
 export async function GET() {
+  // Check database availability first
+  const dbError = checkDb();
+  if (dbError) return dbError;
+
   try {
-    // Total counts
-    const totalStudents = await db.student.count();
-    const totalTeachers = await db.teacher.count();
-    const totalSubjects = await db.subject.count();
-    const totalClasses = await db.class.count();
+    // Run independent queries in parallel for better performance
+    const [
+      totalStudents,
+      totalTeachers,
+      totalSubjects,
+      totalClasses,
+      activeStudents,
+      school,
+    ] = await Promise.all([
+      db.student.count(),
+      db.teacher.count(),
+      db.subject.count(),
+      db.class.count(),
+      db.student.count({ where: { status: 'مستمر' } }),
+      db.school.findFirst(),
+    ]);
 
-    // Active students count (for attendance % calculation)
-    const activeStudents = await db.student.count({ where: { status: 'مستمر' } });
-
-    // Today's attendance statistics
+    // Today's date
     const today = new Date().toISOString().split('T')[0];
 
-    const todayAttendance = await db.attendanceRecord.findMany({
-      where: { date: today },
-      select: { status: true },
-    });
+    // Today attendance + recent records in parallel
+    const [todayAttendance, recentAttendance, studentsByStatus] = await Promise.all([
+      db.attendanceRecord.findMany({
+        where: { date: today },
+        select: { status: true },
+      }),
+      db.attendanceRecord.findMany({
+        take: 10,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          student: {
+            select: {
+              id: true,
+              fullName: true,
+              studentNumber: true,
+              class: { select: { name: true } },
+              section: { select: { name: true } },
+            },
+          },
+        },
+      }),
+      db.student.groupBy({
+        by: ['status'],
+        _count: { status: true },
+      }),
+    ]);
 
     const attendanceStats = {
       present: todayAttendance.filter((r) => r.status === 'حاضر').length,
@@ -32,47 +66,60 @@ export async function GET() {
       total: todayAttendance.length,
     };
 
-    // Recent attendance records (last 10)
-    const recentAttendance = await db.attendanceRecord.findMany({
-      take: 10,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        student: {
-          select: {
-            id: true,
-            fullName: true,
-            studentNumber: true,
-            class: { select: { name: true } },
-            section: { select: { name: true } },
-          },
-        },
-      },
-    });
+    // Grade completion + class attendance + weekly trend + class performance in parallel
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 6);
+    const weekAgoStr = weekAgo.toISOString().split('T')[0];
 
-    // Grade completion status
-    const subjectsWithClasses = await db.subject.findMany({
-      include: {
-        classes: {
+    const [subjectsWithClasses, classesWithAttendance, weekRecords, allClasses] =
+      await Promise.all([
+        db.subject.findMany({
           include: {
-            class: {
+            classes: {
               include: {
-                students: {
-                  select: { id: true },
+                class: {
+                  include: {
+                    students: { select: { id: true } },
+                  },
+                },
+              },
+            },
+            examTypes: {
+              include: {
+                grades: { select: { id: true, score: true, status: true } },
+              },
+            },
+          },
+        }),
+        db.class.findMany({
+          include: {
+            students: {
+              include: {
+                attendance: {
+                  where: { date: today },
+                  select: { status: true },
                 },
               },
             },
           },
-        },
-        examTypes: {
+        }),
+        db.attendanceRecord.findMany({
+          where: { date: { gte: weekAgoStr } },
+          select: { date: true, status: true },
+        }),
+        db.class.findMany({
           include: {
-            grades: {
-              select: { id: true, score: true, status: true },
+            students: {
+              where: { status: 'مستمر' },
+              include: {
+                grades: { select: { score: true } },
+              },
             },
           },
-        },
-      },
-    });
+        }),
+      ]);
 
+    // Grade completion calculation
     const gradeCompletion = subjectsWithClasses.map((subject) => {
       const totalStudentsInClasses = subject.classes.reduce(
         (sum, sc) => sum + sc.class.students.length,
@@ -97,30 +144,12 @@ export async function GET() {
         totalGrades,
         completedGrades,
         missingGrades: Math.max(0, expectedGrades - totalGrades),
-        completionPercentage: expectedGrades > 0 ? Math.round((totalGrades / expectedGrades) * 100) : 0,
+        completionPercentage:
+          expectedGrades > 0 ? Math.round((totalGrades / expectedGrades) * 100) : 0,
       };
     });
 
-    // Student status breakdown
-    const studentsByStatus = await db.student.groupBy({
-      by: ['status'],
-      _count: { status: true },
-    });
-
-    // Attendance by class today
-    const classesWithAttendance = await db.class.findMany({
-      include: {
-        students: {
-          include: {
-            attendance: {
-              where: { date: today },
-              select: { status: true },
-            },
-          },
-        },
-      },
-    });
-
+    // Class attendance stats
     const classAttendanceStats = classesWithAttendance.map((cls) => {
       const totalStudents = cls.students.length;
       const attendanceRecords = cls.students.flatMap((s) => s.attendance);
@@ -139,29 +168,13 @@ export async function GET() {
       };
     });
 
-    // Weekly attendance trend - fetch all records for last 7 days in ONE query
-    const weekAgo = new Date();
-    weekAgo.setDate(weekAgo.getDate() - 6);
-    const weekAgoStr = weekAgo.toISOString().split('T')[0];
-
-    const weekRecords = await db.attendanceRecord.findMany({
-      where: {
-        date: { gte: weekAgoStr },
-      },
-      select: {
-        date: true,
-        status: true,
-      },
-    });
-
-    // Group by date
+    // Weekly attendance trend
     const dayNames: Record<string, string> = {
-      'Sun': 'الأحد', 'Mon': 'الإثنين', 'Tue': 'الثلاثاء',
-      'Wed': 'الأربعاء', 'Thu': 'الخميس', 'Fri': 'الجمعة', 'Sat': 'السبت',
+      Sun: 'الأحد', Mon: 'الإثنين', Tue: 'الثلاثاء',
+      Wed: 'الأربعاء', Thu: 'الخميس', Fri: 'الجمعة', Sat: 'السبت',
     };
 
-    const weeklyTrend: Array<{ date: string; day: string; attendance: number; late: number; absent: number }> = [];
-
+    const weeklyTrend = [];
     for (let i = 6; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
@@ -174,9 +187,10 @@ export async function GET() {
       const lateCount = dayRecords.filter((r) => r.status === 'متأخر').length;
       const absentCount = dayRecords.filter((r) => r.status === 'غائب').length;
 
-      const attendancePercentage = activeStudents > 0
-        ? Math.round(((presentCount + lateCount) / activeStudents) * 100)
-        : 0;
+      const attendancePercentage =
+        activeStudents > 0
+          ? Math.round(((presentCount + lateCount) / activeStudents) * 100)
+          : 0;
 
       weeklyTrend.push({
         date: dateStr,
@@ -187,25 +201,13 @@ export async function GET() {
       });
     }
 
-    // Class performance comparison - fetch in ONE query
-    const allClasses = await db.class.findMany({
-      include: {
-        students: {
-          where: { status: 'مستمر' },
-          include: {
-            grades: {
-              select: { score: true },
-            },
-          },
-        },
-      },
-    });
-
+    // Class performance
     const classPerformance = allClasses
       .map((cls) => {
         const allGrades = cls.students.flatMap((s) => s.grades);
         const totalScore = allGrades.reduce((sum, g) => sum + (g.score || 0), 0);
-        const avgGrade = allGrades.length > 0 ? Math.round(totalScore / allGrades.length) : 0;
+        const avgGrade =
+          allGrades.length > 0 ? Math.round(totalScore / allGrades.length) : 0;
 
         return {
           classId: cls.id,
@@ -217,11 +219,10 @@ export async function GET() {
       })
       .filter((cls) => cls.gradeCount > 0);
 
-    // School info
-    const school = await db.school.findFirst();
-
-    return NextResponse.json({
-      school: school ? { name: school.name, academicYear: school.academicYear } : null,
+    return successResponse({
+      school: school
+        ? { name: school.name, academicYear: school.academicYear }
+        : null,
       totals: {
         students: totalStudents,
         teachers: totalTeachers,
@@ -241,9 +242,8 @@ export async function GET() {
     });
   } catch (error) {
     console.error('Dashboard error:', error);
-    return NextResponse.json(
-      { error: 'حدث خطأ في جلب بيانات لوحة التحكم' },
-      { status: 500 }
-    );
+    const message =
+      error instanceof Error ? error.message : 'حدث خطأ في جلب بيانات لوحة التحكم';
+    return errorResponse(message, 500);
   }
 }
