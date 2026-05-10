@@ -1,5 +1,7 @@
-import { checkDb, successResponse, errorResponse } from '@/services/api-response';
+import { checkDb, successResponse, errorResponse, validationErrorResponse, forbiddenResponse } from '@/services/api-response';
 import { db } from '@/lib/db';
+import { studentCreateSchema } from '@/lib/validations';
+import { hasPermission, ADMIN_ROLES } from '@/lib/auth';
 
 export async function GET(request: Request) {
   const dbError = checkDb();
@@ -11,8 +13,8 @@ export async function GET(request: Request) {
     const sectionId = searchParams.get('sectionId');
     const status = searchParams.get('status');
     const search = searchParams.get('search');
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '50');
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '50')));
 
     const where: Record<string, unknown> = {};
 
@@ -60,27 +62,23 @@ export async function POST(request: Request) {
   if (dbError) return dbError;
 
   try {
-    const body = await request.json();
-    const {
-      fullName,
-      gender,
-      dateOfBirth,
-      nationalId,
-      phone,
-      address,
-      photo,
-      status,
-      classId,
-      sectionId,
-      schoolId,
-      guardianName,
-      guardianPhone,
-      guardianRelation,
-    } = body;
-
-    if (!fullName || !classId || !sectionId || !schoolId) {
-      return errorResponse('الاسم والصف والشعبة والمدرسة مطلوبون', 400);
+    // Check authorization — only admin roles can create students
+    const userRole = request.headers.get('x-user-role');
+    if (!userRole || !ADMIN_ROLES.includes(userRole as typeof ADMIN_ROLES[number])) {
+      if (!hasPermission(userRole || '', 'students')) {
+        return forbiddenResponse();
+      }
     }
+
+    const body = await request.json();
+
+    // Validate input with Zod
+    const result = studentCreateSchema.safeParse(body);
+    if (!result.success) {
+      return validationErrorResponse(result.error);
+    }
+
+    const data = result.data;
 
     // Auto-generate student number: STU-2026-XXXXX
     const currentYear = new Date().getFullYear();
@@ -103,20 +101,20 @@ export async function POST(request: Request) {
 
     const student = await db.student.create({
       data: {
-        fullName,
-        gender: gender || 'ذكر',
-        dateOfBirth,
-        nationalId,
-        phone,
-        address,
-        photo,
-        status: status || 'مستمر',
-        classId,
-        sectionId,
-        schoolId,
-        guardianName,
-        guardianPhone,
-        guardianRelation,
+        fullName: data.fullName,
+        gender: data.gender,
+        dateOfBirth: data.dateOfBirth,
+        nationalId: data.nationalId,
+        phone: data.phone,
+        address: data.address,
+        photo: data.photo,
+        status: data.status,
+        classId: data.classId,
+        sectionId: data.sectionId,
+        schoolId: data.schoolId,
+        guardianName: data.guardianName,
+        guardianPhone: data.guardianPhone,
+        guardianRelation: data.guardianRelation,
         studentNumber,
         qrCode,
       },

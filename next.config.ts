@@ -27,15 +27,20 @@ const nextConfig: NextConfig = {
   // Image optimization configuration
   images: {
     formats: ["image/avif", "image/webp"],
+    // Restrict remote images to known sources only (prevent SSRF)
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "**",
+        hostname: "res.cloudinary.com",
+      },
+      {
+        protocol: "https",
+        hostname: "avatars.githubusercontent.com",
       },
     ],
   },
 
-  // Headers for caching static assets
+  // Security headers
   async headers() {
     return [
       {
@@ -53,6 +58,28 @@ const nextConfig: NextConfig = {
           {
             key: "Cache-Control",
             value: "public, max-age=86400",
+          },
+        ],
+      },
+      // Security headers for all routes
+      {
+        source: "/(.*)",
+        headers: [
+          {
+            key: "X-Content-Type-Options",
+            value: "nosniff",
+          },
+          {
+            key: "X-Frame-Options",
+            value: "DENY",
+          },
+          {
+            key: "X-XSS-Protection",
+            value: "1; mode=block",
+          },
+          {
+            key: "Referrer-Policy",
+            value: "strict-origin-when-cross-origin",
           },
         ],
       },

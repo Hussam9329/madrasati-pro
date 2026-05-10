@@ -1,21 +1,22 @@
 import { NextRequest } from 'next/server';
-import { checkDb, successResponse, errorResponse } from '@/services/api-response';
+import { checkDb, successResponse, errorResponse, validationErrorResponse, forbiddenResponse } from '@/services/api-response';
 import { db } from '@/lib/db';
+import { paymentCreateSchema } from '@/lib/validations';
+import { hasPermission } from '@/lib/auth';
 
-// GET /api/payments — List payments (filter by studentId, installmentId)
 export async function GET(request: NextRequest) {
   const dbError = checkDb();
   if (dbError) return dbError;
 
   try {
-    const { searchParams } = new URL(request.url)
-    const studentId = searchParams.get('studentId')
-    const installmentId = searchParams.get('installmentId')
-    const limit = parseInt(searchParams.get('limit') || '50')
+    const { searchParams } = new URL(request.url);
+    const studentId = searchParams.get('studentId');
+    const installmentId = searchParams.get('installmentId');
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '50')));
 
-    const where: Record<string, unknown> = {}
-    if (studentId) where.studentId = studentId
-    if (installmentId) where.installmentId = installmentId
+    const where: Record<string, unknown> = {};
+    if (studentId) where.studentId = studentId;
+    if (installmentId) where.installmentId = installmentId;
 
     const payments = await db.payment.findMany({
       where,
@@ -34,123 +35,129 @@ export async function GET(request: NextRequest) {
       },
       orderBy: { createdAt: 'desc' },
       take: limit,
-    })
+    });
 
-    return successResponse(payments)
+    return successResponse(payments);
   } catch (error) {
-    console.error('Error fetching payments:', error)
-    return errorResponse('فشل في جلب الدفعات', 500)
+    console.error('Error fetching payments:', error);
+    return errorResponse('فشل في جلب الدفعات', 500);
   }
 }
 
-// POST /api/payments — Record a new payment
 export async function POST(request: NextRequest) {
   const dbError = checkDb();
   if (dbError) return dbError;
 
   try {
-    const body = await request.json()
-    const { installmentId, studentId, amount, paymentDate, paymentMethod, receiptNumber, notes, recordedBy } = body
+    // Check authorization
+    const userRole = request.headers.get('x-user-role');
+    if (!userRole || !hasPermission(userRole, 'students')) {
+      if (!hasPermission(userRole || '', 'payments_view')) {
+        return forbiddenResponse('ليس لديك صلاحية لتسجيل الدفعات');
+      }
+    }
 
-    if (!installmentId) {
-      return errorResponse('يرجى اختيار القسط', 400)
+    const body = await request.json();
+
+    // Validate input with Zod
+    const result = paymentCreateSchema.safeParse(body);
+    if (!result.success) {
+      return validationErrorResponse(result.error);
     }
-    if (!amount || amount <= 0) {
-      return errorResponse('مبلغ الدفعة يجب أن يكون أكبر من صفر', 400)
-    }
-    if (!paymentDate) {
-      return errorResponse('يرجى تحديد تاريخ الدفع', 400)
-    }
+
+    const data = result.data;
 
     // Get installment
     const installment = await db.installment.findUnique({
-      where: { id: installmentId }
-    })
+      where: { id: data.installmentId }
+    });
 
     if (!installment) {
-      return errorResponse('القسط غير موجود', 404)
+      return errorResponse('القسط غير موجود', 404);
     }
 
     // Validate amount doesn't exceed remaining
-    if (amount > installment.remainingAmount) {
+    if (data.amount > installment.remainingAmount) {
       return errorResponse(
-        `مبلغ الدفعة (${amount}) يتجاوز المبلغ المتبقي (${installment.remainingAmount})`,
+        `مبلغ الدفعة (${data.amount}) يتجاوز المبلغ المتبقي (${installment.remainingAmount})`,
         400
-      )
+      );
     }
 
     // Create payment and update installment in transaction
-    const result = await db.$transaction(async (tx) => {
-      // Create payment
+    const payResult = await db.$transaction(async (tx) => {
       const payment = await tx.payment.create({
         data: {
-          installmentId,
-          studentId: studentId || installment.studentId,
-          amount: parseInt(amount),
-          paymentDate,
-          paymentMethod: paymentMethod || 'نقدي',
-          receiptNumber: receiptNumber || null,
-          notes: notes || null,
-          recordedBy: recordedBy || null,
+          installmentId: data.installmentId,
+          studentId: data.studentId || installment.studentId,
+          amount: parseInt(String(data.amount)),
+          paymentDate: data.paymentDate,
+          paymentMethod: data.paymentMethod,
+          receiptNumber: data.receiptNumber || null,
+          notes: data.notes || null,
+          recordedBy: data.recordedBy || null,
         }
-      })
+      });
 
-      // Update installment
-      const newPaidAmount = installment.paidAmount + parseInt(amount)
-      const newRemainingAmount = Math.max(0, installment.totalAmount - newPaidAmount)
+      const newPaidAmount = installment.paidAmount + parseInt(String(data.amount));
+      const newRemainingAmount = Math.max(0, installment.totalAmount - newPaidAmount);
       const newStatus = newPaidAmount === 0 ? 'غير مدفوع'
         : newPaidAmount >= installment.totalAmount ? 'مدفوع بالكامل'
-        : 'مدفوع جزئياً'
+        : 'مدفوع جزئياً';
 
       const updatedInstallment = await tx.installment.update({
-        where: { id: installmentId },
+        where: { id: data.installmentId },
         data: {
           paidAmount: newPaidAmount,
           remainingAmount: newRemainingAmount,
           status: newStatus,
         }
-      })
+      });
 
-      return { payment, installment: updatedInstallment }
-    })
+      return { payment, installment: updatedInstallment };
+    });
 
-    return successResponse(result, undefined, 201)
+    return successResponse(payResult, undefined, 201);
   } catch (error) {
-    console.error('Error creating payment:', error)
-    return errorResponse('فشل في تسجيل الدفعة', 500)
+    console.error('Error creating payment:', error);
+    return errorResponse('فشل في تسجيل الدفعة', 500);
   }
 }
 
-// DELETE /api/payments — Delete a payment
 export async function DELETE(request: NextRequest) {
   const dbError = checkDb();
   if (dbError) return dbError;
 
   try {
-    const { searchParams } = new URL(request.url)
-    const id = searchParams.get('id')
+    // Only admin roles can delete payments
+    const userRole = request.headers.get('x-user-role');
+    if (!userRole || !hasPermission(userRole, 'all')) {
+      return forbiddenResponse('حذف الدفعات يتطلب صلاحيات مدير');
+    }
+
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
 
     if (!id) {
-      return errorResponse('معرف الدفعة مطلوب', 400)
+      return errorResponse('معرف الدفعة مطلوب', 400);
     }
 
-    const payment = await db.payment.findUnique({ where: { id } })
+    const payment = await db.payment.findUnique({ where: { id } });
     if (!payment) {
-      return errorResponse('الدفعة غير موجودة', 404)
+      return errorResponse('الدفعة غير موجودة', 404);
     }
 
-    // Delete payment and update installment in transaction
     await db.$transaction(async (tx) => {
       const installment = await tx.installment.findUnique({
         where: { id: payment.installmentId }
-      })
+      });
 
       if (installment) {
-        const newPaidAmount = Math.max(0, installment.paidAmount - payment.amount)
-        const newRemainingAmount = Math.max(0, installment.totalAmount - newPaidAmount)
+        const newPaidAmount = Math.max(0, installment.paidAmount - payment.amount);
+        const newRemainingAmount = Math.max(0, installment.totalAmount - newPaidAmount);
         const newStatus = newPaidAmount === 0 ? 'غير مدفوع'
           : newPaidAmount >= installment.totalAmount ? 'مدفوع بالكامل'
-          : 'مدفوع جزئياً'
+          : 'مدفوع جزئياً';
 
         await tx.installment.update({
           where: { id: installment.id },
@@ -159,15 +166,15 @@ export async function DELETE(request: NextRequest) {
             remainingAmount: newRemainingAmount,
             status: newStatus,
           }
-        })
+        });
       }
 
-      await tx.payment.delete({ where: { id } })
-    })
+      await tx.payment.delete({ where: { id } });
+    });
 
-    return successResponse(null, 'تم حذف الدفعة بنجاح')
+    return successResponse(null, 'تم حذف الدفعة بنجاح');
   } catch (error) {
-    console.error('Error deleting payment:', error)
-    return errorResponse('فشل في حذف الدفعة', 500)
+    console.error('Error deleting payment:', error);
+    return errorResponse('فشل في حذف الدفعة', 500);
   }
 }

@@ -8,7 +8,7 @@ async function seed() {
 
   // 1. إنشاء المدرسة ببيانات ثابتة
   const existingSchools = await prisma.school.findMany()
-  
+
   if (existingSchools.length === 0) {
     const school = await prisma.school.create({
       data: {
@@ -26,7 +26,6 @@ async function seed() {
     console.log(`✅ تم إنشاء المدرسة: ${school.name}`)
     console.log(`   العنوان: ${school.address}`)
   } else {
-    // تأكد من أن الاسم والعنوان ثابتان
     await prisma.school.update({
       where: { id: existingSchools[0].id },
       data: {
@@ -37,20 +36,24 @@ async function seed() {
     console.log('✅ تم تحديث بيانات المدرسة الثابتة')
   }
 
-  // 2. إنشاء مستخدم المدير الافتراضي
+  // 2. إنشاء مستخدم المدير
+  // Use ADMIN_PASSWORD env var if set, otherwise default to 'admin123'
+  // In production, ALWAYS set ADMIN_PASSWORD environment variable
+  const adminPassword = process.env.ADMIN_PASSWORD || 'admin123'
   const existingAdmin = await prisma.user.findUnique({ where: { username: 'admin' } })
-  
+
   if (!existingAdmin) {
     const admin = await prisma.user.create({
       data: {
         username: 'admin',
-        password: hashSync('admin', 10),
+        password: hashSync(adminPassword, 10),
         name: 'مدير النظام',
         role: 'مدير',
         active: true,
       },
     })
     console.log(`✅ تم إنشاء مستخدم المدير: ${admin.username}`)
+    console.log(`   ⚠️  كلمة المرور: ${process.env.ADMIN_PASSWORD ? '(من متغير البيئة)' : 'admin123 — غيّرها فوراً!'}`)
   } else {
     console.log('ℹ️ مستخدم المدير موجود بالفعل')
   }

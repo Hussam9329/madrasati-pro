@@ -1,6 +1,7 @@
-import { checkDb, successResponse, errorResponse } from '@/services/api-response';
+import { checkDb, successResponse, errorResponse, validationErrorResponse, forbiddenResponse } from '@/services/api-response';
 import { db } from '@/lib/db';
-import { verifyToken } from '@/lib/auth';
+import { ADMIN_ROLES } from '@/lib/auth';
+import { userUpdateSchema } from '@/lib/validations';
 
 export async function PUT(
   request: Request,
@@ -10,34 +11,48 @@ export async function PUT(
   if (dbError) return dbError;
 
   try {
+    // Only admin roles can update users
+    const userRole = request.headers.get('x-user-role');
+    if (!userRole || !ADMIN_ROLES.includes(userRole as typeof ADMIN_ROLES[number])) {
+      return forbiddenResponse('تعديل المستخدمين يتطلب صلاحيات مدير');
+    }
+
     const { id } = await params;
     const body = await request.json();
+
+    // Validate input with Zod
+    const result = userUpdateSchema.safeParse(body);
+    if (!result.success) {
+      return validationErrorResponse(result.error);
+    }
+
+    const data = result.data;
 
     const existingUser = await db.user.findUnique({ where: { id } });
     if (!existingUser) {
       return errorResponse('المستخدم غير موجود', 404);
     }
 
-    const data: Record<string, unknown> = {
-      name: body.name,
-      role: body.role,
-      active: body.active,
+    const updateData: Record<string, unknown> = {
+      name: data.name,
+      role: data.role,
+      active: data.active,
     };
 
     // If updating username, check uniqueness
-    if (body.username && body.username !== existingUser.username) {
+    if (data.username && data.username !== existingUser.username) {
       const usernameTaken = await db.user.findUnique({
-        where: { username: body.username },
+        where: { username: data.username },
       });
       if (usernameTaken) {
         return errorResponse('اسم المستخدم مستخدم بالفعل', 409);
       }
-      data.username = body.username;
+      updateData.username = data.username;
     }
 
     const user = await db.user.update({
       where: { id },
-      data,
+      data: updateData,
       select: {
         id: true,
         username: true,
@@ -66,16 +81,11 @@ export async function DELETE(
   try {
     const { id } = await params;
 
-    // Check authorization
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return errorResponse('غير مصرح بهذا الإجراء', 401);
-    }
-
-    const token = authHeader.split(' ')[1];
-    const user = verifyToken(token);
-    if (!user || (user.role !== 'مدير' && user.role !== 'مسؤول نظام')) {
-      return errorResponse('غير مصرح بهذا الإجراء. يتطلب صلاحيات مدير أو مسؤول نظام', 403);
+    // Verify authorization — only admin roles
+    const userRole = request.headers.get('x-user-role');
+    const userId = request.headers.get('x-user-id');
+    if (!userRole || !ADMIN_ROLES.includes(userRole as typeof ADMIN_ROLES[number])) {
+      return forbiddenResponse('حذف المستخدمين يتطلب صلاحيات مدير');
     }
 
     const existingUser = await db.user.findUnique({ where: { id } });
@@ -84,7 +94,7 @@ export async function DELETE(
     }
 
     // Prevent deleting yourself
-    if (existingUser.id === user.id) {
+    if (existingUser.id === userId) {
       return errorResponse('لا يمكنك حذف حسابك الخاص', 400);
     }
 

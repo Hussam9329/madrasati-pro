@@ -1,5 +1,6 @@
-import { checkDb, successResponse, errorResponse } from '@/services/api-response';
+import { checkDb, successResponse, errorResponse, validationErrorResponse } from '@/services/api-response';
 import { db } from '@/lib/db';
+import { attendanceScanSchema } from '@/lib/validations';
 
 export async function POST(request: Request) {
   const dbError = checkDb();
@@ -7,15 +8,14 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { qrCode, type } = body;
 
-    if (!qrCode || !type) {
-      return errorResponse('رمز QR ونوع المسح مطلوبان', 400);
+    // Validate input with Zod
+    const result = attendanceScanSchema.safeParse(body);
+    if (!result.success) {
+      return validationErrorResponse(result.error);
     }
 
-    if (type !== 'checkIn' && type !== 'checkOut') {
-      return errorResponse('نوع المسح يجب أن يكون checkIn أو checkOut', 400);
-    }
+    const { qrCode, type } = result.data;
 
     // Find student by QR code
     const student = await db.student.findFirst({
@@ -34,30 +34,14 @@ export async function POST(request: Request) {
     if (student.cardStatus !== 'فعالة') {
       return errorResponse(
         `بطاقة الطالب ${student.cardStatus}`,
-        403,
-        JSON.stringify({
-          student: {
-            id: student.id,
-            fullName: student.fullName,
-            studentNumber: student.studentNumber,
-            cardStatus: student.cardStatus,
-          },
-        })
+        403
       );
     }
 
     if (student.status !== 'مستمر') {
       return errorResponse(
         `حالة الطالب: ${student.status}`,
-        403,
-        JSON.stringify({
-          student: {
-            id: student.id,
-            fullName: student.fullName,
-            studentNumber: student.studentNumber,
-            status: student.status,
-          },
-        })
+        403
       );
     }
 
@@ -72,7 +56,7 @@ export async function POST(request: Request) {
 
     // Get school settings for late threshold
     const school = student.school;
-    const lateThreshold = school.lateThreshold || 10; // minutes
+    const lateThreshold = school.lateThreshold || 10;
     const startTime = school.startTime || '08:00';
 
     if (type === 'checkIn') {
@@ -95,31 +79,10 @@ export async function POST(request: Request) {
       }
 
       if (existingRecord) {
-        // Check if student already checked in today
         if (existingRecord.checkIn) {
-          return errorResponse(
-            'تم تسجيل حضور هذا الطالب مسبقاً اليوم',
-            409,
-            JSON.stringify({
-              action: 'duplicateCheckIn',
-              student: {
-                id: student.id,
-                fullName: student.fullName,
-                studentNumber: student.studentNumber,
-                class: student.class.name,
-                section: student.section.name,
-              },
-              existingRecord: {
-                id: existingRecord.id,
-                checkIn: existingRecord.checkIn,
-                status: existingRecord.status,
-                lateMinutes: existingRecord.lateMinutes,
-              },
-            })
-          );
+          return errorResponse('تم تسجيل حضور هذا الطالب مسبقاً اليوم', 409);
         }
 
-        // Record exists but no check-in yet (e.g. was marked absent), update it
         const record = await db.attendanceRecord.update({
           where: { id: existingRecord.id },
           data: {
@@ -144,7 +107,6 @@ export async function POST(request: Request) {
         }, 'تم تسجيل الحضور');
       }
 
-      // Create new check-in record
       const record = await db.attendanceRecord.create({
         data: {
           studentId: student.id,
@@ -173,40 +135,11 @@ export async function POST(request: Request) {
 
     // Check-out
     if (!existingRecord) {
-      return errorResponse(
-        'لم يتم تسجيل حضور هذا الطالب اليوم',
-        400,
-        JSON.stringify({
-          student: {
-            id: student.id,
-            fullName: student.fullName,
-            studentNumber: student.studentNumber,
-          },
-        })
-      );
+      return errorResponse('لم يتم تسجيل حضور هذا الطالب اليوم', 400);
     }
 
     if (existingRecord.checkOut) {
-      return errorResponse(
-        'تم تسجيل خروج هذا الطالب مسبقاً اليوم',
-        409,
-        JSON.stringify({
-          action: 'duplicateCheckOut',
-          student: {
-            id: student.id,
-            fullName: student.fullName,
-            studentNumber: student.studentNumber,
-            class: student.class.name,
-            section: student.section.name,
-          },
-          existingRecord: {
-            id: existingRecord.id,
-            checkIn: existingRecord.checkIn,
-            checkOut: existingRecord.checkOut,
-            status: existingRecord.status,
-          },
-        })
-      );
+      return errorResponse('تم تسجيل خروج هذا الطالب مسبقاً اليوم', 409);
     }
 
     // Determine if early exit

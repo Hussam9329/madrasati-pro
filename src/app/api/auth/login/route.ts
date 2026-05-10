@@ -1,6 +1,6 @@
 import { checkDb, successResponse, errorResponse } from '@/services/api-response';
 import { db } from '@/lib/db';
-import { generateToken, type AuthUser } from '@/lib/auth';
+import { generateToken, comparePassword, type AuthUser } from '@/lib/auth';
 
 export async function POST(request: Request) {
   const dbError = checkDb();
@@ -8,10 +8,16 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { username } = body;
+    const { username, password } = body;
 
-    if (!username) {
-      return errorResponse('اسم المستخدم مطلوب', 400);
+    // Validate required fields
+    if (!username || !password) {
+      return errorResponse('اسم المستخدم وكلمة المرور مطلوبان', 400);
+    }
+
+    // Prevent brute-force: limit input length
+    if (username.length > 100 || password.length > 200) {
+      return errorResponse('البيانات المدخلة غير صالحة', 400);
     }
 
     const user = await db.user.findUnique({
@@ -19,11 +25,19 @@ export async function POST(request: Request) {
     });
 
     if (!user) {
-      return errorResponse('اسم المستخدم غير موجود', 401);
+      // Use a generic message to prevent username enumeration
+      return errorResponse('اسم المستخدم أو كلمة المرور غير صحيحة', 401);
     }
 
     if (!user.active) {
       return errorResponse('هذا الحساب معطل. تواصل مع المسؤول', 403);
+    }
+
+    // Verify password against the stored hash
+    const passwordValid = await comparePassword(password, user.password);
+    if (!passwordValid) {
+      // Same generic message — don't reveal which part is wrong
+      return errorResponse('اسم المستخدم أو كلمة المرور غير صحيحة', 401);
     }
 
     const authUser: AuthUser = {
@@ -47,6 +61,7 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error('Login error:', error);
+    // Never expose internal error details
     return errorResponse('حدث خطأ في تسجيل الدخول', 500);
   }
 }

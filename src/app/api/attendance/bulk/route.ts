@@ -1,5 +1,6 @@
-import { checkDb, successResponse, errorResponse } from '@/services/api-response';
+import { checkDb, successResponse, errorResponse, validationErrorResponse } from '@/services/api-response';
 import { db } from '@/lib/db';
+import { attendanceBulkSchema } from '@/lib/validations';
 
 export async function POST(request: Request) {
   const dbError = checkDb();
@@ -7,11 +8,14 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { records } = body;
 
-    if (!Array.isArray(records) || records.length === 0) {
-      return errorResponse('يجب توفير قائمة سجلات الحضور', 400);
+    // Validate input with Zod
+    const result = attendanceBulkSchema.safeParse(body);
+    if (!result.success) {
+      return validationErrorResponse(result.error);
     }
+
+    const { records } = result.data;
 
     const results: Record<string, unknown>[] = [];
     const errors: Record<string, unknown>[] = [];
@@ -20,48 +24,30 @@ export async function POST(request: Request) {
       try {
         const { studentId, schoolId, date, status, checkIn, checkOut, lateMinutes } = record;
 
-        if (!studentId || !schoolId || !date || !status) {
-          errors.push({ studentId: studentId || 'unknown', error: 'بيانات ناقصة' });
-          continue;
-        }
-
         // Check if record already exists for this student on this date
         const existingRecord = await db.attendanceRecord.findFirst({
           where: { studentId, date },
         });
 
-        // Prevent duplicate check-in if student already checked in
         if (existingRecord && existingRecord.checkIn && checkIn) {
           errors.push({
             studentId,
             error: `تم تسجيل حضور الطالب مسبقاً في ${existingRecord.checkIn}`,
-            existingRecord: {
-              id: existingRecord.id,
-              checkIn: existingRecord.checkIn,
-              status: existingRecord.status,
-            }
           });
           continue;
         }
 
-        // Prevent duplicate check-out if student already checked out
         if (existingRecord && existingRecord.checkOut && checkOut) {
           errors.push({
             studentId,
             error: `تم تسجيل خروج الطالب مسبقاً في ${existingRecord.checkOut}`,
-            existingRecord: {
-              id: existingRecord.id,
-              checkOut: existingRecord.checkOut,
-              status: existingRecord.status,
-            }
           });
           continue;
         }
 
-        let result;
+        let savedRecord;
         if (existingRecord) {
-          // Update existing record (only fill missing fields, don't overwrite)
-          result = await db.attendanceRecord.update({
+          savedRecord = await db.attendanceRecord.update({
             where: { id: existingRecord.id },
             data: {
               checkIn: checkIn || existingRecord.checkIn,
@@ -83,8 +69,7 @@ export async function POST(request: Request) {
             },
           });
         } else {
-          // Create new record
-          result = await db.attendanceRecord.create({
+          savedRecord = await db.attendanceRecord.create({
             data: {
               studentId,
               schoolId,
@@ -108,7 +93,7 @@ export async function POST(request: Request) {
           });
         }
 
-        results.push(result);
+        results.push(savedRecord);
       } catch (err) {
         errors.push({ studentId: record.studentId || 'unknown', error: 'خطأ في حفظ السجل' });
       }

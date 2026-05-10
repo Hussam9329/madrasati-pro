@@ -1,5 +1,7 @@
-import { checkDb, successResponse, errorResponse } from '@/services/api-response';
+import { checkDb, successResponse, errorResponse, validationErrorResponse, forbiddenResponse } from '@/services/api-response';
 import { db } from '@/lib/db';
+import { gradeCreateSchema } from '@/lib/validations';
+import { hasPermission } from '@/lib/auth';
 
 export async function GET(request: Request) {
   const dbError = checkDb();
@@ -11,8 +13,8 @@ export async function GET(request: Request) {
     const subjectId = searchParams.get('subjectId');
     const examTypeId = searchParams.get('examTypeId');
     const classId = searchParams.get('classId');
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '50');
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '50')));
 
     const where: Record<string, unknown> = {};
     if (studentId) where.studentId = studentId;
@@ -65,27 +67,31 @@ export async function POST(request: Request) {
   if (dbError) return dbError;
 
   try {
-    const body = await request.json();
-    const {
-      studentId,
-      subjectId,
-      examTypeId,
-      schoolId,
-      score,
-      status,
-    } = body;
-
-    if (!studentId || !subjectId || !examTypeId || !schoolId) {
-      return errorResponse('معرف الطالب والمادة ونوع الامتحان والمدرسة مطلوبون', 400);
+    // Check authorization
+    const userRole = request.headers.get('x-user-role');
+    if (!userRole || !hasPermission(userRole, 'grades')) {
+      if (!hasPermission(userRole || '', 'grades_own')) {
+        return forbiddenResponse('ليس لديك صلاحية لتسجيل الدرجات');
+      }
     }
+
+    const body = await request.json();
+
+    // Validate input with Zod
+    const result = gradeCreateSchema.safeParse(body);
+    if (!result.success) {
+      return validationErrorResponse(result.error);
+    }
+
+    const data = result.data;
 
     // Check if grade already exists for this student/subject/examType combination
     const existingGrade = await db.grade.findUnique({
       where: {
         studentId_subjectId_examTypeId: {
-          studentId,
-          subjectId,
-          examTypeId,
+          studentId: data.studentId,
+          subjectId: data.subjectId,
+          examTypeId: data.examTypeId,
         },
       },
     });
@@ -96,12 +102,11 @@ export async function POST(request: Request) {
         return errorResponse('لا يمكن تعديل درجة مقفلة. الدرجات المعتمدة لا يمكن تعديلها', 403);
       }
 
-      // Update grade
       const grade = await db.grade.update({
         where: { id: existingGrade.id },
         data: {
-          score,
-          status: status || (score !== null ? 'مكتملة' : 'ناقصة'),
+          score: data.score,
+          status: data.status || (data.score !== null ? 'مكتملة' : 'ناقصة'),
         },
         include: {
           student: {
@@ -122,12 +127,12 @@ export async function POST(request: Request) {
     // Create new grade
     const grade = await db.grade.create({
       data: {
-        studentId,
-        subjectId,
-        examTypeId,
-        schoolId,
-        score,
-        status: status || (score !== null ? 'مكتملة' : 'ناقصة'),
+        studentId: data.studentId,
+        subjectId: data.subjectId,
+        examTypeId: data.examTypeId,
+        schoolId: data.schoolId,
+        score: data.score,
+        status: data.status || (data.score !== null ? 'مكتملة' : 'ناقصة'),
       },
       include: {
         student: {

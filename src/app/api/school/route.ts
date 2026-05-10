@@ -1,5 +1,7 @@
-import { checkDb, successResponse, errorResponse } from '@/services/api-response';
+import { checkDb, successResponse, errorResponse, validationErrorResponse, forbiddenResponse } from '@/services/api-response';
 import { db } from '@/lib/db';
+import { schoolUpdateSchema } from '@/lib/validations';
+import { ADMIN_ROLES } from '@/lib/auth';
 
 // قيم ثابتة غير قابلة للتغيير
 const FIXED_SCHOOL_NAME = 'ثانوية مارينا';
@@ -10,7 +12,6 @@ export async function GET() {
   if (dbError) return dbError;
 
   try {
-    // إذا لا توجد مدرسة، أنشئها تلقائيًا بالقيم الثابتة
     let schools = await db.school.findMany({
       include: {
         _count: {
@@ -86,7 +87,21 @@ export async function PUT(request: Request) {
   if (dbError) return dbError;
 
   try {
+    // Only admin roles can update school settings
+    const userRole = request.headers.get('x-user-role');
+    if (!userRole || !ADMIN_ROLES.includes(userRole as typeof ADMIN_ROLES[number])) {
+      return forbiddenResponse('تحديث إعدادات المدرسة يتطلب صلاحيات مدير');
+    }
+
     const body = await request.json();
+
+    // Validate input with Zod
+    const result = schoolUpdateSchema.safeParse(body);
+    if (!result.success) {
+      return validationErrorResponse(result.error);
+    }
+
+    const data = result.data;
 
     const existingSchools = await db.school.findMany();
 
@@ -96,19 +111,19 @@ export async function PUT(request: Request) {
       school = await db.school.update({
         where: { id: existingSchools[0].id },
         data: {
-          name: FIXED_SCHOOL_NAME,           // ثابت — لا يُغيَّر
-          address: FIXED_SCHOOL_ADDRESS,     // ثابت — لا يُغيَّر
-          logo: body.logo,
-          phone: body.phone,
-          email: body.email,
-          principalName: body.principalName,
-          academicYear: body.academicYear,
-          schoolType: body.schoolType,
-          shiftType: body.shiftType,         // configurable — يحدده المدير
-          startTime: body.startTime,         // configurable — يحدده المدير
-          endTime: body.endTime,             // configurable — يحدده المدير
-          lateThreshold: body.lateThreshold,
-          weekendDays: body.weekendDays,
+          name: FIXED_SCHOOL_NAME,
+          address: FIXED_SCHOOL_ADDRESS,
+          logo: data.logo,
+          phone: data.phone,
+          email: data.email,
+          principalName: data.principalName,
+          academicYear: data.academicYear,
+          schoolType: data.schoolType,
+          shiftType: data.shiftType,
+          startTime: data.startTime,
+          endTime: data.endTime,
+          lateThreshold: data.lateThreshold,
+          weekendDays: data.weekendDays,
         },
       });
     } else {
@@ -116,17 +131,17 @@ export async function PUT(request: Request) {
         data: {
           name: FIXED_SCHOOL_NAME,
           address: FIXED_SCHOOL_ADDRESS,
-          logo: body.logo,
-          phone: body.phone,
-          email: body.email,
-          principalName: body.principalName,
-          academicYear: body.academicYear || '2026-2027',
-          schoolType: body.schoolType || 'ثانوية اعتيادية',
-          shiftType: body.shiftType || 'صباحي',
-          startTime: body.startTime || '08:00',
-          endTime: body.endTime || '13:30',
-          lateThreshold: body.lateThreshold || 10,
-          weekendDays: body.weekendDays || '5,6',
+          logo: data.logo,
+          phone: data.phone,
+          email: data.email,
+          principalName: data.principalName,
+          academicYear: data.academicYear || '2026-2027',
+          schoolType: data.schoolType || 'ثانوية اعتيادية',
+          shiftType: data.shiftType || 'صباحي',
+          startTime: data.startTime || '08:00',
+          endTime: data.endTime || '13:30',
+          lateThreshold: data.lateThreshold || 10,
+          weekendDays: data.weekendDays || '5,6',
         },
       });
     }

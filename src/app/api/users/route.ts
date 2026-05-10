@@ -1,12 +1,20 @@
-import { checkDb, successResponse, errorResponse } from '@/services/api-response';
+import { checkDb, successResponse, errorResponse, validationErrorResponse, forbiddenResponse } from '@/services/api-response';
 import { db } from '@/lib/db';
-import { hashPassword } from '@/lib/auth';
+import { hashPassword, ADMIN_ROLES } from '@/lib/auth';
+import { userCreateSchema } from '@/lib/validations';
+import { randomBytes } from 'crypto';
 
 export async function GET(request: Request) {
   const dbError = checkDb();
   if (dbError) return dbError;
 
   try {
+    // Only admin roles can list users
+    const userRole = request.headers.get('x-user-role');
+    if (!userRole || !ADMIN_ROLES.includes(userRole as typeof ADMIN_ROLES[number])) {
+      return forbiddenResponse('عرض المستخدمين يتطلب صلاحيات مدير');
+    }
+
     const { searchParams } = new URL(request.url);
     const role = searchParams.get('role');
     const active = searchParams.get('active');
@@ -41,29 +49,39 @@ export async function POST(request: Request) {
   if (dbError) return dbError;
 
   try {
-    const body = await request.json();
-    const { username, name, role, active } = body;
-
-    if (!username || !name) {
-      return errorResponse('اسم المستخدم والاسم مطلوبان', 400);
+    // Only admin roles can create users
+    const userRole = request.headers.get('x-user-role');
+    if (!userRole || !ADMIN_ROLES.includes(userRole as typeof ADMIN_ROLES[number])) {
+      return forbiddenResponse('إنشاء المستخدمين يتطلب صلاحيات مدير');
     }
 
+    const body = await request.json();
+
+    // Validate input with Zod
+    const result = userCreateSchema.safeParse(body);
+    if (!result.success) {
+      return validationErrorResponse(result.error);
+    }
+
+    const data = result.data;
+
     // Check if username already exists
-    const existingUser = await db.user.findUnique({ where: { username } });
+    const existingUser = await db.user.findUnique({ where: { username: data.username } });
     if (existingUser) {
       return errorResponse('اسم المستخدم مستخدم بالفعل', 409);
     }
 
-    // كلمة مرور افتراضية = اسم المستخدم (لا يوجد تسجيل بكلمة مرور)
-    const hashedPassword = hashPassword(username);
+    // Generate a random temporary password (NOT the username!)
+    const tempPassword = randomBytes(8).toString('hex');
+    const hashedPassword = await hashPassword(tempPassword);
 
     const user = await db.user.create({
       data: {
-        username,
+        username: data.username,
         password: hashedPassword,
-        name,
-        role: role || 'موظف تسجيل',
-        active: active !== undefined ? active : true,
+        name: data.name,
+        role: data.role,
+        active: data.active,
       },
       select: {
         id: true,
@@ -76,7 +94,11 @@ export async function POST(request: Request) {
       },
     });
 
-    return successResponse(user, undefined, 201);
+    // Return user data with temporary password (shown once to admin)
+    return successResponse({
+      ...user,
+      tempPassword, // Admin must share this securely with the user
+    }, undefined, 201);
   } catch (error) {
     console.error('Create user error:', error);
     return errorResponse('حدث خطأ في إنشاء المستخدم', 500);

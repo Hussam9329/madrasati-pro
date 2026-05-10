@@ -1,22 +1,23 @@
 import { NextRequest } from 'next/server';
-import { checkDb, successResponse, errorResponse } from '@/services/api-response';
+import { checkDb, successResponse, errorResponse, validationErrorResponse, forbiddenResponse } from '@/services/api-response';
 import { db } from '@/lib/db';
+import { installmentCreateSchema, installmentUpdateSchema } from '@/lib/validations';
+import { hasPermission } from '@/lib/auth';
 
-// GET /api/installments — List installments (filter by studentId, classId)
 export async function GET(request: NextRequest) {
   const dbError = checkDb();
   if (dbError) return dbError;
 
   try {
-    const { searchParams } = new URL(request.url)
-    const studentId = searchParams.get('studentId')
-    const classId = searchParams.get('classId')
-    const status = searchParams.get('status')
+    const { searchParams } = new URL(request.url);
+    const studentId = searchParams.get('studentId');
+    const classId = searchParams.get('classId');
+    const status = searchParams.get('status');
 
-    const where: Record<string, unknown> = {}
-    if (studentId) where.studentId = studentId
-    if (classId) where.classId = classId
-    if (status) where.status = status
+    const where: Record<string, unknown> = {};
+    if (studentId) where.studentId = studentId;
+    if (classId) where.classId = classId;
+    if (status) where.status = status;
 
     const installments = await db.installment.findMany({
       where,
@@ -27,71 +28,75 @@ export async function GET(request: NextRequest) {
         payments: { orderBy: { createdAt: 'desc' } }
       },
       orderBy: { createdAt: 'desc' }
-    })
+    });
 
-    return successResponse(installments)
+    return successResponse(installments);
   } catch (error) {
-    console.error('Error fetching installments:', error)
-    return errorResponse('فشل في جلب الأقساط', 500)
+    console.error('Error fetching installments:', error);
+    return errorResponse('فشل في جلب الأقساط', 500);
   }
 }
 
-// POST /api/installments — Create installments for a student (from fee plans)
 export async function POST(request: NextRequest) {
   const dbError = checkDb();
   if (dbError) return dbError;
 
   try {
-    const body = await request.json()
-    const { studentId, feePlanId, discountType, discountValue, discountNotes, notes } = body
+    const userRole = request.headers.get('x-user-role');
+    if (!userRole || !hasPermission(userRole, 'students')) {
+      return forbiddenResponse('ليس لديك صلاحية لإنشاء أقساط');
+    }
 
-    if (!studentId) {
-      return errorResponse('يرجى اختيار الطالب', 400)
+    const body = await request.json();
+
+    // Validate input with Zod
+    const result = installmentCreateSchema.safeParse(body);
+    if (!result.success) {
+      return validationErrorResponse(result.error);
     }
-    if (!feePlanId) {
-      return errorResponse('يرجى اختيار خطة الرسوم', 400)
-    }
+
+    const data = result.data;
 
     // Get student
     const student = await db.student.findUnique({
-      where: { id: studentId },
+      where: { id: data.studentId },
       include: { class: true }
-    })
+    });
     if (!student) {
-      return errorResponse('الطالب غير موجود', 404)
+      return errorResponse('الطالب غير موجود', 404);
     }
 
     // Get fee plan
-    const feePlan = await db.feePlan.findUnique({ where: { id: feePlanId } })
+    const feePlan = await db.feePlan.findUnique({ where: { id: data.feePlanId } });
     if (!feePlan) {
-      return errorResponse('خطة الرسوم غير موجودة', 404)
+      return errorResponse('خطة الرسوم غير موجودة', 404);
     }
 
-    // Check if installment already exists for this student + feePlan
+    // Check if installment already exists
     const existing = await db.installment.findUnique({
-      where: { studentId_feePlanId: { studentId, feePlanId } }
-    })
+      where: { studentId_feePlanId: { studentId: data.studentId, feePlanId: data.feePlanId } }
+    });
     if (existing) {
-      return errorResponse('هذا القسط مسجل بالفعل لهذا الطالب', 400)
+      return errorResponse('هذا القسط مسجل بالفعل لهذا الطالب', 400);
     }
 
     // Calculate amount with discount
-    let totalAmount = feePlan.amount
-    const dType = discountType || 'none'
-    const dValue = discountValue || 0
+    let totalAmount = feePlan.amount;
+    const dType = data.discountType;
+    const dValue = data.discountValue;
 
     if (dType === 'percentage' && dValue > 0) {
-      totalAmount = Math.round(feePlan.amount * (1 - dValue / 100))
+      totalAmount = Math.round(feePlan.amount * (1 - dValue / 100));
     } else if (dType === 'fixed' && dValue > 0) {
-      totalAmount = Math.max(0, feePlan.amount - dValue)
+      totalAmount = Math.max(0, feePlan.amount - dValue);
     } else if (dType === 'free') {
-      totalAmount = 0
+      totalAmount = 0;
     }
 
     const installment = await db.installment.create({
       data: {
-        studentId,
-        feePlanId,
+        studentId: data.studentId,
+        feePlanId: data.feePlanId,
         classId: student.classId,
         schoolId: student.schoolId,
         totalAmount,
@@ -99,75 +104,81 @@ export async function POST(request: NextRequest) {
         remainingAmount: totalAmount,
         discountType: dType,
         discountValue: dValue,
-        discountNotes: discountNotes || null,
+        discountNotes: data.discountNotes || null,
         status: 'غير مدفوع',
         dueDate: feePlan.dueDate,
-        notes: notes || null,
+        notes: data.notes || null,
       },
       include: {
         student: { select: { id: true, fullName: true, studentNumber: true } },
         feePlan: { select: { id: true, name: true, amount: true } },
         class: { select: { id: true, name: true } },
       }
-    })
+    });
 
-    return successResponse(installment, undefined, 201)
+    return successResponse(installment, undefined, 201);
   } catch (error) {
-    console.error('Error creating installment:', error)
-    return errorResponse('فشل في إنشاء القسط', 500)
+    console.error('Error creating installment:', error);
+    return errorResponse('فشل في إنشاء القسط', 500);
   }
 }
 
-// PUT /api/installments — Update installment (discount, notes)
 export async function PUT(request: NextRequest) {
   const dbError = checkDb();
   if (dbError) return dbError;
 
   try {
-    const body = await request.json()
-    const { id, discountType, discountValue, discountNotes, notes } = body
-
-    if (!id) {
-      return errorResponse('معرف القسط مطلوب', 400)
+    const userRole = request.headers.get('x-user-role');
+    if (!userRole || !hasPermission(userRole, 'all')) {
+      return forbiddenResponse('تعديل الأقساط يتطلب صلاحيات مدير');
     }
 
+    const body = await request.json();
+
+    // Validate input with Zod
+    const result = installmentUpdateSchema.safeParse(body);
+    if (!result.success) {
+      return validationErrorResponse(result.error);
+    }
+
+    const data = result.data;
+
     const existing = await db.installment.findUnique({
-      where: { id },
+      where: { id: data.id },
       include: { feePlan: true, payments: true }
-    })
+    });
 
     if (!existing) {
-      return errorResponse('القسط غير موجود', 404)
+      return errorResponse('القسط غير موجود', 404);
     }
 
     // Recalculate with new discount
-    const dType = discountType || existing.discountType
-    const dValue = discountValue ?? existing.discountValue
-    let totalAmount = existing.feePlan.amount
+    const dType = data.discountType || existing.discountType;
+    const dValue = data.discountValue ?? existing.discountValue;
+    let totalAmount = existing.feePlan.amount;
 
     if (dType === 'percentage' && dValue > 0) {
-      totalAmount = Math.round(existing.feePlan.amount * (1 - dValue / 100))
+      totalAmount = Math.round(existing.feePlan.amount * (1 - dValue / 100));
     } else if (dType === 'fixed' && dValue > 0) {
-      totalAmount = Math.max(0, existing.feePlan.amount - dValue)
+      totalAmount = Math.max(0, existing.feePlan.amount - dValue);
     } else if (dType === 'free') {
-      totalAmount = 0
+      totalAmount = 0;
     }
 
-    // Ensure paid amount doesn't exceed new total
-    const paidAmount = Math.min(existing.paidAmount, totalAmount)
-    const remainingAmount = Math.max(0, totalAmount - paidAmount)
-    const status = paidAmount === 0 ? 'غير مدفوع' : paidAmount >= totalAmount ? 'مدفوع بالكامل' : 'مدفوع جزئياً'
+    const paidAmount = Math.min(existing.paidAmount, totalAmount);
+    const remainingAmount = Math.max(0, totalAmount - paidAmount);
+    const status = paidAmount === 0 ? 'غير مدفوع' : paidAmount >= totalAmount ? 'مدفوع بالكامل' : 'مدفوع جزئياً';
 
     const installment = await db.installment.update({
-      where: { id },
+      where: { id: data.id },
       data: {
         totalAmount,
         paidAmount,
         remainingAmount,
         discountType: dType,
         discountValue: dValue,
-        discountNotes: discountNotes !== undefined ? discountNotes : existing.discountNotes,
-        notes: notes !== undefined ? notes : existing.notes,
+        discountNotes: data.discountNotes !== undefined ? data.discountNotes : existing.discountNotes,
+        notes: data.notes !== undefined ? data.notes : existing.notes,
         status,
       },
       include: {
@@ -175,11 +186,11 @@ export async function PUT(request: NextRequest) {
         feePlan: { select: { id: true, name: true, amount: true } },
         class: { select: { id: true, name: true } },
       }
-    })
+    });
 
-    return successResponse(installment)
+    return successResponse(installment);
   } catch (error) {
-    console.error('Error updating installment:', error)
-    return errorResponse('فشل في تحديث القسط', 500)
+    console.error('Error updating installment:', error);
+    return errorResponse('فشل في تحديث القسط', 500);
   }
 }

@@ -1,5 +1,6 @@
 // ==================== API Response Helpers ====================
 import { NextResponse } from 'next/server';
+import { ZodError } from 'zod';
 import { isDbAvailable, dbUnavailableResponse } from '@/lib/db';
 
 /**
@@ -119,6 +120,7 @@ export function checkDb() {
 
 /**
  * Validate required fields in request body
+ * @deprecated Use Zod schemas from @/lib/validations instead
  */
 export function validateRequired(body: Record<string, unknown>, fields: string[]): string | null {
   for (const field of fields) {
@@ -127,4 +129,34 @@ export function validateRequired(body: Record<string, unknown>, fields: string[]
     }
   }
   return null;
+}
+
+/**
+ * Convert a ZodError into a user-friendly validation error response.
+ * Returns a 422 response with the first validation error message.
+ */
+export function validationErrorResponse(error: ZodError): NextResponse {
+  const issues = error.issues;
+  const firstError = issues[0];
+  const message = firstError?.message || 'البيانات المُدخلة غير صالحة';
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const details = issues.map((issue: any) => ({
+    field: Array.isArray(issue.path) ? issue.path.join('.') : '',
+    message: String(issue.message || ''),
+  }));
+  return NextResponse.json(
+    {
+      success: false,
+      error: message,
+      details,
+    },
+    { status: 422 }
+  );
+}
+
+/**
+ * Return a 403 forbidden response for unauthorized access.
+ */
+export function forbiddenResponse(message = 'ليس لديك صلاحية للقيام بهذا الإجراء.') {
+  return errorResponse(message, 403);
 }

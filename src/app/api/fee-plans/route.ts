@@ -1,17 +1,18 @@
 import { NextRequest } from 'next/server';
-import { checkDb, successResponse, errorResponse } from '@/services/api-response';
+import { checkDb, successResponse, errorResponse, validationErrorResponse, forbiddenResponse } from '@/services/api-response';
 import { db } from '@/lib/db';
+import { feePlanCreateSchema } from '@/lib/validations';
+import { hasPermission } from '@/lib/auth';
 
-// GET /api/fee-plans — List fee plans (optionally filter by classId)
 export async function GET(request: NextRequest) {
   const dbError = checkDb();
   if (dbError) return dbError;
 
   try {
-    const { searchParams } = new URL(request.url)
-    const classId = searchParams.get('classId')
+    const { searchParams } = new URL(request.url);
+    const classId = searchParams.get('classId');
 
-    const where = classId ? { classId } : {}
+    const where = classId ? { classId } : {};
 
     const feePlans = await db.feePlan.findMany({
       where,
@@ -20,60 +21,62 @@ export async function GET(request: NextRequest) {
         _count: { select: { installments: true } }
       },
       orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }]
-    })
+    });
 
-    return successResponse(feePlans)
+    return successResponse(feePlans);
   } catch (error) {
-    console.error('Error fetching fee plans:', error)
-    return errorResponse('فشل في جلب خطط الرسوم', 500)
+    console.error('Error fetching fee plans:', error);
+    return errorResponse('فشل في جلب خطط الرسوم', 500);
   }
 }
 
-// POST /api/fee-plans — Create a fee plan
 export async function POST(request: NextRequest) {
   const dbError = checkDb();
   if (dbError) return dbError;
 
   try {
-    const body = await request.json()
-    const { name, amount, classId, schoolId, dueDate, description, sortOrder } = body
+    // Only admin roles can create fee plans
+    const userRole = request.headers.get('x-user-role');
+    if (!userRole || !hasPermission(userRole, 'all')) {
+      return forbiddenResponse('إنشاء خطط الرسوم يتطلب صلاحيات مدير');
+    }
 
-    if (!name || !name.trim()) {
-      return errorResponse('اسم خطة الرسوم مطلوب', 400)
+    const body = await request.json();
+
+    // Validate input with Zod
+    const result = feePlanCreateSchema.safeParse(body);
+    if (!result.success) {
+      return validationErrorResponse(result.error);
     }
-    if (!amount || amount <= 0) {
-      return errorResponse('المبلغ يجب أن يكون أكبر من صفر', 400)
-    }
-    if (!classId) {
-      return errorResponse('يرجى اختيار الصف', 400)
-    }
+
+    const data = result.data;
 
     // Verify class exists
-    const classExists = await db.class.findUnique({ where: { id: classId } })
+    const classExists = await db.class.findUnique({ where: { id: data.classId } });
     if (!classExists) {
-      return errorResponse('الصف غير موجود', 404)
+      return errorResponse('الصف غير موجود', 404);
     }
 
-    const schoolIdFinal = schoolId || classExists.schoolId
+    const schoolIdFinal = data.schoolId || classExists.schoolId;
 
     const feePlan = await db.feePlan.create({
       data: {
-        name: name.trim(),
-        amount: parseInt(amount),
-        classId,
+        name: data.name,
+        amount: parseInt(String(data.amount)),
+        classId: data.classId,
         schoolId: schoolIdFinal,
-        dueDate: dueDate || null,
-        description: description || null,
-        sortOrder: sortOrder || 0,
+        dueDate: data.dueDate || null,
+        description: data.description || null,
+        sortOrder: data.sortOrder || 0,
       },
       include: {
         class: { select: { id: true, name: true } }
       }
-    })
+    });
 
-    return successResponse(feePlan, undefined, 201)
+    return successResponse(feePlan, undefined, 201);
   } catch (error) {
-    console.error('Error creating fee plan:', error)
-    return errorResponse('فشل في إنشاء خطة الرسوم', 500)
+    console.error('Error creating fee plan:', error);
+    return errorResponse('فشل في إنشاء خطة الرسوم', 500);
   }
 }

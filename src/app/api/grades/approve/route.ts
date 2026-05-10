@@ -1,46 +1,48 @@
-import { checkDb, successResponse, errorResponse } from '@/services/api-response';
+import { checkDb, successResponse, errorResponse, validationErrorResponse, forbiddenResponse } from '@/services/api-response';
 import { db } from '@/lib/db';
-import { verifyToken } from '@/lib/auth';
+import { GRADE_APPROVAL_ROLES } from '@/lib/auth';
+import { gradeApproveSchema } from '@/lib/validations';
 
 export async function POST(request: Request) {
   const dbError = checkDb();
   if (dbError) return dbError;
 
   try {
+    // Verify authorization — only specific roles can approve grades
+    const userRole = request.headers.get('x-user-role');
+    const userName = request.headers.get('x-user-name');
+
+    if (!userRole || !GRADE_APPROVAL_ROLES.includes(userRole as typeof GRADE_APPROVAL_ROLES[number])) {
+      return forbiddenResponse('غير مصرح بالاعتماد. يتطلب صلاحيات مدير أو معاون');
+    }
+
     const body = await request.json();
-    const { gradeIds, approvedBy } = body;
 
-    if (!gradeIds || !Array.isArray(gradeIds) || gradeIds.length === 0) {
-      return errorResponse('قائمة معرفات الدرجات مطلوبة', 400);
+    // Validate input with Zod
+    const result = gradeApproveSchema.safeParse(body);
+    if (!result.success) {
+      return validationErrorResponse(result.error);
     }
 
-    // Verify authorization
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return errorResponse('غير مصرح بهذا الإجراء', 401);
-    }
-
-    const token = authHeader.split(' ')[1];
-    const user = verifyToken(token);
-    if (!user || (user.role !== 'مدير' && user.role !== 'مسؤول نظام' && user.role !== 'معاون')) {
-      return errorResponse('غير مصرح بالاعتماد. يتطلب صلاحيات مدير أو معاون', 403);
-    }
+    const data = result.data;
 
     // Approve grades - lock them from editing
-    const result = await db.grade.updateMany({
+    const approvedByName = userName ? decodeURIComponent(userName) : data.approvedBy;
+
+    const approveResult = await db.grade.updateMany({
       where: {
-        id: { in: gradeIds },
+        id: { in: data.gradeIds },
         approved: false,
       },
       data: {
         approved: true,
-        approvedBy: approvedBy || user.name,
+        approvedBy: approvedByName,
       },
     });
 
     return successResponse(
-      { approvedCount: result.count },
-      `تم اعتماد ${result.count} درجة بنجاح`
+      { approvedCount: approveResult.count },
+      `تم اعتماد ${approveResult.count} درجة بنجاح`
     );
   } catch (error) {
     console.error('Approve grades error:', error);
