@@ -1,6 +1,7 @@
-import { checkDb, successResponse, errorResponse } from '@/services/api-response';
+import { checkDb, successResponse, errorResponse, validationErrorResponse } from '@/services/api-response';
 import { db } from '@/lib/db';
 import { generateToken, comparePassword, type AuthUser } from '@/lib/auth';
+import { loginSchema } from '@/lib/validations';
 
 export async function POST(request: Request) {
   const dbError = checkDb();
@@ -8,17 +9,14 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { username, password } = body;
 
-    // Validate required fields
-    if (!username || !password) {
-      return errorResponse('اسم المستخدم وكلمة المرور مطلوبان', 400);
+    // Validate input using Zod schema
+    const result = loginSchema.safeParse(body);
+    if (!result.success) {
+      return validationErrorResponse(result.error);
     }
 
-    // Prevent brute-force: limit input length
-    if (username.length > 100 || password.length > 200) {
-      return errorResponse('البيانات المدخلة غير صالحة', 400);
-    }
+    const { username, password } = result.data;
 
     const user = await db.user.findUnique({
       where: { username },
@@ -58,10 +56,10 @@ export async function POST(request: Request) {
         role: user.role,
         active: user.active,
       },
-    });
+    }, 'تم تسجيل الدخول بنجاح');
   } catch (error) {
     console.error('Login error:', error);
     // Never expose internal error details
-    return errorResponse('حدث خطأ في تسجيل الدخول', 500);
+    return errorResponse('حدث خطأ في تسجيل الدخول. حاول مرة أخرى لاحقاً', 500);
   }
 }

@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { GraduationCap, Loader2, Shield, School, Sparkles } from 'lucide-react';
+import { GraduationCap, Loader2, Shield, School, Sparkles, Eye, EyeOff, Lock, User } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,6 +16,8 @@ interface LoginPageProps {
 
 export default function LoginPage({ onLogin }: LoginPageProps) {
   const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [typedText, setTypedText] = useState('');
@@ -34,8 +36,39 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
     return () => clearInterval(timer);
   }, []);
 
+  // Client-side validation before sending to API
+  const validateInputs = useCallback((): string | null => {
+    const trimmedUsername = username.trim();
+    const trimmedPassword = password.trim();
+
+    if (!trimmedUsername && !trimmedPassword) {
+      return 'يرجى إدخال اسم المستخدم وكلمة المرور';
+    }
+    if (!trimmedUsername) {
+      return 'يرجى إدخال اسم المستخدم';
+    }
+    if (!trimmedPassword) {
+      return 'يرجى إدخال كلمة المرور';
+    }
+    if (trimmedUsername.length > 100) {
+      return 'اسم المستخدم طويل جداً';
+    }
+    if (trimmedPassword.length > 200) {
+      return 'كلمة المرور طويلة جداً';
+    }
+    return null;
+  }, [username, password]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Client-side validation
+    const validationError = validateInputs();
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
     setError('');
     setLoading(true);
 
@@ -43,17 +76,29 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username }),
+        body: JSON.stringify({ username: username.trim(), password }),
       });
 
       const raw = await res.json();
       const data = res.ok ? extractApiData(raw) : raw;
 
       if (!res.ok) {
-        setError(data.error || 'حدث خطأ في تسجيل الدخول');
+        // Show the Arabic error message from the server
+        const serverError = data.error || data.message || 'فشل تسجيل الدخول. تحقق من البيانات وأعد المحاولة';
+        setError(serverError);
+
+        // Show specific toast based on error type
+        if (res.status === 401) {
+          toast.error('فشل تسجيل الدخول', { description: 'اسم المستخدم أو كلمة المرور غير صحيحة' });
+        } else if (res.status === 403) {
+          toast.error('حساب معطل', { description: 'هذا الحساب معطل. تواصل مع المسؤول' });
+        } else {
+          toast.error('خطأ', { description: serverError });
+        }
         return;
       }
 
+      // Success — store auth and redirect
       onLogin(
         {
           id: data.user.id,
@@ -63,9 +108,9 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
         },
         data.token
       );
-      toast.success('تم تسجيل الدخول', { description: `مرحباً بك، ${data.user.name}` });
+      toast.success('تم تسجيل الدخول بنجاح', { description: `مرحباً بك، ${data.user.name}` });
     } catch {
-      setError('تعذر الاتصال بالخادم. يرجى المحاولة لاحقاً');
+      setError('تعذر الاتصال بالخادم. يرجى التحقق من اتصالك بالإنترنت والمحاولة لاحقاً');
       toast.error('خطأ في الاتصال', { description: 'تعذر الاتصال بالخادم، تحقق من اتصالك بالإنترنت' });
     } finally {
       setLoading(false);
@@ -250,7 +295,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                 transition={{ delay: 0.3 }}
               >
                 <CardDescription className="text-base mt-1 dark:text-gray-400">
-                  أدخل اسم المستخدم للوصول إلى النظام
+                  أدخل اسم المستخدم وكلمة المرور للوصول إلى النظام
                 </CardDescription>
               </motion.div>
             </CardHeader>
@@ -277,6 +322,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                   </motion.div>
                 )}
 
+                {/* Username field */}
                 <div className="space-y-2">
                   <Label htmlFor="username" className="text-gray-700 dark:text-gray-300 font-medium text-sm">
                     اسم المستخدم
@@ -288,7 +334,10 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                       autoComplete="username"
                       type="text"
                       value={username}
-                      onChange={(e) => setUsername(e.target.value)}
+                      onChange={(e) => {
+                        setUsername(e.target.value);
+                        if (error) setError('');
+                      }}
                       placeholder="أدخل اسم المستخدم"
                       className="h-12 text-base border-gray-200 dark:border-gray-700 focus:border-primary focus:ring-primary/20 rounded-xl pr-4 pl-10 dark:bg-gray-800/50 dark:text-gray-100"
                       required
@@ -297,16 +346,55 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                       autoFocus
                     />
                     <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500">
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                      <User className="w-5 h-5" />
                     </div>
                   </div>
                 </div>
 
+                {/* Password field */}
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="text-gray-700 dark:text-gray-300 font-medium text-sm">
+                    كلمة المرور
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      name="password"
+                      autoComplete="current-password"
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        if (error) setError('');
+                      }}
+                      placeholder="أدخل كلمة المرور"
+                      className="h-12 text-base border-gray-200 dark:border-gray-700 focus:border-primary focus:ring-primary/20 rounded-xl pr-4 pl-10 dark:bg-gray-800/50 dark:text-gray-100"
+                      required
+                      disabled={loading}
+                      dir="ltr"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
+                      tabIndex={-1}
+                      aria-label={showPassword ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="w-5 h-5" />
+                      ) : (
+                        <Eye className="w-5 h-5" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Submit button */}
                 <div className="relative overflow-hidden rounded-xl">
                   <Button
                     type="submit"
-                    disabled={loading}
-                    className="w-full h-12 text-base font-semibold text-white transition-all duration-200 hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] rounded-xl relative overflow-hidden bg-gradient-to-br from-primary to-primary/80"
+                    disabled={loading || !username.trim() || !password.trim()}
+                    className="w-full h-12 text-base font-semibold text-white transition-all duration-200 hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] rounded-xl relative overflow-hidden bg-gradient-to-br from-primary to-primary/80 disabled:opacity-50 disabled:hover:scale-100 disabled:hover:shadow-none"
                   >
                     {loading ? (
                       <span className="flex items-center gap-2 relative z-10">
@@ -314,7 +402,10 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                         جاري تسجيل الدخول...
                       </span>
                     ) : (
-                      <span className="relative z-10">دخول</span>
+                      <span className="flex items-center gap-2 relative z-10">
+                        <Lock className="w-4 h-4" />
+                        تسجيل الدخول
+                      </span>
                     )}
                     {loading && (
                       <motion.div
