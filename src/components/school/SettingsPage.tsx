@@ -40,41 +40,8 @@ import {
 } from '@/components/ui/alert-dialog'
 
 // ============ TYPES ============
-interface SchoolData {
-  id: string
-  name: string
-  logo?: string
-  address?: string
-  phone?: string
-  email?: string
-  principalName?: string
-  academicYear: string
-  schoolType: string
-  shiftType: string
-  startTime: string
-  endTime: string
-  lateThreshold: number
-  weekendDays: string
-}
-
-interface UserData {
-  id: string
-  username: string
-  name: string
-  role: string
-  active: boolean
-  createdAt: string
-  updatedAt: string
-}
-
-const roleColors: Record<string, string> = {
-  'مدير': 'bg-red-100 text-red-800 border-red-300',
-  'معاون': 'bg-purple-100 text-purple-800 border-purple-300',
-  'موظف تسجيل': 'bg-blue-100 text-blue-800 border-blue-300',
-  'موظف بوابة': 'bg-amber-100 text-amber-800 border-amber-300',
-  'مدرس': 'bg-emerald-100 text-emerald-800 border-emerald-300',
-  'مسؤول نظام': 'bg-gray-100 text-gray-800 border-gray-300',
-}
+import type { SchoolData, UserData } from '@/types'
+import { ROLE_COLORS as roleColors } from '@/lib/constants'
 
 interface SettingsPageProps {
   initialTab?: string;
@@ -277,13 +244,15 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
   }
 
   // Format date
-  const formatDate = (dateStr: string) => {
+  const formatDate = (_dateStr: string) => {
+    // Using imported formatDate from @/utils/format
+    // but keeping page-specific formatting with time
     try {
-      return new Date(dateStr).toLocaleDateString('ar-IQ', {
+      return new Date(_dateStr).toLocaleDateString('ar-IQ', {
         year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit',
       })
     } catch {
-      return dateStr
+      return _dateStr
     }
   }
 

@@ -50,55 +50,10 @@ import {
 import { toast } from 'sonner'
 
 // ─── Types ───────────────────────────────────────────────────────
-interface Section {
-  id: string
-  name: string
-  classId: string
-  _count?: { students: number }
-}
-
-interface TeacherClassItem {
-  id: string
-  teacherId: string
-  classId: string
-  sectionId: string | null
-  teacher: { id: string; fullName: string; notes?: string | null; phone?: string | null }
-}
-
-interface ClassItem {
-  id: string
-  name: string
-  level: string
-  stage: string
-  branch: string | null
-  schoolId: string
-  sections: Section[]
-  _count: { students: number }
-  subjects?: {
-    id: string
-    classId: string
-    subject: { id: string; name: string; code: string }
-  }[]
-}
-
-interface TeacherOption {
-  id: string
-  fullName: string
-  notes?: string | null
-  subjects?: string[]
-}
+import type { Section, TeacherClassItem, ClassItem, TeacherOption } from '@/types'
 
 // ─── Constants ───────────────────────────────────────────────────
-const LEVELS = ['إعدادي', 'متوسط', 'ابتدائي'] as const
-const STAGES = ['الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس', 'السادس'] as const
-const BRANCHES = ['علمي', 'أدبي', 'أحيائي', 'تطبيقي'] as const
-const SECTION_OPTIONS = ['أ', 'ب', 'ج', 'د', 'هـ'] as const
-
-const LEVEL_COLORS: Record<string, { bg: string; border: string; dot: string; icon: string }> = {
-  'إعدادي': { bg: 'bg-blue-50 border-blue-200', border: 'border-blue-200', dot: 'bg-blue-500', icon: 'text-blue-600' },
-  'متوسط': { bg: 'bg-violet-50 border-violet-200', border: 'border-violet-200', dot: 'bg-violet-500', icon: 'text-violet-600' },
-  'ابتدائي': { bg: 'bg-emerald-50 border-emerald-200', border: 'border-emerald-200', dot: 'bg-emerald-500', icon: 'text-emerald-600' },
-}
+import { LEVELS, STAGES, BRANCHES, SECTION_OPTIONS, LEVEL_COLORS } from '@/lib/constants'
 
 const STAGE_BADGE: Record<string, string> = {
   'الأول': 'bg-sky-100 text-sky-700 border-sky-200',

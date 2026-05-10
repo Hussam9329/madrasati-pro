@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useAppStore, type PageKey } from '@/lib/store';
+import { useAppStore } from '@/lib/store';
+import type { PageKey, AuthUser } from '@/types';
 import LoginPage from '@/components/school/LoginPage';
 import AppLayout from '@/components/school/AppLayout';
 import DashboardPage from '@/components/school/DashboardPage';
@@ -44,7 +44,7 @@ function PageRenderer({ page }: { page: PageKey }) {
     case 'reports':
       return <ReportsPage />;
     case 'profile':
-      return <StudentProfilePage studentId={selectedStudentId} />;
+      return <StudentProfilePage studentId={selectedStudentId ?? undefined} />;
     case 'users':
       return <SettingsPage initialTab="users" />;
     case 'settings':
@@ -58,7 +58,7 @@ export default function Home() {
   const { auth, setAuth, activePage } = useAppStore();
 
   const handleLogin = (
-    user: { id: string; username: string; name: string; role: string },
+    user: AuthUser,
     token: string
   ) => {
     setAuth({

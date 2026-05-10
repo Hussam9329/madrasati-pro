@@ -44,34 +44,10 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
 
 // Types
-interface SubjectItem {
-  id: string
-  name: string
-  code: string
-}
+import type { Teacher, SubjectItem } from '@/types'
+import { TEACHER_STATUS_COLORS } from '@/lib/constants'
 
-interface Teacher {
-  id: string
-  fullName: string
-  phone: string | null
-  email: string | null
-  notes: string | null
-  status: string
-  photo: string | null
-  schoolId: string
-  subjects: {
-    id: string
-    subjectId: string
-    subject: { id: string; name: string }
-  }[]
-}
-
-const STATUS_COLORS: Record<string, string> = {
-  'نشط': 'bg-emerald-100 text-emerald-700 border-emerald-200',
-  'إجازة': 'bg-amber-100 text-amber-700 border-amber-200',
-  'منقول': 'bg-blue-100 text-blue-700 border-blue-200',
-  'متقاعد': 'bg-gray-100 text-gray-700 border-gray-200',
-}
+const STATUS_COLORS = TEACHER_STATUS_COLORS
 
 export default function TeachersPage() {
   const [teachers, setTeachers] = useState<Teacher[]>([])

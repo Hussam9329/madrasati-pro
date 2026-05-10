@@ -27,26 +27,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
 
 // Types
-interface SubjectData {
-  id: string
-  name: string
-  code: string
-  type: string
-  maxScore: number
-  passScore: number
-  examTypes: ExamTypeData[]
-  teachers: { id: string; teacherId: string; teacher: { id: string; fullName: string } }[]
-  classes: { id: string; classId: string; class: { id: string; name: string } }[]
-}
-
-interface ExamTypeData {
-  id: string
-  name: string
-  maxScore: number
-  subjectId: string
-  subject?: { id: string; name: string; code: string }
-  _count?: { grades: number }
-}
+import type { Subject as SubjectData, ExamTypeData } from '@/types'
 
 // Common exam type templates for quick add
 const EXAM_TEMPLATES = [

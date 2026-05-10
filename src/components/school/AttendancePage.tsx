@@ -26,55 +26,8 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
 
 // Types
-interface Student {
-  id: string
-  fullName: string
-  studentNumber: string
-  class: { id: string; name: string }
-  section: { id: string; name: string }
-}
-
-interface AttendanceRecord {
-  id: string
-  studentId: string
-  date: string
-  checkIn: string | null
-  checkOut: string | null
-  status: string
-  lateMinutes: number | null
-  createdAt: string
-  student: Student
-}
-
-interface ScanResult {
-  message: string
-  action: string
-  status: string
-  lateMinutes?: number | null
-  isEarlyExit?: boolean
-  record: {
-    id: string
-    checkIn: string | null
-    checkOut: string | null
-    status: string
-  }
-  student: {
-    id: string
-    fullName: string
-    studentNumber: string
-    class: string
-    section: string
-  }
-}
-
-interface ClassData {
-  id: string
-  name: string
-  level: string
-  stage: string
-  branch: string | null
-  sections: { id: string; name: string; _count: { students: number } }[]
-}
+import type { AttendanceRecord, ScanResult, ClassData } from '@/types'
+import { ATTENDANCE_STATUS_COLORS } from '@/lib/constants'
 
 // Enhanced status config with chip styling
 const statusConfig: Record<string, { bg: string; text: string; border: string; icon: React.ReactNode; dotColor: string; darkBg: string; darkText: string }> = {
@@ -89,16 +42,7 @@ const statusConfig: Record<string, { bg: string; text: string; border: string; i
 }
 
 // Legacy mapping for backward compatibility
-const statusColors: Record<string, string> = {
-  'حاضر': 'bg-emerald-100 text-emerald-800 border-emerald-300',
-  'متأخر': 'bg-amber-100 text-amber-800 border-amber-300',
-  'غائب': 'bg-red-100 text-red-800 border-red-300',
-  'مستأذن': 'bg-sky-100 text-sky-800 border-sky-300',
-  'خروج مبكر': 'bg-orange-100 text-orange-800 border-orange-300',
-  'حضور ناقص': 'bg-purple-100 text-purple-800 border-purple-300',
-  'مكرر دخول': 'bg-orange-100 text-orange-800 border-orange-300',
-  'مكرر خروج': 'bg-orange-100 text-orange-800 border-orange-300',
-}
+const statusColors = ATTENDANCE_STATUS_COLORS
 
 const statusIcons: Record<string, React.ReactNode> = {
   'حاضر': <CheckCircle className="h-4 w-4" />,

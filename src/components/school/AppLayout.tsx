@@ -26,7 +26,8 @@ import {
   ClipboardList,
   Wallet,
 } from 'lucide-react';
-import { useAppStore, type PageKey } from '@/lib/store';
+import { useAppStore } from '@/lib/store';
+import type { PageKey } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -57,6 +58,7 @@ const pageDescriptions: Record<PageKey, string> = {
   reports: 'تقارير وإحصائيات شاملة',
   users: 'إدارة المستخدمين والصلاحيات',
   settings: 'إعدادات النظام والتخصيص',
+  profile: 'ملف الطالب الشخصي',
 };
 
 // Navigation groups - مدرستي School System

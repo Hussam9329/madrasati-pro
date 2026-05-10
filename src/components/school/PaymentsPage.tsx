@@ -28,39 +28,7 @@ import { Progress } from '@/components/ui/progress'
 import { toast } from 'sonner'
 
 // Types
-interface ClassData {
-  id: string; name: string; level: string; stage: string; branch: string | null
-  students: { id: string }[]
-}
-
-interface FeePlanData {
-  id: string; name: string; amount: number; classId: string; dueDate: string | null; sortOrder: number
-  class: { id: string; name: string }
-  _count?: { installments: number }
-}
-
-interface InstallmentData {
-  id: string; studentId: string; feePlanId: string; classId: string
-  totalAmount: number; paidAmount: number; remainingAmount: number
-  discountType: string; discountValue: number; discountNotes: string | null
-  status: string; dueDate: string | null; notes: string | null
-  createdAt: string
-  student: { id: string; fullName: string; studentNumber: string }
-  feePlan: { id: string; name: string; amount: number }
-  class: { id: string; name: string }
-  payments?: PaymentData[]
-}
-
-interface PaymentData {
-  id: string; installmentId: string; studentId: string
-  amount: number; paymentDate: string; paymentMethod: string
-  receiptNumber: string | null; notes: string | null; recordedBy: string | null
-  createdAt: string
-}
-
-interface StudentData {
-  id: string; fullName: string; studentNumber: string; classId: string
-}
+import type { ClassData, FeePlanData, InstallmentData, PaymentData, StudentMinimal as StudentData } from '@/types'
 
 // Status helpers
 function getStatusConfig(status: string) {

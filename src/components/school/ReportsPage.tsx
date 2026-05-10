@@ -30,47 +30,8 @@ import { toast } from 'sonner'
 import { exportToCSV } from '@/lib/export-utils'
 
 // Types
-interface ClassData {
-  id: string
-  name: string
-  level: string
-  stage: string
-  branch: string | null
-  sections: { id: string; name: string; _count: { students: number } }[]
-}
-
-interface AttendanceRecord {
-  id: string
-  studentId: string
-  date: string
-  checkIn: string | null
-  checkOut: string | null
-  status: string
-  lateMinutes: number | null
-  student: {
-    id: string
-    fullName: string
-    studentNumber: string
-    class: { id: string; name: string }
-    section: { id: string; name: string }
-  }
-}
-
-interface GradeRecord {
-  id: string
-  score: number | null
-  status: string
-  approved: boolean
-  student: {
-    id: string
-    fullName: string
-    studentNumber: string
-    class: { id: string; name: string }
-    section: { id: string; name: string }
-  }
-  subject: { id: string; name: string; passScore: number }
-  examType: { id: string; name: string; maxScore: number }
-}
+import type { ClassData, AttendanceRecord, GradeRecord } from '@/types'
+import { CHART_COLORS, ATTENDANCE_STATUS_COLORS } from '@/lib/constants'
 
 // Report types - added grade-distribution
 const reportTypes = [
@@ -85,15 +46,7 @@ const reportTypes = [
   { id: 'failed-students', title: 'تقرير الطلاب الراسبين', icon: AlertTriangle, color: 'bg-orange-100 text-orange-700 border-orange-200', desc: 'الطلاب الذين لم يجتازوا' },
 ]
 
-const CHART_COLORS = ['#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6', '#ec4899']
-
-const statusColors: Record<string, string> = {
-  'حاضر': 'bg-emerald-100 text-emerald-800 border-emerald-300',
-  'متأخر': 'bg-amber-100 text-amber-800 border-amber-300',
-  'غائب': 'bg-red-100 text-red-800 border-red-300',
-  'مستأذن': 'bg-sky-100 text-sky-800 border-sky-300',
-  'خروج مبكر': 'bg-orange-100 text-orange-800 border-orange-300',
-}
+const statusColors = ATTENDANCE_STATUS_COLORS
 
 export default function ReportsPage() {
   const [selectedReport, setSelectedReport] = useState<string | null>(null)

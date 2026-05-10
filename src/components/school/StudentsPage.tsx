@@ -57,78 +57,11 @@ import { exportToCSV } from '@/lib/export-utils'
 import { useAppStore } from '@/lib/store'
 
 // Types
-interface ClassItem {
-  id: string
-  name: string
-  level: string
-  stage: string
-  branch: string | null
-  schoolId: string
-  sections: SectionItem[]
-}
+import type { Student, ClassItem, SectionItem } from '@/types'
+import { STUDENT_STATUS_COLORS, ATTENDANCE_STATUS_COLORS } from '@/lib/constants'
 
-interface SectionItem {
-  id: string
-  name: string
-  classId: string
-}
-
-interface Student {
-  id: string
-  studentNumber: string
-  fullName: string
-  gender: string
-  dateOfBirth: string | null
-  nationalId: string | null
-  phone: string | null
-  address: string | null
-  photo: string | null
-  status: string
-  qrCode: string | null
-  cardStatus: string
-  classId: string
-  sectionId: string
-  schoolId: string
-  guardianName: string | null
-  guardianPhone: string | null
-  guardianRelation: string | null
-  class: { id: string; name: string }
-  section: { id: string; name: string }
-  grades?: {
-    id: string
-    score: number | null
-    status: string
-    subject: { id: string; name: string }
-    examType: { id: string; name: string; maxScore: number }
-  }[]
-  attendance?: {
-    id: string
-    date: string
-    checkIn: string | null
-    checkOut: string | null
-    status: string
-    lateMinutes: number | null
-  }[]
-}
-
-const STATUS_COLORS: Record<string, string> = {
-  'مستمر': 'bg-emerald-100 text-emerald-700 border-emerald-200',
-  'منقول': 'bg-amber-100 text-amber-700 border-amber-200',
-  'تارك': 'bg-red-100 text-red-700 border-red-200',
-  'مفصول': 'bg-rose-100 text-rose-700 border-rose-200',
-  'متخرج': 'bg-teal-100 text-teal-700 border-teal-200',
-}
-
-const ATTENDANCE_COLORS: Record<string, string> = {
-  'حاضر': 'bg-emerald-100 text-emerald-700',
-  'متأخر': 'bg-amber-100 text-amber-700',
-  'غائب': 'bg-red-100 text-red-700',
-  'مستأذن': 'bg-blue-100 text-blue-700',
-  'خروج مبكر': 'bg-orange-100 text-orange-700',
-  'حضور ناقص': 'bg-yellow-100 text-yellow-700',
-  'إجازة مرضية': 'bg-purple-100 text-purple-700',
-  'إجازة رسمية': 'bg-sky-100 text-sky-700',
-}
+const STATUS_COLORS = STUDENT_STATUS_COLORS
+const ATTENDANCE_COLORS = ATTENDANCE_STATUS_COLORS
 
 export default function StudentsPage() {
   const { setSelectedStudentId, setActivePage } = useAppStore()

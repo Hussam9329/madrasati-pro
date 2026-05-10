@@ -33,17 +33,11 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
-interface Subject { id: string; name: string; code: string; type: string }
-interface Teacher { id: string; fullName: string; phone: string | null; specialty: string | null }
-interface ClassItem { id: string; name: string; level: string; stage: string; branch: string | null; sections: { id: string; name: string }[] }
-interface ScheduleSlot {
-  id: string; day: string; period: number; room: string | null;
-  subject: { id: string; name: string; code: string; type: string };
-  teacher: { id: string; fullName: string; phone: string | null };
-  class: { id: string; name: string; level: string; stage: string; branch: string | null };
-}
+// Types
+import type { SubjectBasic as Subject, TeacherBasic as Teacher, ClassItem, ScheduleSlot } from '@/types'
+import { DAYS, SUBJECT_COLORS, DEFAULT_SUBJECT_COLOR as DEFAULT_COLOR } from '@/lib/constants'
 
-const DAYS = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'];
+// PERIODS kept inline (has time data not in shared constants)
 const PERIODS = [
   { num: 1, time: '08:00 - 08:45' },
   { num: 2, time: '08:45 - 09:30' },
@@ -53,17 +47,6 @@ const PERIODS = [
   { num: 6, time: '11:45 - 12:30' },
   { num: 7, time: '12:30 - 13:15' },
 ];
-
-const SUBJECT_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-  'التربية الإسلامية': { bg: 'bg-emerald-50 dark:bg-emerald-900/30', text: 'text-emerald-700 dark:text-emerald-300', border: 'border-emerald-200 dark:border-emerald-700' },
-  'اللغة العربية': { bg: 'bg-teal-50 dark:bg-teal-900/30', text: 'text-teal-700 dark:text-teal-300', border: 'border-teal-200 dark:border-teal-700' },
-  'اللغة الإنجليزية': { bg: 'bg-sky-50 dark:bg-sky-900/30', text: 'text-sky-700 dark:text-sky-300', border: 'border-sky-200 dark:border-sky-700' },
-  'الأحياء': { bg: 'bg-green-50 dark:bg-green-900/30', text: 'text-green-700 dark:text-green-300', border: 'border-green-200 dark:border-green-700' },
-  'الفيزياء': { bg: 'bg-amber-50 dark:bg-amber-900/30', text: 'text-amber-700 dark:text-amber-300', border: 'border-amber-200 dark:border-amber-700' },
-  'الكيمياء': { bg: 'bg-purple-50 dark:bg-purple-900/30', text: 'text-purple-700 dark:text-purple-300', border: 'border-purple-200 dark:border-purple-700' },
-  'الرياضيات': { bg: 'bg-rose-50 dark:bg-rose-900/30', text: 'text-rose-700 dark:text-rose-300', border: 'border-rose-200 dark:border-rose-700' },
-};
-const DEFAULT_COLOR = { bg: 'bg-blue-50 dark:bg-blue-900/30', text: 'text-blue-700 dark:text-blue-300', border: 'border-blue-200 dark:border-blue-700' };
 
 export default function SchedulePage() {
   const [viewMode, setViewMode] = useState<'class' | 'teacher'>('class');

@@ -26,75 +26,7 @@ import { cn } from '@/lib/utils'
 import { useAppStore } from '@/lib/store'
 
 // Types
-interface ClassData {
-  id: string
-  name: string
-  level: string
-  stage: string
-  branch: string | null
-  sections: { id: string; name: string; _count: { students: number } }[]
-  subjects: { subject: { id: string; name: string; code: string } }[]
-}
-
-interface StudentData {
-  id: string
-  fullName: string
-  studentNumber: string
-  classId: string
-  sectionId: string
-  class: { id: string; name: string }
-  section: { id: string; name: string }
-}
-
-interface SubjectData {
-  id: string
-  name: string
-  code: string
-  type: string
-  maxScore: number
-  passScore: number
-  examTypes: ExamTypeData[]
-}
-
-interface ExamTypeData {
-  id: string
-  name: string
-  maxScore: number
-  subjectId: string
-}
-
-interface GradeData {
-  id: string
-  studentId: string
-  subjectId: string
-  examTypeId: string
-  score: number | null
-  status: string
-  approved: boolean
-  approvedBy: string | null
-  student: {
-    id: string
-    fullName: string
-    studentNumber: string
-    class: { id: string; name: string }
-    section: { id: string; name: string }
-  }
-  subject: { id: string; name: string; code: string; maxScore: number; passScore: number }
-  examType: { id: string; name: string; maxScore: number }
-  modifications: { id: string; oldScore: number; newScore: number; reason: string; modifiedBy: string; createdAt: string }[]
-}
-
-interface GradeEntry {
-  studentId: string
-  fullName: string
-  studentNumber: string
-  sectionName: string
-  score: string
-  existingGradeId?: string
-  existingScore?: number | null
-  approved: boolean
-  status: string
-}
+import type { ClassData, StudentBasic as StudentData, Subject as SubjectData, ExamTypeData, GradeData, GradeEntry } from '@/types'
 
 // Score color helper
 function getScoreColor(score: number, maxScore: number): { bg: string; text: string; border: string; barBg: string } {

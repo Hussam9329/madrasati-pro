@@ -1,32 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import type { PageKey, AuthState } from '@/types';
 
-export type PageKey = 
-  | 'dashboard' 
-  | 'students' 
-  | 'teachers' 
-  | 'subjects' 
-  | 'exams'
-  | 'attendance' 
-  | 'grades' 
-  | 'classes'
-  | 'payments'
-  | 'schedule'
-  | 'reports' 
-  | 'settings'
-  | 'users'
-  | 'profile';
-
-export interface AuthState {
-  user: {
-    id: string;
-    username: string;
-    name: string;
-    role: string;
-  } | null;
-  token: string | null;
-  isAuthenticated: boolean;
-}
+export type { PageKey, AuthState };
 
 interface AppState {
   // Auth
@@ -51,7 +27,7 @@ interface AppState {
   // Selected items
   selectedStudentId: string | null;
   setSelectedStudentId: (id: string | null) => void;
-  
+
   selectedTeacherId: string | null;
   setSelectedTeacherId: (id: string | null) => void;
 
@@ -95,7 +71,7 @@ export const useAppStore = create<AppState>()(
       // Selected items
       selectedStudentId: null,
       setSelectedStudentId: (id) => set({ selectedStudentId: id }),
-      
+
       selectedTeacherId: null,
       setSelectedTeacherId: (id) => set({ selectedTeacherId: id }),
 

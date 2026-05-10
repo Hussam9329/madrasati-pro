@@ -41,58 +41,8 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
 
 // Types
-interface TeacherOption {
-  id: string
-  fullName: string
-}
-
-interface ClassOption {
-  id: string
-  name: string
-  sections: { id: string; name: string }[]
-}
-
-interface Subject {
-  id: string
-  name: string
-  code: string
-  type: string
-  maxScore: number
-  passScore: number
-  schoolId: string
-  teachers: {
-    id: string
-    teacherId: string
-    teacher: { id: string; fullName: string; phone?: string }
-  }[]
-  classes: {
-    id: string
-    classId: string
-    class: { id: string; name: string }
-  }[]
-  examTypes: {
-    id: string
-    name: string
-    maxScore: number
-  }[]
-}
-
-const SUBJECT_COLORS: Record<string, { bg: string; dot: string; icon: string }> = {
-  'رياضيات': { bg: 'bg-blue-50 border-blue-200', dot: 'bg-blue-500', icon: 'text-blue-600' },
-  'فيزياء': { bg: 'bg-purple-50 border-purple-200', dot: 'bg-purple-500', icon: 'text-purple-600' },
-  'كيمياء': { bg: 'bg-emerald-50 border-emerald-200', dot: 'bg-emerald-500', icon: 'text-emerald-600' },
-  'أحياء': { bg: 'bg-green-50 border-green-200', dot: 'bg-green-500', icon: 'text-green-600' },
-  'عربي': { bg: 'bg-red-50 border-red-200', dot: 'bg-red-500', icon: 'text-red-600' },
-  'انكليزي': { bg: 'bg-cyan-50 border-cyan-200', dot: 'bg-cyan-500', icon: 'text-cyan-600' },
-  'تربية إسلامية': { bg: 'bg-amber-50 border-amber-200', dot: 'bg-amber-500', icon: 'text-amber-600' },
-  'تاريخ': { bg: 'bg-orange-50 border-orange-200', dot: 'bg-orange-500', icon: 'text-orange-600' },
-  'جغرافية': { bg: 'bg-teal-50 border-teal-200', dot: 'bg-teal-500', icon: 'text-teal-600' },
-  'حاسوب': { bg: 'bg-indigo-50 border-indigo-200', dot: 'bg-indigo-500', icon: 'text-indigo-600' },
-  'تربية رياضية': { bg: 'bg-lime-50 border-lime-200', dot: 'bg-lime-500', icon: 'text-lime-600' },
-  'فنية': { bg: 'bg-pink-50 border-pink-200', dot: 'bg-pink-500', icon: 'text-pink-600' },
-}
-
-const DEFAULT_SUBJECT_COLOR = { bg: 'bg-gray-50 border-gray-200', dot: 'bg-gray-400', icon: 'text-gray-600' }
+import type { TeacherOption, ClassOption, Subject } from '@/types'
+import { SUBJECT_COLORS, DEFAULT_SUBJECT_COLOR } from '@/lib/constants'
 
 export default function SubjectsPage() {
   const [subjects, setSubjects] = useState<Subject[]>([])
@@ -390,7 +340,7 @@ export default function SubjectsPage() {
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-start gap-2.5">
                         <div className="w-8 h-8 rounded-lg flex items-center justify-center mt-0.5 shrink-0 bg-white/60">
-                          <BookOpen className={`w-4 h-4 ${SUBJECT_COLORS[subject.name]?.icon || DEFAULT_SUBJECT_COLOR.icon}`} />
+                          <BookOpen className={`w-4 h-4 ${SUBJECT_COLORS[subject.name]?.text || DEFAULT_SUBJECT_COLOR.text}`} />
                         </div>
                         <div>
                           <h3 className="font-bold text-base flex items-center gap-2">
