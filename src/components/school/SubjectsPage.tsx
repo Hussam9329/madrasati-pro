@@ -134,8 +134,8 @@ export default function SubjectsPage() {
       type: subject.type,
       maxScore: String(subject.maxScore),
       passScore: String(subject.passScore),
-      selectedTeachers: subject.teachers.map(t => t.teacherId),
-      selectedClasses: subject.classes.map(c => c.classId),
+      selectedTeachers: subject?.teachers?.map(t => t.teacherId) || [],
+      selectedClasses: subject?.classes?.map(c => c.classId) || [],
     })
     setFormStep(0)
     setFormOpen(true)
@@ -281,7 +281,7 @@ export default function SubjectsPage() {
             { label: 'إجمالي المواد', count: subjects.length, icon: BookOpen, textClass: 'text-teal-600', bg: 'bg-teal-50', iconBg: 'bg-teal-100', border: 'border-teal-200' },
             { label: 'مواد أساسية', count: subjects.filter(s => s.type === 'أساسية').length, icon: Flame, textClass: 'text-emerald-600', bg: 'bg-emerald-50', iconBg: 'bg-emerald-100', border: 'border-emerald-200' },
             { label: 'مواد اختيارية', count: subjects.filter(s => s.type === 'اختيارية').length, icon: Target, textClass: 'text-amber-600', bg: 'bg-amber-50', iconBg: 'bg-amber-100', border: 'border-amber-200' },
-            { label: 'المدرسون المرتبطون', count: new Set(subjects.flatMap(s => s.teachers.map(t => t.teacherId))).size, icon: Users, textClass: 'text-cyan-600', bg: 'bg-cyan-50', iconBg: 'bg-cyan-100', border: 'border-cyan-200' },
+            { label: 'المدرسون المرتبطون', count: new Set(subjects.flatMap(s => (s.teachers ?? []).map(t => t.teacherId))).size, icon: Users, textClass: 'text-cyan-600', bg: 'bg-cyan-50', iconBg: 'bg-cyan-100', border: 'border-cyan-200' },
           ].map(stat => (
             <div key={stat.label} className={`flex items-center gap-3 p-3 rounded-xl border ${stat.border} ${stat.bg}`}>
               <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${stat.iconBg}`}>
@@ -393,11 +393,11 @@ export default function SubjectsPage() {
                     <Separator className="my-3" />
 
                     {/* Teachers */}
-                    {subject.teachers.length > 0 && (
+                    {(subject?.teachers ?? []).length > 0 && (
                       <div className="mb-3">
                         <p className="text-xs text-muted-foreground mb-1.5">المدرسون:</p>
                         <div className="flex flex-wrap gap-1.5">
-                          {subject.teachers.map(t => (
+                          {subject?.teachers?.map(t => (
                             <Badge key={t.id} variant="secondary" className="text-xs">
                               {t.teacher.fullName}
                             </Badge>
@@ -407,11 +407,11 @@ export default function SubjectsPage() {
                     )}
 
                     {/* Classes */}
-                    {subject.classes.length > 0 && (
+                    {(subject?.classes ?? []).length > 0 && (
                       <div>
                         <p className="text-xs text-muted-foreground mb-1.5">الصفوف:</p>
                         <div className="flex flex-wrap gap-1.5">
-                          {subject.classes.map(c => (
+                          {subject?.classes?.map(c => (
                             <Badge key={c.id} variant="outline" className="text-xs">
                               {c.class.name}
                             </Badge>
@@ -421,13 +421,13 @@ export default function SubjectsPage() {
                     )}
 
                     {/* Exam Types */}
-                    {subject.examTypes && subject.examTypes.length > 0 && (
+                    {subject.examTypes && subject?.examTypes?.length > 0 && (
                       <>
                         <Separator className="my-3" />
                         <div>
                           <p className="text-xs text-muted-foreground mb-1.5">أنواع الامتحانات:</p>
                           <div className="flex flex-wrap gap-1.5">
-                            {subject.examTypes.map(et => (
+                            {subject?.examTypes?.map(et => (
                               <Badge key={et.id} variant="outline" className="text-xs bg-muted/50">
                                 {et.name} ({et.maxScore})
                               </Badge>

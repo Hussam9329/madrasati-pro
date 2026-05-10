@@ -66,7 +66,7 @@ export default function GradesPage() {
   // Derived values
   const selectedClass = classes.find(c => c.id === selectedClassId)
   const selectedSubject = subjects.find(s => s.id === selectedSubjectId)
-  const selectedExamType = selectedSubject?.examTypes.find(e => e.id === selectedExamTypeId)
+  const selectedExamType = ((selectedSubject?.examTypes ?? [])).find(e => e.id === selectedExamTypeId)
 
   // Fetch classes and subjects on mount
   useEffect(() => {
@@ -429,7 +429,7 @@ export default function GradesPage() {
             {/* Exam Type */}
             <div className="space-y-1 flex-1 min-w-[160px]">
               <Label className="text-xs font-medium">نوع الامتحان *</Label>
-              {selectedSubjectId && selectedSubject && selectedSubject.examTypes.length === 0 ? (
+              {selectedSubjectId && selectedSubject && (selectedSubject?.examTypes ?? []).length === 0 ? (
                 <div className="p-2 rounded-md border border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/10">
                   <p className="text-xs text-amber-700 dark:text-amber-300 font-medium mb-1">لا توجد امتحانات لهذه المادة</p>
                   <Button
@@ -448,7 +448,7 @@ export default function GradesPage() {
                     <SelectValue placeholder="اختر نوع الامتحان" />
                   </SelectTrigger>
                   <SelectContent>
-                    {selectedSubject?.examTypes.map(exam => (
+                    {(selectedSubject?.examTypes ?? []).map(exam => (
                       <SelectItem key={exam.id} value={exam.id}>{exam.name} ({exam.maxScore} درجة)</SelectItem>
                     ))}
                   </SelectContent>

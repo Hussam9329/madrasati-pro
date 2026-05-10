@@ -300,7 +300,7 @@ export default function AttendancePage() {
             <div className="space-y-4">
               {/* Mode Toggle with pulsing live indicator */}
               <Card className="overflow-hidden">
-                <div className="h-1" className={scanMode === 'checkIn' ? 'bg-emerald-500' : 'bg-red-500'} />
+                <div className={`h-1 ${scanMode === 'checkIn' ? 'bg-emerald-500' : 'bg-red-500'}`} />
                 <CardContent className="p-4">
                   <div className="flex gap-2">
                     <Button
@@ -645,7 +645,7 @@ export default function AttendancePage() {
 
           {/* Recent Scans Table */}
           <Card className="overflow-hidden">
-            <div className="h-1" className="bg-primary" />
+            <div className="h-1 bg-primary" />
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg flex items-center gap-2">
@@ -786,7 +786,7 @@ export default function AttendancePage() {
 
           {/* Filters */}
           <Card className="overflow-hidden">
-            <div className="h-1" className="bg-primary" />
+            <div className="h-1 bg-primary" />
             <CardContent className="p-4">
               <div className="flex flex-wrap gap-4 items-end">
                 <div className="space-y-1 flex-1 min-w-[160px]">
@@ -835,7 +835,7 @@ export default function AttendancePage() {
                   <Filter className="h-3 w-3" />
                   تصفية
                 </Button>
-                <Button size="sm" className="gap-1 text-white" className="bg-primary" onClick={() => window.print()}>
+                <Button size="sm" className="gap-1 text-white bg-primary" onClick={() => window.print()}>
                   <Download className="h-3 w-3" />
                   تصدير
                 </Button>
@@ -845,7 +845,7 @@ export default function AttendancePage() {
 
           {/* Records Table */}
           <Card className="overflow-hidden">
-            <div className="h-1" className="bg-primary" />
+            <div className="h-1 bg-primary" />
             <CardContent className="p-0">
               {loadingRecords ? (
                 <div className="p-6 space-y-4">
@@ -921,7 +921,7 @@ export default function AttendancePage() {
         <TabsContent value="bulk" className="space-y-6">
           {/* Header with selectors */}
           <Card className="overflow-hidden">
-            <div className="h-1" className="bg-primary" />
+            <div className="h-1 bg-primary" />
             <CardContent className="p-4">
               <div className="flex flex-wrap gap-4 items-end">
                 <div className="space-y-1 flex-1 min-w-[160px]">
@@ -1018,7 +1018,7 @@ export default function AttendancePage() {
 
           {/* Student List */}
           <Card className="overflow-hidden">
-            <div className="h-1" className="bg-primary" />
+            <div className="h-1 bg-primary" />
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg flex items-center gap-2">
@@ -1111,8 +1111,7 @@ export default function AttendancePage() {
                       جاهز لحفظ {bulkStudents.length} سجل حضور
                     </p>
                     <Button
-                      className="gap-2 text-white"
-                      className="bg-primary"
+                      className="gap-2 text-white bg-primary"
                       disabled={bulkSaving || bulkStudents.length === 0}
                       onClick={async () => {
                         setBulkSaving(true)

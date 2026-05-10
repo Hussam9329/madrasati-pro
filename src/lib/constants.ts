@@ -61,13 +61,14 @@ export const STAGES = ['متوسط', 'خامس', 'سادس', 'إعدادي'];
 export const BRANCHES = ['علمي', 'أدبي', 'احيائي', 'تطبيقي'];
 export const SECTION_OPTIONS = ['أ', 'ب', 'ج', 'د', 'هـ', 'و'];
 
-export const LEVEL_COLORS: Record<string, { bg: string; text: string }> = {
-  'الأول': { bg: 'bg-blue-100 dark:bg-blue-900/30', text: 'text-blue-800 dark:text-blue-400' },
-  'الثاني': { bg: 'bg-green-100 dark:bg-green-900/30', text: 'text-green-800 dark:text-green-400' },
-  'الثالث': { bg: 'bg-purple-100 dark:bg-purple-900/30', text: 'text-purple-800 dark:text-purple-400' },
-  'الرابع': { bg: 'bg-orange-100 dark:bg-orange-900/30', text: 'text-orange-800 dark:text-orange-400' },
-  'الخامس': { bg: 'bg-cyan-100 dark:bg-cyan-900/30', text: 'text-cyan-800 dark:text-cyan-400' },
-  'السادس': { bg: 'bg-pink-100 dark:bg-pink-900/30', text: 'text-pink-800 dark:text-pink-400' },
+export const LEVEL_COLORS: Record<string, { bg: string; dot: string; text: string; border: string }> = {
+  'الأول': { bg: 'bg-blue-100 dark:bg-blue-900/30', dot: 'bg-blue-500', text: 'text-blue-800 dark:text-blue-400', border: 'border-blue-200 dark:border-blue-800' },
+  'الثاني': { bg: 'bg-green-100 dark:bg-green-900/30', dot: 'bg-green-500', text: 'text-green-800 dark:text-green-400', border: 'border-green-200 dark:border-green-800' },
+  'الثالث': { bg: 'bg-purple-100 dark:bg-purple-900/30', dot: 'bg-purple-500', text: 'text-purple-800 dark:text-purple-400', border: 'border-purple-200 dark:border-purple-800' },
+  'الرابع': { bg: 'bg-orange-100 dark:bg-orange-900/30', dot: 'bg-orange-500', text: 'text-orange-800 dark:text-orange-400', border: 'border-orange-200 dark:border-orange-800' },
+  'الخامس': { bg: 'bg-cyan-100 dark:bg-cyan-900/30', dot: 'bg-cyan-500', text: 'text-cyan-800 dark:text-cyan-400', border: 'border-cyan-200 dark:border-cyan-800' },
+  'السادس': { bg: 'bg-pink-100 dark:bg-pink-900/30', dot: 'bg-pink-500', text: 'text-pink-800 dark:text-pink-400', border: 'border-pink-200 dark:border-pink-800' },
+  'إعدادي': { bg: 'bg-indigo-100 dark:bg-indigo-900/30', dot: 'bg-indigo-500', text: 'text-indigo-800 dark:text-indigo-400', border: 'border-indigo-200 dark:border-indigo-800' },
 };
 
 export const DAYS = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'];

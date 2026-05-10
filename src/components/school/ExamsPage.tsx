@@ -91,11 +91,11 @@ export default function ExamsPage() {
   }
 
   // Open edit form
-  const openEditForm = (exam: ExamTypeData) => {
-    setEditingExam(exam)
+  const openEditForm = (exam: ExamTypeData | { id: string; name: string; maxScore: number }) => {
+    setEditingExam({ ...exam, subjectId: (exam as ExamTypeData).subjectId || formSubjectId } as ExamTypeData)
     setFormName(exam.name)
     setFormMaxScore(String(exam.maxScore))
-    setFormSubjectId(exam.subjectId)
+    setFormSubjectId((exam as ExamTypeData).subjectId || formSubjectId)
     setFormOpen(true)
   }
 
@@ -288,7 +288,7 @@ export default function ExamsPage() {
                   <SelectContent>
                     {subjects.map(sub => (
                       <SelectItem key={sub.id} value={sub.id}>
-                        {sub.name} ({sub.code}) — {sub.examTypes.length} امتحان
+                        {sub.name} ({sub.code}) — {sub?.examTypes?.length ?? 0} امتحان
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -480,7 +480,7 @@ export default function ExamsPage() {
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {subjects.map(subject => {
-                const subjectTotal = subject.examTypes.reduce((sum, et) => sum + et.maxScore, 0)
+                const subjectTotal = subject?.examTypes?.reduce((sum, et) => sum + et.maxScore, 0) ?? 0
                 const isComplete = subjectTotal === subject.maxScore
                 const isPartial = subjectTotal > 0 && subjectTotal < subject.maxScore
                 const isOver = subjectTotal > subject.maxScore
@@ -514,7 +514,7 @@ export default function ExamsPage() {
                       </Badge>
                     </div>
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>{subject.examTypes.length} امتحان</span>
+                      <span>{subject?.examTypes?.length} امتحان</span>
                       <span>{subjectTotal} / {subject.maxScore}</span>
                     </div>
                     {/* Mini progress bar */}
@@ -524,7 +524,7 @@ export default function ExamsPage() {
                           "h-full rounded-full transition-all",
                           isOver ? "bg-red-500" : isComplete ? "bg-emerald-500" : "bg-primary"
                         )}
-                        style={{ width: `${Math.min((subjectTotal / subject.maxScore) * 100, 100)}%` }}
+                        style={{ width: `${Math.min(((subjectTotal ?? 0) / subject.maxScore) * 100, 100)}%` }}
                       />
                     </div>
                   </div>

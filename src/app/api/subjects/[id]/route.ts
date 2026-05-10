@@ -14,7 +14,7 @@ export async function GET(
         teachers: {
           include: {
             teacher: {
-              select: { id: true, fullName: true, phone: true, specialty: true },
+              select: { id: true, fullName: true, phone: true },
             },
           },
         },

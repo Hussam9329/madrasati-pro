@@ -427,7 +427,7 @@ export default function ClassesPage() {
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex items-start gap-2.5">
                           <div className="w-8 h-8 rounded-lg flex items-center justify-center mt-0.5 shrink-0 bg-white/60">
-                            <Layers className={`w-4 h-4 ${levelColor.icon}`} />
+                            <Layers className={`w-4 h-4 ${levelColor.text}`} />
                           </div>
                           <div>
                             <h3 className="font-bold text-base flex items-center gap-2">
@@ -438,7 +438,7 @@ export default function ClassesPage() {
                               <Badge variant="outline" className={`text-xs ${STAGE_BADGE[cls.stage] || 'bg-gray-100 text-gray-700 border-gray-200'}`}>
                                 {cls.stage}
                               </Badge>
-                              <Badge variant="outline" className={`text-xs ${levelColor.bg} ${levelColor.icon} ${levelColor.border}`}>
+                              <Badge variant="outline" className={`text-xs ${levelColor.bg} ${levelColor.text} ${levelColor.border}`}>
                                 {cls.level}
                               </Badge>
                               {cls.branch && (

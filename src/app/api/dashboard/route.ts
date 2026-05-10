@@ -194,7 +194,7 @@ export async function GET() {
           where: { status: 'مستمر' },
           include: {
             grades: {
-              select: { score: true, maxScore: true },
+              select: { score: true },
             },
           },
         },
@@ -205,8 +205,7 @@ export async function GET() {
       .map((cls) => {
         const allGrades = cls.students.flatMap((s) => s.grades);
         const totalScore = allGrades.reduce((sum, g) => sum + (g.score || 0), 0);
-        const totalMax = allGrades.reduce((sum, g) => sum + g.maxScore, 0);
-        const avgGrade = totalMax > 0 ? Math.round((totalScore / totalMax) * 100) : 0;
+        const avgGrade = allGrades.length > 0 ? Math.round(totalScore / allGrades.length) : 0;
 
         return {
           classId: cls.id,

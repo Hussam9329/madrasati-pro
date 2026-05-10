@@ -13,8 +13,8 @@ export async function POST(request: Request) {
       );
     }
 
-    const results = [];
-    const errors = [];
+    const results: Record<string, unknown>[] = [];
+    const errors: Record<string, unknown>[] = [];
 
     for (const record of records) {
       try {
