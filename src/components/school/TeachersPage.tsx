@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Search, Plus, Edit, Trash2, Phone, Mail, BookOpen, GraduationCap,
@@ -248,11 +248,21 @@ export default function TeachersPage() {
     return true
   }
 
-  // Filter teachers by status
-  const filteredTeachers = teachers.filter(t => {
-    if (filterStatus !== 'all' && t.status !== filterStatus) return false
-    return true
-  })
+  // Filter teachers by status - memoized to avoid re-computing on every render
+  const filteredTeachers = useMemo(() => {
+    return teachers.filter(t => {
+      if (filterStatus !== 'all' && t.status !== filterStatus) return false
+      return true
+    })
+  }, [teachers, filterStatus])
+
+  // Teacher stats - memoized to avoid repeated .filter() calls
+  const teacherStats = useMemo(() => [
+    { label: 'الإجمالي', count: teachers.length, icon: Users, color: 'text-teal-700', bg: 'bg-teal-50', iconBg: 'bg-teal-100', border: 'border-teal-200' },
+    { label: 'نشط', count: teachers.filter(t => t.status === 'نشط').length, icon: UserCheck, color: 'text-emerald-700', bg: 'bg-emerald-50', iconBg: 'bg-emerald-100', border: 'border-emerald-200' },
+    { label: 'إجازة', count: teachers.filter(t => t.status === 'إجازة').length, icon: UserX, color: 'text-amber-700', bg: 'bg-amber-50', iconBg: 'bg-amber-100', border: 'border-amber-200' },
+    { label: 'منقول', count: teachers.filter(t => t.status === 'منقول').length, icon: ArrowRightLeft, color: 'text-blue-700', bg: 'bg-blue-50', iconBg: 'bg-blue-100', border: 'border-blue-200' },
+  ], [teachers])
 
   return (
     <div className="space-y-6">
@@ -285,12 +295,7 @@ export default function TeachersPage() {
         {/* Teacher Stats Summary */}
         {!loading && teachers.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { label: 'الإجمالي', count: teachers.length, icon: Users, color: 'text-teal-700', bg: 'bg-teal-50', iconBg: 'bg-teal-100', border: 'border-teal-200' },
-              { label: 'نشط', count: teachers.filter(t => t.status === 'نشط').length, icon: UserCheck, color: 'text-emerald-700', bg: 'bg-emerald-50', iconBg: 'bg-emerald-100', border: 'border-emerald-200' },
-              { label: 'إجازة', count: teachers.filter(t => t.status === 'إجازة').length, icon: UserX, color: 'text-amber-700', bg: 'bg-amber-50', iconBg: 'bg-amber-100', border: 'border-amber-200' },
-              { label: 'منقول', count: teachers.filter(t => t.status === 'منقول').length, icon: ArrowRightLeft, color: 'text-blue-700', bg: 'bg-blue-50', iconBg: 'bg-blue-100', border: 'border-blue-200' },
-            ].map(stat => (
+            {teacherStats.map(stat => (
               <div key={stat.label} className={`flex items-center gap-3 p-3 rounded-xl border ${stat.border} ${stat.bg}`}>
                 <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${stat.iconBg}`}>
                   <stat.icon className={`w-4 h-4 ${stat.color}`} />

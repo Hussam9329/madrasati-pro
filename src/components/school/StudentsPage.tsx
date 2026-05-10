@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import QRCode from 'qrcode'
+import NextImage from 'next/image'
 import {
   Search, Plus, Download, Edit, Trash2, Printer,
   ChevronLeft, ChevronRight, User, X, Users, ArrowRightLeft, CheckCircle2,
@@ -973,9 +974,9 @@ export default function StudentsPage() {
                         <div className="flex items-start gap-4">
                           {/* Photo placeholder */}
                           <div className="shrink-0">
-                            <div className="h-20 w-20 rounded-xl bg-gradient-to-br from-teal-50 to-emerald-50 dark:from-teal-900/30 dark:to-emerald-900/30 border-2 border-teal-200 dark:border-teal-700 flex items-center justify-center">
+                            <div className="h-20 w-20 relative rounded-xl bg-gradient-to-br from-teal-50 to-emerald-50 dark:from-teal-900/30 dark:to-emerald-900/30 border-2 border-teal-200 dark:border-teal-700 flex items-center justify-center overflow-hidden">
                               {selectedStudent.photo ? (
-                                <img src={selectedStudent.photo} alt={selectedStudent.fullName} className="h-full w-full object-cover rounded-lg" />
+                                <NextImage src={selectedStudent.photo} alt={selectedStudent.fullName} fill className="object-cover rounded-lg" sizes="80px" />
                               ) : (
                                 <Camera className="h-6 w-6 text-teal-400" />
                               )}
@@ -1019,7 +1020,7 @@ export default function StudentsPage() {
                             </div>
                           </div>
                           {qrCodeUrl && (
-                            <img src={qrCodeUrl} alt="QR Code" className="w-20 h-20 rounded-lg" />
+                            <NextImage src={qrCodeUrl} alt="QR Code" width={80} height={80} className="rounded-lg" unoptimized />
                           )}
                         </div>
                       </div>

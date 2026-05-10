@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Plus, DollarSign, CreditCard, CheckCircle, XCircle, AlertTriangle,
@@ -70,17 +70,25 @@ export default function PaymentsPage() {
   // Delete payment
   const [deletePaymentId, setDeletePaymentId] = useState<string | null>(null)
 
-  // Filtered data
-  const filteredFeePlans = selectedClassId ? feePlans.filter(fp => fp.classId === selectedClassId) : feePlans
-  const filteredInstallments = selectedClassId ? installments.filter(i => i.classId === selectedClassId) : installments
+  // Filtered data - memoized to avoid re-computing on every render
+  const filteredFeePlans = useMemo(() =>
+    selectedClassId ? feePlans.filter(fp => fp.classId === selectedClassId) : feePlans
+  , [selectedClassId, feePlans])
 
-  // Summary stats
-  const totalExpected = filteredInstallments.reduce((sum, i) => sum + i.totalAmount, 0)
-  const totalPaid = filteredInstallments.reduce((sum, i) => sum + i.paidAmount, 0)
-  const totalRemaining = filteredInstallments.reduce((sum, i) => sum + i.remainingAmount, 0)
-  const paidCount = filteredInstallments.filter(i => i.status === 'مدفوع بالكامل').length
-  const partialCount = filteredInstallments.filter(i => i.status === 'مدفوع جزئياً').length
-  const unpaidCount = filteredInstallments.filter(i => i.status === 'غير مدفوع').length
+  const filteredInstallments = useMemo(() =>
+    selectedClassId ? installments.filter(i => i.classId === selectedClassId) : installments
+  , [selectedClassId, installments])
+
+  // Summary stats - memoized to avoid repeated reduce/filter on every render
+  const paymentStats = useMemo(() => {
+    const totalExpected = filteredInstallments.reduce((sum, i) => sum + i.totalAmount, 0)
+    const totalPaid = filteredInstallments.reduce((sum, i) => sum + i.paidAmount, 0)
+    const totalRemaining = filteredInstallments.reduce((sum, i) => sum + i.remainingAmount, 0)
+    const paidCount = filteredInstallments.filter(i => i.status === 'مدفوع بالكامل').length
+    const partialCount = filteredInstallments.filter(i => i.status === 'مدفوع جزئياً').length
+    const unpaidCount = filteredInstallments.filter(i => i.status === 'غير مدفوع').length
+    return { totalExpected, totalPaid, totalRemaining, paidCount, partialCount, unpaidCount }
+  }, [filteredInstallments])
 
   // Fetch data
   const fetchData = useCallback(async () => {
@@ -274,19 +282,19 @@ export default function PaymentsPage() {
       {!loading && filteredInstallments.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           <Card className="overflow-hidden border-blue-200 dark:border-blue-800"><div className="h-1 bg-blue-500" />
-            <CardContent className="p-3 text-center"><DollarSign className="h-4 w-4 mx-auto text-blue-600 mb-1" /><p className="text-lg font-bold text-blue-700 dark:text-blue-400">{totalExpected.toLocaleString('ar-IQ')}</p><p className="text-xs text-muted-foreground">المطلوب (د.ع)</p></CardContent>
+            <CardContent className="p-3 text-center"><DollarSign className="h-4 w-4 mx-auto text-blue-600 mb-1" /><p className="text-lg font-bold text-blue-700 dark:text-blue-400">{paymentStats.totalExpected.toLocaleString('ar-IQ')}</p><p className="text-xs text-muted-foreground">المطلوب (د.ع)</p></CardContent>
           </Card>
           <Card className="overflow-hidden border-emerald-200 dark:border-emerald-800"><div className="h-1 bg-emerald-500" />
-            <CardContent className="p-3 text-center"><CheckCircle className="h-4 w-4 mx-auto text-emerald-600 mb-1" /><p className="text-lg font-bold text-emerald-700 dark:text-emerald-400">{totalPaid.toLocaleString('ar-IQ')}</p><p className="text-xs text-muted-foreground">المدفوع (د.ع)</p></CardContent>
+            <CardContent className="p-3 text-center"><CheckCircle className="h-4 w-4 mx-auto text-emerald-600 mb-1" /><p className="text-lg font-bold text-emerald-700 dark:text-emerald-400">{paymentStats.totalPaid.toLocaleString('ar-IQ')}</p><p className="text-xs text-muted-foreground">المدفوع (د.ع)</p></CardContent>
           </Card>
           <Card className="overflow-hidden border-red-200 dark:border-red-800"><div className="h-1 bg-red-500" />
-            <CardContent className="p-3 text-center"><AlertTriangle className="h-4 w-4 mx-auto text-red-600 mb-1" /><p className="text-lg font-bold text-red-700 dark:text-red-400">{totalRemaining.toLocaleString('ar-IQ')}</p><p className="text-xs text-muted-foreground">المتبقي (د.ع)</p></CardContent>
+            <CardContent className="p-3 text-center"><AlertTriangle className="h-4 w-4 mx-auto text-red-600 mb-1" /><p className="text-lg font-bold text-red-700 dark:text-red-400">{paymentStats.totalRemaining.toLocaleString('ar-IQ')}</p><p className="text-xs text-muted-foreground">المتبقي (د.ع)</p></CardContent>
           </Card>
           <Card className="overflow-hidden border-amber-200 dark:border-amber-800"><div className="h-1 bg-amber-500" />
-            <CardContent className="p-3 text-center"><TrendingUp className="h-4 w-4 mx-auto text-amber-600 mb-1" /><p className="text-lg font-bold text-amber-700 dark:text-amber-400">{totalExpected > 0 ? Math.round(totalPaid / totalExpected * 100) : 0}%</p><p className="text-xs text-muted-foreground">نسبة التحصيل</p><Progress value={totalExpected > 0 ? (totalPaid / totalExpected) * 100 : 0} className="mt-1 h-1.5" /></CardContent>
+            <CardContent className="p-3 text-center"><TrendingUp className="h-4 w-4 mx-auto text-amber-600 mb-1" /><p className="text-lg font-bold text-amber-700 dark:text-amber-400">{paymentStats.totalExpected > 0 ? Math.round(paymentStats.totalPaid / paymentStats.totalExpected * 100) : 0}%</p><p className="text-xs text-muted-foreground">نسبة التحصيل</p><Progress value={paymentStats.totalExpected > 0 ? (paymentStats.totalPaid / paymentStats.totalExpected) * 100 : 0} className="mt-1 h-1.5" /></CardContent>
           </Card>
           <Card className="overflow-hidden"><div className="h-1 bg-primary" />
-            <CardContent className="p-3 text-center"><Users className="h-4 w-4 mx-auto text-primary mb-1" /><div className="flex justify-center gap-2 mt-1"><Badge className="text-[10px] bg-emerald-100 text-emerald-700">{paidCount} مدفوع</Badge><Badge className="text-[10px] bg-amber-100 text-amber-700">{partialCount} جزئي</Badge><Badge className="text-[10px] bg-red-100 text-red-700">{unpaidCount} غير مدفوع</Badge></div></CardContent>
+            <CardContent className="p-3 text-center"><Users className="h-4 w-4 mx-auto text-primary mb-1" /><div className="flex justify-center gap-2 mt-1"><Badge className="text-[10px] bg-emerald-100 text-emerald-700">{paymentStats.paidCount} مدفوع</Badge><Badge className="text-[10px] bg-amber-100 text-amber-700">{paymentStats.partialCount} جزئي</Badge><Badge className="text-[10px] bg-red-100 text-red-700">{paymentStats.unpaidCount} غير مدفوع</Badge></div></CardContent>
           </Card>
         </div>
       )}
@@ -307,7 +315,7 @@ export default function PaymentsPage() {
               { num: 1, label: 'اختر الصف', done: !!selectedClassId },
               { num: 2, label: 'أنشئ الأقساط', done: filteredFeePlans.length > 0 },
               { num: 3, label: 'وزّع على الطلاب', done: filteredInstallments.length > 0 },
-              { num: 4, label: 'سجّل الدفعات', done: totalPaid > 0 },
+              { num: 4, label: 'سجّل الدفعات', done: paymentStats.totalPaid > 0 },
             ].map((step, idx) => (
               <div key={step.num} className="flex items-center gap-1.5">
                 <div className={cn("w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-colors",

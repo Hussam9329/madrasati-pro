@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import QRCode from 'qrcode';
+import Image from 'next/image';
 import {
   Printer,
   Download,
@@ -579,7 +580,7 @@ export default function StudentProfilePage({ studentId }: StudentProfilePageProp
               <div className="flex flex-col items-center gap-2">
                 {qrCodeUrl && (
                   <div className="bg-white p-2 rounded-lg shadow-lg">
-                    <img src={qrCodeUrl} alt="QR Code" className="w-20 h-20" />
+                    <Image src={qrCodeUrl} alt="QR Code" width={80} height={80} className="w-20 h-20" unoptimized />
                   </div>
                 )}
                 <span className="text-white/60 text-[10px]">رمز QR</span>

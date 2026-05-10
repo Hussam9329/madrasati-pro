@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   QrCode, ScanLine, LogIn, LogOut, Search, Download, Filter,
@@ -91,6 +91,14 @@ export default function AttendancePage() {
   const [bulkClassId, setBulkClassId] = useState<string>('all')
   const [bulkStudents, setBulkStudents] = useState<Array<{ id: string; fullName: string; studentNumber: string; schoolId: string; status: string }>>([])
   const [bulkSaving, setBulkSaving] = useState(false)
+
+  // Memoized bulk attendance stats to avoid repeated .filter() on every render
+  const bulkAttendanceStats = useMemo(() => ({
+    present: bulkStudents.filter(s => s.status === 'حاضر').length,
+    late: bulkStudents.filter(s => s.status === 'متأخر').length,
+    absent: bulkStudents.filter(s => s.status === 'غائب').length,
+    excused: bulkStudents.filter(s => s.status === 'مستأذن').length,
+  }), [bulkStudents])
 
   // Live clock - updates every second
   useEffect(() => {
@@ -990,25 +998,25 @@ export default function AttendancePage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <Card className="border-emerald-200 bg-emerald-50/50">
                 <CardContent className="p-3 text-center">
-                  <p className="text-2xl font-bold text-emerald-700">{bulkStudents.filter(s => s.status === 'حاضر').length}</p>
+                  <p className="text-2xl font-bold text-emerald-700">{bulkAttendanceStats.present}</p>
                   <p className="text-xs text-emerald-600">حاضر</p>
                 </CardContent>
               </Card>
               <Card className="border-amber-200 bg-amber-50/50">
                 <CardContent className="p-3 text-center">
-                  <p className="text-2xl font-bold text-amber-700">{bulkStudents.filter(s => s.status === 'متأخر').length}</p>
+                  <p className="text-2xl font-bold text-amber-700">{bulkAttendanceStats.late}</p>
                   <p className="text-xs text-amber-600">متأخر</p>
                 </CardContent>
               </Card>
               <Card className="border-red-200 bg-red-50/50">
                 <CardContent className="p-3 text-center">
-                  <p className="text-2xl font-bold text-red-700">{bulkStudents.filter(s => s.status === 'غائب').length}</p>
+                  <p className="text-2xl font-bold text-red-700">{bulkAttendanceStats.absent}</p>
                   <p className="text-xs text-red-600">غائب</p>
                 </CardContent>
               </Card>
               <Card className="border-sky-200 bg-sky-50/50">
                 <CardContent className="p-3 text-center">
-                  <p className="text-2xl font-bold text-sky-700">{bulkStudents.filter(s => s.status === 'مستأذن').length}</p>
+                  <p className="text-2xl font-bold text-sky-700">{bulkAttendanceStats.excused}</p>
                   <p className="text-xs text-sky-600">مستأذن</p>
                 </CardContent>
               </Card>

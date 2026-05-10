@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import {
   LayoutDashboard,
   GraduationCap,
@@ -36,8 +37,14 @@ import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import { useTheme } from 'next-themes';
 import { motion, AnimatePresence } from 'framer-motion';
-import CommandPalette from '@/components/school/CommandPalette';
-import KeyboardShortcutsDialog from '@/components/school/KeyboardShortcutsDialog';
+
+// Lazy load heavy dialog components - only loaded when user opens them
+const CommandPalette = dynamic(() => import('@/components/school/CommandPalette'), {
+  ssr: false,
+});
+const KeyboardShortcutsDialog = dynamic(() => import('@/components/school/KeyboardShortcutsDialog'), {
+  ssr: false,
+});
 
 interface AppLayoutProps {
   children: React.ReactNode;

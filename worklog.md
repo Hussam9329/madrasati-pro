@@ -2479,3 +2479,29 @@ Stage Summary:
 - Unused code cleaned up (Eye import, handleNextStep functions)
 - All UI text in Arabic, RTL layout preserved
 - Build passes, dev server running without errors
+---
+Task ID: 6
+Agent: main
+Task: الدفعة 6 — تحسين الواجهة وتجربة المستخدم
+
+Work Log:
+- Created branch cleanup/batch-06-ui-ux from cleanup/batch-05-logic-fixes
+- Created 5 shared UI state components: LoadingState, EmptyState, ErrorState, SuccessState, Modal
+- Created src/utils/errors.ts with getUserMessage(), SUCCESS_MESSAGES, EMPTY_MESSAGES
+- Updated globals.css with RTL body direction, success/warning CSS variables, responsive utilities
+- Updated layout.tsx with dir="rtl" on body, RTL Toaster configuration
+- Fixed Dialog close button for RTL (start-4 instead of right-4)
+- Enhanced Button with success variant, improved disabled state, cursor-pointer
+- Updated api-response.ts to sanitize technical errors into user-friendly Arabic messages
+- Updated all 13 page components to use shared EmptyState/ErrorState/LoadingState components
+- Replaced 20+ inline empty/error states with shared components
+- Converted 30+ technical error messages to user-friendly Arabic
+- Fixed CSS build error (animate-fade-in in @apply)
+- Verified: tsc 0 errors, build 24 pages, dev HTTP 200, lint no new errors
+- Committed and pushed to origin/cleanup/batch-06-ui-ux
+
+Stage Summary:
+- 25 files changed, 1052 insertions, 208 deletions
+- 6 new files created (5 UI components + 1 utility)
+- Build passes, TypeScript passes, no new lint issues
+- Branch pushed: cleanup/batch-06-ui-ux

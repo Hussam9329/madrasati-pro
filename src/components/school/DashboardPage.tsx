@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   GraduationCap,
@@ -280,7 +280,7 @@ export default function DashboardPage() {
   const attendance = data?.todayAttendance;
   const attendanceTotal = attendance?.total || 0;
 
-  const pieData = attendance
+  const pieData = useMemo(() => attendance
     ? [
         { name: 'حاضر', value: attendance.present },
         { name: 'غائب', value: attendance.absent },
@@ -291,10 +291,10 @@ export default function DashboardPage() {
         { name: 'إجازة رسمية', value: attendance.officialLeave },
         { name: 'حضور ناقص', value: attendance.partialAttendance },
       ].filter((d) => d.value > 0)
-    : [];
+    : [], [attendance]);
 
-  // Stat cards config
-  const statCards = data
+  // Stat cards config - memoized to avoid re-creating on every render
+  const statCards = useMemo(() => data
     ? [
         {
           title: 'إجمالي الطلاب',
@@ -345,7 +345,7 @@ export default function DashboardPage() {
           iconBg: 'bg-orange-100',
         },
       ]
-    : [];
+    : [], [data, attendance]);
 
   if (error && !data) {
     return (
