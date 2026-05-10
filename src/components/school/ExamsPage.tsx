@@ -25,6 +25,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
+import { EmptyState } from '@/components/ui/empty-state'
 
 // Types
 import type { Subject as SubjectData, ExamTypeData } from '@/types'
@@ -71,7 +72,7 @@ export default function ExamsPage() {
         setSelectedSubjectId(data[0].id)
       }
     } catch {
-      toast.error('خطأ', { description: 'فشل في جلب بيانات المواد' })
+      toast.error('خطأ', { description: 'تعذر تحميل بيانات المواد. حاول مرة أخرى.' })
     } finally {
       setLoading(false)
     }
@@ -164,7 +165,7 @@ export default function ExamsPage() {
       setFormOpen(false)
       fetchSubjects()
     } catch (err) {
-      toast.error('خطأ', { description: err instanceof Error ? err.message : 'فشل في حفظ البيانات' })
+      toast.error('خطأ', { description: err instanceof Error ? err.message : 'تعذر حفظ البيانات. حاول مرة أخرى.' })
     } finally {
       setSaving(false)
     }
@@ -182,7 +183,7 @@ export default function ExamsPage() {
       toast.success('تم الحذف', { description: 'تم حذف نوع الامتحان بنجاح' })
       fetchSubjects()
     } catch (err) {
-      toast.error('خطأ', { description: err instanceof Error ? err.message : 'فشل في حذف نوع الامتحان' })
+      toast.error('خطأ', { description: err instanceof Error ? err.message : 'تعذر حذف نوع الامتحان. حاول مرة أخرى.' })
     } finally {
       setDeleteId(null)
     }
@@ -362,17 +363,13 @@ export default function ExamsPage() {
             {selectedSubject && (
               <>
                 {examTypes.length === 0 ? (
-                  <div className="text-center py-8">
-                    <ClipboardList className="h-12 w-12 mx-auto text-muted-foreground/30 mb-3" />
-                    <p className="text-sm font-medium text-muted-foreground mb-1">لا توجد أنواع امتحانات لهذه المادة</p>
-                    <p className="text-xs text-muted-foreground mb-3">
-                      أضف أنواع الامتحانات (مثل: امتحان نصفي، نهائي، مذاكرة...) حتى يمكنك إدخال الدرجات لاحقاً
-                    </p>
-                    <Button variant="outline" size="sm" onClick={openAddForm} className="gap-1.5">
-                      <Plus className="h-3.5 w-3.5" />
-                      إضافة امتحان جديد
-                    </Button>
-                  </div>
+                  <EmptyState
+                    icon={ClipboardList}
+                    title="لا توجد أنواع امتحانات لهذه المادة"
+                    description="أضف أنواع الامتحانات (مثل: امتحان نصفي، نهائي، مذاكرة...) حتى يمكنك إدخال الدرجات لاحقاً"
+                    actionLabel="إضافة امتحان جديد"
+                    onAction={openAddForm}
+                  />
                 ) : (
                   <div className="space-y-2">
                     {examTypes.map((exam, idx) => (

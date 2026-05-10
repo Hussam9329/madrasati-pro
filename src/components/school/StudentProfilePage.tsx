@@ -39,6 +39,8 @@ import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { useAppStore } from '@/lib/store';
 import { useToast } from '@/hooks/use-toast';
+import { LoadingState } from '@/components/ui/loading-state'
+import { EmptyState } from '@/components/ui/empty-state'
 
 interface StudentProfile {
   id: string;
@@ -425,7 +427,7 @@ export default function StudentProfilePage({ studentId }: StudentProfilePageProp
         });
       } catch (error) {
         console.error('Error loading student profile:', error);
-        toast({ title: 'خطأ', description: 'فشل في تحميل بيانات الطالب', variant: 'destructive' });
+        toast({ title: 'خطأ', description: 'تعذر تحميل بيانات الطالب. حاول مرة أخرى.', variant: 'destructive' });
       } finally {
         setLoading(false);
       }
@@ -487,25 +489,19 @@ export default function StudentProfilePage({ studentId }: StudentProfilePageProp
   // Loading state
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-10 h-10 animate-spin text-teal-600" />
-          <p className="text-muted-foreground">جاري تحميل بيانات الطالب...</p>
-        </div>
-      </div>
+      <LoadingState message="جاري تحميل بيانات الطالب..." size="lg" />
     );
   }
 
   // No student selected
   if (!student) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="flex flex-col items-center gap-4">
-          <User className="w-16 h-16 text-muted-foreground/30" />
-          <p className="text-muted-foreground">لم يتم تحديد طالب</p>
-          <Button variant="outline" onClick={() => setActivePage('students')}>العودة لقائمة الطلاب</Button>
-        </div>
-      </div>
+      <EmptyState
+        icon={User}
+        title="لم يتم تحديد طالب"
+        actionLabel="العودة لقائمة الطلاب"
+        onAction={() => setActivePage('students')}
+      />
     );
   }
 

@@ -28,6 +28,7 @@ import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Switch } from '@/components/ui/switch'
 import { toast } from 'sonner'
+import { EmptyState } from '@/components/ui/empty-state'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -142,10 +143,10 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
         fetchSchool()
       } else {
         const data = await res.json()
-        toast.error('خطأ', { description: data.error || 'حدث خطأ في الحفظ' })
+        toast.error('خطأ', { description: data.error || 'تعذر حفظ الإعدادات. حاول مرة أخرى.' })
       }
     } catch {
-      toast.error('خطأ', { description: 'حدث خطأ في الاتصال' })
+      toast.error('خطأ', { description: 'تعذر الاتصال بالخادم. حاول مرة أخرى.' })
     } finally {
       setSavingSchool(false)
     }
@@ -219,7 +220,7 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
         }
       }
     } catch {
-      toast.error('خطأ', { description: 'حدث خطأ في الاتصال' })
+      toast.error('خطأ', { description: 'تعذر الاتصال بالخادم. حاول مرة أخرى.' })
     } finally {
       setSavingUser(false)
     }
@@ -237,7 +238,7 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
         toast.error('خطأ', { description: data.error })
       }
     } catch {
-      toast.error('خطأ', { description: 'حدث خطأ في الحذف' })
+      toast.error('خطأ', { description: 'تعذر حذف المستخدم. حاول مرة أخرى.' })
     } finally {
       setDeleteUserId(null)
     }
@@ -658,15 +659,13 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
                   ))}
                 </div>
               ) : users.length === 0 ? (
-                <div className="text-center py-12">
-                  <Users className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
-                  <p className="text-lg font-medium text-muted-foreground mb-1">لا يوجد مستخدمون</p>
-                  <p className="text-sm text-muted-foreground mb-4">أضف مستخدم جديد للبدء في إدارة حسابات النظام والصلاحيات</p>
-                  <Button onClick={() => handleOpenUserDialog()} className="gap-2 bg-primary text-white">
-                    <UserPlus className="h-4 w-4" />
-                    إضافة مستخدم
-                  </Button>
-                </div>
+                <EmptyState
+                  icon={Users}
+                  title="لا يوجد مستخدمون"
+                  description="أضف مستخدم جديد للبدء في إدارة حسابات النظام والصلاحيات"
+                  actionLabel="إضافة مستخدم"
+                  onAction={() => handleOpenUserDialog()}
+                />
               ) : (
                 <ScrollArea className="max-h-[500px]">
                   <Table>

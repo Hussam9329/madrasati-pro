@@ -22,11 +22,19 @@ export default function RootLayout({
   return (
     <html lang="ar" dir="rtl" suppressHydrationWarning>
       <body
+        dir="rtl"
         className="font-['Cairo'] antialiased bg-background text-foreground"
       >
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
           {children}
-          <Toaster richColors position="top-center" />
+          <Toaster
+            richColors
+            position="top-center"
+            dir="rtl"
+            toastOptions={{
+              className: 'text-right',
+            }}
+          />
         </ThemeProvider>
       </body>
     </html>

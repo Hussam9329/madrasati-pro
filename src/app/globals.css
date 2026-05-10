@@ -38,6 +38,10 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -62,6 +66,10 @@
   --accent: oklch(0.93 0.03 260);
   --accent-foreground: oklch(0.25 0.05 260);
   --destructive: oklch(0.577 0.245 27.325);
+  --success: oklch(0.55 0.17 155);
+  --success-foreground: oklch(0.98 0.002 155);
+  --warning: oklch(0.70 0.17 60);
+  --warning-foreground: oklch(0.20 0.05 60);
   --border: oklch(0.92 0.008 260);
   --input: oklch(0.92 0.008 260);
   --ring: oklch(0.50 0.20 260);
@@ -96,6 +104,10 @@
   --accent: oklch(0.22 0.02 260);
   --accent-foreground: oklch(0.96 0.01 260);
   --destructive: oklch(0.704 0.191 22.216);
+  --success: oklch(0.65 0.17 155);
+  --success-foreground: oklch(0.12 0.01 155);
+  --warning: oklch(0.80 0.17 60);
+  --warning-foreground: oklch(0.20 0.05 60);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.60 0.20 260);
@@ -121,6 +133,8 @@
   body {
     @apply bg-background text-foreground;
     font-family: 'Cairo', 'Tajawal', sans-serif;
+    direction: rtl;
+    text-align: right;
   }
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Cairo', sans-serif;
@@ -152,9 +166,30 @@
   background: oklch(0.45 0.05 260);
 }
 
-/* RTL specific */
+/* RTL specific fixes */
 [dir="rtl"] .sidebar-icon {
   transform: scaleX(1);
+}
+
+/* Fix Radix/Dialog close button position for RTL */
+[dir="rtl"] [data-slot="dialog-close"] {
+  right: auto;
+  left: 1rem;
+}
+
+/* Fix Radix Dialog positioning for RTL */
+[dir="rtl"] [data-slot="dialog-content"] {
+  text-align: right;
+}
+
+/* Fix Radix Select for RTL */
+[dir="rtl"] [data-radix-select-content] {
+  direction: rtl;
+}
+
+/* Fix popover for RTL */
+[dir="rtl"] [data-radix-popper-content-wrapper] {
+  direction: rtl;
 }
 
 /* Print styles */
@@ -258,4 +293,114 @@
 
 .page-subtitle {
   @apply text-sm text-muted-foreground mt-0.5;
+}
+
+/* ==================== إضافات الدفعة 6 ==================== */
+
+/* --- أزرار موحّدة --- */
+
+/* زر معطّل واضح بصرياً */
+button:disabled,
+[data-slot="button"]:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* --- حقول إدخال موحّدة --- */
+
+/* تركيز واضح على حقول الإدخال */
+input:focus,
+select:focus,
+textarea:focus {
+  @apply ring-2 ring-primary/20 border-primary;
+}
+
+/* حقل إدخال فيه خطأ */
+input[data-invalid="true"],
+input[aria-invalid="true"] {
+  @apply border-destructive ring-destructive/20;
+}
+
+/* --- حالة التحميلSkeleton --- */
+.skeleton-pulse {
+  animation: skeleton-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* --- RTL Responsive Utilities --- */
+
+/* شاشات صغيرة: تخطيط عمودي */
+@media (max-width: 639px) {
+  .responsive-grid {
+    @apply grid grid-cols-1 gap-3;
+  }
+  .responsive-table-wrapper {
+    @apply overflow-x-auto -mx-4 px-4;
+  }
+  .responsive-hide-sm {
+    display: none !important;
+  }
+}
+
+/* شاشات متوسطة */
+@media (min-width: 640px) and (max-width: 1023px) {
+  .responsive-grid {
+    @apply grid grid-cols-2 gap-4;
+  }
+}
+
+/* شاشات كبيرة */
+@media (min-width: 1024px) {
+  .responsive-grid {
+    @apply grid grid-cols-3 gap-6;
+  }
+}
+
+/* --- رسائل عربية واضحة للمستخدم --- */
+.user-message {
+  @apply text-sm leading-relaxed;
+}
+
+.user-message-error {
+  @apply text-sm leading-relaxed text-destructive font-medium;
+}
+
+.user-message-success {
+  @apply text-sm leading-relaxed text-emerald-600 dark:text-emerald-400 font-medium;
+}
+
+/* --- حاوية الصفحة الموحّدة --- */
+.page-container {
+  @apply space-y-6;
+}
+
+/* --- ترويسة صفحة موحّدة --- */
+.page-header-bar {
+  @apply flex flex-col sm:flex-row sm:items-center justify-between gap-4;
+}
+
+.page-header-icon {
+  @apply flex h-10 w-10 items-center justify-center rounded-lg shadow-lg bg-primary;
+}
+
+.page-header-icon svg {
+  @apply h-5 w-5 text-white;
+}
+
+.page-header-title {
+  @apply text-2xl font-bold dark:text-gray-200;
+}
+
+.page-header-desc {
+  @apply text-sm text-muted-foreground;
+}
+
+/* --- فلاتر موحّدة --- */
+.filter-bar {
+  @apply flex flex-col sm:flex-row gap-3;
 }

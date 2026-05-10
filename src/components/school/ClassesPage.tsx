@@ -48,6 +48,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { toast } from 'sonner'
+import { EmptyState } from '@/components/ui/empty-state'
 
 // ─── Types ───────────────────────────────────────────────────────
 import type { Section, TeacherClassItem, ClassItem, TeacherOption } from '@/types'
@@ -116,7 +117,7 @@ export default function ClassesPage() {
       const data = await res.json()
       setClasses(data || [])
     } catch {
-      toast.error('خطأ', { description: 'فشل في جلب بيانات الصفوف' })
+      toast.error('خطأ', { description: 'تعذر تحميل بيانات الصفوف. حاول مرة أخرى.' })
     }
   }, [])
 
@@ -241,7 +242,7 @@ export default function ClassesPage() {
       setFormOpen(false)
       fetchClasses()
     } catch (err) {
-      toast.error('خطأ', { description: err instanceof Error ? err.message : 'فشل في حفظ البيانات' })
+      toast.error('خطأ', { description: err instanceof Error ? err.message : 'تعذر حفظ البيانات. حاول مرة أخرى.' })
     } finally {
       setSaving(false)
     }
@@ -256,7 +257,7 @@ export default function ClassesPage() {
       toast.success('تم الحذف', { description: 'تم حذف الصف بنجاح' })
       fetchClasses()
     } catch {
-      toast.error('خطأ', { description: 'فشل في حذف الصف' })
+      toast.error('خطأ', { description: 'تعذر حذف الصف. حاول مرة أخرى.' })
     } finally {
       setDeleteId(null)
     }
@@ -294,7 +295,7 @@ export default function ClassesPage() {
       setAssignOpen(false)
       fetchAssignments()
     } catch (err) {
-      toast.error('خطأ', { description: err instanceof Error ? err.message : 'فشل في تعيين الأستاذ' })
+      toast.error('خطأ', { description: err instanceof Error ? err.message : 'تعذر تعيين الأستاذ. حاول مرة أخرى.' })
     } finally {
       setSaving(false)
     }
@@ -307,7 +308,7 @@ export default function ClassesPage() {
       toast.success('تم الإلغاء', { description: 'تم إلغاء تعيين الأستاذ بنجاح' })
       fetchAssignments()
     } catch {
-      toast.error('خطأ', { description: 'فشل في إلغاء التعيين' })
+      toast.error('خطأ', { description: 'تعذر إلغاء التعيين. حاول مرة أخرى.' })
     }
   }
 
@@ -394,15 +395,13 @@ export default function ClassesPage() {
           ))}
         </div>
       ) : classes.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <Layers className="h-16 w-16 mb-4 text-muted-foreground/20" />
-          <h3 className="text-lg font-semibold text-muted-foreground">لا توجد صفوف دراسية بعد</h3>
-          <p className="text-sm text-muted-foreground mt-1 max-w-sm">أنشئ الصفوف الدراسية وأضف الشعب لكل صف. يمكنك تعيين المدرسين للشعب وربطها بالمواد الدراسية.</p>
-          <Button className="mt-4 gap-2 bg-primary" onClick={openAddForm}>
-            <Plus className="h-4 w-4" />
-            إضافة صف جديد
-          </Button>
-        </div>
+        <EmptyState
+          icon={Layers}
+          title="لا توجد صفوف دراسية بعد"
+          description="أنشئ الصفوف الدراسية وأضف الشعب لكل صف. يمكنك تعيين المدرسين للشعب وربطها بالمواد الدراسية."
+          actionLabel="إضافة صف جديد"
+          onAction={openAddForm}
+        />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <AnimatePresence>

@@ -24,6 +24,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
+import { EmptyState } from '@/components/ui/empty-state'
 
 // Types
 import type { AttendanceRecord, ScanResult, ClassData } from '@/types'
@@ -673,15 +674,13 @@ export default function AttendancePage() {
                   ))}
                 </div>
               ) : recentScans.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <Calendar className="h-16 w-16 mb-4 text-muted-foreground/20" />
-                  <h3 className="text-lg font-semibold text-muted-foreground">لا توجد عمليات مسح اليوم</h3>
-                  <p className="text-sm text-muted-foreground mt-1 max-w-sm">ابدأ بمسح بطاقة الطالب أو إدخال رقم QR يدوياً لتسجيل الحضور والانصراف.</p>
-                  <Button variant="outline" className="mt-4 gap-2" onClick={() => { const input = document.getElementById('qrInput') as HTMLInputElement; input?.focus() }}>
-                    <ScanLine className="h-4 w-4" />
-                    مسح الآن
-                  </Button>
-                </div>
+                <EmptyState
+                  icon={Calendar}
+                  title="لا توجد عمليات مسح اليوم"
+                  description="ابدأ بمسح بطاقة الطالب أو إدخال رقم QR يدوياً لتسجيل الحضور والانصراف."
+                  actionLabel="مسح الآن"
+                  onAction={() => { const input = document.getElementById('qrInput') as HTMLInputElement; input?.focus() }}
+                />
               ) : (
                 <ScrollArea className="max-h-72">
                   <Table>
@@ -858,11 +857,11 @@ export default function AttendancePage() {
                   ))}
                 </div>
               ) : records.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <Search className="h-16 w-16 mb-4 text-muted-foreground/20" />
-                  <h3 className="text-lg font-semibold text-muted-foreground">لا توجد سجلات حضور للتاريخ المحدد</h3>
-                  <p className="text-sm text-muted-foreground mt-1 max-w-sm">جرّب تغيير التاريخ أو الفلاتر للبحث عن سجلات حضور سابقة. يمكنك أيضاً تسجيل حضور جديد من تبويب مسح QR.</p>
-                </div>
+                <EmptyState
+                  icon={Search}
+                  title="لا توجد سجلات حضور للتاريخ المحدد"
+                  description="جرّب تغيير التاريخ أو الفلاتر للبحث عن سجلات حضور سابقة. يمكنك أيضاً تسجيل حضور جديد من تبويب مسح QR."
+                />
               ) : (
                 <ScrollArea className="max-h-[500px]">
                   <Table>
@@ -1032,17 +1031,17 @@ export default function AttendancePage() {
             </CardHeader>
             <CardContent>
               {bulkClassId === 'all' ? (
-                <div className="flex flex-col items-center justify-center py-16 text-center">
-                  <Users className="h-16 w-16 mb-4 text-muted-foreground/20" />
-                  <h3 className="text-lg font-semibold text-muted-foreground">اختر صفاً لتسجيل الحضور</h3>
-                  <p className="text-sm text-muted-foreground mt-1 max-w-sm">اختر الصف والشعبة من القائمة أعلاه لعرض قائمة الطلاب وتسجيل حالة حضورهم.</p>
-                </div>
+                <EmptyState
+                  icon={Users}
+                  title="اختر صفاً لتسجيل الحضور"
+                  description="اختر الصف والشعبة من القائمة أعلاه لعرض قائمة الطلاب وتسجيل حالة حضورهم."
+                />
               ) : bulkStudents.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 text-center">
-                  <User className="h-16 w-16 mb-4 text-muted-foreground/20" />
-                  <h3 className="text-lg font-semibold text-muted-foreground">لا يوجد طلاب في هذا الصف</h3>
-                  <p className="text-sm text-muted-foreground mt-1 max-w-sm">لم يتم تسجيل أي طالب في هذا الصف بعد. تأكد من إضافة الطلاب أولاً من صفحة الطلاب.</p>
-                </div>
+                <EmptyState
+                  icon={User}
+                  title="لا يوجد طلاب في هذا الصف"
+                  description="لم يتم تسجيل أي طالب في هذا الصف بعد. تأكد من إضافة الطلاب أولاً من صفحة الطلاب."
+                />
               ) : (
                 <>
                   <ScrollArea className="max-h-[500px]">
@@ -1134,7 +1133,7 @@ export default function AttendancePage() {
                           fetchRecords()
                           fetchRecentScans()
                         } catch {
-                          toast.error('خطأ', { description: 'فشل في حفظ الحضور الجماعي' })
+                          toast.error('خطأ', { description: 'تعذر حفظ الحضور الجماعي. حاول مرة أخرى.' })
                         } finally {
                           setBulkSaving(false)
                         }

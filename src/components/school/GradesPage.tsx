@@ -22,6 +22,7 @@ import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Progress } from '@/components/ui/progress'
 import { toast } from 'sonner'
+import { EmptyState } from '@/components/ui/empty-state'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/lib/store'
 
@@ -160,7 +161,7 @@ export default function GradesPage() {
       setIsShowingStudents(true)
       setShowStats(false)
     } catch {
-      toast.error('خطأ', { description: 'حدث خطأ في جلب البيانات' })
+      toast.error('خطأ', { description: 'تعذر تحميل البيانات. حاول مرة أخرى.' })
     } finally {
       setLoadingStudents(false)
     }
@@ -240,7 +241,7 @@ export default function GradesPage() {
       // Refresh data
       handleShowStudents()
     } catch {
-      toast.error('خطأ', { description: 'حدث خطأ في حفظ الدرجات' })
+      toast.error('خطأ', { description: 'تعذر حفظ الدرجات. حاول مرة أخرى.' })
     } finally {
       setSaving(false)
     }
@@ -274,7 +275,7 @@ export default function GradesPage() {
         toast.error('خطأ', { description: data.error })
       }
     } catch {
-      toast.error('خطأ', { description: 'حدث خطأ في اعتماد الدرجات' })
+      toast.error('خطأ', { description: 'تعذر اعتماد الدرجات. حاول مرة أخرى.' })
     } finally {
       setApproving(false)
     }
@@ -611,15 +612,13 @@ export default function GradesPage() {
                     ))}
                   </div>
                 ) : gradeEntries.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Search className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
-                    <p className="text-lg font-medium text-muted-foreground mb-1">لا يوجد طلاب في الصف المحدد</p>
-                    <p className="text-sm text-muted-foreground mb-4">تأكد من اتباع الخطوات: 1) اختر الصف 2) اختر المادة 3) اختر نوع الامتحان 4) اضغط عرض الطلاب</p>
-                    <Button variant="outline" size="sm" onClick={() => setIsShowingStudents(false)} className="gap-2">
-                      <Search className="h-4 w-4" />
-                      تعديل الفلتر
-                    </Button>
-                  </div>
+                  <EmptyState
+                    icon={Search}
+                    title="لا يوجد طلاب في الصف المحدد"
+                    description="تأكد من اتباع الخطوات: 1) اختر الصف 2) اختر المادة 3) اختر نوع الامتحان 4) اضغط عرض الطلاب"
+                    actionLabel="تعديل الفلتر"
+                    onAction={() => setIsShowingStudents(false)}
+                  />
                 ) : (
                   <ScrollArea className="max-h-[500px]">
                     <Table>

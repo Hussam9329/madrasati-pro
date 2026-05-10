@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { EmptyState } from '@/components/ui/empty-state'
 import {
   Select,
   SelectContent,
@@ -95,7 +96,7 @@ export default function TeachersPage() {
       const data = await res.json()
       setTeachers(data || [])
     } catch {
-      toast.error('خطأ', { description: 'فشل في جلب بيانات المدرسين' })
+      toast.error('خطأ', { description: 'تعذر تحميل بيانات المدرسين. حاول مرة أخرى.' })
     } finally {
       setLoading(false)
     }
@@ -352,15 +353,13 @@ export default function TeachersPage() {
           ))}
         </div>
       ) : filteredTeachers.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <GraduationCap className="h-16 w-16 mb-4 text-muted-foreground/20" />
-          <h3 className="text-lg font-semibold text-muted-foreground">لم يتم تسجيل أي مدرس بعد</h3>
-          <p className="text-sm text-muted-foreground mt-1 max-w-sm">أضف المدرسين وحدد المواد التي يدرسونها لبدء إدارة الجدول والحصص.</p>
-          <Button variant="outline" className="mt-4 gap-2" onClick={openAddForm}>
-            <Plus className="h-4 w-4" />
-            إضافة أول مدرس
-          </Button>
-        </div>
+        <EmptyState
+          icon={GraduationCap}
+          title="لم يتم تسجيل أي مدرس بعد"
+          description="أضف المدرسين وحدد المواد التي يدرسونها لبدء إدارة الجدول والحصص."
+          actionLabel="إضافة أول مدرس"
+          onAction={openAddForm}
+        />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <AnimatePresence>

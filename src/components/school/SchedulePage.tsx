@@ -22,6 +22,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+import { EmptyState } from '@/components/ui/empty-state';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -156,7 +157,7 @@ export default function SchedulePage() {
       const refreshRes = await fetch(`/api/schedule?${params}`);
       if (refreshRes.ok) setSlots(await refreshRes.json());
     } catch {
-      toast.error('خطأ', { description: 'حدث خطأ في إضافة الحصة' });
+      toast.error('خطأ', { description: 'تعذر إضافة الحصة. حاول مرة أخرى.' });
     }
   };
 
@@ -169,10 +170,10 @@ export default function SchedulePage() {
         toast.success('تم الحذف', { description: 'تم حذف الحصة بنجاح' });
         setSlots(prev => prev.filter(s => s.id !== deleteSlotId));
       } else {
-        toast.error('خطأ', { description: 'فشل في حذف الحصة' });
+        toast.error('خطأ', { description: 'تعذر حذف الحصة. حاول مرة أخرى.' });
       }
     } catch {
-      toast.error('خطأ', { description: 'حدث خطأ في حذف الحصة' });
+      toast.error('خطأ', { description: 'تعذر حذف الحصة. حاول مرة أخرى.' });
     } finally {
       setDeleteSlotId(null);
     }
@@ -483,20 +484,13 @@ export default function SchedulePage() {
 
       {/* Empty state */}
       {slots.length === 0 && !loading && (
-        <Card className="dark:bg-gray-900/50 dark:border-gray-700">
-          <CardContent className="text-center py-12">
-            <Calendar className="h-16 w-16 mx-auto text-muted-foreground/30 mb-4" />
-            <h3 className="text-lg font-semibold text-muted-foreground mb-2">الجدول فارغ</h3>
-            <p className="text-sm text-muted-foreground mb-4">لم يتم إضافة أي حصص بعد. ابدأ ببناء جدول الحصص للمدرسة.</p>
-            <Button
-              onClick={() => setAddDialogOpen(true)}
-              className="gap-2 bg-primary text-white"
-            >
-              <Plus className="h-4 w-4" />
-              إضافة حصة أولى
-            </Button>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={Calendar}
+          title="الجدول فارغ"
+          description="لم يتم إضافة أي حصص بعد. ابدأ ببناء جدول الحصص للمدرسة."
+          actionLabel="إضافة حصة أولى"
+          onAction={() => setAddDialogOpen(true)}
+        />
       )}
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!deleteSlotId} onOpenChange={() => setDeleteSlotId(null)}>

@@ -51,6 +51,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { CHART_COLORS, containerVariants, itemVariants } from '@/lib/constants';
+import { ErrorState } from '@/components/ui/error-state';
+import { getUserMessage } from '@/utils/errors';
 
 interface DashboardData {
   totals: {
@@ -255,8 +257,8 @@ export default function DashboardPage() {
       if (refreshing) {
         toast.success('تم التحديث', { description: 'تم تحديث بيانات لوحة التحكم بنجاح' });
       }
-    } catch {
-      setError('تعذر جلب بيانات لوحة التحكم');
+    } catch (err) {
+      setError(getUserMessage(err, 'تعذر جلب بيانات لوحة التحكم'));
       toast.error('خطأ في الاتصال', { description: 'تعذر جلب بيانات لوحة التحكم، تحقق من الاتصال بالخادم' });
     } finally {
       setLoading(false);
@@ -347,13 +349,11 @@ export default function DashboardPage() {
 
   if (error && !data) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4">
-        <p className="text-red-500 text-lg">{error}</p>
-        <Button onClick={handleRefresh} variant="outline" className="gap-2">
-          <RefreshCw className="w-4 h-4" />
-          إعادة المحاولة
-        </Button>
-      </div>
+      <ErrorState
+        title="تعذر تحميل لوحة التحكم"
+        description={error}
+        onRetry={handleRefresh}
+      />
     );
   }
 

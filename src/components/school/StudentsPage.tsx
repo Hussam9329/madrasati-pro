@@ -55,6 +55,9 @@ import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
 import { exportToCSV } from '@/lib/export-utils'
 import { useAppStore } from '@/lib/store'
+import { EmptyState } from '@/components/ui/empty-state'
+import { ErrorState } from '@/components/ui/error-state'
+import { getUserMessage } from '@/utils/errors'
 
 // Types
 import type { Student, ClassItem, SectionItem } from '@/types'
@@ -125,7 +128,7 @@ export default function StudentsPage() {
       setTotal(data.total || 0)
       setTotalPages(data.totalPages || 1)
     } catch {
-      toast.error('خطأ', { description: 'فشل في جلب بيانات الطلاب' })
+      toast.error('خطأ', { description: 'تعذر تحميل بيانات الطلاب. حاول مرة أخرى.' })
     } finally {
       setLoading(false)
     }
@@ -160,7 +163,7 @@ export default function StudentsPage() {
         setQrCodeUrl(url)
       }
     } catch {
-      toast.error('خطأ', { description: 'فشل في جلب بيانات الطالب' })
+      toast.error('خطأ', { description: 'تعذر تحميل بيانات الطالب. حاول مرة أخرى.' })
     }
   }
 
@@ -429,15 +432,13 @@ export default function StudentsPage() {
               ))}
             </div>
           ) : students.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <Users className="h-16 w-16 mb-4 text-muted-foreground/20" />
-              <h3 className="text-lg font-semibold text-muted-foreground">لم يتم تسجيل أي طالب بعد</h3>
-              <p className="text-sm text-muted-foreground mt-1 max-w-sm">ابدأ بإضافة الطلاب لإدارة بياناتهم وحضورهم ودرجاتهم. يمكنك أيضاً تصدير واستيراد البيانات.</p>
-              <Button variant="outline" className="mt-4 gap-2" onClick={openAddForm}>
-                <Plus className="h-4 w-4" />
-                إضافة أول طالب
-              </Button>
-            </div>
+            <EmptyState
+              icon={Users}
+              title="لم يتم تسجيل أي طالب بعد"
+              description="ابدأ بإضافة الطلاب لإدارة بياناتهم وحضورهم ودرجاتهم."
+              actionLabel="إضافة أول طالب"
+              onAction={openAddForm}
+            />
           ) : (
             <>
               <div className="overflow-x-auto">
@@ -892,7 +893,7 @@ export default function StudentsPage() {
                     </Table>
                   </div>
                 ) : (
-                  <EmptyState message="لا توجد سجلات حضور بعد" />
+                  <EmptyState title="لا توجد سجلات حضور بعد" />
                 )}
               </TabsContent>
 
@@ -933,7 +934,7 @@ export default function StudentsPage() {
                     </Table>
                   </div>
                 ) : (
-                  <EmptyState message="لا توجد درجات مسجلة بعد" />
+                  <EmptyState title="لا توجد درجات مسجلة بعد" />
                 )}
               </TabsContent>
 
@@ -1251,14 +1252,6 @@ function InfoField({ label, value, icon }: { label: string; value: string; icon?
         {icon === 'female' && <User className="h-4 w-4 text-pink-500" />}
         <p className={`text-sm font-medium ${icon === 'male' ? 'text-blue-600' : icon === 'female' ? 'text-pink-600' : ''}`}>{value}</p>
       </div>
-    </div>
-  )
-}
-
-function EmptyState({ message }: { message: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-      <p className="text-sm">{message}</p>
     </div>
   )
 }

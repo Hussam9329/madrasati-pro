@@ -39,6 +39,7 @@ import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
+import { EmptyState } from '@/components/ui/empty-state'
 
 // Types
 import type { TeacherOption, ClassOption, Subject } from '@/types'
@@ -73,7 +74,7 @@ export default function SubjectsPage() {
       const data = await res.json()
       setSubjects(data || [])
     } catch {
-      toast.error('خطأ', { description: 'فشل في جلب بيانات المواد' })
+      toast.error('خطأ', { description: 'تعذر تحميل بيانات المواد. حاول مرة أخرى.' })
     } finally {
       setLoading(false)
     }
@@ -209,7 +210,7 @@ export default function SubjectsPage() {
       setFormOpen(false)
       fetchSubjects()
     } catch (err) {
-      toast.error('خطأ', { description: err instanceof Error ? err.message : 'فشل في حفظ البيانات' })
+      toast.error('خطأ', { description: err instanceof Error ? err.message : 'تعذر حفظ البيانات. حاول مرة أخرى.' })
     } finally {
       setSaving(false)
     }
@@ -223,7 +224,7 @@ export default function SubjectsPage() {
       toast.success('تم الحذف', { description: 'تم حذف المادة بنجاح' })
       fetchSubjects()
     } catch {
-      toast.error('خطأ', { description: 'فشل في حذف المادة' })
+      toast.error('خطأ', { description: 'تعذر حذف المادة. حاول مرة أخرى.' })
     } finally {
       setDeleteId(null)
     }
@@ -313,15 +314,13 @@ export default function SubjectsPage() {
           ))}
         </div>
       ) : subjects.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <BookOpen className="h-16 w-16 mb-4 text-muted-foreground/20" />
-          <h3 className="text-lg font-semibold text-muted-foreground">لا توجد مواد دراسية بعد</h3>
-          <p className="text-sm text-muted-foreground mt-1 max-w-sm">ابدأ بإضافة المواد الدراسية وتحديد رمز لكل مادة. ستظهر المواد تلقائياً عند إدخال الدرجات وبناء الجدول الدراسي.</p>
-          <Button className="mt-4 gap-2 bg-primary" onClick={openAddForm}>
-            <Plus className="h-4 w-4" />
-            إضافة مادة جديدة
-          </Button>
-        </div>
+        <EmptyState
+          icon={BookOpen}
+          title="لا توجد مواد دراسية بعد"
+          description="ابدأ بإضافة المواد الدراسية وتحديد رمز لكل مادة. ستظهر المواد تلقائياً عند إدخال الدرجات وبناء الجدول الدراسي."
+          actionLabel="إضافة مادة جديدة"
+          onAction={openAddForm}
+        />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <AnimatePresence>

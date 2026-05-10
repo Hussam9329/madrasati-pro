@@ -26,6 +26,7 @@ import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Progress } from '@/components/ui/progress'
 import { toast } from 'sonner'
+import { EmptyState } from '@/components/ui/empty-state'
 
 // Types
 import type { ClassData, FeePlanData, InstallmentData, PaymentData, StudentMinimal as StudentData } from '@/types'
@@ -94,7 +95,7 @@ export default function PaymentsPage() {
       if (feePlansRes.ok) setFeePlans(await feePlansRes.json())
       if (installmentsRes.ok) setInstallments(await installmentsRes.json())
     } catch {
-      toast.error('خطأ', { description: 'فشل في جلب البيانات' })
+      toast.error('خطأ', { description: 'تعذر تحميل البيانات. حاول مرة أخرى.' })
     } finally {
       setLoading(false)
     }
@@ -128,7 +129,7 @@ export default function PaymentsPage() {
       setFeePlanForm({ name: '', amount: '', dueDate: '', description: '', sortOrder: '0' })
       fetchData()
     } catch (err) {
-      toast.error('خطأ', { description: err instanceof Error ? err.message : 'فشل الحفظ' })
+      toast.error('خطأ', { description: err instanceof Error ? err.message : 'تعذر الحفظ. حاول مرة أخرى.' })
     } finally { setSavingFeePlan(false) }
   }
 
@@ -177,7 +178,7 @@ export default function PaymentsPage() {
       setAssignFormOpen(false)
       fetchData()
     } catch {
-      toast.error('خطأ', { description: 'فشل في تسجيل الأقساط' })
+      toast.error('خطأ', { description: 'تعذر تسجيل الأقساط. حاول مرة أخرى.' })
     } finally { setSavingAssign(false) }
   }
 
@@ -215,7 +216,7 @@ export default function PaymentsPage() {
       setPaymentFormOpen(false)
       fetchData()
     } catch (err) {
-      toast.error('خطأ', { description: err instanceof Error ? err.message : 'فشل تسجيل الدفعة' })
+      toast.error('خطأ', { description: err instanceof Error ? err.message : 'تعذر تسجيل الدفعة. حاول مرة أخرى.' })
     } finally { setSavingPayment(false) }
   }
 
@@ -227,7 +228,7 @@ export default function PaymentsPage() {
       if (!res.ok) throw new Error()
       toast.success('تم الحذف', { description: 'تم حذف الدفعة بنجاح' })
       fetchData()
-    } catch { toast.error('خطأ', { description: 'فشل حذف الدفعة' }) }
+    } catch { toast.error('خطأ', { description: 'تعذر حذف الدفعة. حاول مرة أخرى.' }) }
     finally { setDeletePaymentId(null) }
   }
 
@@ -336,9 +337,17 @@ export default function PaymentsPage() {
           </div>
 
           {!selectedClassId ? (
-            <div className="text-center py-8"><CreditCard className="h-12 w-12 mx-auto text-muted-foreground/30 mb-3" /><p className="text-sm text-muted-foreground">اختر صفّاً لعرض وإدارة الأقساط</p></div>
+            <EmptyState
+              icon={CreditCard}
+              title="اختر صفّاً لعرض وإدارة الأقساط"
+            />
           ) : filteredFeePlans.length === 0 ? (
-            <div className="text-center py-8"><Receipt className="h-12 w-12 mx-auto text-muted-foreground/30 mb-3" /><p className="text-sm text-muted-foreground mb-3">لا توجد خطط رسوم لهذا الصف بعد</p><Button variant="outline" size="sm" onClick={() => setFeePlanFormOpen(true)} className="gap-1.5"><Plus className="h-3.5 w-3.5" />إضافة قسط جديد</Button></div>
+            <EmptyState
+              icon={Receipt}
+              title="لا توجد خطط رسوم لهذا الصف بعد"
+              actionLabel="إضافة قسط جديد"
+              onAction={() => setFeePlanFormOpen(true)}
+            />
           ) : (
             <>
               {/* Fee Plans */}
