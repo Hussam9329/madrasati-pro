@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import {
   LayoutDashboard,
   GraduationCap,
@@ -26,7 +27,8 @@ import {
   ClipboardList,
   Wallet,
 } from 'lucide-react';
-import { useAppStore, type PageKey } from '@/lib/store';
+import { useAppStore } from '@/lib/store';
+import type { PageKey } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -35,8 +37,14 @@ import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import { useTheme } from 'next-themes';
 import { motion, AnimatePresence } from 'framer-motion';
-import CommandPalette from '@/components/school/CommandPalette';
-import KeyboardShortcutsDialog from '@/components/school/KeyboardShortcutsDialog';
+
+// Lazy load heavy dialog components - only loaded when user opens them
+const CommandPalette = dynamic(() => import('@/components/school/CommandPalette'), {
+  ssr: false,
+});
+const KeyboardShortcutsDialog = dynamic(() => import('@/components/school/KeyboardShortcutsDialog'), {
+  ssr: false,
+});
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -57,6 +65,7 @@ const pageDescriptions: Record<PageKey, string> = {
   reports: 'تقارير وإحصائيات شاملة',
   users: 'إدارة المستخدمين والصلاحيات',
   settings: 'إعدادات النظام والتخصيص',
+  profile: 'ملف الطالب الشخصي',
 };
 
 // Navigation groups - مدرستي School System

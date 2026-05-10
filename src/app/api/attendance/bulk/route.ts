@@ -1,20 +1,20 @@
-import { NextResponse } from 'next/server';
+import { checkDb, successResponse, errorResponse } from '@/services/api-response';
 import { db } from '@/lib/db';
 
 export async function POST(request: Request) {
+  const dbError = checkDb();
+  if (dbError) return dbError;
+
   try {
     const body = await request.json();
     const { records } = body;
 
     if (!Array.isArray(records) || records.length === 0) {
-      return NextResponse.json(
-        { error: 'يجب توفير قائمة سجلات الحضور' },
-        { status: 400 }
-      );
+      return errorResponse('يجب توفير قائمة سجلات الحضور', 400);
     }
 
-    const results = [];
-    const errors = [];
+    const results: Record<string, unknown>[] = [];
+    const errors: Record<string, unknown>[] = [];
 
     for (const record of records) {
       try {
@@ -114,17 +114,17 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.json({
-      message: `تم حفظ ${results.length} سجل حضور`,
-      saved: results.length,
-      errors: errors.length,
-      errorDetails: errors,
-    }, { status: 201 });
+    return successResponse(
+      {
+        saved: results.length,
+        errors: errors.length,
+        errorDetails: errors,
+      },
+      `تم حفظ ${results.length} سجل حضور`,
+      201
+    );
   } catch (error) {
     console.error('Bulk attendance error:', error);
-    return NextResponse.json(
-      { error: 'حدث خطأ في تسجيل الحضور الجماعي' },
-      { status: 500 }
-    );
+    return errorResponse('حدث خطأ في تسجيل الحضور الجماعي', 500);
   }
 }

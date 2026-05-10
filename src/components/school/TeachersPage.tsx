@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Search, Plus, Edit, Trash2, Phone, Mail, BookOpen, GraduationCap,
@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { EmptyState } from '@/components/ui/empty-state'
 import {
   Select,
   SelectContent,
@@ -44,34 +45,10 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
 
 // Types
-interface SubjectItem {
-  id: string
-  name: string
-  code: string
-}
+import type { Teacher, SubjectItem } from '@/types'
+import { TEACHER_STATUS_COLORS } from '@/lib/constants'
 
-interface Teacher {
-  id: string
-  fullName: string
-  phone: string | null
-  email: string | null
-  notes: string | null
-  status: string
-  photo: string | null
-  schoolId: string
-  subjects: {
-    id: string
-    subjectId: string
-    subject: { id: string; name: string }
-  }[]
-}
-
-const STATUS_COLORS: Record<string, string> = {
-  'نشط': 'bg-emerald-100 text-emerald-700 border-emerald-200',
-  'إجازة': 'bg-amber-100 text-amber-700 border-amber-200',
-  'منقول': 'bg-blue-100 text-blue-700 border-blue-200',
-  'متقاعد': 'bg-gray-100 text-gray-700 border-gray-200',
-}
+const STATUS_COLORS = TEACHER_STATUS_COLORS
 
 export default function TeachersPage() {
   const [teachers, setTeachers] = useState<Teacher[]>([])
@@ -119,7 +96,7 @@ export default function TeachersPage() {
       const data = await res.json()
       setTeachers(data || [])
     } catch {
-      toast.error('خطأ', { description: 'فشل في جلب بيانات المدرسين' })
+      toast.error('خطأ', { description: 'تعذر تحميل بيانات المدرسين. حاول مرة أخرى.' })
     } finally {
       setLoading(false)
     }
@@ -271,11 +248,21 @@ export default function TeachersPage() {
     return true
   }
 
-  // Filter teachers by status
-  const filteredTeachers = teachers.filter(t => {
-    if (filterStatus !== 'all' && t.status !== filterStatus) return false
-    return true
-  })
+  // Filter teachers by status - memoized to avoid re-computing on every render
+  const filteredTeachers = useMemo(() => {
+    return teachers.filter(t => {
+      if (filterStatus !== 'all' && t.status !== filterStatus) return false
+      return true
+    })
+  }, [teachers, filterStatus])
+
+  // Teacher stats - memoized to avoid repeated .filter() calls
+  const teacherStats = useMemo(() => [
+    { label: 'الإجمالي', count: teachers.length, icon: Users, color: 'text-teal-700', bg: 'bg-teal-50', iconBg: 'bg-teal-100', border: 'border-teal-200' },
+    { label: 'نشط', count: teachers.filter(t => t.status === 'نشط').length, icon: UserCheck, color: 'text-emerald-700', bg: 'bg-emerald-50', iconBg: 'bg-emerald-100', border: 'border-emerald-200' },
+    { label: 'إجازة', count: teachers.filter(t => t.status === 'إجازة').length, icon: UserX, color: 'text-amber-700', bg: 'bg-amber-50', iconBg: 'bg-amber-100', border: 'border-amber-200' },
+    { label: 'منقول', count: teachers.filter(t => t.status === 'منقول').length, icon: ArrowRightLeft, color: 'text-blue-700', bg: 'bg-blue-50', iconBg: 'bg-blue-100', border: 'border-blue-200' },
+  ], [teachers])
 
   return (
     <div className="space-y-6">
@@ -308,12 +295,7 @@ export default function TeachersPage() {
         {/* Teacher Stats Summary */}
         {!loading && teachers.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { label: 'الإجمالي', count: teachers.length, icon: Users, color: 'text-teal-700', bg: 'bg-teal-50', iconBg: 'bg-teal-100', border: 'border-teal-200' },
-              { label: 'نشط', count: teachers.filter(t => t.status === 'نشط').length, icon: UserCheck, color: 'text-emerald-700', bg: 'bg-emerald-50', iconBg: 'bg-emerald-100', border: 'border-emerald-200' },
-              { label: 'إجازة', count: teachers.filter(t => t.status === 'إجازة').length, icon: UserX, color: 'text-amber-700', bg: 'bg-amber-50', iconBg: 'bg-amber-100', border: 'border-amber-200' },
-              { label: 'منقول', count: teachers.filter(t => t.status === 'منقول').length, icon: ArrowRightLeft, color: 'text-blue-700', bg: 'bg-blue-50', iconBg: 'bg-blue-100', border: 'border-blue-200' },
-            ].map(stat => (
+            {teacherStats.map(stat => (
               <div key={stat.label} className={`flex items-center gap-3 p-3 rounded-xl border ${stat.border} ${stat.bg}`}>
                 <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${stat.iconBg}`}>
                   <stat.icon className={`w-4 h-4 ${stat.color}`} />
@@ -376,15 +358,13 @@ export default function TeachersPage() {
           ))}
         </div>
       ) : filteredTeachers.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <GraduationCap className="h-16 w-16 mb-4 text-muted-foreground/20" />
-          <h3 className="text-lg font-semibold text-muted-foreground">لم يتم تسجيل أي مدرس بعد</h3>
-          <p className="text-sm text-muted-foreground mt-1 max-w-sm">أضف المدرسين وحدد المواد التي يدرسونها لبدء إدارة الجدول والحصص.</p>
-          <Button variant="outline" className="mt-4 gap-2" onClick={openAddForm}>
-            <Plus className="h-4 w-4" />
-            إضافة أول مدرس
-          </Button>
-        </div>
+        <EmptyState
+          icon={GraduationCap}
+          title="لم يتم تسجيل أي مدرس بعد"
+          description="أضف المدرسين وحدد المواد التي يدرسونها لبدء إدارة الجدول والحصص."
+          actionLabel="إضافة أول مدرس"
+          onAction={openAddForm}
+        />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <AnimatePresence>

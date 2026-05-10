@@ -48,57 +48,13 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { toast } from 'sonner'
+import { EmptyState } from '@/components/ui/empty-state'
 
 // ─── Types ───────────────────────────────────────────────────────
-interface Section {
-  id: string
-  name: string
-  classId: string
-  _count?: { students: number }
-}
-
-interface TeacherClassItem {
-  id: string
-  teacherId: string
-  classId: string
-  sectionId: string | null
-  teacher: { id: string; fullName: string; notes?: string | null; phone?: string | null }
-}
-
-interface ClassItem {
-  id: string
-  name: string
-  level: string
-  stage: string
-  branch: string | null
-  schoolId: string
-  sections: Section[]
-  _count: { students: number }
-  subjects?: {
-    id: string
-    classId: string
-    subject: { id: string; name: string; code: string }
-  }[]
-}
-
-interface TeacherOption {
-  id: string
-  fullName: string
-  notes?: string | null
-  subjects?: string[]
-}
+import type { Section, TeacherClassItem, ClassItem, TeacherOption } from '@/types'
 
 // ─── Constants ───────────────────────────────────────────────────
-const LEVELS = ['إعدادي', 'متوسط', 'ابتدائي'] as const
-const STAGES = ['الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس', 'السادس'] as const
-const BRANCHES = ['علمي', 'أدبي', 'أحيائي', 'تطبيقي'] as const
-const SECTION_OPTIONS = ['أ', 'ب', 'ج', 'د', 'هـ'] as const
-
-const LEVEL_COLORS: Record<string, { bg: string; border: string; dot: string; icon: string }> = {
-  'إعدادي': { bg: 'bg-blue-50 border-blue-200', border: 'border-blue-200', dot: 'bg-blue-500', icon: 'text-blue-600' },
-  'متوسط': { bg: 'bg-violet-50 border-violet-200', border: 'border-violet-200', dot: 'bg-violet-500', icon: 'text-violet-600' },
-  'ابتدائي': { bg: 'bg-emerald-50 border-emerald-200', border: 'border-emerald-200', dot: 'bg-emerald-500', icon: 'text-emerald-600' },
-}
+import { LEVELS, STAGES, BRANCHES, SECTION_OPTIONS, LEVEL_COLORS } from '@/lib/constants'
 
 const STAGE_BADGE: Record<string, string> = {
   'الأول': 'bg-sky-100 text-sky-700 border-sky-200',
@@ -161,7 +117,7 @@ export default function ClassesPage() {
       const data = await res.json()
       setClasses(data || [])
     } catch {
-      toast.error('خطأ', { description: 'فشل في جلب بيانات الصفوف' })
+      toast.error('خطأ', { description: 'تعذر تحميل بيانات الصفوف. حاول مرة أخرى.' })
     }
   }, [])
 
@@ -286,7 +242,7 @@ export default function ClassesPage() {
       setFormOpen(false)
       fetchClasses()
     } catch (err) {
-      toast.error('خطأ', { description: err instanceof Error ? err.message : 'فشل في حفظ البيانات' })
+      toast.error('خطأ', { description: err instanceof Error ? err.message : 'تعذر حفظ البيانات. حاول مرة أخرى.' })
     } finally {
       setSaving(false)
     }
@@ -301,7 +257,7 @@ export default function ClassesPage() {
       toast.success('تم الحذف', { description: 'تم حذف الصف بنجاح' })
       fetchClasses()
     } catch {
-      toast.error('خطأ', { description: 'فشل في حذف الصف' })
+      toast.error('خطأ', { description: 'تعذر حذف الصف. حاول مرة أخرى.' })
     } finally {
       setDeleteId(null)
     }
@@ -339,7 +295,7 @@ export default function ClassesPage() {
       setAssignOpen(false)
       fetchAssignments()
     } catch (err) {
-      toast.error('خطأ', { description: err instanceof Error ? err.message : 'فشل في تعيين الأستاذ' })
+      toast.error('خطأ', { description: err instanceof Error ? err.message : 'تعذر تعيين الأستاذ. حاول مرة أخرى.' })
     } finally {
       setSaving(false)
     }
@@ -352,7 +308,7 @@ export default function ClassesPage() {
       toast.success('تم الإلغاء', { description: 'تم إلغاء تعيين الأستاذ بنجاح' })
       fetchAssignments()
     } catch {
-      toast.error('خطأ', { description: 'فشل في إلغاء التعيين' })
+      toast.error('خطأ', { description: 'تعذر إلغاء التعيين. حاول مرة أخرى.' })
     }
   }
 
@@ -439,15 +395,13 @@ export default function ClassesPage() {
           ))}
         </div>
       ) : classes.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <Layers className="h-16 w-16 mb-4 text-muted-foreground/20" />
-          <h3 className="text-lg font-semibold text-muted-foreground">لا توجد صفوف دراسية بعد</h3>
-          <p className="text-sm text-muted-foreground mt-1 max-w-sm">أنشئ الصفوف الدراسية وأضف الشعب لكل صف. يمكنك تعيين المدرسين للشعب وربطها بالمواد الدراسية.</p>
-          <Button className="mt-4 gap-2 bg-primary" onClick={openAddForm}>
-            <Plus className="h-4 w-4" />
-            إضافة صف جديد
-          </Button>
-        </div>
+        <EmptyState
+          icon={Layers}
+          title="لا توجد صفوف دراسية بعد"
+          description="أنشئ الصفوف الدراسية وأضف الشعب لكل صف. يمكنك تعيين المدرسين للشعب وربطها بالمواد الدراسية."
+          actionLabel="إضافة صف جديد"
+          onAction={openAddForm}
+        />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <AnimatePresence>
@@ -472,7 +426,7 @@ export default function ClassesPage() {
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex items-start gap-2.5">
                           <div className="w-8 h-8 rounded-lg flex items-center justify-center mt-0.5 shrink-0 bg-white/60">
-                            <Layers className={`w-4 h-4 ${levelColor.icon}`} />
+                            <Layers className={`w-4 h-4 ${levelColor.text}`} />
                           </div>
                           <div>
                             <h3 className="font-bold text-base flex items-center gap-2">
@@ -483,7 +437,7 @@ export default function ClassesPage() {
                               <Badge variant="outline" className={`text-xs ${STAGE_BADGE[cls.stage] || 'bg-gray-100 text-gray-700 border-gray-200'}`}>
                                 {cls.stage}
                               </Badge>
-                              <Badge variant="outline" className={`text-xs ${levelColor.bg} ${levelColor.icon} ${levelColor.border}`}>
+                              <Badge variant="outline" className={`text-xs ${levelColor.bg} ${levelColor.text} ${levelColor.border}`}>
                                 {cls.level}
                               </Badge>
                               {cls.branch && (

@@ -39,60 +39,11 @@ import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
+import { EmptyState } from '@/components/ui/empty-state'
 
 // Types
-interface TeacherOption {
-  id: string
-  fullName: string
-}
-
-interface ClassOption {
-  id: string
-  name: string
-  sections: { id: string; name: string }[]
-}
-
-interface Subject {
-  id: string
-  name: string
-  code: string
-  type: string
-  maxScore: number
-  passScore: number
-  schoolId: string
-  teachers: {
-    id: string
-    teacherId: string
-    teacher: { id: string; fullName: string; phone?: string }
-  }[]
-  classes: {
-    id: string
-    classId: string
-    class: { id: string; name: string }
-  }[]
-  examTypes: {
-    id: string
-    name: string
-    maxScore: number
-  }[]
-}
-
-const SUBJECT_COLORS: Record<string, { bg: string; dot: string; icon: string }> = {
-  'رياضيات': { bg: 'bg-blue-50 border-blue-200', dot: 'bg-blue-500', icon: 'text-blue-600' },
-  'فيزياء': { bg: 'bg-purple-50 border-purple-200', dot: 'bg-purple-500', icon: 'text-purple-600' },
-  'كيمياء': { bg: 'bg-emerald-50 border-emerald-200', dot: 'bg-emerald-500', icon: 'text-emerald-600' },
-  'أحياء': { bg: 'bg-green-50 border-green-200', dot: 'bg-green-500', icon: 'text-green-600' },
-  'عربي': { bg: 'bg-red-50 border-red-200', dot: 'bg-red-500', icon: 'text-red-600' },
-  'انكليزي': { bg: 'bg-cyan-50 border-cyan-200', dot: 'bg-cyan-500', icon: 'text-cyan-600' },
-  'تربية إسلامية': { bg: 'bg-amber-50 border-amber-200', dot: 'bg-amber-500', icon: 'text-amber-600' },
-  'تاريخ': { bg: 'bg-orange-50 border-orange-200', dot: 'bg-orange-500', icon: 'text-orange-600' },
-  'جغرافية': { bg: 'bg-teal-50 border-teal-200', dot: 'bg-teal-500', icon: 'text-teal-600' },
-  'حاسوب': { bg: 'bg-indigo-50 border-indigo-200', dot: 'bg-indigo-500', icon: 'text-indigo-600' },
-  'تربية رياضية': { bg: 'bg-lime-50 border-lime-200', dot: 'bg-lime-500', icon: 'text-lime-600' },
-  'فنية': { bg: 'bg-pink-50 border-pink-200', dot: 'bg-pink-500', icon: 'text-pink-600' },
-}
-
-const DEFAULT_SUBJECT_COLOR = { bg: 'bg-gray-50 border-gray-200', dot: 'bg-gray-400', icon: 'text-gray-600' }
+import type { TeacherOption, ClassOption, Subject } from '@/types'
+import { SUBJECT_COLORS, DEFAULT_SUBJECT_COLOR } from '@/lib/constants'
 
 export default function SubjectsPage() {
   const [subjects, setSubjects] = useState<Subject[]>([])
@@ -123,7 +74,7 @@ export default function SubjectsPage() {
       const data = await res.json()
       setSubjects(data || [])
     } catch {
-      toast.error('خطأ', { description: 'فشل في جلب بيانات المواد' })
+      toast.error('خطأ', { description: 'تعذر تحميل بيانات المواد. حاول مرة أخرى.' })
     } finally {
       setLoading(false)
     }
@@ -184,8 +135,8 @@ export default function SubjectsPage() {
       type: subject.type,
       maxScore: String(subject.maxScore),
       passScore: String(subject.passScore),
-      selectedTeachers: subject.teachers.map(t => t.teacherId),
-      selectedClasses: subject.classes.map(c => c.classId),
+      selectedTeachers: subject?.teachers?.map(t => t.teacherId) || [],
+      selectedClasses: subject?.classes?.map(c => c.classId) || [],
     })
     setFormStep(0)
     setFormOpen(true)
@@ -259,7 +210,7 @@ export default function SubjectsPage() {
       setFormOpen(false)
       fetchSubjects()
     } catch (err) {
-      toast.error('خطأ', { description: err instanceof Error ? err.message : 'فشل في حفظ البيانات' })
+      toast.error('خطأ', { description: err instanceof Error ? err.message : 'تعذر حفظ البيانات. حاول مرة أخرى.' })
     } finally {
       setSaving(false)
     }
@@ -273,7 +224,7 @@ export default function SubjectsPage() {
       toast.success('تم الحذف', { description: 'تم حذف المادة بنجاح' })
       fetchSubjects()
     } catch {
-      toast.error('خطأ', { description: 'فشل في حذف المادة' })
+      toast.error('خطأ', { description: 'تعذر حذف المادة. حاول مرة أخرى.' })
     } finally {
       setDeleteId(null)
     }
@@ -331,7 +282,7 @@ export default function SubjectsPage() {
             { label: 'إجمالي المواد', count: subjects.length, icon: BookOpen, textClass: 'text-teal-600', bg: 'bg-teal-50', iconBg: 'bg-teal-100', border: 'border-teal-200' },
             { label: 'مواد أساسية', count: subjects.filter(s => s.type === 'أساسية').length, icon: Flame, textClass: 'text-emerald-600', bg: 'bg-emerald-50', iconBg: 'bg-emerald-100', border: 'border-emerald-200' },
             { label: 'مواد اختيارية', count: subjects.filter(s => s.type === 'اختيارية').length, icon: Target, textClass: 'text-amber-600', bg: 'bg-amber-50', iconBg: 'bg-amber-100', border: 'border-amber-200' },
-            { label: 'المدرسون المرتبطون', count: new Set(subjects.flatMap(s => s.teachers.map(t => t.teacherId))).size, icon: Users, textClass: 'text-cyan-600', bg: 'bg-cyan-50', iconBg: 'bg-cyan-100', border: 'border-cyan-200' },
+            { label: 'المدرسون المرتبطون', count: new Set(subjects.flatMap(s => (s.teachers ?? []).map(t => t.teacherId))).size, icon: Users, textClass: 'text-cyan-600', bg: 'bg-cyan-50', iconBg: 'bg-cyan-100', border: 'border-cyan-200' },
           ].map(stat => (
             <div key={stat.label} className={`flex items-center gap-3 p-3 rounded-xl border ${stat.border} ${stat.bg}`}>
               <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${stat.iconBg}`}>
@@ -363,15 +314,13 @@ export default function SubjectsPage() {
           ))}
         </div>
       ) : subjects.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <BookOpen className="h-16 w-16 mb-4 text-muted-foreground/20" />
-          <h3 className="text-lg font-semibold text-muted-foreground">لا توجد مواد دراسية بعد</h3>
-          <p className="text-sm text-muted-foreground mt-1 max-w-sm">ابدأ بإضافة المواد الدراسية وتحديد رمز لكل مادة. ستظهر المواد تلقائياً عند إدخال الدرجات وبناء الجدول الدراسي.</p>
-          <Button className="mt-4 gap-2 bg-primary" onClick={openAddForm}>
-            <Plus className="h-4 w-4" />
-            إضافة مادة جديدة
-          </Button>
-        </div>
+        <EmptyState
+          icon={BookOpen}
+          title="لا توجد مواد دراسية بعد"
+          description="ابدأ بإضافة المواد الدراسية وتحديد رمز لكل مادة. ستظهر المواد تلقائياً عند إدخال الدرجات وبناء الجدول الدراسي."
+          actionLabel="إضافة مادة جديدة"
+          onAction={openAddForm}
+        />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <AnimatePresence>
@@ -390,7 +339,7 @@ export default function SubjectsPage() {
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-start gap-2.5">
                         <div className="w-8 h-8 rounded-lg flex items-center justify-center mt-0.5 shrink-0 bg-white/60">
-                          <BookOpen className={`w-4 h-4 ${SUBJECT_COLORS[subject.name]?.icon || DEFAULT_SUBJECT_COLOR.icon}`} />
+                          <BookOpen className={`w-4 h-4 ${SUBJECT_COLORS[subject.name]?.text || DEFAULT_SUBJECT_COLOR.text}`} />
                         </div>
                         <div>
                           <h3 className="font-bold text-base flex items-center gap-2">
@@ -443,11 +392,11 @@ export default function SubjectsPage() {
                     <Separator className="my-3" />
 
                     {/* Teachers */}
-                    {subject.teachers.length > 0 && (
+                    {(subject?.teachers ?? []).length > 0 && (
                       <div className="mb-3">
                         <p className="text-xs text-muted-foreground mb-1.5">المدرسون:</p>
                         <div className="flex flex-wrap gap-1.5">
-                          {subject.teachers.map(t => (
+                          {subject?.teachers?.map(t => (
                             <Badge key={t.id} variant="secondary" className="text-xs">
                               {t.teacher.fullName}
                             </Badge>
@@ -457,11 +406,11 @@ export default function SubjectsPage() {
                     )}
 
                     {/* Classes */}
-                    {subject.classes.length > 0 && (
+                    {(subject?.classes ?? []).length > 0 && (
                       <div>
                         <p className="text-xs text-muted-foreground mb-1.5">الصفوف:</p>
                         <div className="flex flex-wrap gap-1.5">
-                          {subject.classes.map(c => (
+                          {subject?.classes?.map(c => (
                             <Badge key={c.id} variant="outline" className="text-xs">
                               {c.class.name}
                             </Badge>
@@ -471,13 +420,13 @@ export default function SubjectsPage() {
                     )}
 
                     {/* Exam Types */}
-                    {subject.examTypes && subject.examTypes.length > 0 && (
+                    {subject.examTypes && subject?.examTypes?.length > 0 && (
                       <>
                         <Separator className="my-3" />
                         <div>
                           <p className="text-xs text-muted-foreground mb-1.5">أنواع الامتحانات:</p>
                           <div className="flex flex-wrap gap-1.5">
-                            {subject.examTypes.map(et => (
+                            {subject?.examTypes?.map(et => (
                               <Badge key={et.id} variant="outline" className="text-xs bg-muted/50">
                                 {et.name} ({et.maxScore})
                               </Badge>

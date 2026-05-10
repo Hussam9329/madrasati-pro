@@ -1,10 +1,13 @@
-import { NextResponse } from 'next/server';
+import { checkDb, successResponse, errorResponse } from '@/services/api-response';
 import { db } from '@/lib/db';
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const dbError = checkDb();
+  if (dbError) return dbError;
+
   try {
     const { id } = await params;
 
@@ -14,7 +17,7 @@ export async function GET(
         teachers: {
           include: {
             teacher: {
-              select: { id: true, fullName: true, phone: true, specialty: true },
+              select: { id: true, fullName: true, phone: true },
             },
           },
         },
@@ -38,19 +41,13 @@ export async function GET(
     });
 
     if (!subject) {
-      return NextResponse.json(
-        { error: 'المادة غير موجودة' },
-        { status: 404 }
-      );
+      return errorResponse('المادة غير موجودة', 404);
     }
 
-    return NextResponse.json(subject);
+    return successResponse(subject);
   } catch (error) {
     console.error('Get subject error:', error);
-    return NextResponse.json(
-      { error: 'حدث خطأ في جلب بيانات المادة' },
-      { status: 500 }
-    );
+    return errorResponse('حدث خطأ في جلب بيانات المادة', 500);
   }
 }
 
@@ -58,16 +55,16 @@ export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const dbError = checkDb();
+  if (dbError) return dbError;
+
   try {
     const { id } = await params;
     const body = await request.json();
 
     const existingSubject = await db.subject.findUnique({ where: { id } });
     if (!existingSubject) {
-      return NextResponse.json(
-        { error: 'المادة غير موجودة' },
-        { status: 404 }
-      );
+      return errorResponse('المادة غير موجودة', 404);
     }
 
     const { teacherIds, classIds, ...data } = body;
@@ -122,13 +119,10 @@ export async function PUT(
       },
     });
 
-    return NextResponse.json(updatedSubject);
+    return successResponse(updatedSubject);
   } catch (error) {
     console.error('Update subject error:', error);
-    return NextResponse.json(
-      { error: 'حدث خطأ في تحديث بيانات المادة' },
-      { status: 500 }
-    );
+    return errorResponse('حدث خطأ في تحديث بيانات المادة', 500);
   }
 }
 
@@ -136,15 +130,15 @@ export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const dbError = checkDb();
+  if (dbError) return dbError;
+
   try {
     const { id } = await params;
 
     const existingSubject = await db.subject.findUnique({ where: { id } });
     if (!existingSubject) {
-      return NextResponse.json(
-        { error: 'المادة غير موجودة' },
-        { status: 404 }
-      );
+      return errorResponse('المادة غير موجودة', 404);
     }
 
     // Delete related records
@@ -155,12 +149,9 @@ export async function DELETE(
 
     await db.subject.delete({ where: { id } });
 
-    return NextResponse.json({ message: 'تم حذف المادة بنجاح' });
+    return successResponse(null, 'تم حذف المادة بنجاح');
   } catch (error) {
     console.error('Delete subject error:', error);
-    return NextResponse.json(
-      { error: 'حدث خطأ في حذف المادة' },
-      { status: 500 }
-    );
+    return errorResponse('حدث خطأ في حذف المادة', 500);
   }
 }

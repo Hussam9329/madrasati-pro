@@ -28,6 +28,7 @@ import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Switch } from '@/components/ui/switch'
 import { toast } from 'sonner'
+import { EmptyState } from '@/components/ui/empty-state'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -40,41 +41,8 @@ import {
 } from '@/components/ui/alert-dialog'
 
 // ============ TYPES ============
-interface SchoolData {
-  id: string
-  name: string
-  logo?: string
-  address?: string
-  phone?: string
-  email?: string
-  principalName?: string
-  academicYear: string
-  schoolType: string
-  shiftType: string
-  startTime: string
-  endTime: string
-  lateThreshold: number
-  weekendDays: string
-}
-
-interface UserData {
-  id: string
-  username: string
-  name: string
-  role: string
-  active: boolean
-  createdAt: string
-  updatedAt: string
-}
-
-const roleColors: Record<string, string> = {
-  'مدير': 'bg-red-100 text-red-800 border-red-300',
-  'معاون': 'bg-purple-100 text-purple-800 border-purple-300',
-  'موظف تسجيل': 'bg-blue-100 text-blue-800 border-blue-300',
-  'موظف بوابة': 'bg-amber-100 text-amber-800 border-amber-300',
-  'مدرس': 'bg-emerald-100 text-emerald-800 border-emerald-300',
-  'مسؤول نظام': 'bg-gray-100 text-gray-800 border-gray-300',
-}
+import type { SchoolData, UserData } from '@/types'
+import { ROLE_COLORS as roleColors } from '@/lib/constants'
 
 interface SettingsPageProps {
   initialTab?: string;
@@ -175,10 +143,10 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
         fetchSchool()
       } else {
         const data = await res.json()
-        toast.error('خطأ', { description: data.error || 'حدث خطأ في الحفظ' })
+        toast.error('خطأ', { description: data.error || 'تعذر حفظ الإعدادات. حاول مرة أخرى.' })
       }
     } catch {
-      toast.error('خطأ', { description: 'حدث خطأ في الاتصال' })
+      toast.error('خطأ', { description: 'تعذر الاتصال بالخادم. حاول مرة أخرى.' })
     } finally {
       setSavingSchool(false)
     }
@@ -252,7 +220,7 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
         }
       }
     } catch {
-      toast.error('خطأ', { description: 'حدث خطأ في الاتصال' })
+      toast.error('خطأ', { description: 'تعذر الاتصال بالخادم. حاول مرة أخرى.' })
     } finally {
       setSavingUser(false)
     }
@@ -270,20 +238,22 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
         toast.error('خطأ', { description: data.error })
       }
     } catch {
-      toast.error('خطأ', { description: 'حدث خطأ في الحذف' })
+      toast.error('خطأ', { description: 'تعذر حذف المستخدم. حاول مرة أخرى.' })
     } finally {
       setDeleteUserId(null)
     }
   }
 
   // Format date
-  const formatDate = (dateStr: string) => {
+  const formatDate = (_dateStr: string) => {
+    // Using imported formatDate from @/utils/format
+    // but keeping page-specific formatting with time
     try {
-      return new Date(dateStr).toLocaleDateString('ar-IQ', {
+      return new Date(_dateStr).toLocaleDateString('ar-IQ', {
         year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit',
       })
     } catch {
-      return dateStr
+      return _dateStr
     }
   }
 
@@ -689,15 +659,13 @@ export default function SettingsPage({ initialTab = 'settings' }: SettingsPagePr
                   ))}
                 </div>
               ) : users.length === 0 ? (
-                <div className="text-center py-12">
-                  <Users className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
-                  <p className="text-lg font-medium text-muted-foreground mb-1">لا يوجد مستخدمون</p>
-                  <p className="text-sm text-muted-foreground mb-4">أضف مستخدم جديد للبدء في إدارة حسابات النظام والصلاحيات</p>
-                  <Button onClick={() => handleOpenUserDialog()} className="gap-2 bg-primary text-white">
-                    <UserPlus className="h-4 w-4" />
-                    إضافة مستخدم
-                  </Button>
-                </div>
+                <EmptyState
+                  icon={Users}
+                  title="لا يوجد مستخدمون"
+                  description="أضف مستخدم جديد للبدء في إدارة حسابات النظام والصلاحيات"
+                  actionLabel="إضافة مستخدم"
+                  onAction={() => handleOpenUserDialog()}
+                />
               ) : (
                 <ScrollArea className="max-h-[500px]">
                   <Table>

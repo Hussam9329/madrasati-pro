@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   QrCode, ScanLine, LogIn, LogOut, Search, Download, Filter,
@@ -24,57 +24,11 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
+import { EmptyState } from '@/components/ui/empty-state'
 
 // Types
-interface Student {
-  id: string
-  fullName: string
-  studentNumber: string
-  class: { id: string; name: string }
-  section: { id: string; name: string }
-}
-
-interface AttendanceRecord {
-  id: string
-  studentId: string
-  date: string
-  checkIn: string | null
-  checkOut: string | null
-  status: string
-  lateMinutes: number | null
-  createdAt: string
-  student: Student
-}
-
-interface ScanResult {
-  message: string
-  action: string
-  status: string
-  lateMinutes?: number | null
-  isEarlyExit?: boolean
-  record: {
-    id: string
-    checkIn: string | null
-    checkOut: string | null
-    status: string
-  }
-  student: {
-    id: string
-    fullName: string
-    studentNumber: string
-    class: string
-    section: string
-  }
-}
-
-interface ClassData {
-  id: string
-  name: string
-  level: string
-  stage: string
-  branch: string | null
-  sections: { id: string; name: string; _count: { students: number } }[]
-}
+import type { AttendanceRecord, ScanResult, ClassData } from '@/types'
+import { ATTENDANCE_STATUS_COLORS } from '@/lib/constants'
 
 // Enhanced status config with chip styling
 const statusConfig: Record<string, { bg: string; text: string; border: string; icon: React.ReactNode; dotColor: string; darkBg: string; darkText: string }> = {
@@ -89,16 +43,7 @@ const statusConfig: Record<string, { bg: string; text: string; border: string; i
 }
 
 // Legacy mapping for backward compatibility
-const statusColors: Record<string, string> = {
-  'حاضر': 'bg-emerald-100 text-emerald-800 border-emerald-300',
-  'متأخر': 'bg-amber-100 text-amber-800 border-amber-300',
-  'غائب': 'bg-red-100 text-red-800 border-red-300',
-  'مستأذن': 'bg-sky-100 text-sky-800 border-sky-300',
-  'خروج مبكر': 'bg-orange-100 text-orange-800 border-orange-300',
-  'حضور ناقص': 'bg-purple-100 text-purple-800 border-purple-300',
-  'مكرر دخول': 'bg-orange-100 text-orange-800 border-orange-300',
-  'مكرر خروج': 'bg-orange-100 text-orange-800 border-orange-300',
-}
+const statusColors = ATTENDANCE_STATUS_COLORS
 
 const statusIcons: Record<string, React.ReactNode> = {
   'حاضر': <CheckCircle className="h-4 w-4" />,
@@ -146,6 +91,14 @@ export default function AttendancePage() {
   const [bulkClassId, setBulkClassId] = useState<string>('all')
   const [bulkStudents, setBulkStudents] = useState<Array<{ id: string; fullName: string; studentNumber: string; schoolId: string; status: string }>>([])
   const [bulkSaving, setBulkSaving] = useState(false)
+
+  // Memoized bulk attendance stats to avoid repeated .filter() on every render
+  const bulkAttendanceStats = useMemo(() => ({
+    present: bulkStudents.filter(s => s.status === 'حاضر').length,
+    late: bulkStudents.filter(s => s.status === 'متأخر').length,
+    absent: bulkStudents.filter(s => s.status === 'غائب').length,
+    excused: bulkStudents.filter(s => s.status === 'مستأذن').length,
+  }), [bulkStudents])
 
   // Live clock - updates every second
   useEffect(() => {
@@ -356,7 +309,7 @@ export default function AttendancePage() {
             <div className="space-y-4">
               {/* Mode Toggle with pulsing live indicator */}
               <Card className="overflow-hidden">
-                <div className="h-1" className={scanMode === 'checkIn' ? 'bg-emerald-500' : 'bg-red-500'} />
+                <div className={`h-1 ${scanMode === 'checkIn' ? 'bg-emerald-500' : 'bg-red-500'}`} />
                 <CardContent className="p-4">
                   <div className="flex gap-2">
                     <Button
@@ -701,7 +654,7 @@ export default function AttendancePage() {
 
           {/* Recent Scans Table */}
           <Card className="overflow-hidden">
-            <div className="h-1" className="bg-primary" />
+            <div className="h-1 bg-primary" />
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg flex items-center gap-2">
@@ -729,15 +682,13 @@ export default function AttendancePage() {
                   ))}
                 </div>
               ) : recentScans.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <Calendar className="h-16 w-16 mb-4 text-muted-foreground/20" />
-                  <h3 className="text-lg font-semibold text-muted-foreground">لا توجد عمليات مسح اليوم</h3>
-                  <p className="text-sm text-muted-foreground mt-1 max-w-sm">ابدأ بمسح بطاقة الطالب أو إدخال رقم QR يدوياً لتسجيل الحضور والانصراف.</p>
-                  <Button variant="outline" className="mt-4 gap-2" onClick={() => { const input = document.getElementById('qrInput') as HTMLInputElement; input?.focus() }}>
-                    <ScanLine className="h-4 w-4" />
-                    مسح الآن
-                  </Button>
-                </div>
+                <EmptyState
+                  icon={Calendar}
+                  title="لا توجد عمليات مسح اليوم"
+                  description="ابدأ بمسح بطاقة الطالب أو إدخال رقم QR يدوياً لتسجيل الحضور والانصراف."
+                  actionLabel="مسح الآن"
+                  onAction={() => { const input = document.getElementById('qrInput') as HTMLInputElement; input?.focus() }}
+                />
               ) : (
                 <ScrollArea className="max-h-72">
                   <Table>
@@ -842,7 +793,7 @@ export default function AttendancePage() {
 
           {/* Filters */}
           <Card className="overflow-hidden">
-            <div className="h-1" className="bg-primary" />
+            <div className="h-1 bg-primary" />
             <CardContent className="p-4">
               <div className="flex flex-wrap gap-4 items-end">
                 <div className="space-y-1 flex-1 min-w-[160px]">
@@ -891,7 +842,7 @@ export default function AttendancePage() {
                   <Filter className="h-3 w-3" />
                   تصفية
                 </Button>
-                <Button size="sm" className="gap-1 text-white" className="bg-primary" onClick={() => window.print()}>
+                <Button size="sm" className="gap-1 text-white bg-primary" onClick={() => window.print()}>
                   <Download className="h-3 w-3" />
                   تصدير
                 </Button>
@@ -901,7 +852,7 @@ export default function AttendancePage() {
 
           {/* Records Table */}
           <Card className="overflow-hidden">
-            <div className="h-1" className="bg-primary" />
+            <div className="h-1 bg-primary" />
             <CardContent className="p-0">
               {loadingRecords ? (
                 <div className="p-6 space-y-4">
@@ -914,11 +865,11 @@ export default function AttendancePage() {
                   ))}
                 </div>
               ) : records.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <Search className="h-16 w-16 mb-4 text-muted-foreground/20" />
-                  <h3 className="text-lg font-semibold text-muted-foreground">لا توجد سجلات حضور للتاريخ المحدد</h3>
-                  <p className="text-sm text-muted-foreground mt-1 max-w-sm">جرّب تغيير التاريخ أو الفلاتر للبحث عن سجلات حضور سابقة. يمكنك أيضاً تسجيل حضور جديد من تبويب مسح QR.</p>
-                </div>
+                <EmptyState
+                  icon={Search}
+                  title="لا توجد سجلات حضور للتاريخ المحدد"
+                  description="جرّب تغيير التاريخ أو الفلاتر للبحث عن سجلات حضور سابقة. يمكنك أيضاً تسجيل حضور جديد من تبويب مسح QR."
+                />
               ) : (
                 <ScrollArea className="max-h-[500px]">
                   <Table>
@@ -977,7 +928,7 @@ export default function AttendancePage() {
         <TabsContent value="bulk" className="space-y-6">
           {/* Header with selectors */}
           <Card className="overflow-hidden">
-            <div className="h-1" className="bg-primary" />
+            <div className="h-1 bg-primary" />
             <CardContent className="p-4">
               <div className="flex flex-wrap gap-4 items-end">
                 <div className="space-y-1 flex-1 min-w-[160px]">
@@ -1047,25 +998,25 @@ export default function AttendancePage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <Card className="border-emerald-200 bg-emerald-50/50">
                 <CardContent className="p-3 text-center">
-                  <p className="text-2xl font-bold text-emerald-700">{bulkStudents.filter(s => s.status === 'حاضر').length}</p>
+                  <p className="text-2xl font-bold text-emerald-700">{bulkAttendanceStats.present}</p>
                   <p className="text-xs text-emerald-600">حاضر</p>
                 </CardContent>
               </Card>
               <Card className="border-amber-200 bg-amber-50/50">
                 <CardContent className="p-3 text-center">
-                  <p className="text-2xl font-bold text-amber-700">{bulkStudents.filter(s => s.status === 'متأخر').length}</p>
+                  <p className="text-2xl font-bold text-amber-700">{bulkAttendanceStats.late}</p>
                   <p className="text-xs text-amber-600">متأخر</p>
                 </CardContent>
               </Card>
               <Card className="border-red-200 bg-red-50/50">
                 <CardContent className="p-3 text-center">
-                  <p className="text-2xl font-bold text-red-700">{bulkStudents.filter(s => s.status === 'غائب').length}</p>
+                  <p className="text-2xl font-bold text-red-700">{bulkAttendanceStats.absent}</p>
                   <p className="text-xs text-red-600">غائب</p>
                 </CardContent>
               </Card>
               <Card className="border-sky-200 bg-sky-50/50">
                 <CardContent className="p-3 text-center">
-                  <p className="text-2xl font-bold text-sky-700">{bulkStudents.filter(s => s.status === 'مستأذن').length}</p>
+                  <p className="text-2xl font-bold text-sky-700">{bulkAttendanceStats.excused}</p>
                   <p className="text-xs text-sky-600">مستأذن</p>
                 </CardContent>
               </Card>
@@ -1074,7 +1025,7 @@ export default function AttendancePage() {
 
           {/* Student List */}
           <Card className="overflow-hidden">
-            <div className="h-1" className="bg-primary" />
+            <div className="h-1 bg-primary" />
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg flex items-center gap-2">
@@ -1088,17 +1039,17 @@ export default function AttendancePage() {
             </CardHeader>
             <CardContent>
               {bulkClassId === 'all' ? (
-                <div className="flex flex-col items-center justify-center py-16 text-center">
-                  <Users className="h-16 w-16 mb-4 text-muted-foreground/20" />
-                  <h3 className="text-lg font-semibold text-muted-foreground">اختر صفاً لتسجيل الحضور</h3>
-                  <p className="text-sm text-muted-foreground mt-1 max-w-sm">اختر الصف والشعبة من القائمة أعلاه لعرض قائمة الطلاب وتسجيل حالة حضورهم.</p>
-                </div>
+                <EmptyState
+                  icon={Users}
+                  title="اختر صفاً لتسجيل الحضور"
+                  description="اختر الصف والشعبة من القائمة أعلاه لعرض قائمة الطلاب وتسجيل حالة حضورهم."
+                />
               ) : bulkStudents.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 text-center">
-                  <User className="h-16 w-16 mb-4 text-muted-foreground/20" />
-                  <h3 className="text-lg font-semibold text-muted-foreground">لا يوجد طلاب في هذا الصف</h3>
-                  <p className="text-sm text-muted-foreground mt-1 max-w-sm">لم يتم تسجيل أي طالب في هذا الصف بعد. تأكد من إضافة الطلاب أولاً من صفحة الطلاب.</p>
-                </div>
+                <EmptyState
+                  icon={User}
+                  title="لا يوجد طلاب في هذا الصف"
+                  description="لم يتم تسجيل أي طالب في هذا الصف بعد. تأكد من إضافة الطلاب أولاً من صفحة الطلاب."
+                />
               ) : (
                 <>
                   <ScrollArea className="max-h-[500px]">
@@ -1167,8 +1118,7 @@ export default function AttendancePage() {
                       جاهز لحفظ {bulkStudents.length} سجل حضور
                     </p>
                     <Button
-                      className="gap-2 text-white"
-                      className="bg-primary"
+                      className="gap-2 text-white bg-primary"
                       disabled={bulkSaving || bulkStudents.length === 0}
                       onClick={async () => {
                         setBulkSaving(true)
@@ -1191,7 +1141,7 @@ export default function AttendancePage() {
                           fetchRecords()
                           fetchRecentScans()
                         } catch {
-                          toast.error('خطأ', { description: 'فشل في حفظ الحضور الجماعي' })
+                          toast.error('خطأ', { description: 'تعذر حفظ الحضور الجماعي. حاول مرة أخرى.' })
                         } finally {
                           setBulkSaving(false)
                         }

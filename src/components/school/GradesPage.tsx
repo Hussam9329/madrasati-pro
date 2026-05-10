@@ -22,79 +22,12 @@ import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Progress } from '@/components/ui/progress'
 import { toast } from 'sonner'
+import { EmptyState } from '@/components/ui/empty-state'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/lib/store'
 
 // Types
-interface ClassData {
-  id: string
-  name: string
-  level: string
-  stage: string
-  branch: string | null
-  sections: { id: string; name: string; _count: { students: number } }[]
-  subjects: { subject: { id: string; name: string; code: string } }[]
-}
-
-interface StudentData {
-  id: string
-  fullName: string
-  studentNumber: string
-  classId: string
-  sectionId: string
-  class: { id: string; name: string }
-  section: { id: string; name: string }
-}
-
-interface SubjectData {
-  id: string
-  name: string
-  code: string
-  type: string
-  maxScore: number
-  passScore: number
-  examTypes: ExamTypeData[]
-}
-
-interface ExamTypeData {
-  id: string
-  name: string
-  maxScore: number
-  subjectId: string
-}
-
-interface GradeData {
-  id: string
-  studentId: string
-  subjectId: string
-  examTypeId: string
-  score: number | null
-  status: string
-  approved: boolean
-  approvedBy: string | null
-  student: {
-    id: string
-    fullName: string
-    studentNumber: string
-    class: { id: string; name: string }
-    section: { id: string; name: string }
-  }
-  subject: { id: string; name: string; code: string; maxScore: number; passScore: number }
-  examType: { id: string; name: string; maxScore: number }
-  modifications: { id: string; oldScore: number; newScore: number; reason: string; modifiedBy: string; createdAt: string }[]
-}
-
-interface GradeEntry {
-  studentId: string
-  fullName: string
-  studentNumber: string
-  sectionName: string
-  score: string
-  existingGradeId?: string
-  existingScore?: number | null
-  approved: boolean
-  status: string
-}
+import type { ClassData, StudentBasic as StudentData, Subject as SubjectData, ExamTypeData, GradeData, GradeEntry } from '@/types'
 
 // Score color helper
 function getScoreColor(score: number, maxScore: number): { bg: string; text: string; border: string; barBg: string } {
@@ -134,7 +67,7 @@ export default function GradesPage() {
   // Derived values
   const selectedClass = classes.find(c => c.id === selectedClassId)
   const selectedSubject = subjects.find(s => s.id === selectedSubjectId)
-  const selectedExamType = selectedSubject?.examTypes.find(e => e.id === selectedExamTypeId)
+  const selectedExamType = ((selectedSubject?.examTypes ?? [])).find(e => e.id === selectedExamTypeId)
 
   // Fetch classes and subjects on mount
   useEffect(() => {
@@ -228,7 +161,7 @@ export default function GradesPage() {
       setIsShowingStudents(true)
       setShowStats(false)
     } catch {
-      toast.error('خطأ', { description: 'حدث خطأ في جلب البيانات' })
+      toast.error('خطأ', { description: 'تعذر تحميل البيانات. حاول مرة أخرى.' })
     } finally {
       setLoadingStudents(false)
     }
@@ -308,7 +241,7 @@ export default function GradesPage() {
       // Refresh data
       handleShowStudents()
     } catch {
-      toast.error('خطأ', { description: 'حدث خطأ في حفظ الدرجات' })
+      toast.error('خطأ', { description: 'تعذر حفظ الدرجات. حاول مرة أخرى.' })
     } finally {
       setSaving(false)
     }
@@ -342,7 +275,7 @@ export default function GradesPage() {
         toast.error('خطأ', { description: data.error })
       }
     } catch {
-      toast.error('خطأ', { description: 'حدث خطأ في اعتماد الدرجات' })
+      toast.error('خطأ', { description: 'تعذر اعتماد الدرجات. حاول مرة أخرى.' })
     } finally {
       setApproving(false)
     }
@@ -497,7 +430,7 @@ export default function GradesPage() {
             {/* Exam Type */}
             <div className="space-y-1 flex-1 min-w-[160px]">
               <Label className="text-xs font-medium">نوع الامتحان *</Label>
-              {selectedSubjectId && selectedSubject && selectedSubject.examTypes.length === 0 ? (
+              {selectedSubjectId && selectedSubject && (selectedSubject?.examTypes ?? []).length === 0 ? (
                 <div className="p-2 rounded-md border border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/10">
                   <p className="text-xs text-amber-700 dark:text-amber-300 font-medium mb-1">لا توجد امتحانات لهذه المادة</p>
                   <Button
@@ -516,7 +449,7 @@ export default function GradesPage() {
                     <SelectValue placeholder="اختر نوع الامتحان" />
                   </SelectTrigger>
                   <SelectContent>
-                    {selectedSubject?.examTypes.map(exam => (
+                    {(selectedSubject?.examTypes ?? []).map(exam => (
                       <SelectItem key={exam.id} value={exam.id}>{exam.name} ({exam.maxScore} درجة)</SelectItem>
                     ))}
                   </SelectContent>
@@ -679,15 +612,13 @@ export default function GradesPage() {
                     ))}
                   </div>
                 ) : gradeEntries.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Search className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
-                    <p className="text-lg font-medium text-muted-foreground mb-1">لا يوجد طلاب في الصف المحدد</p>
-                    <p className="text-sm text-muted-foreground mb-4">تأكد من اتباع الخطوات: 1) اختر الصف 2) اختر المادة 3) اختر نوع الامتحان 4) اضغط عرض الطلاب</p>
-                    <Button variant="outline" size="sm" onClick={() => setIsShowingStudents(false)} className="gap-2">
-                      <Search className="h-4 w-4" />
-                      تعديل الفلتر
-                    </Button>
-                  </div>
+                  <EmptyState
+                    icon={Search}
+                    title="لا يوجد طلاب في الصف المحدد"
+                    description="تأكد من اتباع الخطوات: 1) اختر الصف 2) اختر المادة 3) اختر نوع الامتحان 4) اضغط عرض الطلاب"
+                    actionLabel="تعديل الفلتر"
+                    onAction={() => setIsShowingStudents(false)}
+                  />
                 ) : (
                   <ScrollArea className="max-h-[500px]">
                     <Table>

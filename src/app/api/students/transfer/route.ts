@@ -1,16 +1,16 @@
-import { NextResponse } from 'next/server';
+import { checkDb, successResponse, errorResponse } from '@/services/api-response';
 import { db } from '@/lib/db';
 
 export async function PUT(request: Request) {
+  const dbError = checkDb();
+  if (dbError) return dbError;
+
   try {
     const body = await request.json();
     const { studentId, newClassId, newSectionId, reason } = body;
 
     if (!studentId || !newClassId || !newSectionId) {
-      return NextResponse.json(
-        { error: 'معرف الطالب والصف الجديد والشعبة الجديدة مطلوبون' },
-        { status: 400 }
-      );
+      return errorResponse('معرف الطالب والصف الجديد والشعبة الجديدة مطلوبون', 400);
     }
 
     // Find the student
@@ -23,10 +23,7 @@ export async function PUT(request: Request) {
     });
 
     if (!student) {
-      return NextResponse.json(
-        { error: 'الطالب غير موجود' },
-        { status: 404 }
-      );
+      return errorResponse('الطالب غير موجود', 404);
     }
 
     // Verify new class and section exist
@@ -35,10 +32,7 @@ export async function PUT(request: Request) {
     });
 
     if (!newClass) {
-      return NextResponse.json(
-        { error: 'الصف الجديد غير موجود' },
-        { status: 404 }
-      );
+      return errorResponse('الصف الجديد غير موجود', 404);
     }
 
     const newSection = await db.section.findUnique({
@@ -46,10 +40,7 @@ export async function PUT(request: Request) {
     });
 
     if (!newSection) {
-      return NextResponse.json(
-        { error: 'الشعبة الجديدة غير موجودة' },
-        { status: 404 }
-      );
+      return errorResponse('الشعبة الجديدة غير موجودة', 404);
     }
 
     // Update student's class and section
@@ -65,8 +56,7 @@ export async function PUT(request: Request) {
       },
     });
 
-    return NextResponse.json({
-      message: 'تم نقل الطالب بنجاح',
+    return successResponse({
       student: updatedStudent,
       transfer: {
         from: {
@@ -80,12 +70,9 @@ export async function PUT(request: Request) {
         reason: reason || '',
         date: new Date().toISOString(),
       },
-    });
+    }, 'تم نقل الطالب بنجاح');
   } catch (error) {
     console.error('Transfer student error:', error);
-    return NextResponse.json(
-      { error: 'حدث خطأ في نقل الطالب' },
-      { status: 500 }
-    );
+    return errorResponse('حدث خطأ في نقل الطالب', 500);
   }
 }

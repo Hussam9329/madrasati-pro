@@ -1,7 +1,10 @@
-import { NextResponse } from 'next/server';
+import { checkDb, successResponse, errorResponse } from '@/services/api-response';
 import { db } from '@/lib/db';
 
 export async function GET(request: Request) {
+  const dbError = checkDb();
+  if (dbError) return dbError;
+
   try {
     const { searchParams } = new URL(request.url);
     const date = searchParams.get('date');
@@ -40,7 +43,7 @@ export async function GET(request: Request) {
       db.attendanceRecord.count({ where }),
     ]);
 
-    return NextResponse.json({
+    return successResponse({
       records,
       total,
       page,
@@ -49,14 +52,14 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     console.error('Get attendance error:', error);
-    return NextResponse.json(
-      { error: 'حدث خطأ في جلب سجلات الحضور' },
-      { status: 500 }
-    );
+    return errorResponse('حدث خطأ في جلب سجلات الحضور', 500);
   }
 }
 
 export async function POST(request: Request) {
+  const dbError = checkDb();
+  if (dbError) return dbError;
+
   try {
     const body = await request.json();
     const {
@@ -73,10 +76,7 @@ export async function POST(request: Request) {
     } = body;
 
     if (!studentId || !schoolId || !date) {
-      return NextResponse.json(
-        { error: 'معرف الطالب والمدرسة والتاريخ مطلوبون' },
-        { status: 400 }
-      );
+      return errorResponse('معرف الطالب والمدرسة والتاريخ مطلوبون', 400);
     }
 
     // Check if record already exists for this student on this date
@@ -86,33 +86,33 @@ export async function POST(request: Request) {
 
     // Prevent duplicate check-in
     if (existingRecord && existingRecord.checkIn && checkIn) {
-      return NextResponse.json(
-        {
-          error: 'تم تسجيل حضور هذا الطالب مسبقاً اليوم',
+      return errorResponse(
+        'تم تسجيل حضور هذا الطالب مسبقاً اليوم',
+        409,
+        JSON.stringify({
           action: 'duplicateCheckIn',
           existingRecord: {
             id: existingRecord.id,
             checkIn: existingRecord.checkIn,
             status: existingRecord.status,
           },
-        },
-        { status: 409 }
+        })
       );
     }
 
     // Prevent duplicate check-out
     if (existingRecord && existingRecord.checkOut && checkOut) {
-      return NextResponse.json(
-        {
-          error: 'تم تسجيل خروج هذا الطالب مسبقاً اليوم',
+      return errorResponse(
+        'تم تسجيل خروج هذا الطالب مسبقاً اليوم',
+        409,
+        JSON.stringify({
           action: 'duplicateCheckOut',
           existingRecord: {
             id: existingRecord.id,
             checkOut: existingRecord.checkOut,
             status: existingRecord.status,
           },
-        },
-        { status: 409 }
+        })
       );
     }
 
@@ -141,7 +141,7 @@ export async function POST(request: Request) {
         },
       });
 
-      return NextResponse.json(record);
+      return successResponse(record);
     }
 
     // Create new record
@@ -169,12 +169,9 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json(record, { status: 201 });
+    return successResponse(record, undefined, 201);
   } catch (error) {
     console.error('Create attendance error:', error);
-    return NextResponse.json(
-      { error: 'حدث خطأ في تسجيل الحضور' },
-      { status: 500 }
-    );
+    return errorResponse('حدث خطأ في تسجيل الحضور', 500);
   }
 }

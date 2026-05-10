@@ -25,28 +25,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
+import { EmptyState } from '@/components/ui/empty-state'
 
 // Types
-interface SubjectData {
-  id: string
-  name: string
-  code: string
-  type: string
-  maxScore: number
-  passScore: number
-  examTypes: ExamTypeData[]
-  teachers: { id: string; teacherId: string; teacher: { id: string; fullName: string } }[]
-  classes: { id: string; classId: string; class: { id: string; name: string } }[]
-}
-
-interface ExamTypeData {
-  id: string
-  name: string
-  maxScore: number
-  subjectId: string
-  subject?: { id: string; name: string; code: string }
-  _count?: { grades: number }
-}
+import type { Subject as SubjectData, ExamTypeData } from '@/types'
 
 // Common exam type templates for quick add
 const EXAM_TEMPLATES = [
@@ -90,7 +72,7 @@ export default function ExamsPage() {
         setSelectedSubjectId(data[0].id)
       }
     } catch {
-      toast.error('خطأ', { description: 'فشل في جلب بيانات المواد' })
+      toast.error('خطأ', { description: 'تعذر تحميل بيانات المواد. حاول مرة أخرى.' })
     } finally {
       setLoading(false)
     }
@@ -110,11 +92,11 @@ export default function ExamsPage() {
   }
 
   // Open edit form
-  const openEditForm = (exam: ExamTypeData) => {
-    setEditingExam(exam)
+  const openEditForm = (exam: ExamTypeData | { id: string; name: string; maxScore: number }) => {
+    setEditingExam({ ...exam, subjectId: (exam as ExamTypeData).subjectId || formSubjectId } as ExamTypeData)
     setFormName(exam.name)
     setFormMaxScore(String(exam.maxScore))
-    setFormSubjectId(exam.subjectId)
+    setFormSubjectId((exam as ExamTypeData).subjectId || formSubjectId)
     setFormOpen(true)
   }
 
@@ -183,7 +165,7 @@ export default function ExamsPage() {
       setFormOpen(false)
       fetchSubjects()
     } catch (err) {
-      toast.error('خطأ', { description: err instanceof Error ? err.message : 'فشل في حفظ البيانات' })
+      toast.error('خطأ', { description: err instanceof Error ? err.message : 'تعذر حفظ البيانات. حاول مرة أخرى.' })
     } finally {
       setSaving(false)
     }
@@ -201,7 +183,7 @@ export default function ExamsPage() {
       toast.success('تم الحذف', { description: 'تم حذف نوع الامتحان بنجاح' })
       fetchSubjects()
     } catch (err) {
-      toast.error('خطأ', { description: err instanceof Error ? err.message : 'فشل في حذف نوع الامتحان' })
+      toast.error('خطأ', { description: err instanceof Error ? err.message : 'تعذر حذف نوع الامتحان. حاول مرة أخرى.' })
     } finally {
       setDeleteId(null)
     }
@@ -307,7 +289,7 @@ export default function ExamsPage() {
                   <SelectContent>
                     {subjects.map(sub => (
                       <SelectItem key={sub.id} value={sub.id}>
-                        {sub.name} ({sub.code}) — {sub.examTypes.length} امتحان
+                        {sub.name} ({sub.code}) — {sub?.examTypes?.length ?? 0} امتحان
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -381,17 +363,13 @@ export default function ExamsPage() {
             {selectedSubject && (
               <>
                 {examTypes.length === 0 ? (
-                  <div className="text-center py-8">
-                    <ClipboardList className="h-12 w-12 mx-auto text-muted-foreground/30 mb-3" />
-                    <p className="text-sm font-medium text-muted-foreground mb-1">لا توجد أنواع امتحانات لهذه المادة</p>
-                    <p className="text-xs text-muted-foreground mb-3">
-                      أضف أنواع الامتحانات (مثل: امتحان نصفي، نهائي، مذاكرة...) حتى يمكنك إدخال الدرجات لاحقاً
-                    </p>
-                    <Button variant="outline" size="sm" onClick={openAddForm} className="gap-1.5">
-                      <Plus className="h-3.5 w-3.5" />
-                      إضافة امتحان جديد
-                    </Button>
-                  </div>
+                  <EmptyState
+                    icon={ClipboardList}
+                    title="لا توجد أنواع امتحانات لهذه المادة"
+                    description="أضف أنواع الامتحانات (مثل: امتحان نصفي، نهائي، مذاكرة...) حتى يمكنك إدخال الدرجات لاحقاً"
+                    actionLabel="إضافة امتحان جديد"
+                    onAction={openAddForm}
+                  />
                 ) : (
                   <div className="space-y-2">
                     {examTypes.map((exam, idx) => (
@@ -499,7 +477,7 @@ export default function ExamsPage() {
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {subjects.map(subject => {
-                const subjectTotal = subject.examTypes.reduce((sum, et) => sum + et.maxScore, 0)
+                const subjectTotal = subject?.examTypes?.reduce((sum, et) => sum + et.maxScore, 0) ?? 0
                 const isComplete = subjectTotal === subject.maxScore
                 const isPartial = subjectTotal > 0 && subjectTotal < subject.maxScore
                 const isOver = subjectTotal > subject.maxScore
@@ -533,7 +511,7 @@ export default function ExamsPage() {
                       </Badge>
                     </div>
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>{subject.examTypes.length} امتحان</span>
+                      <span>{subject?.examTypes?.length} امتحان</span>
                       <span>{subjectTotal} / {subject.maxScore}</span>
                     </div>
                     {/* Mini progress bar */}
@@ -543,7 +521,7 @@ export default function ExamsPage() {
                           "h-full rounded-full transition-all",
                           isOver ? "bg-red-500" : isComplete ? "bg-emerald-500" : "bg-primary"
                         )}
-                        style={{ width: `${Math.min((subjectTotal / subject.maxScore) * 100, 100)}%` }}
+                        style={{ width: `${Math.min(((subjectTotal ?? 0) / subject.maxScore) * 100, 100)}%` }}
                       />
                     </div>
                   </div>

@@ -1,8 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
+import { NextRequest } from 'next/server';
+import { checkDb, successResponse, errorResponse } from '@/services/api-response';
+import { db } from '@/lib/db';
 
 // GET /api/exam-types — List all exam types (optionally filter by subjectId)
 export async function GET(request: NextRequest) {
+  const dbError = checkDb();
+  if (dbError) return dbError;
+
   try {
     const { searchParams } = new URL(request.url)
     const subjectId = searchParams.get('subjectId')
@@ -22,28 +26,31 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'asc' }
     })
 
-    return NextResponse.json(examTypes)
+    return successResponse(examTypes)
   } catch (error) {
     console.error('Error fetching exam types:', error)
-    return NextResponse.json({ error: 'فشل في جلب أنواع الامتحانات' }, { status: 500 })
+    return errorResponse('فشل في جلب أنواع الامتحانات', 500)
   }
 }
 
 // POST /api/exam-types — Create a new exam type
 export async function POST(request: NextRequest) {
+  const dbError = checkDb();
+  if (dbError) return dbError;
+
   try {
     const body = await request.json()
     const { name, maxScore, subjectId } = body
 
     // Validation
     if (!name || !name.trim()) {
-      return NextResponse.json({ error: 'اسم نوع الامتحان مطلوب' }, { status: 400 })
+      return errorResponse('اسم نوع الامتحان مطلوب', 400)
     }
     if (!maxScore || maxScore <= 0) {
-      return NextResponse.json({ error: 'الدرجة الكاملة يجب أن تكون أكبر من صفر' }, { status: 400 })
+      return errorResponse('الدرجة الكاملة يجب أن تكون أكبر من صفر', 400)
     }
     if (!subjectId) {
-      return NextResponse.json({ error: 'يرجى اختيار المادة' }, { status: 400 })
+      return errorResponse('يرجى اختيار المادة', 400)
     }
 
     // Check subject exists
@@ -53,14 +60,14 @@ export async function POST(request: NextRequest) {
     })
 
     if (!subject) {
-      return NextResponse.json({ error: 'المادة غير موجودة' }, { status: 404 })
+      return errorResponse('المادة غير موجودة', 404)
     }
 
     // Validate maxScore doesn't exceed subject maxScore
     if (maxScore > subject.maxScore) {
-      return NextResponse.json(
-        { error: `الدرجة الكاملة للامتحان (${maxScore}) لا يمكن أن تتجاوز الدرجة الكاملة للمادة (${subject.maxScore})` },
-        { status: 400 }
+      return errorResponse(
+        `الدرجة الكاملة للامتحان (${maxScore}) لا يمكن أن تتجاوز الدرجة الكاملة للمادة (${subject.maxScore})`,
+        400
       )
     }
 
@@ -77,9 +84,9 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    return NextResponse.json(examType, { status: 201 })
+    return successResponse(examType, undefined, 201)
   } catch (error) {
     console.error('Error creating exam type:', error)
-    return NextResponse.json({ error: 'فشل في إنشاء نوع الامتحان' }, { status: 500 })
+    return errorResponse('فشل في إنشاء نوع الامتحان', 500)
   }
 }

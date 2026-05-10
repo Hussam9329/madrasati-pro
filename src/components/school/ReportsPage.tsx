@@ -27,50 +27,12 @@ import {
   CartesianGrid, ResponsiveContainer, ScatterChart, Scatter, ZAxis
 } from 'recharts'
 import { toast } from 'sonner'
+import { EmptyState } from '@/components/ui/empty-state'
 import { exportToCSV } from '@/lib/export-utils'
 
 // Types
-interface ClassData {
-  id: string
-  name: string
-  level: string
-  stage: string
-  branch: string | null
-  sections: { id: string; name: string; _count: { students: number } }[]
-}
-
-interface AttendanceRecord {
-  id: string
-  studentId: string
-  date: string
-  checkIn: string | null
-  checkOut: string | null
-  status: string
-  lateMinutes: number | null
-  student: {
-    id: string
-    fullName: string
-    studentNumber: string
-    class: { id: string; name: string }
-    section: { id: string; name: string }
-  }
-}
-
-interface GradeRecord {
-  id: string
-  score: number | null
-  status: string
-  approved: boolean
-  student: {
-    id: string
-    fullName: string
-    studentNumber: string
-    class: { id: string; name: string }
-    section: { id: string; name: string }
-  }
-  subject: { id: string; name: string; passScore: number }
-  examType: { id: string; name: string; maxScore: number }
-}
+import type { ClassData, AttendanceRecord, GradeRecord } from '@/types'
+import { CHART_COLORS, ATTENDANCE_STATUS_COLORS } from '@/lib/constants'
 
 // Report types - added grade-distribution
 const reportTypes = [
@@ -85,15 +47,7 @@ const reportTypes = [
   { id: 'failed-students', title: 'تقرير الطلاب الراسبين', icon: AlertTriangle, color: 'bg-orange-100 text-orange-700 border-orange-200', desc: 'الطلاب الذين لم يجتازوا' },
 ]
 
-const CHART_COLORS = ['#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6', '#ec4899']
-
-const statusColors: Record<string, string> = {
-  'حاضر': 'bg-emerald-100 text-emerald-800 border-emerald-300',
-  'متأخر': 'bg-amber-100 text-amber-800 border-amber-300',
-  'غائب': 'bg-red-100 text-red-800 border-red-300',
-  'مستأذن': 'bg-sky-100 text-sky-800 border-sky-300',
-  'خروج مبكر': 'bg-orange-100 text-orange-800 border-orange-300',
-}
+const statusColors = ATTENDANCE_STATUS_COLORS
 
 export default function ReportsPage() {
   const [selectedReport, setSelectedReport] = useState<string | null>(null)
@@ -170,7 +124,7 @@ export default function ReportsPage() {
         }
       }
     } catch {
-      toast.error('خطأ', { description: 'حدث خطأ في جلب بيانات التقرير' })
+      toast.error('خطأ', { description: 'تعذر تحميل بيانات التقرير. حاول مرة أخرى.' })
     } finally {
       setLoading(false)
     }
@@ -441,11 +395,11 @@ export default function ReportsPage() {
             <div className="h-1.5 bg-primary" />
             <CardContent className="p-0">
               {attendanceRecords.length === 0 ? (
-                <div className="text-center py-12">
-                  <Calendar className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
-                  <p className="text-lg font-medium text-muted-foreground mb-1">لا توجد بيانات حضور لهذا التاريخ</p>
-                  <p className="text-sm text-muted-foreground">جرّب تغيير التاريخ أو الصف المحدد للحصول على نتائج</p>
-                </div>
+                <EmptyState
+                  icon={Calendar}
+                  title="لا توجد بيانات حضور لهذا التاريخ"
+                  description="جرّب تغيير التاريخ أو الصف المحدد للحصول على نتائج"
+                />
               ) : (
                 <ScrollArea className="max-h-[400px]">
                   <Table>
@@ -501,11 +455,11 @@ export default function ReportsPage() {
             <div className="h-1.5 bg-primary" />
             <CardContent className="p-0">
               {lateRecords.length === 0 ? (
-                <div className="text-center py-12">
-                  <CheckCircle className="h-12 w-12 mx-auto text-emerald-500 mb-3" />
-                  <p className="text-lg font-medium text-emerald-700 dark:text-emerald-400 mb-1">لا توجد حالات تأخير</p>
-                  <p className="text-sm text-muted-foreground">جميع الطلاب حضروا في الوقت المحدد</p>
-                </div>
+                <EmptyState
+                  icon={CheckCircle}
+                  title="لا توجد حالات تأخير"
+                  description="جميع الطلاب حضروا في الوقت المحدد"
+                />
               ) : (
                 <ScrollArea className="max-h-[400px]">
                   <Table>
@@ -559,11 +513,11 @@ export default function ReportsPage() {
             <div className="h-1.5 bg-primary" />
             <CardContent className="p-0">
               {absentRecords.length === 0 ? (
-                <div className="text-center py-12">
-                  <CheckCircle className="h-12 w-12 mx-auto text-emerald-500 mb-3" />
-                  <p className="text-lg font-medium text-emerald-700 dark:text-emerald-400 mb-1">لا توجد حالات غياب</p>
-                  <p className="text-sm text-muted-foreground">جميع الطلاب حاضرون في السجل المحدد</p>
-                </div>
+                <EmptyState
+                  icon={CheckCircle}
+                  title="لا توجد حالات غياب"
+                  description="جميع الطلاب حاضرون في السجل المحدد"
+                />
               ) : (
                 <ScrollArea className="max-h-[400px]">
                   <Table>
@@ -705,11 +659,11 @@ export default function ReportsPage() {
           )}
 
           {scatterData.length === 0 && (
-            <div className="text-center py-12">
-              <BarChart3 className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
-              <p className="text-lg font-medium text-muted-foreground mb-1">لا توجد بيانات درجات متاحة</p>
-              <p className="text-sm text-muted-foreground">أدخل درجات الطلاب أولاً أو غيّر الفلتر لعرض النتائج</p>
-            </div>
+            <EmptyState
+              icon={BarChart3}
+              title="لا توجد بيانات درجات متاحة"
+              description="أدخل درجات الطلاب أولاً أو غيّر الفلتر لعرض النتائج"
+            />
           )}
         </div>
       )
@@ -719,11 +673,11 @@ export default function ReportsPage() {
     if (['grades', 'pass-rate', 'top-students', 'failed-students'].includes(selectedReport)) {
       if (!gradeStats) {
         return (
-          <div className="text-center py-12">
-            <BarChart3 className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
-            <p className="text-lg font-medium text-muted-foreground mb-1">لا توجد بيانات درجات متاحة</p>
-            <p className="text-sm text-muted-foreground">أدخل درجات الطلاب أولاً أو غيّر الفلتر لعرض النتائج</p>
-          </div>
+          <EmptyState
+            icon={BarChart3}
+            title="لا توجد بيانات درجات متاحة"
+            description="أدخل درجات الطلاب أولاً أو غيّر الفلتر لعرض النتائج"
+          />
         )
       }
 
@@ -822,10 +776,11 @@ export default function ReportsPage() {
               </CardHeader>
               <CardContent>
                 {sortedGrades.length === 0 ? (
-                  <div className="text-center py-8">
-                    <p className="text-lg font-medium text-muted-foreground mb-1">لا توجد بيانات</p>
-                    <p className="text-sm text-muted-foreground">لم يتم تسجيل أي درجات بعد</p>
-                  </div>
+                  <EmptyState
+                    icon={Award}
+                    title="لا توجد بيانات"
+                    description="لم يتم تسجيل أي درجات بعد"
+                  />
                 ) : (
                   <ScrollArea className="max-h-[400px]">
                     <Table>
@@ -896,11 +851,11 @@ export default function ReportsPage() {
               <div className="h-1.5 bg-primary" />
               <CardContent className="p-0">
                 {failedGrades.length === 0 ? (
-                  <div className="text-center py-12">
-                    <CheckCircle className="h-12 w-12 mx-auto text-emerald-500 mb-3" />
-                    <p className="text-lg font-medium text-emerald-700 dark:text-emerald-400 mb-1">لا يوجد طلاب راسبون</p>
-                    <p className="text-sm text-muted-foreground">جميع الطلاب تجاوزوا درجة النجاح</p>
-                  </div>
+                  <EmptyState
+                    icon={CheckCircle}
+                    title="لا يوجد طلاب راسبون"
+                    description="جميع الطلاب تجاوزوا درجة النجاح"
+                  />
                 ) : (
                   <ScrollArea className="max-h-[400px]">
                     <Table>

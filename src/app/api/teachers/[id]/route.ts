@@ -1,10 +1,13 @@
-import { NextResponse } from 'next/server';
+import { checkDb, successResponse, errorResponse } from '@/services/api-response';
 import { db } from '@/lib/db';
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const dbError = checkDb();
+  if (dbError) return dbError;
+
   try {
     const { id } = await params;
 
@@ -24,19 +27,13 @@ export async function GET(
     });
 
     if (!teacher) {
-      return NextResponse.json(
-        { error: 'المعلم غير موجود' },
-        { status: 404 }
-      );
+      return errorResponse('المعلم غير موجود', 404);
     }
 
-    return NextResponse.json(teacher);
+    return successResponse(teacher);
   } catch (error) {
     console.error('Get teacher error:', error);
-    return NextResponse.json(
-      { error: 'حدث خطأ في جلب بيانات المعلم' },
-      { status: 500 }
-    );
+    return errorResponse('حدث خطأ في جلب بيانات المعلم', 500);
   }
 }
 
@@ -44,16 +41,16 @@ export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const dbError = checkDb();
+  if (dbError) return dbError;
+
   try {
     const { id } = await params;
     const body = await request.json();
 
     const existingTeacher = await db.teacher.findUnique({ where: { id } });
     if (!existingTeacher) {
-      return NextResponse.json(
-        { error: 'المعلم غير موجود' },
-        { status: 404 }
-      );
+      return errorResponse('المعلم غير موجود', 404);
     }
 
     const { subjectIds, classIds, ...data } = body;
@@ -111,13 +108,10 @@ export async function PUT(
       },
     });
 
-    return NextResponse.json(updatedTeacher);
+    return successResponse(updatedTeacher);
   } catch (error) {
     console.error('Update teacher error:', error);
-    return NextResponse.json(
-      { error: 'حدث خطأ في تحديث بيانات المعلم' },
-      { status: 500 }
-    );
+    return errorResponse('حدث خطأ في تحديث بيانات المعلم', 500);
   }
 }
 
@@ -125,15 +119,15 @@ export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const dbError = checkDb();
+  if (dbError) return dbError;
+
   try {
     const { id } = await params;
 
     const existingTeacher = await db.teacher.findUnique({ where: { id } });
     if (!existingTeacher) {
-      return NextResponse.json(
-        { error: 'المعلم غير موجود' },
-        { status: 404 }
-      );
+      return errorResponse('المعلم غير موجود', 404);
     }
 
     // Delete related records
@@ -143,12 +137,9 @@ export async function DELETE(
 
     await db.teacher.delete({ where: { id } });
 
-    return NextResponse.json({ message: 'تم حذف المعلم بنجاح' });
+    return successResponse(null, 'تم حذف المعلم بنجاح');
   } catch (error) {
     console.error('Delete teacher error:', error);
-    return NextResponse.json(
-      { error: 'حدث خطأ في حذف المعلم' },
-      { status: 500 }
-    );
+    return errorResponse('حدث خطأ في حذف المعلم', 500);
   }
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   GraduationCap,
@@ -50,6 +50,9 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { CHART_COLORS, containerVariants, itemVariants } from '@/lib/constants';
+import { ErrorState } from '@/components/ui/error-state';
+import { getUserMessage } from '@/utils/errors';
 
 interface DashboardData {
   totals: {
@@ -142,22 +145,7 @@ const statusRowBorder: Record<string, string> = {
   'إجازة رسمية': 'border-r-cyan-500',
 };
 
-const PIE_COLORS = ['#10b981', '#ef4444', '#f59e0b', '#f97316', '#06b6d4', '#8b5cf6', '#ec4899', '#6b7280'];
-
 // Data now comes from the API (weeklyAttendanceTrend and classPerformance)
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.08 },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: 'easeOut' } },
-};
 
 // Animated counter hook
 function useAnimatedCounter(target: number, duration: number = 1500, enabled: boolean = true) {
@@ -269,8 +257,8 @@ export default function DashboardPage() {
       if (refreshing) {
         toast.success('تم التحديث', { description: 'تم تحديث بيانات لوحة التحكم بنجاح' });
       }
-    } catch {
-      setError('تعذر جلب بيانات لوحة التحكم');
+    } catch (err) {
+      setError(getUserMessage(err, 'تعذر جلب بيانات لوحة التحكم'));
       toast.error('خطأ في الاتصال', { description: 'تعذر جلب بيانات لوحة التحكم، تحقق من الاتصال بالخادم' });
     } finally {
       setLoading(false);
@@ -292,7 +280,7 @@ export default function DashboardPage() {
   const attendance = data?.todayAttendance;
   const attendanceTotal = attendance?.total || 0;
 
-  const pieData = attendance
+  const pieData = useMemo(() => attendance
     ? [
         { name: 'حاضر', value: attendance.present },
         { name: 'غائب', value: attendance.absent },
@@ -303,10 +291,10 @@ export default function DashboardPage() {
         { name: 'إجازة رسمية', value: attendance.officialLeave },
         { name: 'حضور ناقص', value: attendance.partialAttendance },
       ].filter((d) => d.value > 0)
-    : [];
+    : [], [attendance]);
 
-  // Stat cards config
-  const statCards = data
+  // Stat cards config - memoized to avoid re-creating on every render
+  const statCards = useMemo(() => data
     ? [
         {
           title: 'إجمالي الطلاب',
@@ -357,17 +345,15 @@ export default function DashboardPage() {
           iconBg: 'bg-orange-100',
         },
       ]
-    : [];
+    : [], [data, attendance]);
 
   if (error && !data) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4">
-        <p className="text-red-500 text-lg">{error}</p>
-        <Button onClick={handleRefresh} variant="outline" className="gap-2">
-          <RefreshCw className="w-4 h-4" />
-          إعادة المحاولة
-        </Button>
-      </div>
+      <ErrorState
+        title="تعذر تحميل لوحة التحكم"
+        description={error}
+        onRetry={handleRefresh}
+      />
     );
   }
 
@@ -579,7 +565,7 @@ export default function DashboardPage() {
                           stroke="none"
                         >
                           {pieData.map((_, index) => (
-                            <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                            <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                           ))}
                         </Pie>
                         <RechartsTooltip

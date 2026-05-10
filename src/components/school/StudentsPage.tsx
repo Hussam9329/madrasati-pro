@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import QRCode from 'qrcode'
+import NextImage from 'next/image'
 import {
   Search, Plus, Download, Edit, Trash2, Printer,
   ChevronLeft, ChevronRight, User, X, Users, ArrowRightLeft, CheckCircle2,
@@ -55,80 +56,16 @@ import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
 import { exportToCSV } from '@/lib/export-utils'
 import { useAppStore } from '@/lib/store'
+import { EmptyState } from '@/components/ui/empty-state'
+import { ErrorState } from '@/components/ui/error-state'
+import { getUserMessage } from '@/utils/errors'
 
 // Types
-interface ClassItem {
-  id: string
-  name: string
-  level: string
-  stage: string
-  branch: string | null
-  schoolId: string
-  sections: SectionItem[]
-}
+import type { Student, ClassItem, SectionItem } from '@/types'
+import { STUDENT_STATUS_COLORS, ATTENDANCE_STATUS_COLORS } from '@/lib/constants'
 
-interface SectionItem {
-  id: string
-  name: string
-  classId: string
-}
-
-interface Student {
-  id: string
-  studentNumber: string
-  fullName: string
-  gender: string
-  dateOfBirth: string | null
-  nationalId: string | null
-  phone: string | null
-  address: string | null
-  photo: string | null
-  status: string
-  qrCode: string | null
-  cardStatus: string
-  classId: string
-  sectionId: string
-  schoolId: string
-  guardianName: string | null
-  guardianPhone: string | null
-  guardianRelation: string | null
-  class: { id: string; name: string }
-  section: { id: string; name: string }
-  grades?: {
-    id: string
-    score: number | null
-    status: string
-    subject: { id: string; name: string }
-    examType: { id: string; name: string; maxScore: number }
-  }[]
-  attendance?: {
-    id: string
-    date: string
-    checkIn: string | null
-    checkOut: string | null
-    status: string
-    lateMinutes: number | null
-  }[]
-}
-
-const STATUS_COLORS: Record<string, string> = {
-  'مستمر': 'bg-emerald-100 text-emerald-700 border-emerald-200',
-  'منقول': 'bg-amber-100 text-amber-700 border-amber-200',
-  'تارك': 'bg-red-100 text-red-700 border-red-200',
-  'مفصول': 'bg-rose-100 text-rose-700 border-rose-200',
-  'متخرج': 'bg-teal-100 text-teal-700 border-teal-200',
-}
-
-const ATTENDANCE_COLORS: Record<string, string> = {
-  'حاضر': 'bg-emerald-100 text-emerald-700',
-  'متأخر': 'bg-amber-100 text-amber-700',
-  'غائب': 'bg-red-100 text-red-700',
-  'مستأذن': 'bg-blue-100 text-blue-700',
-  'خروج مبكر': 'bg-orange-100 text-orange-700',
-  'حضور ناقص': 'bg-yellow-100 text-yellow-700',
-  'إجازة مرضية': 'bg-purple-100 text-purple-700',
-  'إجازة رسمية': 'bg-sky-100 text-sky-700',
-}
+const STATUS_COLORS = STUDENT_STATUS_COLORS
+const ATTENDANCE_COLORS = ATTENDANCE_STATUS_COLORS
 
 export default function StudentsPage() {
   const { setSelectedStudentId, setActivePage } = useAppStore()
@@ -192,7 +129,7 @@ export default function StudentsPage() {
       setTotal(data.total || 0)
       setTotalPages(data.totalPages || 1)
     } catch {
-      toast.error('خطأ', { description: 'فشل في جلب بيانات الطلاب' })
+      toast.error('خطأ', { description: 'تعذر تحميل بيانات الطلاب. حاول مرة أخرى.' })
     } finally {
       setLoading(false)
     }
@@ -227,7 +164,7 @@ export default function StudentsPage() {
         setQrCodeUrl(url)
       }
     } catch {
-      toast.error('خطأ', { description: 'فشل في جلب بيانات الطالب' })
+      toast.error('خطأ', { description: 'تعذر تحميل بيانات الطالب. حاول مرة أخرى.' })
     }
   }
 
@@ -496,15 +433,13 @@ export default function StudentsPage() {
               ))}
             </div>
           ) : students.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <Users className="h-16 w-16 mb-4 text-muted-foreground/20" />
-              <h3 className="text-lg font-semibold text-muted-foreground">لم يتم تسجيل أي طالب بعد</h3>
-              <p className="text-sm text-muted-foreground mt-1 max-w-sm">ابدأ بإضافة الطلاب لإدارة بياناتهم وحضورهم ودرجاتهم. يمكنك أيضاً تصدير واستيراد البيانات.</p>
-              <Button variant="outline" className="mt-4 gap-2" onClick={openAddForm}>
-                <Plus className="h-4 w-4" />
-                إضافة أول طالب
-              </Button>
-            </div>
+            <EmptyState
+              icon={Users}
+              title="لم يتم تسجيل أي طالب بعد"
+              description="ابدأ بإضافة الطلاب لإدارة بياناتهم وحضورهم ودرجاتهم."
+              actionLabel="إضافة أول طالب"
+              onAction={openAddForm}
+            />
           ) : (
             <>
               <div className="overflow-x-auto">
@@ -959,7 +894,7 @@ export default function StudentsPage() {
                     </Table>
                   </div>
                 ) : (
-                  <EmptyState message="لا توجد سجلات حضور بعد" />
+                  <EmptyState title="لا توجد سجلات حضور بعد" />
                 )}
               </TabsContent>
 
@@ -1000,7 +935,7 @@ export default function StudentsPage() {
                     </Table>
                   </div>
                 ) : (
-                  <EmptyState message="لا توجد درجات مسجلة بعد" />
+                  <EmptyState title="لا توجد درجات مسجلة بعد" />
                 )}
               </TabsContent>
 
@@ -1039,9 +974,9 @@ export default function StudentsPage() {
                         <div className="flex items-start gap-4">
                           {/* Photo placeholder */}
                           <div className="shrink-0">
-                            <div className="h-20 w-20 rounded-xl bg-gradient-to-br from-teal-50 to-emerald-50 dark:from-teal-900/30 dark:to-emerald-900/30 border-2 border-teal-200 dark:border-teal-700 flex items-center justify-center">
+                            <div className="h-20 w-20 relative rounded-xl bg-gradient-to-br from-teal-50 to-emerald-50 dark:from-teal-900/30 dark:to-emerald-900/30 border-2 border-teal-200 dark:border-teal-700 flex items-center justify-center overflow-hidden">
                               {selectedStudent.photo ? (
-                                <img src={selectedStudent.photo} alt={selectedStudent.fullName} className="h-full w-full object-cover rounded-lg" />
+                                <NextImage src={selectedStudent.photo} alt={selectedStudent.fullName} fill className="object-cover rounded-lg" sizes="80px" />
                               ) : (
                                 <Camera className="h-6 w-6 text-teal-400" />
                               )}
@@ -1085,7 +1020,7 @@ export default function StudentsPage() {
                             </div>
                           </div>
                           {qrCodeUrl && (
-                            <img src={qrCodeUrl} alt="QR Code" className="w-20 h-20 rounded-lg" />
+                            <NextImage src={qrCodeUrl} alt="QR Code" width={80} height={80} className="rounded-lg" unoptimized />
                           )}
                         </div>
                       </div>
@@ -1318,14 +1253,6 @@ function InfoField({ label, value, icon }: { label: string; value: string; icon?
         {icon === 'female' && <User className="h-4 w-4 text-pink-500" />}
         <p className={`text-sm font-medium ${icon === 'male' ? 'text-blue-600' : icon === 'female' ? 'text-pink-600' : ''}`}>{value}</p>
       </div>
-    </div>
-  )
-}
-
-function EmptyState({ message }: { message: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-      <p className="text-sm">{message}</p>
     </div>
   )
 }

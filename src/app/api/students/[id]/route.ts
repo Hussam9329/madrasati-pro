@@ -1,10 +1,13 @@
-import { NextResponse } from 'next/server';
+import { checkDb, successResponse, errorResponse } from '@/services/api-response';
 import { db } from '@/lib/db';
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const dbError = checkDb();
+  if (dbError) return dbError;
+
   try {
     const { id } = await params;
 
@@ -27,19 +30,13 @@ export async function GET(
     });
 
     if (!student) {
-      return NextResponse.json(
-        { error: 'الطالب غير موجود' },
-        { status: 404 }
-      );
+      return errorResponse('الطالب غير موجود', 404);
     }
 
-    return NextResponse.json(student);
+    return successResponse(student);
   } catch (error) {
     console.error('Get student error:', error);
-    return NextResponse.json(
-      { error: 'حدث خطأ في جلب بيانات الطالب' },
-      { status: 500 }
-    );
+    return errorResponse('حدث خطأ في جلب بيانات الطالب', 500);
   }
 }
 
@@ -47,16 +44,16 @@ export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const dbError = checkDb();
+  if (dbError) return dbError;
+
   try {
     const { id } = await params;
     const body = await request.json();
 
     const existingStudent = await db.student.findUnique({ where: { id } });
     if (!existingStudent) {
-      return NextResponse.json(
-        { error: 'الطالب غير موجود' },
-        { status: 404 }
-      );
+      return errorResponse('الطالب غير موجود', 404);
     }
 
     const student = await db.student.update({
@@ -83,13 +80,10 @@ export async function PUT(
       },
     });
 
-    return NextResponse.json(student);
+    return successResponse(student);
   } catch (error) {
     console.error('Update student error:', error);
-    return NextResponse.json(
-      { error: 'حدث خطأ في تحديث بيانات الطالب' },
-      { status: 500 }
-    );
+    return errorResponse('حدث خطأ في تحديث بيانات الطالب', 500);
   }
 }
 
@@ -97,15 +91,15 @@ export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const dbError = checkDb();
+  if (dbError) return dbError;
+
   try {
     const { id } = await params;
 
     const existingStudent = await db.student.findUnique({ where: { id } });
     if (!existingStudent) {
-      return NextResponse.json(
-        { error: 'الطالب غير موجود' },
-        { status: 404 }
-      );
+      return errorResponse('الطالب غير موجود', 404);
     }
 
     // Delete related records first
@@ -113,12 +107,9 @@ export async function DELETE(
     await db.grade.deleteMany({ where: { studentId: id } });
     await db.student.delete({ where: { id } });
 
-    return NextResponse.json({ message: 'تم حذف الطالب بنجاح' });
+    return successResponse(null, 'تم حذف الطالب بنجاح');
   } catch (error) {
     console.error('Delete student error:', error);
-    return NextResponse.json(
-      { error: 'حدث خطأ في حذف الطالب' },
-      { status: 500 }
-    );
+    return errorResponse('حدث خطأ في حذف الطالب', 500);
   }
 }

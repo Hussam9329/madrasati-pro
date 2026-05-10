@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { checkDb, successResponse, errorResponse } from '@/services/api-response';
 import { db } from '@/lib/db';
 
 // قيم ثابتة غير قابلة للتغيير
@@ -6,6 +6,9 @@ const FIXED_SCHOOL_NAME = 'ثانوية مارينا';
 const FIXED_SCHOOL_ADDRESS = 'زيونة - الشارع الخدمي لدار الازياء';
 
 export async function GET() {
+  const dbError = checkDb();
+  if (dbError) return dbError;
+
   try {
     // إذا لا توجد مدرسة، أنشئها تلقائيًا بالقيم الثابتة
     let schools = await db.school.findMany({
@@ -45,7 +48,7 @@ export async function GET() {
           },
         },
       });
-      return NextResponse.json({ school, schools: [school] });
+      return successResponse({ school, schools: [school] });
     }
 
     // تأكد من أن الاسم والعنوان ثابتان دائمًا
@@ -71,17 +74,17 @@ export async function GET() {
       });
     }
 
-    return NextResponse.json({ school: schools[0], schools });
+    return successResponse({ school: schools[0], schools });
   } catch (error) {
     console.error('Get school error:', error);
-    return NextResponse.json(
-      { error: 'حدث خطأ في جلب بيانات المدرسة' },
-      { status: 500 }
-    );
+    return errorResponse('حدث خطأ في جلب بيانات المدرسة', 500);
   }
 }
 
 export async function PUT(request: Request) {
+  const dbError = checkDb();
+  if (dbError) return dbError;
+
   try {
     const body = await request.json();
 
@@ -128,12 +131,9 @@ export async function PUT(request: Request) {
       });
     }
 
-    return NextResponse.json(school);
+    return successResponse(school);
   } catch (error) {
     console.error('Update school error:', error);
-    return NextResponse.json(
-      { error: 'حدث خطأ في تحديث بيانات المدرسة' },
-      { status: 500 }
-    );
+    return errorResponse('حدث خطأ في تحديث بيانات المدرسة', 500);
   }
 }

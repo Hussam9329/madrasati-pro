@@ -1,23 +1,20 @@
-import { NextResponse } from 'next/server';
+import { checkDb, successResponse, errorResponse } from '@/services/api-response';
 import { db } from '@/lib/db';
 
 export async function POST(request: Request) {
+  const dbError = checkDb();
+  if (dbError) return dbError;
+
   try {
     const body = await request.json();
     const { qrCode, type } = body;
 
     if (!qrCode || !type) {
-      return NextResponse.json(
-        { error: 'رمز QR ونوع المسح مطلوبان' },
-        { status: 400 }
-      );
+      return errorResponse('رمز QR ونوع المسح مطلوبان', 400);
     }
 
     if (type !== 'checkIn' && type !== 'checkOut') {
-      return NextResponse.json(
-        { error: 'نوع المسح يجب أن يكون checkIn أو checkOut' },
-        { status: 400 }
-      );
+      return errorResponse('نوع المسح يجب أن يكون checkIn أو checkOut', 400);
     }
 
     // Find student by QR code
@@ -31,39 +28,36 @@ export async function POST(request: Request) {
     });
 
     if (!student) {
-      return NextResponse.json(
-        { error: 'الطالب غير موجود. رمز QR غير صالح' },
-        { status: 404 }
-      );
+      return errorResponse('الطالب غير موجود. رمز QR غير صالح', 404);
     }
 
     if (student.cardStatus !== 'فعالة') {
-      return NextResponse.json(
-        {
-          error: `بطاقة الطالب ${student.cardStatus}`,
+      return errorResponse(
+        `بطاقة الطالب ${student.cardStatus}`,
+        403,
+        JSON.stringify({
           student: {
             id: student.id,
             fullName: student.fullName,
             studentNumber: student.studentNumber,
             cardStatus: student.cardStatus,
           },
-        },
-        { status: 403 }
+        })
       );
     }
 
     if (student.status !== 'مستمر') {
-      return NextResponse.json(
-        {
-          error: `حالة الطالب: ${student.status}`,
+      return errorResponse(
+        `حالة الطالب: ${student.status}`,
+        403,
+        JSON.stringify({
           student: {
             id: student.id,
             fullName: student.fullName,
             studentNumber: student.studentNumber,
             status: student.status,
           },
-        },
-        { status: 403 }
+        })
       );
     }
 
@@ -103,9 +97,10 @@ export async function POST(request: Request) {
       if (existingRecord) {
         // Check if student already checked in today
         if (existingRecord.checkIn) {
-          return NextResponse.json(
-            {
-              error: 'تم تسجيل حضور هذا الطالب مسبقاً اليوم',
+          return errorResponse(
+            'تم تسجيل حضور هذا الطالب مسبقاً اليوم',
+            409,
+            JSON.stringify({
               action: 'duplicateCheckIn',
               student: {
                 id: student.id,
@@ -120,8 +115,7 @@ export async function POST(request: Request) {
                 status: existingRecord.status,
                 lateMinutes: existingRecord.lateMinutes,
               },
-            },
-            { status: 409 }
+            })
           );
         }
 
@@ -135,8 +129,7 @@ export async function POST(request: Request) {
           },
         });
 
-        return NextResponse.json({
-          message: 'تم تسجيل الحضور',
+        return successResponse({
           action: 'checkIn',
           status: attendanceStatus,
           lateMinutes,
@@ -148,7 +141,7 @@ export async function POST(request: Request) {
             class: student.class.name,
             section: student.section.name,
           },
-        });
+        }, 'تم تسجيل الحضور');
       }
 
       // Create new check-in record
@@ -163,8 +156,7 @@ export async function POST(request: Request) {
         },
       });
 
-      return NextResponse.json({
-        message: 'تم تسجيل الحضور',
+      return successResponse({
         action: 'checkIn',
         status: attendanceStatus,
         lateMinutes,
@@ -176,28 +168,29 @@ export async function POST(request: Request) {
           class: student.class.name,
           section: student.section.name,
         },
-      });
+      }, 'تم تسجيل الحضور');
     }
 
     // Check-out
     if (!existingRecord) {
-      return NextResponse.json(
-        {
-          error: 'لم يتم تسجيل حضور هذا الطالب اليوم',
+      return errorResponse(
+        'لم يتم تسجيل حضور هذا الطالب اليوم',
+        400,
+        JSON.stringify({
           student: {
             id: student.id,
             fullName: student.fullName,
             studentNumber: student.studentNumber,
           },
-        },
-        { status: 400 }
+        })
       );
     }
 
     if (existingRecord.checkOut) {
-      return NextResponse.json(
-        {
-          error: 'تم تسجيل خروج هذا الطالب مسبقاً اليوم',
+      return errorResponse(
+        'تم تسجيل خروج هذا الطالب مسبقاً اليوم',
+        409,
+        JSON.stringify({
           action: 'duplicateCheckOut',
           student: {
             id: student.id,
@@ -212,8 +205,7 @@ export async function POST(request: Request) {
             checkOut: existingRecord.checkOut,
             status: existingRecord.status,
           },
-        },
-        { status: 409 }
+        })
       );
     }
 
@@ -236,8 +228,7 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json({
-      message: newStatus === 'خروج مبكر' ? 'تم تسجيل خروج مبكر' : 'تم تسجيل الخروج',
+    return successResponse({
       action: 'checkOut',
       status: newStatus,
       isEarlyExit: currentMinutes < endMinutes,
@@ -249,12 +240,9 @@ export async function POST(request: Request) {
         class: student.class.name,
         section: student.section.name,
       },
-    });
+    }, newStatus === 'خروج مبكر' ? 'تم تسجيل خروج مبكر' : 'تم تسجيل الخروج');
   } catch (error) {
     console.error('Scan attendance error:', error);
-    return NextResponse.json(
-      { error: 'حدث خطأ في مسح الحضور' },
-      { status: 500 }
-    );
+    return errorResponse('حدث خطأ في مسح الحضور', 500);
   }
 }
