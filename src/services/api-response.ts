@@ -160,3 +160,64 @@ export function validationErrorResponse(error: ZodError): NextResponse {
 export function forbiddenResponse(message = 'ليس لديك صلاحية للقيام بهذا الإجراء.') {
   return errorResponse(message, 403);
 }
+
+/**
+ * Extract user role from request headers (set by middleware).
+ * Returns null if the role header is missing.
+ */
+export function getUserRole(request: Request): string | null {
+  return request.headers.get('x-user-role');
+}
+
+/**
+ * Check if the authenticated user has the required permission.
+ * Uses the middleware-injected x-user-role header and the ROLE_PERMISSIONS map.
+ *
+ * Returns a 403 forbidden response if the user lacks permission, or null if allowed.
+ *
+ * @example
+ *   const authError = requirePermission(request, 'students');
+ *   if (authError) return authError;
+ *
+ *   // For admin-only operations:
+ *   const authError = requirePermission(request, 'all');
+ *   if (authError) return authError;
+ */
+export function requirePermission(request: Request, permission: string): NextResponse | null {
+  const userRole = getUserRole(request);
+  if (!userRole) {
+    return forbiddenResponse('انتهت صلاحية الجلسة. سجّل الدخول مرة أخرى.');
+  }
+
+  // Import here to avoid circular dependency at module level
+  // (auth.ts imports from api-response indirectly)
+  const { hasPermission: checkPerm } = require('@/lib/auth');
+  if (!checkPerm(userRole, permission)) {
+    return forbiddenResponse('ليس لديك صلاحية للقيام بهذا الإجراء.');
+  }
+
+  return null;
+}
+
+/**
+ * Check if the authenticated user has ANY of the specified permissions.
+ * Returns a 403 forbidden response if the user lacks all permissions, or null if allowed.
+ *
+ * @example
+ *   const authError = requireAnyPermission(request, ['students', 'payments_view']);
+ *   if (authError) return authError;
+ */
+export function requireAnyPermission(request: Request, permissions: string[]): NextResponse | null {
+  const userRole = getUserRole(request);
+  if (!userRole) {
+    return forbiddenResponse('انتهت صلاحية الجلسة. سجّل الدخول مرة أخرى.');
+  }
+
+  const { hasPermission: checkPerm } = require('@/lib/auth');
+  const hasAny = permissions.some((perm) => checkPerm(userRole, perm));
+  if (!hasAny) {
+    return forbiddenResponse('ليس لديك صلاحية للقيام بهذا الإجراء.');
+  }
+
+  return null;
+}

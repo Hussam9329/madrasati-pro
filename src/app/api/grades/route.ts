@@ -1,11 +1,14 @@
-import { checkDb, successResponse, errorResponse, validationErrorResponse, forbiddenResponse } from '@/services/api-response';
+import { checkDb, successResponse, errorResponse, validationErrorResponse, requireAnyPermission } from '@/services/api-response';
 import { db } from '@/lib/db';
 import { gradeCreateSchema } from '@/lib/validations';
-import { hasPermission } from '@/lib/auth';
 
 export async function GET(request: Request) {
   const dbError = checkDb();
   if (dbError) return dbError;
+
+  // View grades requires appropriate permission
+  const authError = requireAnyPermission(request, ['students', 'teachers', 'grades', 'grades_own', 'reports']);
+  if (authError) return authError;
 
   try {
     const { searchParams } = new URL(request.url);
@@ -67,13 +70,9 @@ export async function POST(request: Request) {
   if (dbError) return dbError;
 
   try {
-    // Check authorization
-    const userRole = request.headers.get('x-user-role');
-    if (!userRole || !hasPermission(userRole, 'grades')) {
-      if (!hasPermission(userRole || '', 'grades_own')) {
-        return forbiddenResponse('ليس لديك صلاحية لتسجيل الدرجات');
-      }
-    }
+    // Check authorization - grades or grades_own permission required
+    const authError = requireAnyPermission(request, ['grades', 'grades_own']);
+    if (authError) return authError;
 
     const body = await request.json();
 

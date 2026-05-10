@@ -1,12 +1,15 @@
 import { NextRequest } from 'next/server';
-import { checkDb, successResponse, errorResponse, validationErrorResponse, forbiddenResponse } from '@/services/api-response';
+import { checkDb, successResponse, errorResponse, validationErrorResponse, requirePermission, requireAnyPermission } from '@/services/api-response';
 import { db } from '@/lib/db';
 import { paymentCreateSchema } from '@/lib/validations';
-import { hasPermission } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   const dbError = checkDb();
   if (dbError) return dbError;
+
+  // View payments requires payments_view or students permission
+  const authError = requireAnyPermission(request, ['students', 'payments_view']);
+  if (authError) return authError;
 
   try {
     const { searchParams } = new URL(request.url);
@@ -49,13 +52,10 @@ export async function POST(request: NextRequest) {
   if (dbError) return dbError;
 
   try {
-    // Check authorization
-    const userRole = request.headers.get('x-user-role');
-    if (!userRole || !hasPermission(userRole, 'students')) {
-      if (!hasPermission(userRole || '', 'payments_view')) {
-        return forbiddenResponse('ليس لديك صلاحية لتسجيل الدفعات');
-      }
-    }
+    // Check authorization - only users with students permission can create payments
+    // (payments_view is read-only, not for creating)
+    const authError = requirePermission(request, 'students');
+    if (authError) return authError;
 
     const body = await request.json();
 
@@ -130,10 +130,8 @@ export async function DELETE(request: NextRequest) {
 
   try {
     // Only admin roles can delete payments
-    const userRole = request.headers.get('x-user-role');
-    if (!userRole || !hasPermission(userRole, 'all')) {
-      return forbiddenResponse('حذف الدفعات يتطلب صلاحيات مدير');
-    }
+    const authError = requirePermission(request, 'all');
+    if (authError) return authError;
 
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');

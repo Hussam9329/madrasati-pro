@@ -1,10 +1,14 @@
-import { checkDb, successResponse, errorResponse } from '@/services/api-response';
+import { checkDb, successResponse, errorResponse, requirePermission, requireAnyPermission } from '@/services/api-response';
 import { db } from '@/lib/db';
 
 // GET /api/schedule - Get schedule slots
 export async function GET(request: Request) {
   const dbError = checkDb();
   if (dbError) return dbError;
+
+  // View schedule - most roles need this
+  const authError = requireAnyPermission(request, ['students', 'teachers', 'schedule', 'schedule_view', 'grades', 'attendance']);
+  if (authError) return authError;
 
   try {
     const { searchParams } = new URL(request.url);
@@ -40,6 +44,10 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const dbError = checkDb();
   if (dbError) return dbError;
+
+  // Create schedule slot requires schedule permission
+  const authError = requirePermission(request, 'schedule');
+  if (authError) return authError;
 
   try {
     const body = await request.json();
@@ -122,6 +130,10 @@ export async function DELETE(request: Request) {
   const dbError = checkDb();
   if (dbError) return dbError;
 
+  // Delete schedule slot requires schedule permission
+  const authError = requirePermission(request, 'schedule');
+  if (authError) return authError;
+
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
@@ -143,6 +155,10 @@ export async function DELETE(request: Request) {
 export async function PUT(request: Request) {
   const dbError = checkDb();
   if (dbError) return dbError;
+
+  // Update schedule slot requires schedule permission
+  const authError = requirePermission(request, 'schedule');
+  if (authError) return authError;
 
   try {
     const body = await request.json();

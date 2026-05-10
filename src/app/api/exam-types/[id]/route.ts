@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { checkDb, successResponse, errorResponse } from '@/services/api-response';
+import { checkDb, successResponse, errorResponse, requirePermission, requireAnyPermission } from '@/services/api-response';
 import { db } from '@/lib/db';
 
 // GET /api/exam-types/[id] — Get single exam type
@@ -9,6 +9,10 @@ export async function GET(
 ) {
   const dbError = checkDb();
   if (dbError) return dbError;
+
+  // View exam type requires grades or subjects permission
+  const authError = requireAnyPermission(request, ['grades', 'grades_own', 'subjects', 'reports']);
+  if (authError) return authError;
 
   try {
     const { id } = await params
@@ -44,6 +48,10 @@ export async function PUT(
 ) {
   const dbError = checkDb();
   if (dbError) return dbError;
+
+  // Edit exam type requires grades permission
+  const authError = requirePermission(request, 'grades');
+  if (authError) return authError;
 
   try {
     const { id } = await params
@@ -112,6 +120,10 @@ export async function DELETE(
 ) {
   const dbError = checkDb();
   if (dbError) return dbError;
+
+  // Delete exam type requires admin-level access (cascades to grades)
+  const authError = requirePermission(request, 'all');
+  if (authError) return authError;
 
   try {
     const { id } = await params

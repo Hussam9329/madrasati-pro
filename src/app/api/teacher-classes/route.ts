@@ -1,10 +1,14 @@
-import { checkDb, successResponse, errorResponse } from '@/services/api-response';
+import { checkDb, successResponse, errorResponse, requirePermission, requireAnyPermission } from '@/services/api-response';
 import { db } from '@/lib/db';
 
 // GET - Fetch teacher-class assignments
 export async function GET(request: Request) {
   const dbError = checkDb();
   if (dbError) return dbError;
+
+  // View assignments requires appropriate permission
+  const authError = requireAnyPermission(request, ['teachers', 'students', 'schedule', 'grades']);
+  if (authError) return authError;
 
   try {
     const { searchParams } = new URL(request.url);
@@ -34,6 +38,10 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const dbError = checkDb();
   if (dbError) return dbError;
+
+  // Assign teacher requires teachers permission
+  const authError = requirePermission(request, 'teachers');
+  if (authError) return authError;
 
   try {
     const body = await request.json();
@@ -78,6 +86,10 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   const dbError = checkDb();
   if (dbError) return dbError;
+
+  // Remove assignment requires teachers permission
+  const authError = requirePermission(request, 'teachers');
+  if (authError) return authError;
 
   try {
     const { searchParams } = new URL(request.url);

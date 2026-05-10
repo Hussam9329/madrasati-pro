@@ -1,10 +1,14 @@
-import { checkDb, successResponse, errorResponse, validationErrorResponse } from '@/services/api-response';
+import { checkDb, successResponse, errorResponse, validationErrorResponse, requirePermission } from '@/services/api-response';
 import { db } from '@/lib/db';
 import { attendanceScanSchema } from '@/lib/validations';
 
 export async function POST(request: Request) {
   const dbError = checkDb();
   if (dbError) return dbError;
+
+  // QR scan attendance requires attendance_scan or attendance permission
+  const authError = requirePermission(request, 'attendance_scan');
+  if (authError) return authError;
 
   try {
     const body = await request.json();

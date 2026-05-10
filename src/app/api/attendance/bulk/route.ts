@@ -1,10 +1,14 @@
-import { checkDb, successResponse, errorResponse, validationErrorResponse } from '@/services/api-response';
+import { checkDb, successResponse, errorResponse, validationErrorResponse, requirePermission } from '@/services/api-response';
 import { db } from '@/lib/db';
 import { attendanceBulkSchema } from '@/lib/validations';
 
 export async function POST(request: Request) {
   const dbError = checkDb();
   if (dbError) return dbError;
+
+  // Bulk attendance requires attendance permission
+  const authError = requirePermission(request, 'attendance');
+  if (authError) return authError;
 
   try {
     const body = await request.json();

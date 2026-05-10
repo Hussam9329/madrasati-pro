@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { useAppStore } from '@/lib/store';
 import type { PageKey } from '@/types';
+import { hasPermission } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -69,33 +70,33 @@ const pageDescriptions: Record<PageKey, string> = {
 };
 
 // Navigation groups - مدرستي School System
-const navGroups: { label: string; items: { key: PageKey; label: string; icon: React.ElementType; badge?: string }[] }[] = [
+const navGroups: { label: string; items: { key: PageKey; label: string; icon: React.ElementType; badge?: string; permission: string }[] }[] = [
   {
     label: 'الرئيسية',
     items: [
-      { key: 'dashboard', label: 'لوحة التحكم', icon: LayoutDashboard },
-      { key: 'students', label: 'الطلاب', icon: GraduationCap },
-      { key: 'teachers', label: 'الأساتذة', icon: Users },
-      { key: 'subjects', label: 'المواد', icon: BookOpen },
+      { key: 'dashboard', label: 'لوحة التحكم', icon: LayoutDashboard, permission: 'students' },
+      { key: 'students', label: 'الطلاب', icon: GraduationCap, permission: 'students' },
+      { key: 'teachers', label: 'الأساتذة', icon: Users, permission: 'teachers' },
+      { key: 'subjects', label: 'المواد', icon: BookOpen, permission: 'subjects' },
     ],
   },
   {
     label: 'الأكاديمية',
     items: [
-      { key: 'classes', label: 'الصفوف والشعب', icon: Layers },
-      { key: 'exams', label: 'الامتحانات', icon: ClipboardList },
-      { key: 'payments', label: 'الأقساط', icon: Wallet },
-      { key: 'attendance', label: 'الحضور QR', icon: ScanLine, badge: 'مباشر' },
-      { key: 'grades', label: 'الدرجات', icon: FileText },
-      { key: 'schedule', label: 'جدول الحصص', icon: Calendar },
+      { key: 'classes', label: 'الصفوف والشعب', icon: Layers, permission: 'subjects' },
+      { key: 'exams', label: 'الامتحانات', icon: ClipboardList, permission: 'grades' },
+      { key: 'payments', label: 'الأقساط', icon: Wallet, permission: 'payments_view' },
+      { key: 'attendance', label: 'الحضور QR', icon: ScanLine, badge: 'مباشر', permission: 'attendance' },
+      { key: 'grades', label: 'الدرجات', icon: FileText, permission: 'grades' },
+      { key: 'schedule', label: 'جدول الحصص', icon: Calendar, permission: 'schedule' },
     ],
   },
   {
     label: 'التقارير والإعدادات',
     items: [
-      { key: 'reports', label: 'التقارير', icon: BarChart3 },
-      { key: 'users', label: 'المستخدمون', icon: Shield },
-      { key: 'settings', label: 'الإعدادات', icon: Settings },
+      { key: 'reports', label: 'التقارير', icon: BarChart3, permission: 'reports' },
+      { key: 'users', label: 'المستخدمون', icon: Shield, permission: 'all' },
+      { key: 'settings', label: 'الإعدادات', icon: Settings, permission: 'all' },
     ],
   },
 ];
@@ -151,9 +152,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
     (event: KeyboardEvent) => {
       if (event.ctrlKey && !event.shiftKey && !event.altKey) {
         const num = parseInt(event.key, 10);
-        if (num >= 1 && num <= 9 && num <= flatNavItems.length) {
+        if (num >= 1 && num <= 9 && num <= flatFilteredNavItems.length) {
           event.preventDefault();
-          setActivePage(flatNavItems[num - 1].key);
+          setActivePage(flatFilteredNavItems[num - 1].key);
           setSidebarOpen(false);
           return;
         }
@@ -211,6 +212,17 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const userRole = auth.user?.role || '';
   const userInitials = userName.charAt(0);
 
+  // Filter navigation by role permissions
+  const filteredNavGroups = navGroups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => hasPermission(userRole, item.permission)),
+    }))
+    .filter((group) => group.items.length > 0);
+
+  // Flat filtered nav items for keyboard shortcuts
+  const flatFilteredNavItems = filteredNavGroups.flatMap((g) => g.items);
+
   const roleBadgeColor: Record<string, string> = {
     'مدير': 'bg-emerald-100 text-emerald-700 border-emerald-200',
     'معاون': 'bg-teal-100 text-teal-700 border-teal-200',
@@ -229,7 +241,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   };
 
   // Current page info
-  const currentPageLabel = flatNavItems.find((i) => i.key === activePage)?.label || 'لوحة التحكم';
+  const currentPageLabel = flatFilteredNavItems.find((i) => i.key === activePage)?.label || 'لوحة التحكم';
   const currentPageDescription = pageDescriptions[activePage] || '';
 
   // Sidebar navigation content
@@ -293,7 +305,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
       {/* Navigation - scrollable */}
       <div className="flex-1 overflow-y-auto px-3 py-2">
         <div className="space-y-0.5">
-          {navGroups.map((group, gIdx) => (
+          {filteredNavGroups.map((group, gIdx) => (
             <React.Fragment key={group.label}>
               {gIdx > 0 && (
                 <div className="my-2 mx-2">

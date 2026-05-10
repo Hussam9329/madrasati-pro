@@ -1,9 +1,10 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { useAppStore } from '@/lib/store';
 import type { PageKey, AuthUser } from '@/types';
+import { hasPermission } from '@/lib/auth';
 import LoginPage from '@/components/school/LoginPage';
 import AppLayout from '@/components/school/AppLayout';
 
@@ -82,6 +83,24 @@ const pageComponents: Record<PageKey, React.ComponentType> = {
   profile: StudentProfilePage,
 };
 
+// Map page keys to required permissions
+const pagePermissions: Record<PageKey, string> = {
+  dashboard: 'students',
+  students: 'students',
+  teachers: 'teachers',
+  subjects: 'subjects',
+  attendance: 'attendance',
+  exams: 'grades',
+  payments: 'payments_view',
+  grades: 'grades',
+  classes: 'subjects',
+  schedule: 'schedule',
+  reports: 'reports',
+  users: 'all',
+  settings: 'all',
+  profile: 'self_view',
+};
+
 function PageRenderer({ page }: { page: PageKey }) {
   const { selectedStudentId } = useAppStore();
   const PageComponent = pageComponents[page] || DashboardPage;
@@ -101,7 +120,7 @@ function PageRenderer({ page }: { page: PageKey }) {
 }
 
 export default function Home() {
-  const { auth, setAuth, activePage } = useAppStore();
+  const { auth, setAuth, activePage, setActivePage } = useAppStore();
 
   const handleLogin = useMemo(
     () => (user: AuthUser, token: string) => {
@@ -113,6 +132,19 @@ export default function Home() {
     },
     [setAuth]
   );
+
+  // Redirect to dashboard if user tries to access a page they don't have permission for
+  useEffect(() => {
+    if (auth.isAuthenticated && auth.user?.role) {
+      const requiredPermission = pagePermissions[activePage];
+      if (requiredPermission && !hasPermission(auth.user.role, requiredPermission)) {
+        // Find the first page the user has access to
+        const firstAllowedPage = (Object.entries(pagePermissions) as [PageKey, string][])
+          .find(([, perm]) => hasPermission(auth.user!.role, perm));
+        setActivePage(firstAllowedPage?.[0] || 'dashboard');
+      }
+    }
+  }, [auth.isAuthenticated, auth.user?.role, activePage, setActivePage]);
 
   // Show login page if not authenticated
   if (!auth.isAuthenticated) {

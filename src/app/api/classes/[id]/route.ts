@@ -1,4 +1,4 @@
-import { checkDb, successResponse, errorResponse } from '@/services/api-response';
+import { checkDb, successResponse, errorResponse, requirePermission } from '@/services/api-response';
 import { db } from '@/lib/db';
 
 export async function DELETE(
@@ -7,6 +7,10 @@ export async function DELETE(
 ) {
   const dbError = checkDb();
   if (dbError) return dbError;
+
+  // Delete class requires admin-level access (very destructive)
+  const authError = requirePermission(request, 'all');
+  if (authError) return authError;
 
   try {
     const { id } = await params;

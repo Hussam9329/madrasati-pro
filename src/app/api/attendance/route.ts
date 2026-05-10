@@ -1,9 +1,13 @@
-import { checkDb, successResponse, errorResponse } from '@/services/api-response';
+import { checkDb, successResponse, errorResponse, requirePermission, requireAnyPermission } from '@/services/api-response';
 import { db } from '@/lib/db';
 
 export async function GET(request: Request) {
   const dbError = checkDb();
   if (dbError) return dbError;
+
+  // View attendance - staff who work with attendance
+  const authError = requireAnyPermission(request, ['students', 'attendance', 'attendance_view', 'attendance_scan', 'grades']);
+  if (authError) return authError;
 
   try {
     const { searchParams } = new URL(request.url);
@@ -59,6 +63,10 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const dbError = checkDb();
   if (dbError) return dbError;
+
+  // Manual attendance creation requires attendance permission
+  const authError = requirePermission(request, 'attendance');
+  if (authError) return authError;
 
   try {
     const body = await request.json();

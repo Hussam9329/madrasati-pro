@@ -1,4 +1,4 @@
-import { checkDb, successResponse, errorResponse } from '@/services/api-response';
+import { checkDb, successResponse, errorResponse, requirePermission, requireAnyPermission } from '@/services/api-response';
 import { db } from '@/lib/db';
 
 export async function GET(
@@ -7,6 +7,9 @@ export async function GET(
 ) {
   const dbError = checkDb();
   if (dbError) return dbError;
+
+  const authError = requireAnyPermission(request, ['teachers', 'students_view', 'grades', 'schedule']);
+  if (authError) return authError;
 
   try {
     const { id } = await params;
@@ -43,6 +46,10 @@ export async function PUT(
 ) {
   const dbError = checkDb();
   if (dbError) return dbError;
+
+  // Edit teacher requires teachers permission
+  const authError = requirePermission(request, 'teachers');
+  if (authError) return authError;
 
   try {
     const { id } = await params;
@@ -121,6 +128,10 @@ export async function DELETE(
 ) {
   const dbError = checkDb();
   if (dbError) return dbError;
+
+  // Delete teacher requires admin-level access
+  const authError = requirePermission(request, 'all');
+  if (authError) return authError;
 
   try {
     const { id } = await params;

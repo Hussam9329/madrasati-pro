@@ -1,9 +1,13 @@
-import { checkDb, successResponse, errorResponse } from '@/services/api-response';
+import { checkDb, successResponse, errorResponse, requirePermission, requireAnyPermission } from '@/services/api-response';
 import { db } from '@/lib/db';
 
 export async function GET(request: Request) {
   const dbError = checkDb();
   if (dbError) return dbError;
+
+  // View classes - most roles need this for dropdowns/selectors
+  const authError = requireAnyPermission(request, ['students', 'teachers', 'classes', 'grades', 'attendance', 'schedule', 'subjects', 'payments', 'reports']);
+  if (authError) return authError;
 
   try {
     const { searchParams } = new URL(request.url);
@@ -46,6 +50,10 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const dbError = checkDb();
   if (dbError) return dbError;
+
+  // Create class requires admin-level access
+  const authError = requirePermission(request, 'all');
+  if (authError) return authError;
 
   try {
     const body = await request.json();

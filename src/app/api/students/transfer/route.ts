@@ -1,9 +1,13 @@
-import { checkDb, successResponse, errorResponse } from '@/services/api-response';
+import { checkDb, successResponse, errorResponse, requirePermission } from '@/services/api-response';
 import { db } from '@/lib/db';
 
 export async function PUT(request: Request) {
   const dbError = checkDb();
   if (dbError) return dbError;
+
+  // Transfer student requires students permission (admin-level operation)
+  const authError = requirePermission(request, 'students');
+  if (authError) return authError;
 
   try {
     const body = await request.json();

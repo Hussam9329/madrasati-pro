@@ -1,10 +1,14 @@
 import { db, isDbAvailable } from '@/lib/db';
-import { successResponse, errorResponse, checkDb } from '@/services/api-response';
+import { successResponse, errorResponse, checkDb, requireAnyPermission } from '@/services/api-response';
 
-export async function GET() {
+export async function GET(request: Request) {
   // Check database availability first
   const dbError = checkDb();
   if (dbError) return dbError;
+
+  // Dashboard view requires at least students or attendance permission
+  const authError = requireAnyPermission(request, ['students', 'attendance', 'grades', 'reports']);
+  if (authError) return authError;
 
   try {
     // Run independent queries in parallel for better performance

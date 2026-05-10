@@ -1,9 +1,13 @@
-import { checkDb, successResponse, errorResponse } from '@/services/api-response';
+import { checkDb, successResponse, errorResponse, requirePermission, requireAnyPermission } from '@/services/api-response';
 import { db } from '@/lib/db';
 
 export async function GET(request: Request) {
   const dbError = checkDb();
   if (dbError) return dbError;
+
+  // View subjects - most roles need this for dropdowns/selectors
+  const authError = requireAnyPermission(request, ['students', 'teachers', 'subjects', 'grades', 'attendance', 'schedule', 'reports']);
+  if (authError) return authError;
 
   try {
     const { searchParams } = new URL(request.url);
@@ -47,6 +51,10 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const dbError = checkDb();
   if (dbError) return dbError;
+
+  // Create subject requires subjects permission
+  const authError = requirePermission(request, 'subjects');
+  if (authError) return authError;
 
   try {
     const body = await request.json();

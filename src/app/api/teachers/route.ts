@@ -1,9 +1,13 @@
-import { checkDb, successResponse, errorResponse } from '@/services/api-response';
+import { checkDb, successResponse, errorResponse, requirePermission, requireAnyPermission } from '@/services/api-response';
 import { db } from '@/lib/db';
 
 export async function GET(request: Request) {
   const dbError = checkDb();
   if (dbError) return dbError;
+
+  // View teachers requires at least teachers or students_view permission
+  const authError = requireAnyPermission(request, ['teachers', 'students_view', 'grades', 'schedule']);
+  if (authError) return authError;
 
   try {
     const { searchParams } = new URL(request.url);
@@ -48,6 +52,10 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const dbError = checkDb();
   if (dbError) return dbError;
+
+  // Create teacher requires teachers permission
+  const authError = requirePermission(request, 'teachers');
+  if (authError) return authError;
 
   try {
     const body = await request.json();

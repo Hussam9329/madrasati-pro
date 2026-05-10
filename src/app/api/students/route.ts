@@ -1,11 +1,14 @@
-import { checkDb, successResponse, errorResponse, validationErrorResponse, forbiddenResponse } from '@/services/api-response';
+import { checkDb, successResponse, errorResponse, validationErrorResponse, requirePermission, requireAnyPermission } from '@/services/api-response';
 import { db } from '@/lib/db';
 import { studentCreateSchema } from '@/lib/validations';
-import { hasPermission, ADMIN_ROLES } from '@/lib/auth';
 
 export async function GET(request: Request) {
   const dbError = checkDb();
   if (dbError) return dbError;
+
+  // View students requires appropriate permission
+  const authError = requireAnyPermission(request, ['students', 'students_view', 'attendance', 'grades', 'grades_own', 'reports']);
+  if (authError) return authError;
 
   try {
     const { searchParams } = new URL(request.url);
@@ -62,13 +65,9 @@ export async function POST(request: Request) {
   if (dbError) return dbError;
 
   try {
-    // Check authorization — only admin roles can create students
-    const userRole = request.headers.get('x-user-role');
-    if (!userRole || !ADMIN_ROLES.includes(userRole as typeof ADMIN_ROLES[number])) {
-      if (!hasPermission(userRole || '', 'students')) {
-        return forbiddenResponse();
-      }
-    }
+    // Check authorization — students permission required to create
+    const authError = requirePermission(request, 'students');
+    if (authError) return authError;
 
     const body = await request.json();
 
