@@ -1,0 +1,440 @@
+import {
+  AlertTriangle,
+  BarChart3,
+  CalendarCheck,
+  CheckCircle2,
+  Clock3,
+  GraduationCap,
+  Receipt,
+  School,
+  TrendingUp,
+  Users,
+} from "lucide-react";
+import { AppShell } from "@/components/layout/app-shell";
+import { QuickActions } from "@/components/dashboard/quick-actions";
+
+const dashboardStats = [
+  {
+    title: "إجمالي الطلاب",
+    value: "0",
+    description: "طالب مسجل في النظام",
+    icon: Users,
+    tone: "blue",
+  },
+  {
+    title: "المدرسون",
+    value: "0",
+    description: "مدرس جاهز للتوزيع",
+    icon: GraduationCap,
+    tone: "green",
+  },
+  {
+    title: "الصفوف والشُعب",
+    value: "0",
+    description: "صف وشعبة داخل المدرسة",
+    icon: School,
+    tone: "indigo",
+  },
+  {
+    title: "حضور اليوم",
+    value: "0%",
+    description: "نسبة الحضور المسجلة اليوم",
+    icon: CalendarCheck,
+    tone: "emerald",
+  },
+  {
+    title: "الدرجات المدخلة",
+    value: "0",
+    description: "درجة محفوظة هذا الشهر",
+    icon: BarChart3,
+    tone: "violet",
+  },
+  {
+    title: "الأقساط المستلمة",
+    value: "0 د.ع",
+    description: "إجمالي المدفوعات المسجلة",
+    icon: Receipt,
+    tone: "amber",
+  },
+  {
+    title: "تنبيهات تحتاج متابعة",
+    value: "0",
+    description: "ملاحظة أو إجراء مطلوب",
+    icon: AlertTriangle,
+    tone: "rose",
+  },
+  {
+    title: "جاهزية النظام",
+    value: "0%",
+    description: "اكتملت خطوات التأسيس",
+    icon: TrendingUp,
+    tone: "cyan",
+  },
+];
+
+const setupSteps = [
+  {
+    title: "أضف بيانات المدرسة",
+    description: "اسم المدرسة، الشعار، العنوان، والسنة الدراسية.",
+    status: "قريبًا",
+  },
+  {
+    title: "أضف المواد الدراسية",
+    description: "المواد هي الأساس قبل ربط المدرسين والدرجات.",
+    status: "ابدأ هنا",
+    active: true,
+  },
+  {
+    title: "أنشئ الصفوف والشُعب",
+    description: "حتى تتمكن من توزيع الطلاب وتنظيم الحضور.",
+    status: "بعد المواد",
+  },
+  {
+    title: "أضف المدرسين",
+    description: "اربط المدرسين بالمواد والصفوف المناسبة.",
+    status: "بعد الصفوف",
+  },
+  {
+    title: "أضف الطلاب",
+    description: "أدخل الطلاب واربط كل طالب بصفه وشعبته.",
+    status: "بعد الصفوف",
+  },
+];
+
+const recentActivities = [
+  {
+    title: "النظام جاهز للبناء",
+    description: "تم فتح لوحة التحكم بدون تسجيل دخول حسب الإعداد الجديد.",
+    time: "الآن",
+    icon: CheckCircle2,
+  },
+  {
+    title: "التوجيه الذكي مفعّل",
+    description: "سيظهر للمستخدم ترتيب العمل الصحيح داخل النظام.",
+    time: "الآن",
+    icon: Clock3,
+  },
+];
+
+export default function DashboardPage() {
+  return (
+    <AppShell>
+      <div className="mx-auto flex w-full max-w-[1500px] flex-col gap-6">
+        <section className="grid gap-5 xl:grid-cols-[1.35fr_0.65fr]">
+          <div className="app-card overflow-hidden p-6 sm:p-7">
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-2 text-xs font-extrabold text-blue-700">
+                  <span className="h-2 w-2 rounded-full bg-blue-600" />
+                  نسخة النظام الأساسية بدون تسجيل دخول
+                </div>
+
+                <h2 className="app-title">
+                  أهلًا بك في لوحة تحكم مدرستي برو
+                </h2>
+
+                <p className="app-subtitle mt-3 max-w-3xl">
+                  هذه هي نقطة البداية. من هنا تستطيع متابعة الإحصائيات، معرفة
+                  الخطوة التالية، والانتقال بسرعة إلى أهم أعمال المدرسة اليومية.
+                </p>
+              </div>
+
+              <div className="rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-600 to-indigo-700 p-5 text-white shadow-xl shadow-blue-900/10 lg:min-w-[260px]">
+                <p className="text-sm font-bold text-blue-100">
+                  الخطوة المقترحة الآن
+                </p>
+
+                <h3 className="mt-3 text-xl font-extrabold">
+                  أضف المواد الدراسية أولًا
+                </h3>
+
+                <p className="mt-2 text-sm leading-7 text-blue-50">
+                  لأن المدرسين والدرجات والجدول يعتمدون عليها لاحقًا.
+                </p>
+
+                <a
+                  href="/subjects"
+                  className="mt-5 inline-flex h-11 items-center justify-center rounded-2xl bg-white px-5 text-sm font-extrabold text-blue-700 transition hover:bg-blue-50"
+                >
+                  إضافة أول مادة
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div className="app-card p-6">
+            <div className="flex items-start gap-3">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
+                <AlertTriangle size={22} />
+              </div>
+
+              <div>
+                <h3 className="text-lg font-extrabold text-[var(--app-text)]">
+                  تنبيه مهم للمستخدم
+                </h3>
+
+                <p className="mt-2 text-sm leading-7 text-[var(--app-text-muted)]">
+                  لا تضف الطلاب قبل إنشاء الصفوف والشُعب. الترتيب الصحيح يجعل
+                  النظام أسهل وأسرع ويمنع الأخطاء لاحقًا.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="stat-grid">
+          {dashboardStats.map((stat) => (
+            <StatCard
+              key={stat.title}
+              title={stat.title}
+              value={stat.value}
+              description={stat.description}
+              icon={stat.icon}
+              tone={stat.tone}
+            />
+          ))}
+        </section>
+
+        <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+          <QuickActions />
+
+          <div className="app-card p-6">
+            <div className="mb-5 flex items-center justify-between gap-3">
+              <div>
+                <h3 className="text-xl font-extrabold text-[var(--app-text)]">
+                  دليل التأسيس السريع
+                </h3>
+
+                <p className="mt-1 text-sm leading-6 text-[var(--app-text-muted)]">
+                  اتبع هذه الخطوات بالترتيب حتى تبني النظام بدون ارتباك.
+                </p>
+              </div>
+
+              <span className="badge badge-info">إرشاد</span>
+            </div>
+
+            <div className="space-y-3">
+              {setupSteps.map((step, index) => (
+                <div
+                  key={step.title}
+                  className={[
+                    "flex gap-4 rounded-2xl border p-4 transition",
+                    step.active
+                      ? "border-blue-200 bg-blue-50/80"
+                      : "border-[var(--app-border-soft)] bg-white",
+                  ].join(" ")}
+                >
+                  <div
+                    className={[
+                      "flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-sm font-extrabold",
+                      step.active
+                        ? "bg-blue-600 text-white"
+                        : "bg-slate-100 text-slate-600",
+                    ].join(" ")}
+                  >
+                    {index + 1}
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <h4 className="font-extrabold text-[var(--app-text)]">
+                        {step.title}
+                      </h4>
+
+                      <span
+                        className={[
+                          "badge",
+                          step.active ? "badge-info" : "bg-slate-100 text-slate-600",
+                        ].join(" ")}
+                      >
+                        {step.status}
+                      </span>
+                    </div>
+
+                    <p className="mt-1 text-sm leading-7 text-[var(--app-text-muted)]">
+                      {step.description}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="grid gap-6 xl:grid-cols-[1fr_1fr]">
+          <div className="app-card p-6">
+            <div className="mb-5">
+              <h3 className="text-xl font-extrabold text-[var(--app-text)]">
+                آخر النشاطات
+              </h3>
+
+              <p className="mt-1 text-sm leading-6 text-[var(--app-text-muted)]">
+                هنا تظهر آخر العمليات المهمة داخل النظام.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              {recentActivities.map((activity) => {
+                const Icon = activity.icon;
+
+                return (
+                  <div
+                    key={activity.title}
+                    className="flex items-start gap-3 rounded-2xl border border-[var(--app-border-soft)] bg-white p-4"
+                  >
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
+                      <Icon size={19} />
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-3">
+                        <h4 className="font-extrabold text-[var(--app-text)]">
+                          {activity.title}
+                        </h4>
+
+                        <span className="text-xs font-bold text-[var(--app-text-soft)]">
+                          {activity.time}
+                        </span>
+                      </div>
+
+                      <p className="mt-1 text-sm leading-7 text-[var(--app-text-muted)]">
+                        {activity.description}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="app-card overflow-hidden">
+            <div className="border-b border-[var(--app-border-soft)] p-6">
+              <h3 className="text-xl font-extrabold text-[var(--app-text)]">
+                حالة النظام اليوم
+              </h3>
+
+              <p className="mt-1 text-sm leading-6 text-[var(--app-text-muted)]">
+                ملخص مبسط يساعد المستخدم يعرف شنو ناقص بدون تعقيد.
+              </p>
+            </div>
+
+            <div className="grid gap-0 sm:grid-cols-2">
+              <StatusTile
+                label="التأسيس"
+                value="غير مكتمل"
+                description="ابدأ بالمواد والصفوف"
+                tone="warning"
+              />
+
+              <StatusTile
+                label="الحضور"
+                value="لم يسجل بعد"
+                description="يحتاج طلاب داخل صفوف"
+                tone="info"
+              />
+
+              <StatusTile
+                label="الدرجات"
+                value="بانتظار المواد"
+                description="أضف المواد أولًا"
+                tone="info"
+              />
+
+              <StatusTile
+                label="الأقساط"
+                value="بانتظار الطلاب"
+                description="أضف الطلاب ثم الأقساط"
+                tone="success"
+              />
+            </div>
+          </div>
+        </section>
+      </div>
+    </AppShell>
+  );
+}
+
+type StatCardProps = {
+  title: string;
+  value: string;
+  description: string;
+  icon: React.ElementType;
+  tone: string;
+};
+
+function StatCard({ title, value, description, icon: Icon, tone }: StatCardProps) {
+  const toneClass = getToneClass(tone);
+
+  return (
+    <article className="app-card app-card-hover p-5">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-sm font-bold text-[var(--app-text-muted)]">
+            {title}
+          </p>
+
+          <h3 className="mt-3 text-3xl font-extrabold tracking-tight text-[var(--app-text)]">
+            {value}
+          </h3>
+
+          <p className="mt-2 text-sm leading-6 text-[var(--app-text-muted)]">
+            {description}
+          </p>
+        </div>
+
+        <div
+          className={[
+            "flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl",
+            toneClass,
+          ].join(" ")}
+        >
+          <Icon size={22} />
+        </div>
+      </div>
+    </article>
+  );
+}
+
+type StatusTileProps = {
+  label: string;
+  value: string;
+  description: string;
+  tone: "success" | "warning" | "info";
+};
+
+function StatusTile({ label, value, description, tone }: StatusTileProps) {
+  const badgeClass =
+    tone === "success"
+      ? "badge-success"
+      : tone === "warning"
+        ? "badge-warning"
+        : "badge-info";
+
+  return (
+    <div className="border-b border-l border-[var(--app-border-soft)] p-5">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <p className="text-sm font-bold text-[var(--app-text-muted)]">{label}</p>
+        <span className={["badge", badgeClass].join(" ")}>{value}</span>
+      </div>
+
+      <p className="text-sm leading-7 text-[var(--app-text-muted)]">
+        {description}
+      </p>
+    </div>
+  );
+}
+
+function getToneClass(tone: string) {
+  const tones: Record<string, string> = {
+    blue: "bg-blue-100 text-blue-700",
+    green: "bg-green-100 text-green-700",
+    indigo: "bg-indigo-100 text-indigo-700",
+    emerald: "bg-emerald-100 text-emerald-700",
+    violet: "bg-violet-100 text-violet-700",
+    amber: "bg-amber-100 text-amber-700",
+    rose: "bg-rose-100 text-rose-700",
+    cyan: "bg-cyan-100 text-cyan-700",
+  };
+
+  return tones[tone] ?? tones.blue;
+}
