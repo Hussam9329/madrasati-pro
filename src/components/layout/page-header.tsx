@@ -62,7 +62,7 @@ export function PageHeader({
     <section className="app-card overflow-hidden">
       <div className="flex flex-col gap-5 p-6 sm:p-7 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex min-w-0 gap-4">
-          <div className="hidden h-14 w-14 shrink-0 items-center justify-center rounded-3xl bg-[var(--primary-soft)] text-[var(--primary)] sm:flex">
+          <div className="hidden h-14 w-14 shrink-0 items-center justify-center rounded-3xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-500/20 sm:flex">
             <Icon size={26} />
           </div>
 
@@ -71,7 +71,7 @@ export function PageHeader({
               {backHref ? (
                 <Link
                   href={backHref}
-                  className="inline-flex items-center gap-2 rounded-full border border-[var(--app-border)] bg-white px-3 py-1.5 text-xs font-extrabold text-[var(--app-text-muted)] transition hover:border-blue-200 hover:text-[var(--primary)]"
+                  className="inline-flex items-center gap-2 rounded-full border border-[var(--app-border)] bg-white px-3 py-1.5 text-xs font-extrabold text-[var(--app-text-muted)] transition hover:border-indigo-200 hover:text-[var(--primary)] hover:shadow-sm hover:shadow-indigo-100/50"
                 >
                   <ArrowRight size={14} />
                   {backLabel}

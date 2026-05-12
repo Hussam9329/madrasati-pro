@@ -90,10 +90,15 @@ export function AppShell({ children }: AppShellProps) {
 
       <aside
         className={[
-          "fixed right-0 top-0 z-50 h-screen w-[292px] border-l border-white/10 bg-[var(--sidebar-bg)] text-[var(--sidebar-text)] shadow-2xl transition-transform duration-200 lg:translate-x-0",
+          "fixed right-0 top-0 z-50 h-screen w-[292px] border-l border-white/[0.06] text-[var(--sidebar-text)] shadow-[var(--shadow-sidebar)] transition-transform duration-300",
+          "bg-gradient-to-b from-[#0f1535] via-[#0c1222] to-[#080d1a]",
           isMobileSidebarOpen ? "translate-x-0" : "translate-x-full",
+          "lg:translate-x-0",
         ].join(" ")}
       >
+        {/* Subtle top glow */}
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-indigo-600/[0.08] to-transparent" />
+
         <SidebarContent
           pathname={pathname}
           onNavigate={closeMobileSidebar}
@@ -101,7 +106,10 @@ export function AppShell({ children }: AppShellProps) {
       </aside>
 
       <div className="min-h-screen lg:pr-[292px]">
-        <header className="sticky top-0 z-40 border-b border-[var(--app-border-soft)] bg-white/82 backdrop-blur-xl">
+        <header className="sticky top-0 z-40 border-b border-indigo-100/60 glass">
+          {/* Subtle gradient border at bottom */}
+          <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-l from-transparent via-indigo-200/50 to-transparent" />
+
           <div className="flex min-h-[74px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
             <div className="flex min-w-0 items-center gap-3">
               <button
@@ -115,7 +123,7 @@ export function AppShell({ children }: AppShellProps) {
 
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-[var(--primary-soft)] text-[var(--primary)]">
+                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-md shadow-indigo-500/20">
                     <Home size={17} />
                   </span>
                   <h1 className="truncate text-lg font-extrabold text-[var(--app-text)] sm:text-xl">
@@ -134,7 +142,7 @@ export function AppShell({ children }: AppShellProps) {
 
               <button
                 type="button"
-                className="hidden h-11 w-11 items-center justify-center rounded-2xl border border-[var(--app-border)] bg-white text-[var(--app-text-muted)] transition hover:border-blue-200 hover:text-[var(--primary)] md:inline-flex"
+                className="hidden h-11 w-11 items-center justify-center rounded-2xl border border-[var(--app-border)] bg-white/80 text-[var(--app-text-muted)] transition hover:border-indigo-200 hover:text-[var(--primary)] hover:shadow-md hover:shadow-indigo-100/50 md:inline-flex"
                 aria-label="الإشعارات"
                 title="الإشعارات"
               >
@@ -143,7 +151,7 @@ export function AppShell({ children }: AppShellProps) {
 
               <button
                 type="button"
-                className="hidden h-11 w-11 items-center justify-center rounded-2xl border border-[var(--app-border)] bg-white text-[var(--app-text-muted)] transition hover:border-blue-200 hover:text-[var(--primary)] md:inline-flex"
+                className="hidden h-11 w-11 items-center justify-center rounded-2xl border border-[var(--app-border)] bg-white/80 text-[var(--app-text-muted)] transition hover:border-indigo-200 hover:text-[var(--primary)] hover:shadow-md hover:shadow-indigo-100/50 md:inline-flex"
                 aria-label="وضع العرض"
                 title="وضع العرض"
               >
@@ -151,8 +159,8 @@ export function AppShell({ children }: AppShellProps) {
                 <Moon className="hidden" size={18} />
               </button>
 
-              <div className="hidden items-center gap-3 rounded-2xl border border-[var(--app-border)] bg-white px-3 py-2 lg:flex">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white">
+              <div className="hidden items-center gap-3 rounded-2xl border border-[var(--app-border)] bg-white/80 px-3 py-2 lg:flex">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-md shadow-indigo-500/20">
                   <School size={18} />
                 </div>
 
@@ -184,14 +192,14 @@ type SidebarContentProps = {
 
 function SidebarContent({ pathname, onNavigate }: SidebarContentProps) {
   return (
-    <div className="flex h-full flex-col">
-      <div className="border-b border-white/10 px-5 py-5">
+    <div className="relative flex h-full flex-col">
+      <div className="relative border-b border-white/[0.06] px-5 py-5">
         <Link
           href="/"
           onClick={onNavigate}
           className="flex items-center gap-3 rounded-2xl outline-none"
         >
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-950/30">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-600/30">
             <School size={24} />
           </div>
 
@@ -239,18 +247,18 @@ function SidebarContent({ pathname, onNavigate }: SidebarContentProps) {
                         href={item.href}
                         onClick={onNavigate}
                         className={[
-                          "group flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-bold transition",
+                          "group flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-bold transition-all duration-200",
                           isActive
-                            ? "bg-[var(--sidebar-active)] text-white shadow-lg shadow-blue-950/20"
-                            : "text-[var(--sidebar-text)] hover:bg-white/8 hover:text-white",
+                            ? "bg-gradient-to-l from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-600/20"
+                            : "text-[var(--sidebar-text)] hover:bg-white/[0.06] hover:text-white",
                         ].join(" ")}
                       >
                         <span
                           className={[
-                            "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition",
+                            "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-all duration-200",
                             isActive
-                              ? "bg-white/18 text-white"
-                              : "bg-white/7 text-[var(--sidebar-muted)] group-hover:bg-white/12 group-hover:text-white",
+                              ? "bg-white/20 text-white shadow-sm"
+                              : "bg-white/[0.06] text-[var(--sidebar-muted)] group-hover:bg-white/[0.1] group-hover:text-white",
                           ].join(" ")}
                         >
                           <Icon size={18} />
@@ -261,7 +269,7 @@ function SidebarContent({ pathname, onNavigate }: SidebarContentProps) {
                         </span>
 
                         {item.isPrimary ? (
-                          <span className="rounded-full bg-white/18 px-2 py-1 text-[10px] font-extrabold text-white">
+                          <span className="rounded-full bg-white/20 px-2 py-1 text-[10px] font-extrabold text-white">
                             رئيسية
                           </span>
                         ) : null}
@@ -275,19 +283,24 @@ function SidebarContent({ pathname, onNavigate }: SidebarContentProps) {
         </div>
       </nav>
 
-      <div className="border-t border-white/10 p-4">
-        <div className="rounded-3xl border border-white/10 bg-white/7 p-4">
-          <div className="mb-3 flex items-center gap-2 text-white">
-            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-500/25 text-blue-100">
-              <Sparkles size={16} />
-            </span>
-            <p className="text-sm font-extrabold">تلميحة ذكية</p>
-          </div>
+      <div className="relative border-t border-white/[0.06] p-4">
+        <div className="relative overflow-hidden rounded-3xl border border-white/[0.08] bg-white/[0.04] p-4">
+          {/* Shimmer border effect */}
+          <div className="absolute inset-0 rounded-3xl bg-gradient-to-l from-indigo-500/10 via-transparent to-violet-500/10 opacity-60" />
 
-          <p className="text-xs leading-6 text-[var(--sidebar-muted)]">
-            اتبع الترتيب من الأعلى للأسفل: المواد، الصفوف، المدرسون، ثم الطلاب.
-            هكذا يبقى النظام مرتبًا من أول يوم.
-          </p>
+          <div className="relative">
+            <div className="mb-3 flex items-center gap-2 text-white">
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500/30 to-violet-500/30 text-indigo-200">
+                <Sparkles size={16} />
+              </span>
+              <p className="text-sm font-extrabold">تلميحة ذكية</p>
+            </div>
+
+            <p className="relative text-xs leading-6 text-[var(--sidebar-muted)]">
+              اتبع الترتيب من الأعلى للأسفل: المواد، الصفوف، المدرسون، ثم الطلاب.
+              هكذا يبقى النظام مرتبًا من أول يوم.
+            </p>
+          </div>
         </div>
       </div>
     </div>
@@ -296,7 +309,7 @@ function SidebarContent({ pathname, onNavigate }: SidebarContentProps) {
 
 function TopbarSearch() {
   return (
-    <div className="hidden min-w-[280px] items-center gap-2 rounded-2xl border border-[var(--app-border)] bg-white px-3 py-2 xl:flex">
+    <div className="hidden min-w-[280px] items-center gap-2 rounded-2xl border border-[var(--app-border)] bg-white/80 px-3 py-2 backdrop-blur-sm xl:flex">
       <Search size={18} className="text-[var(--app-text-soft)]" />
 
       <input
@@ -326,7 +339,7 @@ function MobileSidebarBackdrop({
   }
 
   return (
-    <div className="fixed inset-0 z-40 bg-slate-950/45 backdrop-blur-sm lg:hidden">
+    <div className="fixed inset-0 z-40 bg-slate-950/50 backdrop-blur-sm lg:hidden">
       <button
         type="button"
         className="absolute left-4 top-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-slate-700 shadow-xl"

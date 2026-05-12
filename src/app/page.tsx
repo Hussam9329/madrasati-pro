@@ -121,50 +121,62 @@ export default function DashboardPage() {
     <AppShell>
       <div className="mx-auto flex w-full max-w-[1500px] flex-col gap-6">
         <section className="grid gap-5 xl:grid-cols-[1.35fr_0.65fr]">
-          <div className="app-card overflow-hidden p-6 sm:p-7">
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-2 text-xs font-extrabold text-blue-700">
-                  <span className="h-2 w-2 rounded-full bg-blue-600" />
-                  نسخة النظام الأساسية بدون تسجيل دخول
+          {/* Hero card with gradient border effect */}
+          <div className="relative overflow-hidden rounded-[var(--radius-lg)] p-px">
+            <div className="absolute inset-0 bg-gradient-to-l from-indigo-500/20 via-violet-500/10 to-indigo-500/20" />
+            <div className="app-card relative p-6 sm:p-7">
+              <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-gradient-to-l from-indigo-50 to-violet-50 px-3 py-2 text-xs font-extrabold text-indigo-700">
+                    <span className="h-2 w-2 rounded-full bg-gradient-to-r from-indigo-500 to-violet-500" />
+                    نسخة النظام الأساسية بدون تسجيل دخول
+                  </div>
+
+                  <h2 className="app-title">
+                    أهلًا بك في لوحة تحكم مدرستي برو
+                  </h2>
+
+                  <p className="app-subtitle mt-3 max-w-3xl">
+                    هذه هي نقطة البداية. من هنا تستطيع متابعة الإحصائيات، معرفة
+                    الخطوة التالية، والانتقال بسرعة إلى أهم أعمال المدرسة اليومية.
+                  </p>
                 </div>
 
-                <h2 className="app-title">
-                  أهلًا بك في لوحة تحكم مدرستي برو
-                </h2>
+                {/* Suggested step - dramatic gradient card */}
+                <div className="relative overflow-hidden rounded-3xl border border-indigo-300/30 bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700 p-5 text-white shadow-xl shadow-indigo-900/20 lg:min-w-[260px]">
+                  {/* Decorative circles */}
+                  <div className="absolute -left-8 -top-8 h-24 w-24 rounded-full bg-white/[0.06]" />
+                  <div className="absolute -bottom-4 -right-4 h-16 w-16 rounded-full bg-white/[0.04]" />
 
-                <p className="app-subtitle mt-3 max-w-3xl">
-                  هذه هي نقطة البداية. من هنا تستطيع متابعة الإحصائيات، معرفة
-                  الخطوة التالية، والانتقال بسرعة إلى أهم أعمال المدرسة اليومية.
-                </p>
-              </div>
+                  <div className="relative">
+                    <p className="text-sm font-bold text-indigo-200">
+                      الخطوة المقترحة الآن
+                    </p>
 
-              <div className="rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-600 to-indigo-700 p-5 text-white shadow-xl shadow-blue-900/10 lg:min-w-[260px]">
-                <p className="text-sm font-bold text-blue-100">
-                  الخطوة المقترحة الآن
-                </p>
+                    <h3 className="mt-3 text-xl font-extrabold">
+                      أضف المواد الدراسية أولًا
+                    </h3>
 
-                <h3 className="mt-3 text-xl font-extrabold">
-                  أضف المواد الدراسية أولًا
-                </h3>
+                    <p className="mt-2 text-sm leading-7 text-indigo-100">
+                      لأن المدرسين والدرجات والجدول يعتمدون عليها لاحقًا.
+                    </p>
 
-                <p className="mt-2 text-sm leading-7 text-blue-50">
-                  لأن المدرسين والدرجات والجدول يعتمدون عليها لاحقًا.
-                </p>
-
-                <a
-                  href="/subjects"
-                  className="mt-5 inline-flex h-11 items-center justify-center rounded-2xl bg-white px-5 text-sm font-extrabold text-blue-700 transition hover:bg-blue-50"
-                >
-                  إضافة أول مادة
-                </a>
+                    <a
+                      href="/subjects"
+                      className="mt-5 inline-flex h-11 items-center justify-center rounded-2xl bg-white px-5 text-sm font-extrabold text-indigo-700 shadow-lg shadow-indigo-900/20 transition hover:bg-indigo-50 hover:shadow-xl"
+                    >
+                      إضافة أول مادة
+                    </a>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
+          {/* Warning card */}
           <div className="app-card p-6">
             <div className="flex items-start gap-3">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-100 to-orange-100 text-amber-700">
                 <AlertTriangle size={22} />
               </div>
 
@@ -220,7 +232,7 @@ export default function DashboardPage() {
                   className={[
                     "flex gap-4 rounded-2xl border p-4 transition",
                     step.active
-                      ? "border-blue-200 bg-blue-50/80"
+                      ? "border-indigo-200 bg-gradient-to-l from-indigo-50/80 to-violet-50/50"
                       : "border-[var(--app-border-soft)] bg-white",
                   ].join(" ")}
                 >
@@ -228,7 +240,7 @@ export default function DashboardPage() {
                     className={[
                       "flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-sm font-extrabold",
                       step.active
-                        ? "bg-blue-600 text-white"
+                        ? "bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-md shadow-indigo-500/25"
                         : "bg-slate-100 text-slate-600",
                     ].join(" ")}
                   >
@@ -282,7 +294,7 @@ export default function DashboardPage() {
                     key={activity.title}
                     className="flex items-start gap-3 rounded-2xl border border-[var(--app-border-soft)] bg-white p-4"
                   >
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-700">
                       <Icon size={19} />
                     </div>
 
@@ -364,10 +376,16 @@ type StatCardProps = {
 
 function StatCard({ title, value, description, icon: Icon, tone }: StatCardProps) {
   const toneClass = getToneClass(tone);
+  const toneBorderClass = getToneBorderClass(tone);
 
   return (
-    <article className="app-card app-card-hover p-5">
-      <div className="flex items-start justify-between gap-4">
+    <article className="app-card app-card-hover relative overflow-hidden p-5">
+      {/* Top gradient border */}
+      <div className={`absolute inset-x-0 top-0 h-1 ${toneBorderClass}`} />
+      {/* Decorative circle */}
+      <div className={`absolute -left-6 -top-6 h-20 w-20 rounded-full opacity-[0.06] ${toneBorderClass}`} />
+
+      <div className="relative flex items-start justify-between gap-4">
         <div className="min-w-0">
           <p className="text-sm font-bold text-[var(--app-text-muted)]">
             {title}
@@ -410,8 +428,15 @@ function StatusTile({ label, value, description, tone }: StatusTileProps) {
         ? "badge-warning"
         : "badge-info";
 
+  const bgClass =
+    tone === "success"
+      ? "bg-gradient-to-br from-emerald-50/60 to-teal-50/40"
+      : tone === "warning"
+        ? "bg-gradient-to-br from-amber-50/60 to-orange-50/40"
+        : "bg-gradient-to-br from-indigo-50/60 to-sky-50/40";
+
   return (
-    <div className="border-b border-l border-[var(--app-border-soft)] p-5">
+    <div className={`border-b border-l border-[var(--app-border-soft)] p-5 ${bgClass}`}>
       <div className="mb-3 flex items-center justify-between gap-3">
         <p className="text-sm font-bold text-[var(--app-text-muted)]">{label}</p>
         <span className={["badge", badgeClass].join(" ")}>{value}</span>
@@ -426,14 +451,29 @@ function StatusTile({ label, value, description, tone }: StatusTileProps) {
 
 function getToneClass(tone: string) {
   const tones: Record<string, string> = {
-    blue: "bg-blue-100 text-blue-700",
-    green: "bg-green-100 text-green-700",
-    indigo: "bg-indigo-100 text-indigo-700",
-    emerald: "bg-emerald-100 text-emerald-700",
-    violet: "bg-violet-100 text-violet-700",
-    amber: "bg-amber-100 text-amber-700",
-    rose: "bg-rose-100 text-rose-700",
-    cyan: "bg-cyan-100 text-cyan-700",
+    blue: "bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700",
+    green: "bg-gradient-to-br from-green-100 to-emerald-100 text-green-700",
+    indigo: "bg-gradient-to-br from-indigo-100 to-violet-100 text-indigo-700",
+    emerald: "bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-700",
+    violet: "bg-gradient-to-br from-violet-100 to-purple-100 text-violet-700",
+    amber: "bg-gradient-to-br from-amber-100 to-orange-100 text-amber-700",
+    rose: "bg-gradient-to-br from-rose-100 to-pink-100 text-rose-700",
+    cyan: "bg-gradient-to-br from-cyan-100 to-sky-100 text-cyan-700",
+  };
+
+  return tones[tone] ?? tones.blue;
+}
+
+function getToneBorderClass(tone: string) {
+  const tones: Record<string, string> = {
+    blue: "bg-gradient-to-l from-blue-400 to-indigo-400",
+    green: "bg-gradient-to-l from-green-400 to-emerald-400",
+    indigo: "bg-gradient-to-l from-indigo-400 to-violet-400",
+    emerald: "bg-gradient-to-l from-emerald-400 to-teal-400",
+    violet: "bg-gradient-to-l from-violet-400 to-purple-400",
+    amber: "bg-gradient-to-l from-amber-400 to-orange-400",
+    rose: "bg-gradient-to-l from-rose-400 to-pink-400",
+    cyan: "bg-gradient-to-l from-cyan-400 to-sky-400",
   };
 
   return tones[tone] ?? tones.blue;

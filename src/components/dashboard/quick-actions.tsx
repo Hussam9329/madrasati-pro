@@ -50,14 +50,17 @@ export function QuickActions() {
             <Link
               key={action.title}
               href={action.href}
-              className="group rounded-3xl border border-[var(--app-border-soft)] bg-white p-4 transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50/50 hover:shadow-[var(--shadow-soft)]"
+              className="group relative overflow-hidden rounded-3xl border border-[var(--app-border-soft)] bg-white p-4 transition-all duration-200 hover:-translate-y-1 hover:border-indigo-200 hover:shadow-[0_8px_24px_rgba(99,102,241,0.1),0_4px_12px_rgba(99,102,241,0.06)]"
             >
+              {/* Gradient border on hover - top accent */}
+              <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-l from-indigo-400 to-violet-400 opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+
               <div className="mb-4 flex items-center justify-between gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--primary-soft)] text-[var(--primary)] transition group-hover:bg-[var(--primary)] group-hover:text-white">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-100 to-violet-100 text-indigo-700 transition-all duration-200 group-hover:bg-gradient-to-br group-hover:from-indigo-500 group-hover:to-violet-600 group-hover:text-white group-hover:shadow-lg group-hover:shadow-indigo-500/20">
                   <Icon size={22} />
                 </div>
 
-                <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-extrabold text-slate-500 transition group-hover:bg-white group-hover:text-blue-600">
+                <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-extrabold text-slate-500 transition group-hover:bg-indigo-50 group-hover:text-indigo-600">
                   فتح
                 </span>
               </div>
@@ -74,12 +77,12 @@ export function QuickActions() {
         })}
       </div>
 
-      <div className="mt-5 rounded-3xl border border-blue-100 bg-blue-50/70 p-4">
-        <p className="text-sm font-extrabold text-blue-800">
+      <div className="mt-5 rounded-3xl border border-indigo-100 bg-gradient-to-l from-indigo-50/80 to-violet-50/60 p-4">
+        <p className="text-sm font-extrabold text-indigo-800">
           نصيحة لتجربة أفضل
         </p>
 
-        <p className="mt-2 text-sm leading-7 text-blue-700">
+        <p className="mt-2 text-sm leading-7 text-indigo-700">
           استخدم الاختصارات حسب الترتيب: مادة، صف، مدرس، طالب. بعدها يصبح
           تسجيل الحضور والدرجات أسهل بكثير.
         </p>

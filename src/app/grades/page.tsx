@@ -247,9 +247,9 @@ function GradeCreateForm({ students, subjects, teachers }: GradeCreateFormProps)
       action={createGradeAction}
       className="app-card overflow-hidden"
     >
-      <div className="border-b border-[var(--app-border-soft)] p-6">
+      <div className="border-b border-[var(--app-border-soft)] bg-gradient-to-l from-indigo-50/40 to-violet-50/20 p-6">
         <div className="flex items-start gap-3">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-100 text-blue-700">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700">
             <ClipboardList size={24} />
           </div>
 
@@ -465,7 +465,7 @@ function GradeCreateForm({ students, subjects, teachers }: GradeCreateFormProps)
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 border-t border-[var(--app-border-soft)] bg-slate-50/70 p-6 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 border-t border-[var(--app-border-soft)] bg-gradient-to-l from-indigo-50/30 to-violet-50/20 p-6 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm leading-7 text-[var(--app-text-muted)]">
           بعد إدخال الدرجات، يمكنك متابعة مستوى الطلاب والتقارير.
         </p>
@@ -499,19 +499,19 @@ function GradesStats({
       label: "إجمالي الدرجات",
       value: total,
       icon: BarChart3,
-      className: "bg-blue-100 text-blue-700",
+      className: "bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700",
     },
     {
       label: "ممتاز",
       value: excellent,
       icon: Star,
-      className: "bg-emerald-100 text-emerald-700",
+      className: "bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-700",
     },
     {
       label: "ناجح",
       value: passed,
       icon: TrendingUp,
-      className: "bg-sky-100 text-sky-700",
+      className: "bg-gradient-to-br from-sky-100 to-cyan-100 text-sky-700",
     },
     {
       label: "راسب",
@@ -687,17 +687,17 @@ type GradeRowProps = {
 function GradeRow({ grade }: GradeRowProps) {
   const ratingBadgeClass =
     grade.ratingClass === "badge-success"
-      ? "bg-emerald-100 text-emerald-700"
+      ? "bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-700"
       : grade.ratingClass === "badge-info"
-        ? "bg-sky-100 text-sky-700"
+        ? "bg-gradient-to-br from-sky-100 to-cyan-100 text-sky-700"
         : grade.ratingClass === "badge-warning"
-          ? "bg-amber-100 text-amber-700"
+          ? "bg-gradient-to-br from-amber-100 to-orange-100 text-amber-700"
           : "bg-rose-100 text-rose-700";
 
   return (
-    <article className="grid gap-4 p-5 transition hover:bg-slate-50/70 xl:grid-cols-[1fr_auto] xl:items-center">
+    <article className="grid gap-4 p-5 transition hover:bg-indigo-50/40 xl:grid-cols-[1fr_auto] xl:items-center">
       <div className="flex min-w-0 gap-4">
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-3xl bg-blue-100 text-blue-700">
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700">
           <ClipboardList size={25} />
         </div>
 
@@ -806,7 +806,7 @@ function GradeRow({ grade }: GradeRowProps) {
 
           <button
             type="submit"
-            className="btn w-full border-red-100 bg-red-50 text-red-700 hover:bg-red-100"
+            className="btn w-full border-red-100 bg-gradient-to-r from-red-50 to-rose-50 text-red-700 hover:from-red-100 hover:to-rose-100"
           >
             <Trash2 size={17} />
             حذف

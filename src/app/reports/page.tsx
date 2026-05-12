@@ -139,7 +139,7 @@ export default function ReportsPage() {
         <section className="app-card overflow-hidden">
           <div className="flex flex-col gap-5 p-6 sm:p-7 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex min-w-0 gap-4">
-              <div className="hidden h-14 w-14 shrink-0 items-center justify-center rounded-3xl bg-[var(--primary-soft)] text-[var(--primary)] sm:flex">
+              <div className="hidden h-14 w-14 shrink-0 items-center justify-center rounded-3xl bg-gradient-to-br from-indigo-100 to-violet-100 text-indigo-700 sm:flex">
                 <BarChart3 size={26} />
               </div>
 
@@ -209,7 +209,7 @@ export default function ReportsPage() {
                   "flex shrink-0 items-center gap-2 rounded-2xl border px-4 py-3 text-sm font-bold transition",
                   isActive
                     ? "border-[var(--primary)] bg-[var(--primary-soft)] text-[var(--primary)]"
-                    : "border-[var(--app-border)] bg-white text-[var(--app-text-muted)] hover:border-blue-200 hover:text-[var(--primary)]",
+                    : "border-[var(--app-border)] bg-white text-[var(--app-text-muted)] hover:border-indigo-200 hover:text-[var(--primary)] hover:shadow-sm hover:shadow-indigo-100/50",
                 ].join(" ")}
               >
                 <Icon size={16} />
@@ -290,7 +290,7 @@ function ReportFilterForm({
     <section className="app-card overflow-hidden">
       <div className="border-b border-[var(--app-border-soft)] p-5">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-blue-100 text-blue-700">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700">
             <Calendar size={20} />
           </div>
           <div>
@@ -438,8 +438,8 @@ function ReportCover({ filter, summary }: ReportCoverProps) {
 
   return (
     <section className="report-cover app-card overflow-hidden print:shadow-none">
-      <div className="flex flex-col items-center gap-4 border-b border-[var(--app-border-soft)] bg-gradient-to-l from-blue-50 to-indigo-50 p-8 text-center">
-        <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-[var(--primary-soft)] text-[var(--primary)]">
+      <div className="flex flex-col items-center gap-4 border-b border-[var(--app-border-soft)] bg-gradient-to-l from-indigo-50 to-violet-50 p-8 text-center">
+        <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-indigo-100 to-violet-100 text-indigo-700">
           <School size={40} />
         </div>
 
@@ -463,25 +463,25 @@ function ReportCover({ filter, summary }: ReportCoverProps) {
               icon={Users}
               label="الطلاب"
               value={summary.students.total}
-              color="bg-blue-100 text-blue-700"
+              color="bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700"
             />
             <CoverStat
               icon={GraduationCap}
               label="المدرسون"
               value={summary.teachers.total}
-              color="bg-emerald-100 text-emerald-700"
+              color="bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-700"
             />
             <CoverStat
               icon={Landmark}
               label="الصفوف"
               value={summary.classes.total}
-              color="bg-amber-100 text-amber-700"
+              color="bg-gradient-to-br from-amber-100 to-orange-100 text-amber-700"
             />
             <CoverStat
               icon={BookOpen}
               label="المواد"
               value={summary.subjects.total}
-              color="bg-purple-100 text-purple-700"
+              color="bg-gradient-to-br from-purple-100 to-violet-100 text-purple-700"
             />
           </div>
         ) : null}
@@ -532,28 +532,28 @@ function SummaryReport({ summary, charts }: SummaryReportProps) {
           label="إجمالي الطلاب"
           value={summary.students.total}
           detail={`${summary.students.active} مستمر`}
-          color="bg-blue-100 text-blue-700"
+          color="bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700"
         />
         <SummaryStatCard
           icon={CheckCircle2}
           label="نسبة الحضور"
           value={`${summary.attendance.attendanceRate}%`}
           detail={`${formatReportNumber(summary.attendance.totalRecords)} سجل`}
-          color="bg-emerald-100 text-emerald-700"
+          color="bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-700"
         />
         <SummaryStatCard
           icon={ClipboardList}
           label="متوسط الدرجات"
           value={`${summary.grades.averagePercentage}%`}
           detail={`نسبة النجاح ${summary.grades.passingRate}%`}
-          color="bg-purple-100 text-purple-700"
+          color="bg-gradient-to-br from-purple-100 to-violet-100 text-purple-700"
         />
         <SummaryStatCard
           icon={DollarSign}
           label="نسبة التحصيل"
           value={`${summary.payments.collectionRate}%`}
           detail={formatReportMoney(summary.payments.totalPaid)}
-          color="bg-amber-100 text-amber-700"
+          color="bg-gradient-to-br from-amber-100 to-orange-100 text-amber-700"
         />
       </div>
 
@@ -910,7 +910,7 @@ function AttendanceTable({ rows }: AttendanceTableProps) {
       <div className="overflow-x-auto">
         <table className="w-full min-w-[700px] text-sm">
           <thead>
-            <tr className="border-b border-[var(--app-border-soft)] bg-slate-50/70">
+            <tr className="border-b border-[var(--app-border-soft)] bg-gradient-to-l from-indigo-50/60 to-violet-50/40">
               <th className="px-5 py-3 text-right font-extrabold text-[var(--app-text-muted)]">
                 الطالب
               </th>
@@ -941,7 +941,7 @@ function AttendanceTable({ rows }: AttendanceTableProps) {
             {rows.map((row) => (
               <tr
                 key={row.studentId}
-                className="transition hover:bg-slate-50/70"
+                className="transition hover:bg-indigo-50/40"
               >
                 <td className="px-5 py-3">
                   <div>
@@ -1036,7 +1036,7 @@ function GradesTable({ rows }: GradesTableProps) {
       <div className="overflow-x-auto">
         <table className="w-full min-w-[800px] text-sm">
           <thead>
-            <tr className="border-b border-[var(--app-border-soft)] bg-slate-50/70">
+            <tr className="border-b border-[var(--app-border-soft)] bg-gradient-to-l from-indigo-50/60 to-violet-50/40">
               <th className="px-5 py-3 text-right font-extrabold text-[var(--app-text-muted)]">
                 الطالب
               </th>
@@ -1061,7 +1061,7 @@ function GradesTable({ rows }: GradesTableProps) {
             {rows.map((row, idx) => (
               <tr
                 key={`${row.studentId}-${row.subjectName}-${idx}`}
-                className="transition hover:bg-slate-50/70"
+                className="transition hover:bg-indigo-50/40"
               >
                 <td className="px-5 py-3">
                   <div>
@@ -1147,7 +1147,7 @@ function PaymentsTable({ rows }: PaymentsTableProps) {
       <div className="overflow-x-auto">
         <table className="w-full min-w-[800px] text-sm">
           <thead>
-            <tr className="border-b border-[var(--app-border-soft)] bg-slate-50/70">
+            <tr className="border-b border-[var(--app-border-soft)] bg-gradient-to-l from-indigo-50/60 to-violet-50/40">
               <th className="px-5 py-3 text-right font-extrabold text-[var(--app-text-muted)]">
                 الطالب
               </th>
@@ -1166,7 +1166,7 @@ function PaymentsTable({ rows }: PaymentsTableProps) {
             {rows.map((row, idx) => (
               <tr
                 key={`${row.studentId}-${row.feeTitle}-${idx}`}
-                className="transition hover:bg-slate-50/70"
+                className="transition hover:bg-indigo-50/40"
               >
                 <td className="px-5 py-3">
                   <div>
@@ -1246,7 +1246,7 @@ function ClassesTable({ rows }: ClassesTableProps) {
       <div className="overflow-x-auto">
         <table className="w-full min-w-[700px] text-sm">
           <thead>
-            <tr className="border-b border-[var(--app-border-soft)] bg-slate-50/70">
+            <tr className="border-b border-[var(--app-border-soft)] bg-gradient-to-l from-indigo-50/60 to-violet-50/40">
               <th className="px-5 py-3 text-right font-extrabold text-[var(--app-text-muted)]">
                 الصف
               </th>
@@ -1271,7 +1271,7 @@ function ClassesTable({ rows }: ClassesTableProps) {
             {rows.map((row) => (
               <tr
                 key={row.classId}
-                className="transition hover:bg-slate-50/70"
+                className="transition hover:bg-indigo-50/40"
               >
                 <td className="px-5 py-3 font-extrabold text-[var(--app-text)]">
                   {row.className}
@@ -1347,7 +1347,7 @@ function TeachersTable({ rows }: TeachersTableProps) {
       <div className="overflow-x-auto">
         <table className="w-full min-w-[700px] text-sm">
           <thead>
-            <tr className="border-b border-[var(--app-border-soft)] bg-slate-50/70">
+            <tr className="border-b border-[var(--app-border-soft)] bg-gradient-to-l from-indigo-50/60 to-violet-50/40">
               <th className="px-5 py-3 text-right font-extrabold text-[var(--app-text-muted)]">
                 المدرس
               </th>
@@ -1372,7 +1372,7 @@ function TeachersTable({ rows }: TeachersTableProps) {
             {rows.map((row) => (
               <tr
                 key={row.teacherId}
-                className="transition hover:bg-slate-50/70"
+                className="transition hover:bg-indigo-50/40"
               >
                 <td className="px-5 py-3 font-extrabold text-[var(--app-text)]">
                   {row.teacherName}

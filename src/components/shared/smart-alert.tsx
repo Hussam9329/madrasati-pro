@@ -29,34 +29,34 @@ const alertConfig: Record<
   info: {
     icon: Info,
     wrapperClass: "smart-alert-info",
-    iconClass: "bg-sky-100 text-sky-700",
+    iconClass: "bg-gradient-to-br from-sky-100 to-cyan-100 text-sky-700",
     titleClass: "text-sky-950",
     actionClass:
-      "bg-sky-600 text-white hover:bg-sky-700 focus-visible:shadow-[0_0_0_4px_rgba(2,132,199,0.16)]",
+      "bg-gradient-to-r from-sky-600 to-cyan-600 text-white hover:from-sky-700 hover:to-cyan-700 focus-visible:shadow-[0_0_0_4px_rgba(8,145,178,0.16)]",
   },
   success: {
     icon: CheckCircle2,
     wrapperClass: "smart-alert-success",
-    iconClass: "bg-emerald-100 text-emerald-700",
+    iconClass: "bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-700",
     titleClass: "text-emerald-950",
     actionClass:
-      "bg-emerald-600 text-white hover:bg-emerald-700 focus-visible:shadow-[0_0_0_4px_rgba(22,163,74,0.16)]",
+      "bg-gradient-to-r from-emerald-600 to-teal-600 text-white hover:from-emerald-700 hover:to-teal-700 focus-visible:shadow-[0_0_0_4px_rgba(5,150,105,0.16)]",
   },
   warning: {
     icon: AlertTriangle,
     wrapperClass: "smart-alert-warning",
-    iconClass: "bg-amber-100 text-amber-700",
+    iconClass: "bg-gradient-to-br from-amber-100 to-orange-100 text-amber-700",
     titleClass: "text-amber-950",
     actionClass:
-      "bg-amber-500 text-white hover:bg-amber-600 focus-visible:shadow-[0_0_0_4px_rgba(245,158,11,0.18)]",
+      "bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600 focus-visible:shadow-[0_0_0_4px_rgba(234,88,12,0.18)]",
   },
   danger: {
     icon: XCircle,
     wrapperClass: "smart-alert-danger",
-    iconClass: "bg-red-100 text-red-700",
+    iconClass: "bg-gradient-to-br from-red-100 to-rose-100 text-red-700",
     titleClass: "text-red-950",
     actionClass:
-      "bg-red-600 text-white hover:bg-red-700 focus-visible:shadow-[0_0_0_4px_rgba(220,38,38,0.16)]",
+      "bg-gradient-to-r from-rose-600 to-red-600 text-white hover:from-rose-700 hover:to-red-700 focus-visible:shadow-[0_0_0_4px_rgba(225,29,72,0.16)]",
   },
 };
 
@@ -109,7 +109,7 @@ export function SmartAlert({
             <Link
               href={actionHref}
               className={[
-                "inline-flex min-h-10 items-center justify-center rounded-2xl px-4 text-sm font-extrabold transition",
+                "inline-flex min-h-10 items-center justify-center rounded-2xl px-4 text-sm font-extrabold transition shadow-sm",
                 config.actionClass,
               ].join(" ")}
             >

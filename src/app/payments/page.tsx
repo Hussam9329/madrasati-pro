@@ -263,9 +263,9 @@ function PaymentCreateForm({ students }: PaymentCreateFormProps) {
       action={createPaymentAction}
       className="app-card overflow-hidden"
     >
-      <div className="border-b border-[var(--app-border-soft)] p-6">
+      <div className="border-b border-[var(--app-border-soft)] bg-gradient-to-l from-indigo-50/40 to-violet-50/20 p-6">
         <div className="flex items-start gap-3">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-700">
             <CreditCard size={24} />
           </div>
 
@@ -480,7 +480,7 @@ function PaymentCreateForm({ students }: PaymentCreateFormProps) {
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 border-t border-[var(--app-border-soft)] bg-slate-50/70 p-6 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 border-t border-[var(--app-border-soft)] bg-gradient-to-l from-indigo-50/30 to-violet-50/20 p-6 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm leading-7 text-[var(--app-text-muted)]">
           بعد تسجيل الدفعة، يمكنك متابعة حالتها وتحديثها لاحقًا.
         </p>
@@ -554,14 +554,14 @@ function PaymentsStats({
           label="المدفوع"
           amount={totalPaid}
           icon={Banknote}
-          iconClass="bg-emerald-100 text-emerald-700"
+          iconClass="bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-700"
         />
 
         <MoneyCard
           label="المعلّق"
           amount={totalPending}
           icon={Clock}
-          iconClass="bg-amber-100 text-amber-700"
+          iconClass="bg-gradient-to-br from-amber-100 to-orange-100 text-amber-700"
         />
 
         <MoneyCard
@@ -575,7 +575,7 @@ function PaymentsStats({
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="app-card app-card-hover p-5">
           <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-100 text-blue-700">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700">
               <Receipt size={22} />
             </div>
 
@@ -593,7 +593,7 @@ function PaymentsStats({
 
         <div className="app-card app-card-hover p-5">
           <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-700">
               <CheckCircle2 size={22} />
             </div>
 
@@ -760,9 +760,9 @@ function PaymentRow({ payment }: PaymentRowProps) {
   });
 
   return (
-    <article className="grid gap-4 p-5 transition hover:bg-slate-50/70 xl:grid-cols-[1fr_auto] xl:items-center">
+    <article className="grid gap-4 p-5 transition hover:bg-indigo-50/40 xl:grid-cols-[1fr_auto] xl:items-center">
       <div className="flex min-w-0 gap-4">
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-3xl bg-emerald-100 text-emerald-700">
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-3xl bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-700">
           <Wallet size={25} />
         </div>
 
@@ -859,7 +859,7 @@ function PaymentRow({ payment }: PaymentRowProps) {
 
           <button
             type="submit"
-            className="btn w-full border-red-100 bg-red-50 text-red-700 hover:bg-red-100"
+            className="btn w-full border-red-100 bg-gradient-to-r from-red-50 to-rose-50 text-red-700 hover:from-red-100 hover:to-rose-100"
           >
             <Trash2 size={17} />
             حذف

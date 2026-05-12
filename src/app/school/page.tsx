@@ -123,7 +123,7 @@ type SchoolFormProps = {
 function SchoolForm({ defaultValues }: SchoolFormProps) {
   return (
     <form action={saveSchoolAction} className="app-card overflow-hidden">
-      <div className="border-b border-[var(--app-border-soft)] p-6">
+      <div className="border-b border-[var(--app-border-soft)] bg-gradient-to-l from-indigo-50/40 to-violet-50/20 p-6">
         <h3 className="text-xl font-extrabold text-[var(--app-text)]">
           معلومات المدرسة
         </h3>
@@ -203,7 +203,7 @@ function SchoolForm({ defaultValues }: SchoolFormProps) {
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 border-t border-[var(--app-border-soft)] bg-slate-50/70 p-6 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 border-t border-[var(--app-border-soft)] bg-gradient-to-l from-indigo-50/30 to-violet-50/20 p-6 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm leading-7 text-[var(--app-text-muted)]">
           سيتم استخدام هذه البيانات لاحقًا في التقارير والطباعة.
         </p>
@@ -288,7 +288,7 @@ function SchoolOverviewCard({
     <section className="app-card p-6">
       <div className="grid gap-5 md:grid-cols-[1fr_220px] md:items-center">
         <div className="flex items-start gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-3xl bg-blue-100 text-blue-700">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700">
             <School size={27} />
           </div>
 
@@ -324,7 +324,7 @@ function SchoolOverviewCard({
 
           <div className="h-3 overflow-hidden rounded-full bg-slate-100">
             <div
-              className="h-full rounded-full bg-blue-600 transition-all"
+              className="h-full rounded-full bg-gradient-to-l from-indigo-500 to-violet-500 transition-all"
               style={{ width: `${completionPercentage}%` }}
             />
           </div>
@@ -362,7 +362,7 @@ function SchoolTips() {
     <aside className="flex flex-col gap-5">
       <div className="app-card p-6">
         <div className="mb-5 flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-700">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-100 to-violet-100 text-indigo-700">
             <Sparkles size={21} />
           </div>
 
@@ -386,7 +386,7 @@ function SchoolTips() {
                 key={tip.title}
                 className="flex gap-3 rounded-2xl border border-[var(--app-border-soft)] bg-white p-4"
               >
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-slate-600">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-100 to-slate-50 text-slate-600">
                   <Icon size={19} />
                 </div>
 

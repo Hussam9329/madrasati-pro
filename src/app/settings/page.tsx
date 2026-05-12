@@ -13,9 +13,9 @@ export default function SettingsPage() {
         />
 
         <section className="app-card overflow-hidden">
-          <div className="border-b border-[var(--app-border-soft)] p-6">
+          <div className="border-b border-[var(--app-border-soft)] bg-gradient-to-l from-indigo-50/40 to-violet-50/20 p-6">
             <div className="flex items-start gap-3">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-100 text-blue-700">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700">
                 <Settings size={24} />
               </div>
               <div>
@@ -31,7 +31,7 @@ export default function SettingsPage() {
 
           <div className="grid gap-6 p-6 md:grid-cols-2">
             <div className="flex items-start gap-4 rounded-2xl border border-[var(--app-border-soft)] p-5">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-700">
                 <Database size={20} />
               </div>
               <div>
@@ -43,7 +43,7 @@ export default function SettingsPage() {
             </div>
 
             <div className="flex items-start gap-4 rounded-2xl border border-[var(--app-border-soft)] p-5">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-700">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700">
                 <Globe size={20} />
               </div>
               <div>
@@ -55,7 +55,7 @@ export default function SettingsPage() {
             </div>
 
             <div className="flex items-start gap-4 rounded-2xl border border-[var(--app-border-soft)] p-5">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-100 to-orange-100 text-amber-700">
                 <ShieldCheck size={20} />
               </div>
               <div>
@@ -67,7 +67,7 @@ export default function SettingsPage() {
             </div>
 
             <div className="flex items-start gap-4 rounded-2xl border border-[var(--app-border-soft)] p-5">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-purple-100 text-purple-700">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-purple-100 to-violet-100 text-purple-700">
                 <Settings size={20} />
               </div>
               <div>

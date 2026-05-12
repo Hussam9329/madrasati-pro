@@ -71,9 +71,11 @@ export function EmptyState({
       ].join(" ")}
     >
       <div className="relative mb-6">
-        <div className="absolute inset-0 rounded-full bg-blue-200/50 blur-2xl" />
+        {/* Decorative background circles */}
+        <div className="absolute inset-0 -m-4 rounded-full bg-indigo-200/30 blur-2xl" />
+        <div className="absolute inset-0 -m-2 rounded-full bg-violet-200/20 blur-xl" />
 
-        <div className="relative flex h-20 w-20 items-center justify-center rounded-[28px] border border-blue-100 bg-gradient-to-br from-blue-50 to-indigo-50 text-blue-700 shadow-[var(--shadow-soft)]">
+        <div className="relative flex h-20 w-20 items-center justify-center rounded-[28px] border border-indigo-100 bg-gradient-to-br from-indigo-50 to-violet-100 text-indigo-700 shadow-[var(--shadow-soft)] animate-pulse-soft">
           <Icon size={34} />
         </div>
       </div>
@@ -128,7 +130,7 @@ export function CompactEmptyState({
         className ?? "",
       ].join(" ")}
     >
-      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-slate-600">
+      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-100 to-slate-50 text-slate-600">
         <Icon size={20} />
       </div>
 
