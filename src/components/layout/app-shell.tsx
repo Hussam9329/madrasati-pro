@@ -31,6 +31,7 @@ import {
   type NavigationGroup,
   type NavigationIcon,
 } from "@/lib/navigation";
+import { useTheme } from "@/components/layout/theme-provider";
 
 type AppShellProps = {
   children: React.ReactNode;
@@ -106,9 +107,9 @@ export function AppShell({ children }: AppShellProps) {
       </aside>
 
       <div className="min-h-screen lg:pr-[292px]">
-        <header className="sticky top-0 z-40 border-b border-indigo-100/60 glass">
+        <header className="sticky top-0 z-40 border-b border-indigo-100/60 glass dark:border-slate-700/60">
           {/* Subtle gradient border at bottom */}
-          <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-l from-transparent via-indigo-200/50 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-l from-transparent via-indigo-200/50 to-transparent dark:via-indigo-500/20" />
 
           <div className="flex min-h-[74px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
             <div className="flex min-w-0 items-center gap-3">
@@ -142,24 +143,16 @@ export function AppShell({ children }: AppShellProps) {
 
               <button
                 type="button"
-                className="hidden h-11 w-11 items-center justify-center rounded-2xl border border-[var(--app-border)] bg-white/80 text-[var(--app-text-muted)] transition hover:border-indigo-200 hover:text-[var(--primary)] hover:shadow-md hover:shadow-indigo-100/50 md:inline-flex"
+                className="hidden h-11 w-11 items-center justify-center rounded-2xl border border-[var(--app-border)] bg-[var(--color-app-card)] text-[var(--app-text-muted)] transition hover:border-indigo-300 hover:text-[var(--color-primary)] hover:shadow-md hover:shadow-indigo-200/30 md:inline-flex dark:hover:border-indigo-500/50 dark:hover:shadow-indigo-500/20"
                 aria-label="الإشعارات"
                 title="الإشعارات"
               >
                 <Bell size={19} />
               </button>
 
-              <button
-                type="button"
-                className="hidden h-11 w-11 items-center justify-center rounded-2xl border border-[var(--app-border)] bg-white/80 text-[var(--app-text-muted)] transition hover:border-indigo-200 hover:text-[var(--primary)] hover:shadow-md hover:shadow-indigo-100/50 md:inline-flex"
-                aria-label="وضع العرض"
-                title="وضع العرض"
-              >
-                <Sun size={18} />
-                <Moon className="hidden" size={18} />
-              </button>
+              <ThemeToggle />
 
-              <div className="hidden items-center gap-3 rounded-2xl border border-[var(--app-border)] bg-white/80 px-3 py-2 lg:flex">
+              <div className="hidden items-center gap-3 rounded-2xl border border-[var(--app-border)] bg-[var(--color-app-card)] px-3 py-2 lg:flex">
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-md shadow-indigo-500/20">
                   <School size={18} />
                 </div>
@@ -342,12 +335,29 @@ function MobileSidebarBackdrop({
     <div className="fixed inset-0 z-40 bg-slate-950/50 backdrop-blur-sm lg:hidden">
       <button
         type="button"
-        className="absolute left-4 top-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-slate-700 shadow-xl"
+        className="absolute left-4 top-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-slate-700 shadow-xl dark:bg-slate-800 dark:text-slate-200"
         aria-label="إغلاق القائمة"
         onClick={onClose}
       >
         <X size={20} />
       </button>
     </div>
+  );
+}
+
+function ThemeToggle() {
+  const { theme, toggleTheme } = useTheme();
+  const isDark = theme === "dark";
+
+  return (
+    <button
+      type="button"
+      className="hidden h-11 w-11 items-center justify-center rounded-2xl border border-[var(--app-border)] bg-[var(--color-app-card)] text-[var(--app-text-muted)] transition hover:border-indigo-300 hover:text-[var(--color-primary)] hover:shadow-md hover:shadow-indigo-200/30 md:inline-flex dark:hover:border-indigo-500/50 dark:hover:shadow-indigo-500/20"
+      aria-label={isDark ? "الوضع الفاتح" : "الوضع الداكن"}
+      title={isDark ? "الوضع الفاتح" : "الوضع الداكن"}
+      onClick={toggleTheme}
+    >
+      {isDark ? <Sun size={18} /> : <Moon size={18} />}
+    </button>
   );
 }
