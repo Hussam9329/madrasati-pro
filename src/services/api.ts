@@ -19,13 +19,13 @@ interface ApiResponse<T = unknown> {
 
 /**
  * مسح بيانات المصادقة من التخزين المحلي وإعادة التوجيه لصفحة تسجيل الدخول.
- * يُستخدم عند انتهاء الجلسة أو عند استلام استجابة 401.
+ * في وضع الوصول المفتوح، يتم إعادة المصادقة تلقائياً ك مدير.
  */
 function clearAuthAndRedirect() {
   if (typeof window === 'undefined') return;
 
   try {
-    // مسح حالة المصادقة من Zustand persist
+    // في وضع الوصول المفتوح، أعد تعيين المصادقة كمدير بدلاً من تسجيل الخروج
     const storageKey = 'madrasati-storage';
     const stored = localStorage.getItem(storageKey);
     if (stored) {
@@ -33,14 +33,18 @@ function clearAuthAndRedirect() {
         const parsed = JSON.parse(stored);
         if (parsed?.state?.auth) {
           parsed.state.auth = {
-            user: null,
-            token: null,
-            isAuthenticated: false,
+            user: {
+              id: 'default-admin',
+              username: 'admin',
+              name: 'مدير النظام',
+              role: 'مدير',
+            },
+            token: 'open-access',
+            isAuthenticated: true,
           };
           localStorage.setItem(storageKey, JSON.stringify(parsed));
         }
       } catch {
-        // إذا فشل التحليل، احذف كامل التخزين
         localStorage.removeItem(storageKey);
       }
     }
@@ -48,13 +52,10 @@ function clearAuthAndRedirect() {
     // تجاهل أخطاء localStorage
   }
 
-  // إظهار رسالة للمستخدم قبل إعادة التوجيه
-  toast.error('انتهت صلاحية الجلسة. سجّل الدخول مرة أخرى.');
-
-  // إعادة تحميل الصفحة لإعادة تصيير المكون مع حالة غير مصادق
+  // إعادة تحميل الصفحة لإعادة تصيير المكون
   setTimeout(() => {
-    window.location.href = '/';
-  }, 1500);
+    window.location.reload();
+  }, 1000);
 }
 
 /**
@@ -97,11 +98,31 @@ export async function apiFetch<T = unknown>(
     });
 
     // معالجة انتهاء الجلسة - 401
+    // في وضع الوصول المفتوح، أعد المحاولة بدون token
     if (response.status === 401) {
-      clearAuthAndRedirect();
+      // إذا كان الطلب يحتوي على token قديم، أعد المحاولة بدونه
+      if (token) {
+        const retryHeaders: Record<string, string> = {
+          'Content-Type': 'application/json',
+        };
+        // لا نرسل token في إعادة المحاولة
+        try {
+          const retryResponse = await fetch(url, {
+            ...fetchOptions,
+            headers: retryHeaders,
+          });
+          if (retryResponse.ok) {
+            const result = await retryResponse.json();
+            const data = (result.success === true && result.data !== undefined) ? result.data : result;
+            return { data: data as T, error: null, ok: true };
+          }
+        } catch {
+          // فشلت إعادة المحاولة، أكمل كخطأ عادي
+        }
+      }
       return {
         data: null,
-        error: 'انتهت صلاحية الجلسة. سجّل الدخول مرة أخرى.',
+        error: 'خطأ في المصادقة.',
         ok: false,
       };
     }
@@ -212,11 +233,30 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}): Pro
   });
 
   // معالجة انتهاء الجلسة - 401
-  if (response.status === 401) {
-    clearAuthAndRedirect();
-    // نُرجع response جديد لنمنع الأخطاء في الكود المستدعي
+  // في وضع الوصول المفتوح، أعد المحاولة بدون token
+  if (response.status === 401 && token) {
+    // أعد المحاولة بدون token
+    const retryHeaders = new Headers(options.headers || {});
+    if (!(options.body instanceof FormData)) {
+      if (!retryHeaders.has('Content-Type')) {
+        retryHeaders.set('Content-Type', 'application/json');
+      }
+    }
+    // لا نرسل Authorization header في إعادة المحاولة
+    retryHeaders.delete('Authorization');
+    try {
+      const retryResponse = await fetch(url, {
+        ...options,
+        headers: retryHeaders,
+      });
+      if (retryResponse.ok) {
+        return retryResponse;
+      }
+    } catch {
+      // فشلت إعادة المحاولة، أكمل كخطأ عادي
+    }
     return new Response(
-      JSON.stringify({ success: false, error: 'انتهت صلاحية الجلسة.' }),
+      JSON.stringify({ success: false, error: 'خطأ في المصادقة.' }),
       { status: 401, headers: { 'Content-Type': 'application/json' } }
     );
   }

@@ -12,7 +12,6 @@ import {
   BarChart3,
   Shield,
   Settings,
-  LogOut,
   Menu,
   X,
   ChevronLeft,
@@ -109,7 +108,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
     activePage,
     setActivePage,
     auth,
-    logout,
     sidebarOpen,
     setSidebarOpen,
     sidebarCollapsed,
@@ -591,17 +589,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
               </div>
 
               <Separator orientation="vertical" className="h-8 hidden sm:block" />
-
-              {/* Logout button */}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={logout}
-                className="text-gray-500 dark:text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 gap-1.5 h-9"
-              >
-                <LogOut className="w-4 h-4" />
-                <span className="hidden sm:inline text-xs">خروج</span>
-              </Button>
             </div>
           </div>
         </header>

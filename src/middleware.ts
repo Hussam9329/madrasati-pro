@@ -3,18 +3,24 @@ import { verifyToken } from '@/lib/auth';
 import { apiRateLimiter, getClientIp } from '@/lib/rate-limit';
 
 /**
- * Middleware لحماية مسارات API والتحقق من المصادقة والصلاحيات.
+ * Middleware لحماية مسارات API.
  *
- * المسارات العامة (لا تتطلب مصادقة):
- *   - GET /api              (health check)
- *   - POST /api/auth/login  (login)
- *
- * جميع مسارات /api/* الأخرى تتطلب Bearer token صالح.
+ * النظام مفتوح للجميع بدون تسجيل دخول.
+ * إذا لم يكن هناك token صالح، يُحقن مستخدم مدير افتراضي تلقائياً.
  *
  * ميزات إضافية:
  *   - Rate limiting لمنع إساءة الاستخدام
- *   - التحقق من صحة JWT قبل الوصول لأي مسار محمي
+ *   - التحقق من صحة JWT إذا وُجد، وإلا يُستخدم حساب المدير الافتراضي
  */
+
+// Default admin user injected when no auth token is present
+const DEFAULT_ADMIN = {
+  id: 'default-admin',
+  username: 'admin',
+  name: 'مدير النظام',
+  role: 'مدير',
+};
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -48,38 +54,20 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Extract Bearer token from Authorization header
+  // Try to extract and verify Bearer token
   const authHeader = request.headers.get('authorization');
-  if (!authHeader?.startsWith('Bearer ')) {
-    return NextResponse.json(
-      { success: false, error: 'انتهت صلاحية الجلسة. سجّل الدخول مرة أخرى.' },
-      { status: 401 }
-    );
-  }
+  const token = authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
+  const user = token ? verifyToken(token) : null;
 
-  const token = authHeader.split(' ')[1];
-  if (!token) {
-    return NextResponse.json(
-      { success: false, error: 'انتهت صلاحية الجلسة. سجّل الدخول مرة أخرى.' },
-      { status: 401 }
-    );
-  }
-
-  // Verify token
-  const user = verifyToken(token);
-  if (!user) {
-    return NextResponse.json(
-      { success: false, error: 'انتهت صلاحية الجلسة. سجّل الدخول مرة أخرى.' },
-      { status: 401 }
-    );
-  }
+  // If no valid token, inject default admin user (open access)
+  const effectiveUser = user || DEFAULT_ADMIN;
 
   // Add user info to request headers for downstream handlers
   const requestHeaders = new Headers(request.headers);
-  requestHeaders.set('x-user-id', user.id);
-  requestHeaders.set('x-user-role', user.role);
-  requestHeaders.set('x-user-name', encodeURIComponent(user.name));
-  requestHeaders.set('x-user-username', user.username);
+  requestHeaders.set('x-user-id', effectiveUser.id);
+  requestHeaders.set('x-user-role', effectiveUser.role);
+  requestHeaders.set('x-user-name', encodeURIComponent(effectiveUser.name));
+  requestHeaders.set('x-user-username', effectiveUser.username);
 
   return NextResponse.next({
     request: {

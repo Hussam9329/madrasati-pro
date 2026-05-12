@@ -1,11 +1,10 @@
 'use client';
 
-import { useMemo, useEffect } from 'react';
+import { useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { useAppStore } from '@/lib/store';
-import type { PageKey, AuthUser } from '@/types';
+import type { PageKey } from '@/types';
 import { hasPermission } from '@/lib/auth';
-import LoginPage from '@/components/school/LoginPage';
 import AppLayout from '@/components/school/AppLayout';
 
 // Lazy load page components - only loaded when the user navigates to them
@@ -119,19 +118,27 @@ function PageRenderer({ page }: { page: PageKey }) {
   return <PageComponent />;
 }
 
+// Default admin user for open access (no login required)
+const DEFAULT_USER = {
+  id: 'default-admin',
+  username: 'admin',
+  name: 'مدير النظام',
+  role: 'مدير' as const,
+};
+
 export default function Home() {
   const { auth, setAuth, activePage, setActivePage } = useAppStore();
 
-  const handleLogin = useMemo(
-    () => (user: AuthUser, token: string) => {
+  // Auto-authenticate as admin if not already authenticated
+  useEffect(() => {
+    if (!auth.isAuthenticated) {
       setAuth({
-        user,
-        token,
+        user: DEFAULT_USER,
+        token: 'open-access',
         isAuthenticated: true,
       });
-    },
-    [setAuth]
-  );
+    }
+  }, [auth.isAuthenticated, setAuth]);
 
   // Redirect to dashboard if user tries to access a page they don't have permission for
   useEffect(() => {
@@ -146,12 +153,7 @@ export default function Home() {
     }
   }, [auth.isAuthenticated, auth.user?.role, activePage, setActivePage]);
 
-  // Show login page if not authenticated
-  if (!auth.isAuthenticated) {
-    return <LoginPage onLogin={handleLogin} />;
-  }
-
-  // Show main app
+  // Show main app directly (no login page)
   return (
     <AppLayout>
       <PageRenderer page={activePage} />

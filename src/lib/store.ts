@@ -39,15 +39,30 @@ interface AppState {
 export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
-      // Auth
+      // Auth — default authenticated as admin (open access)
       auth: {
-        user: null,
-        token: null,
-        isAuthenticated: false,
+        user: {
+          id: 'default-admin',
+          username: 'admin',
+          name: 'مدير النظام',
+          role: 'مدير',
+        },
+        token: 'open-access',
+        isAuthenticated: true,
       },
       setAuth: (auth) => set({ auth }),
       logout: () => set({
-        auth: { user: null, token: null, isAuthenticated: false },
+        // Keep authenticated even on "logout" — open access
+        auth: {
+          user: {
+            id: 'default-admin',
+            username: 'admin',
+            name: 'مدير النظام',
+            role: 'مدير',
+          },
+          token: 'open-access',
+          isAuthenticated: true,
+        },
         activePage: 'dashboard',
       }),
 

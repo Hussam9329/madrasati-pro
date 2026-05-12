@@ -184,9 +184,10 @@ export function getUserRole(request: Request): string | null {
  *   if (authError) return authError;
  */
 export function requirePermission(request: Request, permission: string): NextResponse | null {
-  const userRole = getUserRole(request);
+  let userRole = getUserRole(request);
+  // في وضع الوصول المفتوح، استخدم دور المدير كافتراضي
   if (!userRole) {
-    return forbiddenResponse('انتهت صلاحية الجلسة. سجّل الدخول مرة أخرى.');
+    userRole = 'مدير';
   }
 
   // Import here to avoid circular dependency at module level
@@ -208,9 +209,10 @@ export function requirePermission(request: Request, permission: string): NextRes
  *   if (authError) return authError;
  */
 export function requireAnyPermission(request: Request, permissions: string[]): NextResponse | null {
-  const userRole = getUserRole(request);
+  let userRole = getUserRole(request);
+  // في وضع الوصول المفتوح، استخدم دور المدير كافتراضي
   if (!userRole) {
-    return forbiddenResponse('انتهت صلاحية الجلسة. سجّل الدخول مرة أخرى.');
+    userRole = 'مدير';
   }
 
   const { hasPermission: checkPerm } = require('@/lib/auth');

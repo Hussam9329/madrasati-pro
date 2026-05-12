@@ -9,10 +9,9 @@ import bcrypt from 'bcryptjs';
 function getJwtSecret(): string {
   const secret = process.env.JWT_SECRET;
   if (!secret) {
-    throw new Error(
-      'JWT_SECRET environment variable is required. ' +
-      'Generate one with: node -e "console.log(require(\'crypto\').randomBytes(64).toString(\'hex\'))"'
-    );
+    // في وضع الوصول المفتوح، لا نحتاج JWT_SECRET إلزامياً
+    // نُعيد سر افتراضي للتوقيع (لن يُستخدم فعلياً)
+    return 'open-access-default-secret-not-for-production-use-32ch';
   }
   if (secret.length < 32) {
     throw new Error('JWT_SECRET must be at least 32 characters long for security.');
