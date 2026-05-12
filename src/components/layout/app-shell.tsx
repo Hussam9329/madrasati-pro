@@ -90,7 +90,7 @@ export function AppShell({ children }: AppShellProps) {
 
       <aside
         className={[
-          "fixed right-0 top-0 z-50 h-screen w-[292px] border-l border-white/[0.06] text-[var(--sidebar-text)] shadow-[var(--shadow-sidebar)] transition-transform duration-300",
+          "fixed right-0 top-0 z-50 h-screen w-[292px] border-l border-white/[0.06] text-[var(--color-sidebar-text)] shadow-[var(--shadow-sidebar)] transition-transform duration-300",
           "bg-gradient-to-b from-[#0f1535] via-[#0c1222] to-[#080d1a]",
           isMobileSidebarOpen ? "translate-x-0" : "translate-x-full",
           "lg:translate-x-0",
@@ -207,7 +207,7 @@ function SidebarContent({ pathname, onNavigate }: SidebarContentProps) {
             <p className="truncate text-lg font-extrabold text-white">
               مدرستي برو
             </p>
-            <p className="mt-1 truncate text-xs font-medium text-[var(--sidebar-muted)]">
+            <p className="mt-1 truncate text-xs font-medium text-[var(--color-sidebar-muted)]">
               تجربة مدرسية أسرع وأسهل
             </p>
           </div>
@@ -228,7 +228,7 @@ function SidebarContent({ pathname, onNavigate }: SidebarContentProps) {
             return (
               <div key={group}>
                 <div className="mb-2 px-3">
-                  <p className="text-[11px] font-extrabold uppercase tracking-wide text-[var(--sidebar-muted)]">
+                  <p className="text-[11px] font-extrabold uppercase tracking-wide text-[var(--color-sidebar-muted)]">
                     {navigationGroups[group].title}
                   </p>
                 </div>
@@ -250,7 +250,7 @@ function SidebarContent({ pathname, onNavigate }: SidebarContentProps) {
                           "group flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-bold transition-all duration-200",
                           isActive
                             ? "bg-gradient-to-l from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-600/20"
-                            : "text-[var(--sidebar-text)] hover:bg-white/[0.06] hover:text-white",
+                            : "text-[var(--color-sidebar-text)] hover:bg-white/[0.06] hover:text-white",
                         ].join(" ")}
                       >
                         <span
@@ -258,7 +258,7 @@ function SidebarContent({ pathname, onNavigate }: SidebarContentProps) {
                             "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-all duration-200",
                             isActive
                               ? "bg-white/20 text-white shadow-sm"
-                              : "bg-white/[0.06] text-[var(--sidebar-muted)] group-hover:bg-white/[0.1] group-hover:text-white",
+                              : "bg-white/[0.06] text-[var(--color-sidebar-muted)] group-hover:bg-white/[0.1] group-hover:text-white",
                           ].join(" ")}
                         >
                           <Icon size={18} />
@@ -296,7 +296,7 @@ function SidebarContent({ pathname, onNavigate }: SidebarContentProps) {
               <p className="text-sm font-extrabold">تلميحة ذكية</p>
             </div>
 
-            <p className="relative text-xs leading-6 text-[var(--sidebar-muted)]">
+            <p className="relative text-xs leading-6 text-[var(--color-sidebar-muted)]">
               اتبع الترتيب من الأعلى للأسفل: المواد، الصفوف، المدرسون، ثم الطلاب.
               هكذا يبقى النظام مرتبًا من أول يوم.
             </p>
