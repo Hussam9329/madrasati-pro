@@ -13,6 +13,7 @@ import {
   Trash2,
   UserRound,
 } from "lucide-react";
+import { safeQuery } from "@/lib/db";
 import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -52,9 +53,9 @@ export default async function TeachersPage({
   const query = searchParams?.q?.trim() ?? "";
 
   const [teachers, counts, subjects] = await Promise.all([
-    getTeachers(),
-    getTeachersCount(),
-    getActiveSubjects(),
+    safeQuery(() => getTeachers(), []),
+    safeQuery(() => getTeachersCount(), { total: 0, active: 0, inactive: 0, withSubjects: 0, withoutSubjects: 0 }),
+    safeQuery(() => getActiveSubjects(), []),
   ]);
 
   const filteredTeachers = query

@@ -10,6 +10,7 @@ import {
   School,
   Sparkles,
 } from "lucide-react";
+import { safeQuery } from "@/lib/db";
 import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/layout/page-header";
 import { SmartAlert } from "@/components/shared/smart-alert";
@@ -24,7 +25,10 @@ type SchoolPageProps = {
 };
 
 export default async function SchoolPage({ searchParams }: SchoolPageProps) {
-  const { school, summary, completionPercentage } = await getSchoolOverview();
+  const { school, summary, completionPercentage } = await safeQuery(
+    () => getSchoolOverview(),
+    { school: null, summary: null, completionPercentage: 0 },
+  );
 
   const hasSavedMessage = searchParams?.saved === "1";
   const hasErrorMessage = searchParams?.error === "validation";

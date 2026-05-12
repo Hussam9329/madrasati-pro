@@ -12,6 +12,7 @@ import {
   UserRound,
   XCircle,
 } from "lucide-react";
+import { safeQuery } from "@/lib/db";
 import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -55,15 +56,15 @@ export default async function AttendancePage({
   const date = searchParams?.date?.trim() ?? "";
 
   const [records, sections, schedules, counts, students] = await Promise.all([
-    getAttendanceRecords({
+    safeQuery(() => getAttendanceRecords({
       query,
       status,
       date,
-    }),
-    getSections(),
-    getSchedules(),
-    getAttendanceCounts(),
-    getStudents(),
+    }), []),
+    safeQuery(() => getSections(), []),
+    safeQuery(() => getSchedules(), []),
+    safeQuery(() => getAttendanceCounts(), { total: 0, present: 0, absent: 0, late: 0, excused: 0 }),
+    safeQuery(() => getStudents(), []),
   ]);
 
   const activeSections = sections.filter((s) => s.isActive);

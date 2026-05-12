@@ -12,6 +12,7 @@ import {
   Search,
   Trash2,
 } from "lucide-react";
+import { safeQuery } from "@/lib/db";
 import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -46,8 +47,8 @@ export default async function SubjectsPage({
 }: SubjectsPageProps) {
   const query = searchParams?.q?.trim() ?? "";
   const [subjects, counts] = await Promise.all([
-    searchSubjects(query),
-    getSubjectsCount(),
+    safeQuery(() => searchSubjects(query), []),
+    safeQuery(() => getSubjectsCount(), { total: 0, active: 0, inactive: 0 }),
   ]);
 
   const hasSubjects = counts.total > 0;

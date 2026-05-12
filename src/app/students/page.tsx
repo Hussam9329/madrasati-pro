@@ -18,7 +18,10 @@ import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { SmartAlert } from "@/components/shared/smart-alert";
-import { getSections } from "@/services/class-service";
+import { safeQuery } from "@/lib/db";
+import {
+  getSections
+} from "@/services/class-service";
 import {
   createStudent,
   deleteStudent,
@@ -56,12 +59,12 @@ export default async function StudentsPage({
   const status = searchParams?.status?.trim() ?? "";
 
   const [students, sections, counts] = await Promise.all([
-    getStudents({
+    safeQuery(() => getStudents({
       query,
       status,
-    }),
-    getSections(),
-    getStudentsCount(),
+    }), []),
+    safeQuery(() => getSections(), []),
+    safeQuery(() => getStudentsCount(), { total: 0, active: 0, inactive: 0, graduated: 0, transferred: 0, withoutSection: 0 }),
   ]);
 
   const activeSections = sections.filter((section) => section.isActive);

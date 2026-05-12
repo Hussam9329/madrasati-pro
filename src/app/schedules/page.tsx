@@ -15,6 +15,7 @@ import {
   Trash2,
   Users,
 } from "lucide-react";
+import { safeQuery } from "@/lib/db";
 import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -58,14 +59,14 @@ export default async function SchedulesPage({
   const dayOfWeek = searchParams?.dayOfWeek?.trim() ?? "";
 
   const [schedules, counts, sections, subjects, teachers] = await Promise.all([
-    getSchedules({
+    safeQuery(() => getSchedules({
       query: query || undefined,
       dayOfWeek: dayOfWeek || undefined,
-    }),
-    getSchedulesCount(),
-    getSections(),
-    getActiveSubjects(),
-    getActiveTeachers(),
+    }), []),
+    safeQuery(() => getSchedulesCount(), { total: 0, active: 0, inactive: 0, today: 0 }),
+    safeQuery(() => getSections(), []),
+    safeQuery(() => getActiveSubjects(), []),
+    safeQuery(() => getActiveTeachers(), []),
   ]);
 
   const hasSchedules = counts.total > 0;

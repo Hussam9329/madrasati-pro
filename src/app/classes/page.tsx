@@ -13,6 +13,7 @@ import {
   Trash2,
   Users,
 } from "lucide-react";
+import { safeQuery } from "@/lib/db";
 import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -56,10 +57,10 @@ export default async function ClassesPage({ searchParams }: ClassesPageProps) {
   const query = searchParams?.q?.trim() ?? "";
 
   const [classes, activeClasses, sections, counts] = await Promise.all([
-    searchClasses(query),
-    getActiveClasses(),
-    getSections(),
-    getClassesCount(),
+    safeQuery(() => searchClasses(query), []),
+    safeQuery(() => getActiveClasses(), []),
+    safeQuery(() => getSections(), []),
+    safeQuery(() => getClassesCount(), { total: 0, active: 0, inactive: 0, sections: 0 }),
   ]);
 
   const hasClasses = counts.total > 0;

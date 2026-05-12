@@ -15,6 +15,7 @@ import {
   UserRound,
   XCircle,
 } from "lucide-react";
+import { safeQuery } from "@/lib/db";
 import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -55,15 +56,15 @@ export default async function GradesPage({ searchParams }: GradesPageProps) {
   const term = searchParams?.term?.trim() ?? "";
 
   const [grades, counts, students, subjects, teachers] = await Promise.all([
-    getGrades({
+    safeQuery(() => getGrades({
       query,
       examType: examType || undefined,
       term: term || undefined,
-    }),
-    getGradesCount(),
-    getActiveStudents(),
-    getActiveSubjects(),
-    getActiveTeachers(),
+    }), []),
+    safeQuery(() => getGradesCount(), { total: 0, excellent: 0, passed: 0, failed: 0, averagePercentage: 0 }),
+    safeQuery(() => getActiveStudents(), []),
+    safeQuery(() => getActiveSubjects(), []),
+    safeQuery(() => getActiveTeachers(), []),
   ]);
 
   const hasGrades = counts.total > 0;

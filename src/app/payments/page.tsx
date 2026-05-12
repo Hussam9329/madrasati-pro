@@ -16,6 +16,7 @@ import {
   UserRound,
   Wallet,
 } from "lucide-react";
+import { safeQuery } from "@/lib/db";
 import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -64,14 +65,14 @@ export default async function PaymentsPage({
   const overdueOnly = searchParams?.overdueOnly === "1";
 
   const [payments, students, counts] = await Promise.all([
-    getPayments({
+    safeQuery(() => getPayments({
       query,
       feeType,
       status,
       overdueOnly,
-    }),
-    getStudents(),
-    getPaymentsCount(),
+    }), []),
+    safeQuery(() => getStudents(), []),
+    safeQuery(() => getPaymentsCount(), { total: 0, paid: 0, partial: 0, pending: 0, refunded: 0, overdue: 0, totalPaid: 0, totalPending: 0, totalRefunded: 0 }),
   ]);
 
   const hasPayments = counts.total > 0;

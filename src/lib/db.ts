@@ -41,6 +41,13 @@ export async function ensureDatabase() {
   if (process.env.VERCEL) {
     try {
       const { execSync } = await import("child_process");
+      // First, generate the Prisma client if missing
+      try {
+        execSync("npx prisma generate", { stdio: "pipe" });
+      } catch {
+        // Generate may fail if already done, that's ok
+      }
+      // Then push the schema to create/migrate the database
       execSync("npx prisma db push --accept-data-loss --skip-generate", {
         stdio: "pipe",
         env: {
@@ -49,8 +56,22 @@ export async function ensureDatabase() {
         },
       });
     } catch {
-      // Database might already exist
+      // Database might already exist or be unavailable
+      // On Vercel, the database lives in /tmp and is ephemeral
     }
+  }
+}
+
+/**
+ * Safely executes a database query with a fallback value.
+ * Used to prevent Server Component crashes when the database is unavailable
+ * (e.g., on Vercel serverless where SQLite in /tmp may not be ready).
+ */
+export async function safeQuery<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
+  try {
+    return await fn();
+  } catch {
+    return fallback;
   }
 }
 
