@@ -8,7 +8,7 @@ const globalForPrisma = globalThis as unknown as {
 // Validate DATABASE_URL format before creating client
 function isValidDatabaseUrl(url: string): boolean {
   if (!url) return false
-  return url.startsWith('postgresql://') || url.startsWith('postgres://')
+  return url.startsWith('postgresql://') || url.startsWith('postgres://') || url.startsWith('file:')
 }
 
 // Lazy-initialize PrismaClient to ensure env vars are loaded
