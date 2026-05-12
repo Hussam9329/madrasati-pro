@@ -6,7 +6,6 @@ import {
   BookOpen,
   CheckCircle2,
   FileText,
-  Hash,
   Layers3,
   Power,
   Search,
@@ -25,7 +24,6 @@ import {
   toggleSubjectStatus,
 } from "@/services/subject-service";
 import {
-  formatSubjectCode,
   getSubjectStatus,
   getSubjectStatusLabel,
   type SubjectFormInput,
@@ -106,7 +104,7 @@ export default async function SubjectsPage({
           <EmptyState
             icon="search"
             title="لا توجد نتائج مطابقة للبحث"
-            description="جرّب البحث باسم المادة أو رمزها، أو امسح حقل البحث لعرض كل المواد."
+            description="جرّب البحث باسم المادة، أو امسح حقل البحث لعرض كل المواد."
             actionLabel="عرض كل المواد"
             actionHref="/subjects"
           />
@@ -123,7 +121,6 @@ async function createSubjectAction(formData: FormData) {
 
   const input: SubjectFormInput = {
     name: String(formData.get("name") ?? ""),
-    code: String(formData.get("code") ?? ""),
     description: String(formData.get("description") ?? ""),
     isActive: formData.get("isActive") === "on",
   };
@@ -259,7 +256,7 @@ function SubjectCreateForm() {
             </h3>
 
             <p className="mt-1 text-sm leading-7 text-[var(--app-text-muted)]">
-              اكتب اسم المادة، ويمكنك إضافة رمز مختصر ووصف بسيط.
+              اكتب اسم المادة، ويمكنك إضافة وصف بسيط.
             </p>
           </div>
         </div>
@@ -282,23 +279,6 @@ function SubjectCreateForm() {
             maxLength={80}
             placeholder="مثال: الرياضيات"
             className="input"
-          />
-        </div>
-
-        <div>
-          <label
-            htmlFor="code"
-            className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
-          >
-            رمز المادة
-          </label>
-
-          <input
-            id="code"
-            name="code"
-            maxLength={20}
-            placeholder="مثال: MATH"
-            className="input ltr text-right"
           />
         </div>
 
@@ -441,7 +421,7 @@ function SubjectSearchForm({ query }: SubjectSearchFormProps) {
             id="q"
             name="q"
             defaultValue={query}
-            placeholder="ابحث باسم المادة أو الرمز..."
+            placeholder="ابحث باسم المادة..."
             className="input pr-11"
           />
         </div>
@@ -514,11 +494,6 @@ function SubjectRow({ subject }: SubjectRowProps) {
           </div>
 
           <div className="mt-2 flex flex-wrap gap-2 text-sm text-[var(--app-text-muted)]">
-            <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 font-bold">
-              <Hash size={14} />
-              {formatSubjectCode(subject.code)}
-            </span>
-
             <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 font-bold">
               <FileText size={14} />
               {formatDate(subject.createdAt)}

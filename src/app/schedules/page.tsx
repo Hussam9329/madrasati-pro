@@ -272,7 +272,7 @@ function SchedulesFeedback({
 
 type ScheduleCreateFormProps = {
   sections: SectionListItem[];
-  subjects: { id: string; name: string; code: string | null }[];
+  subjects: { id: string; name: string }[];
   teachers: Teacher[];
 };
 
@@ -394,7 +394,6 @@ function ScheduleCreateForm({
             {subjects.map((subject) => (
               <option key={subject.id} value={subject.id}>
                 {subject.name}
-                {subject.code ? ` (${subject.code})` : ""}
               </option>
             ))}
           </select>
@@ -729,11 +728,6 @@ function ScheduleRow({ schedule }: ScheduleRowProps) {
               </span>
             ) : null}
 
-            {schedule.subjectCode ? (
-              <span className="badge bg-slate-100 text-slate-600">
-                {schedule.subjectCode}
-              </span>
-            ) : null}
 
             {schedule.classLevel ? (
               <span className="badge bg-slate-100 text-slate-600">

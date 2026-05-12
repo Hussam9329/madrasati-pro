@@ -44,7 +44,6 @@ export type ScheduleListItem = {
 
   subjectId: string;
   subjectName: string;
-  subjectCode: string | null;
 
   teacherId: string;
   teacherName: string;

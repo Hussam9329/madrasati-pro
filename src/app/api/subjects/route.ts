@@ -40,7 +40,6 @@ export async function POST(request: NextRequest) {
 
     const result = await createSubject({
       name: body.name ?? "",
-      code: body.code ?? "",
       description: body.description ?? "",
       isActive: body.isActive ?? true,
     });
@@ -80,7 +79,6 @@ export async function PUT(request: NextRequest) {
 
     const result = await updateSubject(id, {
       name: body.name ?? "",
-      code: body.code ?? "",
       description: body.description ?? "",
       isActive: body.isActive ?? true,
     });

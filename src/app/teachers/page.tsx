@@ -427,12 +427,6 @@ function TeacherCreateForm({ subjects }: TeacherCreateFormProps) {
                       <span className="text-sm font-bold text-[var(--app-text)]">
                         {subject.name}
                       </span>
-
-                      {subject.code ? (
-                        <span className="text-xs text-[var(--app-text-soft)]">
-                          ({subject.code})
-                        </span>
-                      ) : null}
                     </span>
                   </label>
                 ))}

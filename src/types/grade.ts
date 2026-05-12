@@ -55,7 +55,6 @@ export type GradeListItem = {
 
   subjectId: string;
   subjectName: string;
-  subjectCode: string | null;
 
   teacherId: string | null;
   teacherName: string | null;

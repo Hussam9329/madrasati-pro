@@ -40,7 +40,6 @@ export async function getSubjects(): Promise<SubjectListItem[]> {
   return subjects.map((subject) => ({
     id: subject.id,
     name: subject.name,
-    code: subject.code,
     description: subject.description,
     isActive: subject.isActive,
     teachersCount: subject._count.teacherSubjects,
@@ -120,7 +119,6 @@ export async function createSubject(
     const subject = await db.subject.create({
       data: {
         name: data.name,
-        code: data.code ?? null,
         description: data.description ?? null,
         isActive: data.isActive ?? true,
       },
@@ -181,7 +179,6 @@ export async function updateSubject(
       },
       data: {
         name: data.name,
-        code: data.code ?? null,
         description: data.description ?? null,
         isActive: data.isActive ?? true,
       },
@@ -307,11 +304,6 @@ export async function searchSubjects(query: string): Promise<SubjectListItem[]> 
           },
         },
         {
-          code: {
-            contains: normalizedQuery,
-          },
-        },
-        {
           description: {
             contains: normalizedQuery,
           },
@@ -335,7 +327,6 @@ export async function searchSubjects(query: string): Promise<SubjectListItem[]> 
   return subjects.map((subject) => ({
     id: subject.id,
     name: subject.name,
-    code: subject.code,
     description: subject.description,
     isActive: subject.isActive,
     teachersCount: subject._count.teacherSubjects,

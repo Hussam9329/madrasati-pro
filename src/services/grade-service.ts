@@ -251,7 +251,6 @@ function toGradeListItem(grade: GradeWithRelations): GradeListItem {
 
     subjectId: grade.subjectId,
     subjectName: grade.subject.name,
-    subjectCode: grade.subject.code,
 
     teacherId: grade.teacherId,
     teacherName: grade.teacher?.fullName ?? null,

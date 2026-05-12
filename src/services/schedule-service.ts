@@ -443,13 +443,6 @@ function buildScheduleWhere(
         },
       },
       {
-        subject: {
-          code: {
-            contains: query,
-          },
-        },
-      },
-      {
         teacher: {
           fullName: {
             contains: query,
@@ -646,7 +639,6 @@ function toScheduleListItem(
 
     subjectId: schedule.subjectId,
     subjectName: schedule.subject.name,
-    subjectCode: schedule.subject.code,
 
     teacherId: schedule.teacherId,
     teacherName: schedule.teacher.fullName,

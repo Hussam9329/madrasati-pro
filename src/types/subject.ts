@@ -1,7 +1,6 @@
 export type Subject = {
   id: string;
   name: string;
-  code: string | null;
   description: string | null;
   isActive: boolean;
   createdAt: Date;
@@ -10,7 +9,6 @@ export type Subject = {
 
 export type SubjectFormInput = {
   name: string;
-  code?: string;
   description?: string;
   isActive?: boolean;
 };
@@ -18,7 +16,6 @@ export type SubjectFormInput = {
 export type SubjectListItem = {
   id: string;
   name: string;
-  code: string | null;
   description: string | null;
   isActive: boolean;
   teachersCount: number;
@@ -37,7 +34,6 @@ export type SubjectStatus = "active" | "inactive";
 export function getEmptySubjectForm(): SubjectFormInput {
   return {
     name: "",
-    code: "",
     description: "",
     isActive: true,
   };
@@ -48,7 +44,6 @@ export function normalizeSubjectInput(
 ): SubjectFormInput {
   return {
     name: input.name.trim(),
-    code: input.code?.trim() || undefined,
     description: input.description?.trim() || undefined,
     isActive: input.isActive ?? true,
   };
@@ -70,10 +65,6 @@ export function validateSubjectInput(
 
   if (normalized.name && normalized.name.length > 80) {
     errors.name = "اسم المادة طويل جدًا.";
-  }
-
-  if (normalized.code && normalized.code.length > 20) {
-    errors.code = "رمز المادة يجب ألا يتجاوز 20 حرفًا.";
   }
 
   if (normalized.description && normalized.description.length > 300) {
@@ -103,10 +94,6 @@ export function getSubjectStatusTone(
   status: SubjectStatus,
 ): "success" | "warning" {
   return status === "active" ? "success" : "warning";
-}
-
-export function formatSubjectCode(code?: string | null): string {
-  return code?.trim() || "بدون رمز";
 }
 
 export function canDeleteSubject(subject: {
@@ -140,12 +127,4 @@ export function canDeleteSubject(subject: {
   return {
     allowed: true,
   };
-}
-
-export function getSubjectDisplayName(subject: Pick<Subject, "name" | "code">) {
-  if (subject.code) {
-    return `${subject.name} - ${subject.code}`;
-  }
-
-  return subject.name;
 }

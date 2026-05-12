@@ -26,7 +26,6 @@ model School {
 model Subject {
   id          String  @id @default(cuid())
   name        String  @unique
-  code        String?
   description String?
   isActive    Boolean @default(true)
 

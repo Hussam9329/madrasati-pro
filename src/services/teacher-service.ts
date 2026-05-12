@@ -81,7 +81,6 @@ export async function getTeacherDetails(
     subjects: teacher.teacherSubjects.map((item) => ({
       id: item.subject.id,
       name: item.subject.name,
-      code: item.subject.code,
     })),
     subjectsCount: teacher._count.teacherSubjects,
     schedulesCount: teacher._count.schedules,
@@ -503,7 +502,6 @@ function toTeacherListItem(teacher: TeacherWithRelations): TeacherListItem {
     subjects: teacher.teacherSubjects.map((item) => ({
       id: item.subject.id,
       name: item.subject.name,
-      code: item.subject.code,
     })),
     subjectsCount: teacher._count.teacherSubjects,
     schedulesCount: teacher._count.schedules,

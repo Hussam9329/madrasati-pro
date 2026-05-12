@@ -420,7 +420,6 @@ function GradeCreateForm({ students, subjects, teachers }: GradeCreateFormProps)
               {subjects.map((subject) => (
                 <option key={subject.id} value={subject.id}>
                   {subject.name}
-                  {subject.code ? ` (${subject.code})` : ""}
                 </option>
               ))}
             </select>

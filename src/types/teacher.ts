@@ -36,7 +36,6 @@ export type TeacherListItem = {
   subjects: {
     id: string;
     name: string;
-    code: string | null;
   }[];
   subjectsCount: number;
   schedulesCount: number;
@@ -47,7 +46,6 @@ export type TeacherDetails = Teacher & {
   subjects: {
     id: string;
     name: string;
-    code: string | null;
   }[];
   subjectsCount: number;
   schedulesCount: number;
@@ -189,7 +187,6 @@ export function formatTeacherSalary(salary?: number | null): string {
 export function formatTeacherSubjects(
   subjects: {
     name: string;
-    code?: string | null;
   }[],
 ): string {
   if (subjects.length === 0) {
@@ -197,13 +194,7 @@ export function formatTeacherSubjects(
   }
 
   return subjects
-    .map((subject) => {
-      if (subject.code) {
-        return `${subject.name} (${subject.code})`;
-      }
-
-      return subject.name;
-    })
+    .map((subject) => subject.name)
     .join("، ");
 }
 
