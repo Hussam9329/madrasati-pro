@@ -793,6 +793,7 @@ export async function scanAttendanceByStudentCode(
 ): Promise<AttendanceScanResult> {
   const studentCode = input.studentCode?.trim();
   const mode = input.mode;
+  const source = input.source ?? "qr";
 
   if (!studentCode || !studentCode.startsWith("MarinaSchoolStd-")) {
     return {
@@ -881,7 +882,7 @@ export async function scanAttendanceByStudentCode(
     if (existingRecord && !existingRecord.checkInAt) {
       const updated = await db.attendanceRecord.update({
         where: { id: existingRecord.id },
-        data: { checkInAt: now, status: "present", source: "qr" },
+        data: { checkInAt: now, status: "present", source },
       });
       return {
         ok: true,
@@ -901,7 +902,7 @@ export async function scanAttendanceByStudentCode(
         studentId: student.id,
         status: "present",
         checkInAt: now,
-        source: "qr",
+        source,
       },
     });
     return {

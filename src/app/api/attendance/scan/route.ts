@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { studentCode, mode } = body;
+  const { studentCode, mode, source } = body;
 
   if (!studentCode || !mode) {
     return NextResponse.json(
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const input: AttendanceScanInput = { studentCode, mode };
+  const input: AttendanceScanInput = { studentCode, mode, source: source || "qr" };
   const result = await scanAttendanceByStudentCode(input);
 
   return NextResponse.json(result);

@@ -18,7 +18,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { SmartAlert } from "@/components/shared/smart-alert";
-import { QrAttendanceScanner } from "@/components/attendance/qr-attendance-scanner";
+import { AttendanceEntryPanel } from "@/components/attendance/attendance-entry-panel";
 import {
   createAttendanceRecord,
   deleteAttendanceRecord,
@@ -93,23 +93,14 @@ export default async function AttendancePage({
         <SmartAlert
           tone="info"
           title="الحضور يعتمد على الطالبات داخل الصفوف"
-          description="اختاري الشعبة والتاريخ، ثم سجّلي حالة كل طالبة. يمكنك أيضًا ربط الحضور بحصة معينة من الجدول."
+          description="سجّلي حضور الطالبات بسرعة عبر إدخال رمز الطالبة أو مسح QR بالهاتف. على الحاسوب، يمكنك إدخال رمز الطالبة مباشرة لتسجيل الحضور والانصراف فورًا."
           actionLabel="إدارة الطالبات"
           actionHref="/students"
         />
 
-        {/* QR Scanner Grid */}
-        <section className="grid gap-6 md:grid-cols-2">
-          <QrAttendanceScanner
-            mode="check-in"
-            title="تسجيل حضور (QR)"
-            description="وجّهي الكاميرا نحو رمز QR الخاص بالطالبة لتسجيل حضورها."
-          />
-          <QrAttendanceScanner
-            mode="check-out"
-            title="تسجيل انصراف (QR)"
-            description="وجّهي الكاميرا نحو رمز QR الخاص بالطالبة لتسجيل انصرافها."
-          />
+        {/* Attendance Entry — QR (mobile) + Quick Code (all devices) */}
+        <section>
+          <AttendanceEntryPanel />
         </section>
 
         <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
@@ -597,7 +588,7 @@ type AttendanceRowProps = {
 function AttendanceRow({ record }: AttendanceRowProps) {
   const statusClass = getAttendanceStatusBadgeClass(record.status);
 
-  const sourceLabel = record.source === "qr" ? "QR" : "يدوي";
+  const sourceLabel = record.source === "qr" ? "QR" : record.source === "manual-code" ? "رمز يدوي" : "يدوي";
 
   return (
     <article className="grid gap-4 p-5 transition hover:bg-rose-50/40 xl:grid-cols-[1fr_auto] xl:items-center">
