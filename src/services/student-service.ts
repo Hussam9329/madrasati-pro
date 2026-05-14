@@ -12,6 +12,32 @@ import {
   type StudentsFilter,
 } from "@/types/student";
 
+const STUDENT_CODE_PREFIX = "MarinaSchoolStd-";
+
+async function generateNextStudentCode(): Promise<string> {
+  const lastStudent = await db.student.findFirst({
+    where: {
+      studentCode: {
+        startsWith: STUDENT_CODE_PREFIX,
+      },
+    },
+    orderBy: {
+      studentCode: "desc",
+    },
+    select: {
+      studentCode: true,
+    },
+  });
+
+  const lastNumber = lastStudent?.studentCode
+    ? Number(lastStudent.studentCode.replace(STUDENT_CODE_PREFIX, ""))
+    : 0;
+
+  const nextNumber = Number.isFinite(lastNumber) ? lastNumber + 1 : 1;
+
+  return `${STUDENT_CODE_PREFIX}${String(nextNumber).padStart(4, "0")}`;
+}
+
 export type StudentServiceResult<T> = {
   ok: boolean;
   data?: T;
@@ -178,26 +204,50 @@ export async function createStudent(
   }
 
   try {
-    const student = await db.student.create({
-      data: {
-        fullName: data.fullName,
-        studentCode: null,
-        gender: "female",
-        birthDate: parseOptionalDate(data.birthDate) ?? null,
-        phone: data.phone ?? null,
-        guardianName: null,
-        guardianPhone: data.guardianPhone ?? null,
-        address: null,
-        enrollmentDate: new Date(),
-        status: "active",
-        notes: null,
-        sectionId: data.sectionId || null,
-      },
-    });
+    let studentCode = await generateNextStudentCode();
+    let student;
+
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        student = await db.student.create({
+          data: {
+            fullName: data.fullName,
+            studentCode,
+            gender: "female",
+            birthDate: parseOptionalDate(data.birthDate) ?? null,
+            phone: data.phone ?? null,
+            guardianName: null,
+            guardianPhone: data.guardianPhone ?? null,
+            address: null,
+            enrollmentDate: new Date(),
+            status: "active",
+            notes: null,
+            sectionId: data.sectionId || null,
+          },
+        });
+        break;
+      } catch (error) {
+        if (isUniqueConstraintError(error) && attempt < 2) {
+          studentCode = await generateNextStudentCode();
+          continue;
+        }
+        if (isUniqueConstraintError(error)) {
+          return {
+            ok: false,
+            message: "رقم الطالبة مستخدم مسبقًا.",
+            errors: { studentCode: "رقم الطالبة مستخدم مسبقًا." },
+          };
+        }
+        return {
+          ok: false,
+          message: "حدث خطأ أثناء إضافة الطالب.",
+        };
+      }
+    }
 
     return {
       ok: true,
-      data: student,
+      data: student!,
       message: "تمت إضافة الطالب بنجاح.",
     };
   } catch (error) {

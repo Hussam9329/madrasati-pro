@@ -34,7 +34,6 @@ type EmptyStateProps = {
 
 const iconMap: Record<EmptyStateIcon, React.ElementType> = {
   dashboard: School,
-  school: School,
   book: BookOpen,
   classes: Landmark,
   teachers: GraduationCap,

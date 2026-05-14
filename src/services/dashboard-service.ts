@@ -25,7 +25,6 @@ const emptyStats = {
   todayAttendanceRate: 0,
   gradesThisMonth: 0,
   totalPaid: 0,
-  alertsCount: 0,
   readinessRate: 0,
 };
 
@@ -47,11 +46,7 @@ export async function getDashboardStats() {
       todayAttendancePresent,
       gradesThisMonth,
       paidAggregate,
-      schoolCount,
       subjectsTotal,
-      studentsWithoutSection,
-      teachersWithoutSubjects,
-      overduePayments,
     ] = await Promise.all([
       db.student.count(),
       db.teacher.count(),
@@ -73,20 +68,10 @@ export async function getDashboardStats() {
         where: { status: { in: ["paid", "partial"] } },
         _sum: { amount: true },
       }),
-      db.school.count(),
       db.subject.count(),
-      db.student.count({ where: { sectionId: null } }),
-      db.teacher.count({ where: { teacherSubjects: { none: {} } } }),
-      db.payment.count({
-        where: {
-          status: { in: ["pending", "partial"] },
-          dueDate: { lt: todayStart },
-        },
-      }),
     ]);
 
     const setupChecks = [
-      schoolCount > 0,
       subjectsTotal > 0,
       classesTotal > 0,
       sectionsTotal > 0,
@@ -105,7 +90,6 @@ export async function getDashboardStats() {
           : 0,
       gradesThisMonth,
       totalPaid: paidAggregate._sum.amount ?? 0,
-      alertsCount: studentsWithoutSection + teachersWithoutSubjects + overduePayments,
       readinessRate: Math.round(
         (setupChecks.filter(Boolean).length / setupChecks.length) * 100,
       ),

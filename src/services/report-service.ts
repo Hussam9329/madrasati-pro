@@ -350,6 +350,10 @@ export async function getAttendanceReport(
       subjectName: string | null;
       teacherName: string | null;
       date: Date | null;
+      checkInAt: Date | null;
+      checkOutAt: Date | null;
+      source: string | null;
+      duration: string | null;
       totalSessions: number;
       present: number;
       absent: number;
@@ -362,6 +366,16 @@ export async function getAttendanceReport(
     const studentId = record.studentId;
 
     if (!studentMap.has(studentId)) {
+      // Calculate duration if both check-in and check-out exist
+      let duration: string | null = null;
+      if (record.checkInAt && record.checkOutAt) {
+        const diffMs = new Date(record.checkOutAt).getTime() - new Date(record.checkInAt).getTime();
+        const diffMins = Math.round(diffMs / 60000);
+        const hours = Math.floor(diffMins / 60);
+        const mins = diffMins % 60;
+        duration = hours > 0 ? `${hours} ساعة ${mins} دقيقة` : `${mins} دقيقة`;
+      }
+
       studentMap.set(studentId, {
         studentId,
         studentName: record.student.fullName,
@@ -371,6 +385,10 @@ export async function getAttendanceReport(
         subjectName: record.schedule?.subject?.name ?? null,
         teacherName: record.schedule?.teacher?.fullName ?? null,
         date: record.date,
+        checkInAt: record.checkInAt ?? null,
+        checkOutAt: record.checkOutAt ?? null,
+        source: record.source ?? null,
+        duration,
         totalSessions: 0,
         present: 0,
         absent: 0,
@@ -404,6 +422,10 @@ export async function getAttendanceReport(
       subjectName: entry.subjectName,
       teacherName: entry.teacherName,
       date: entry.date,
+      checkInAt: entry.checkInAt,
+      checkOutAt: entry.checkOutAt,
+      source: entry.source,
+      duration: entry.duration,
       attendanceRate,
       attendanceRating: getReportRating(attendanceRate),
     };

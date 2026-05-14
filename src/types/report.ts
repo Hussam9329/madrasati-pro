@@ -84,6 +84,10 @@ export type AttendanceReportRow = {
   subjectName: string | null;
   teacherName: string | null;
   date: Date | null;
+  checkInAt: Date | null;
+  checkOutAt: Date | null;
+  source: string | null;
+  duration: string | null;
   totalSessions: number;
   present: number;
   absent: number;
@@ -162,6 +166,8 @@ export type ReportFilter = {
   studentId?: string;
   status?: string;
   term?: string;
+  source?: string;
+  missingCheckOut?: boolean;
 };
 
 // ── Charts ───────────────────────────────────

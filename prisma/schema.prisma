@@ -18,22 +18,6 @@ model Admin {
   @@map("admins")
 }
 
-model School {
-  id           String   @id @default(cuid())
-  name         String
-  academicYear String?
-  address      String?
-  phone        String?
-  email        String?
-  logoUrl      String?
-  notes        String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("schools")
-}
-
 model Subject {
   id          String  @id @default(cuid())
   name        String  @unique
@@ -209,6 +193,9 @@ model AttendanceRecord {
   date   DateTime
   status String  @default("present")
   notes  String?
+  checkInAt  DateTime?
+  checkOutAt DateTime?
+  source     String? @default("manual")
 
   studentId String
   student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
@@ -219,6 +206,7 @@ model AttendanceRecord {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([studentId, date])
   @@index([studentId])
   @@index([scheduleId])
   @@index([date])

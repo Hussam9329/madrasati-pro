@@ -18,6 +18,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { SmartAlert } from "@/components/shared/smart-alert";
+import { QrAttendanceScanner } from "@/components/attendance/qr-attendance-scanner";
 import {
   createAttendanceRecord,
   deleteAttendanceRecord,
@@ -96,6 +97,20 @@ export default async function AttendancePage({
           actionLabel="إدارة الطالبات"
           actionHref="/students"
         />
+
+        {/* QR Scanner Grid */}
+        <section className="grid gap-6 md:grid-cols-2">
+          <QrAttendanceScanner
+            mode="check-in"
+            title="تسجيل حضور (QR)"
+            description="وجّهي الكاميرا نحو رمز QR الخاص بالطالبة لتسجيل حضورها."
+          />
+          <QrAttendanceScanner
+            mode="check-out"
+            title="تسجيل انصراف (QR)"
+            description="وجّهي الكاميرا نحو رمز QR الخاص بالطالبة لتسجيل انصرافها."
+          />
+        </section>
 
         <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
           <AttendanceCreateForm
@@ -265,7 +280,7 @@ function AttendanceCreateForm({
 
           <div>
             <h3 className="text-xl font-extrabold text-[var(--app-text)]">
-              تسجيل حضور
+              تسجيل حضور يدوي
             </h3>
 
             <p className="mt-1 text-sm leading-7 text-[var(--app-text-muted)]">
@@ -582,6 +597,8 @@ type AttendanceRowProps = {
 function AttendanceRow({ record }: AttendanceRowProps) {
   const statusClass = getAttendanceStatusBadgeClass(record.status);
 
+  const sourceLabel = record.source === "qr" ? "QR" : "يدوي";
+
   return (
     <article className="grid gap-4 p-5 transition hover:bg-rose-50/40 xl:grid-cols-[1fr_auto] xl:items-center">
       <div className="flex min-w-0 gap-4">
@@ -618,7 +635,27 @@ function AttendanceRow({ record }: AttendanceRowProps) {
                 {record.sectionName ? ` / ${record.sectionName}` : ""}
               </span>
             ) : null}
+
+            <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 font-bold">
+              {sourceLabel}
+            </span>
           </div>
+
+          {/* Check-in/Check-out times */}
+          {(record.checkInAt || record.checkOutAt) && (
+            <div className="mt-2 flex flex-wrap gap-2 text-sm">
+              {record.checkInAt && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 font-bold text-emerald-700">
+                  حضور: {new Date(record.checkInAt).toLocaleTimeString("ar-IQ")}
+                </span>
+              )}
+              {record.checkOutAt && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1 font-bold text-amber-700">
+                  انصراف: {new Date(record.checkOutAt).toLocaleTimeString("ar-IQ")}
+                </span>
+              )}
+            </div>
+          )}
 
           <div className="mt-3 grid gap-2 text-sm leading-6 text-[var(--app-text-muted)] md:grid-cols-2">
             {record.subjectName ? (

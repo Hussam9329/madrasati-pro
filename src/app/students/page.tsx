@@ -36,6 +36,8 @@ import {
   type StudentFormInput,
   type StudentListItem,
 } from "@/types/student";
+import { CopyCodeButton } from "@/components/students/student-actions";
+import { StudentQrImage } from "@/components/students/student-qr-image";
 import type { SectionListItem } from "@/types/class";
 
 type StudentsPageProps = {
@@ -657,6 +659,12 @@ function StudentRow({ student }: StudentRowProps) {
           </div>
 
           <div className="mt-2 flex flex-wrap gap-2 text-sm text-[var(--app-text-muted)]">
+            {student.studentCode ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 font-bold text-[var(--app-text-muted)]">
+                {student.studentCode}
+              </span>
+            ) : null}
+
             <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 font-bold">
               <GraduationCap size={14} />
               {getStudentClassDisplay({
@@ -671,6 +679,13 @@ function StudentRow({ student }: StudentRowProps) {
               العمر: {age ?? "غير محدد"}
             </span>
           </div>
+
+          {student.studentCode ? (
+            <div className="mt-2 flex items-center gap-2">
+              <CopyCodeButton studentCode={student.studentCode} />
+              <StudentQrImage studentId={student.id} studentCode={student.studentCode} />
+            </div>
+          ) : null}
 
           <div className="mt-3 grid gap-2 text-sm leading-6 text-[var(--app-text-muted)] md:grid-cols-2">
             <p>

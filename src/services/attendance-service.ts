@@ -13,6 +13,8 @@ import {
   type AttendanceFormInput,
   type AttendanceListItem,
   type AttendanceRecord,
+  type AttendanceScanInput,
+  type AttendanceScanResult,
 } from "@/types/attendance";
 
 export type AttendanceServiceResult<T> = {
@@ -64,6 +66,9 @@ function toAttendanceListItem(
     status: record.status,
     statusLabel: getAttendanceStatusLabel(record.status),
     notes: record.notes ?? null,
+    checkInAt: record.checkInAt ?? null,
+    checkOutAt: record.checkOutAt ?? null,
+    source: record.source ?? null,
 
     studentId: record.studentId,
     studentName: record.student.fullName,
@@ -274,6 +279,27 @@ function buildAttendanceWhere(
     };
   }
 
+  if (filter.source) {
+    where.source = filter.source;
+  }
+
+  if (filter.hasCheckIn === "yes") {
+    where.checkInAt = { not: null };
+  } else if (filter.hasCheckIn === "no") {
+    where.checkInAt = null;
+  }
+
+  if (filter.hasCheckOut === "yes") {
+    where.checkOutAt = { not: null };
+  } else if (filter.hasCheckOut === "no") {
+    where.checkOutAt = null;
+  }
+
+  if (filter.missingCheckOut === "yes") {
+    where.checkInAt = { not: null };
+    where.checkOutAt = null;
+  }
+
   return where;
 }
 
@@ -431,6 +457,9 @@ export async function getAttendanceRecordById(
     date: record.date,
     status: record.status,
     notes: record.notes,
+    checkInAt: record.checkInAt,
+    checkOutAt: record.checkOutAt,
+    source: record.source,
     studentId: record.studentId,
     scheduleId: record.scheduleId,
     createdAt: record.createdAt,
@@ -507,6 +536,7 @@ export async function createAttendanceRecord(
         notes: data.notes ?? null,
         scheduleId: data.scheduleId || null,
         studentId: data.studentId,
+        source: "manual",
       },
     });
 
@@ -517,6 +547,9 @@ export async function createAttendanceRecord(
         date: record.date,
         status: record.status,
         notes: record.notes,
+        checkInAt: record.checkInAt,
+        checkOutAt: record.checkOutAt,
+        source: record.source,
         studentId: record.studentId,
         scheduleId: record.scheduleId,
         createdAt: record.createdAt,
@@ -612,6 +645,9 @@ export async function updateAttendanceRecord(
         date: record.date,
         status: record.status,
         notes: record.notes,
+        checkInAt: record.checkInAt,
+        checkOutAt: record.checkOutAt,
+        source: record.source,
         studentId: record.studentId,
         scheduleId: record.scheduleId,
         createdAt: record.createdAt,
@@ -736,6 +772,7 @@ export async function markAttendanceBatch(
           notes: entry.notes?.trim() || null,
           scheduleId: input.scheduleId || null,
           studentId: entry.studentId,
+          source: "manual",
         },
       });
       created++;
@@ -746,6 +783,180 @@ export async function markAttendanceBatch(
     ok: true,
     data: { created, updated },
     message: `تم تسجيل الحضور: ${created} جديد، ${updated} محدّث.`,
+  };
+}
+
+// ─── QR Scan Attendance ─────────────────────────────────────────
+
+export async function scanAttendanceByStudentCode(
+  input: AttendanceScanInput,
+): Promise<AttendanceScanResult> {
+  const studentCode = input.studentCode?.trim();
+  const mode = input.mode;
+
+  if (!studentCode || !studentCode.startsWith("MarinaSchoolStd-")) {
+    return {
+      ok: false,
+      studentId: "",
+      studentName: "",
+      studentCode: studentCode ?? "",
+      status: "",
+      checkInAt: null,
+      checkOutAt: null,
+      message: "الرمز غير صالح. يجب أن يبدأ بـ MarinaSchoolStd-",
+    };
+  }
+
+  const student = await db.student.findUnique({
+    where: { studentCode },
+  });
+
+  if (!student) {
+    return {
+      ok: false,
+      studentId: "",
+      studentName: "",
+      studentCode,
+      status: "",
+      checkInAt: null,
+      checkOutAt: null,
+      message: "لم يتم العثور على طالبة بهذا الرمز.",
+    };
+  }
+
+  if (student.status !== "active") {
+    return {
+      ok: false,
+      studentId: student.id,
+      studentName: student.fullName,
+      studentCode,
+      status: student.status,
+      checkInAt: null,
+      checkOutAt: null,
+      message: "لا يمكن تسجيل الحضور لطالبة غير مستمرة.",
+    };
+  }
+
+  const today = normalizeDateOnly(new Date());
+  if (!today) {
+    return {
+      ok: false,
+      studentId: student.id,
+      studentName: student.fullName,
+      studentCode,
+      status: "",
+      checkInAt: null,
+      checkOutAt: null,
+      message: "خطأ في تحديد تاريخ اليوم.",
+    };
+  }
+
+  const dayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0);
+  const dayEnd = new Date(dayStart);
+  dayEnd.setDate(dayEnd.getDate() + 1);
+
+  const existingRecord = await db.attendanceRecord.findFirst({
+    where: {
+      studentId: student.id,
+      date: { gte: dayStart, lt: dayEnd },
+    },
+  });
+
+  const now = new Date();
+
+  if (mode === "check-in") {
+    if (existingRecord && existingRecord.checkInAt) {
+      return {
+        ok: false,
+        studentId: student.id,
+        studentName: student.fullName,
+        studentCode,
+        status: existingRecord.status,
+        checkInAt: existingRecord.checkInAt,
+        checkOutAt: existingRecord.checkOutAt,
+        message: "تم تسجيل حضور الطالبة مسبقًا اليوم.",
+      };
+    }
+
+    if (existingRecord && !existingRecord.checkInAt) {
+      const updated = await db.attendanceRecord.update({
+        where: { id: existingRecord.id },
+        data: { checkInAt: now, status: "present", source: "qr" },
+      });
+      return {
+        ok: true,
+        studentId: student.id,
+        studentName: student.fullName,
+        studentCode,
+        status: updated.status,
+        checkInAt: updated.checkInAt,
+        checkOutAt: updated.checkOutAt,
+        message: "تم تسجيل حضور الطالبة بنجاح.",
+      };
+    }
+
+    const created = await db.attendanceRecord.create({
+      data: {
+        date: today,
+        studentId: student.id,
+        status: "present",
+        checkInAt: now,
+        source: "qr",
+      },
+    });
+    return {
+      ok: true,
+      studentId: student.id,
+      studentName: student.fullName,
+      studentCode,
+      status: created.status,
+      checkInAt: created.checkInAt,
+      checkOutAt: created.checkOutAt,
+      message: "تم تسجيل حضور الطالبة بنجاح.",
+    };
+  }
+
+  // mode === "check-out"
+  if (!existingRecord || !existingRecord.checkInAt) {
+    return {
+      ok: false,
+      studentId: student.id,
+      studentName: student.fullName,
+      studentCode,
+      status: existingRecord?.status ?? "",
+      checkInAt: existingRecord?.checkInAt ?? null,
+      checkOutAt: null,
+      message: "لا يمكن تسجيل الانصراف قبل تسجيل الحضور.",
+    };
+  }
+
+  if (existingRecord.checkOutAt) {
+    return {
+      ok: false,
+      studentId: student.id,
+      studentName: student.fullName,
+      studentCode,
+      status: existingRecord.status,
+      checkInAt: existingRecord.checkInAt,
+      checkOutAt: existingRecord.checkOutAt,
+      message: "تم تسجيل انصراف الطالبة مسبقًا اليوم.",
+    };
+  }
+
+  const updated = await db.attendanceRecord.update({
+    where: { id: existingRecord.id },
+    data: { checkOutAt: now },
+  });
+
+  return {
+    ok: true,
+    studentId: student.id,
+    studentName: student.fullName,
+    studentCode,
+    status: updated.status,
+    checkInAt: updated.checkInAt,
+    checkOutAt: updated.checkOutAt,
+    message: "تم تسجيل انصراف الطالبة بنجاح.",
   };
 }
 

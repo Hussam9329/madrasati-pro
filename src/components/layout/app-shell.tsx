@@ -39,7 +39,6 @@ type AppShellProps = {
 
 const iconMap: Record<NavigationIcon, React.ElementType> = {
   dashboard: LayoutDashboard,
-  school: School,
   book: BookOpen,
   classes: Landmark,
   teachers: GraduationCap,

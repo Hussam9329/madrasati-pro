@@ -910,7 +910,7 @@ function AttendanceTable({ rows }: AttendanceTableProps) {
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[700px] text-sm">
+        <table className="w-full min-w-[900px] text-sm">
           <thead>
             <tr className="border-b border-[var(--app-border-soft)] bg-gradient-to-l to-rose-50/60 to-amber-50/40">
               <th className="px-5 py-3 text-right font-extrabold text-[var(--app-text-muted)]">
@@ -930,6 +930,12 @@ function AttendanceTable({ rows }: AttendanceTableProps) {
               </th>
               <th className="px-5 py-3 text-center font-extrabold text-[var(--app-text-muted)]">
                 متأخر
+              </th>
+              <th className="px-5 py-3 text-center font-extrabold text-[var(--app-text-muted)]">
+                المصدر
+              </th>
+              <th className="px-5 py-3 text-center font-extrabold text-[var(--app-text-muted)]">
+                المدة
               </th>
               <th className="px-5 py-3 text-center font-extrabold text-[var(--app-text-muted)]">
                 النسبة
@@ -969,6 +975,12 @@ function AttendanceTable({ rows }: AttendanceTableProps) {
                 </td>
                 <td className="px-5 py-3 text-center font-bold text-amber-600">
                   {row.late}
+                </td>
+                <td className="px-5 py-3 text-center text-[var(--app-text-muted)]">
+                  {row.source === "qr" ? "QR" : row.source === "manual" ? "يدوي" : "—"}
+                </td>
+                <td className="px-5 py-3 text-center text-[var(--app-text-muted)]">
+                  {row.duration ?? "—"}
                 </td>
                 <td className="px-5 py-3 text-center font-extrabold text-[var(--app-text)]">
                   {formatReportPercent(row.attendanceRate)}

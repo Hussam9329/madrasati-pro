@@ -18,7 +18,6 @@ export type NavigationGroup =
 
 export type NavigationIcon =
   | "dashboard"
-  | "school"
   | "book"
   | "classes"
   | "teachers"
@@ -75,19 +74,11 @@ export const navigationItems: NavigationItem[] = [
     isPrimary: true,
   },
   {
-    title: "بيانات المدرسة",
-    href: "/school",
-    icon: "school",
-    description: "اسم المدرسة، الشعار، العنوان، والسنة الدراسية.",
-    priority: 2,
-    group: "foundation",
-  },
-  {
     title: "المواد الدراسية",
     href: "/subjects",
     icon: "book",
     description: "أضيفي المواد أولًا حتى يمكن ربطها بالمدرسات والصفوف.",
-    priority: 3,
+    priority: 2,
     group: "foundation",
   },
   {
@@ -95,7 +86,7 @@ export const navigationItems: NavigationItem[] = [
     href: "/classes",
     icon: "classes",
     description: "أنشئي الصفوف والشعب قبل إضافة الطالبات إليها.",
-    priority: 4,
+    priority: 3,
     group: "foundation",
   },
   {
@@ -103,7 +94,7 @@ export const navigationItems: NavigationItem[] = [
     href: "/teachers",
     icon: "teachers",
     description: "أضيفي المدرسات واربطيهن بالمواد والصفوف المناسبة.",
-    priority: 5,
+    priority: 4,
     group: "people",
   },
   {
@@ -111,7 +102,7 @@ export const navigationItems: NavigationItem[] = [
     href: "/students",
     icon: "students",
     description: "أضيفي الطالبات بعد تجهيز الصفوف والشعب.",
-    priority: 6,
+    priority: 5,
     group: "people",
   },
   {
@@ -119,7 +110,7 @@ export const navigationItems: NavigationItem[] = [
     href: "/schedules",
     icon: "schedule",
     description: "نظّمي الحصص بعد توفر المواد، الصفوف، والمدرسات.",
-    priority: 7,
+    priority: 6,
     group: "operations",
   },
   {
@@ -127,7 +118,7 @@ export const navigationItems: NavigationItem[] = [
     href: "/attendance",
     icon: "attendance",
     description: "سجّلي حضور الطالبات حسب الصف والتاريخ.",
-    priority: 8,
+    priority: 7,
     group: "operations",
   },
   {
@@ -135,7 +126,7 @@ export const navigationItems: NavigationItem[] = [
     href: "/grades",
     icon: "grades",
     description: "أدخلي درجات الطالبات حسب المادة والاختبار.",
-    priority: 9,
+    priority: 8,
     group: "results",
   },
   {
@@ -143,7 +134,7 @@ export const navigationItems: NavigationItem[] = [
     href: "/payments",
     icon: "fees",
     description: "تابعي المدفوعات والمتبقي لكل طالبة.",
-    priority: 10,
+    priority: 9,
     group: "results",
   },
   {
@@ -151,7 +142,7 @@ export const navigationItems: NavigationItem[] = [
     href: "/reports",
     icon: "reports",
     description: "استخرجي تقارير الطالبات، الحضور، الدرجات، والأقساط.",
-    priority: 11,
+    priority: 10,
     group: "results",
   },
   {
@@ -159,7 +150,7 @@ export const navigationItems: NavigationItem[] = [
     href: "/settings",
     icon: "settings",
     description: "خيارات النظام العامة والتخصيص.",
-    priority: 12,
+    priority: 11,
     group: "system",
   },
 ];

@@ -5,6 +5,9 @@ export type AttendanceRecord = {
   date: Date;
   status: string;
   notes: string | null;
+  checkInAt: Date | null;
+  checkOutAt: Date | null;
+  source: string | null;
   studentId: string;
   scheduleId: string | null;
   createdAt: Date;
@@ -35,6 +38,10 @@ export type AttendanceListItem = {
   status: string;
   statusLabel: string;
   notes: string | null;
+
+  checkInAt: Date | null;
+  checkOutAt: Date | null;
+  source: string | null;
 
   studentId: string;
   studentName: string;
@@ -82,6 +89,28 @@ export type AttendanceFilter = {
   classId?: string;
   subjectId?: string;
   teacherId?: string;
+  hasCheckIn?: string;
+  hasCheckOut?: string;
+  missingCheckOut?: string;
+  source?: string;
+};
+
+export type AttendanceScanMode = "check-in" | "check-out";
+
+export type AttendanceScanInput = {
+  studentCode: string;
+  mode: AttendanceScanMode;
+};
+
+export type AttendanceScanResult = {
+  ok: boolean;
+  studentId: string;
+  studentName: string;
+  studentCode: string;
+  status: string;
+  checkInAt: Date | null;
+  checkOutAt: Date | null;
+  message: string;
 };
 
 export const ATTENDANCE_STATUSES: {

@@ -100,8 +100,8 @@ export default async function SubjectsPage({
             description="ابدئي بإضافة أول مادة مثل الرياضيات أو اللغة العربية أو العلوم. بعد ذلك يمكنك إنشاء الصفوف وربط المدرسات."
             actionLabel="إضافة أول مادة"
             actionHref="#subject-form"
-            secondaryLabel="الذهاب إلى بيانات المدرسة"
-            secondaryHref="/school"
+            secondaryLabel="إنشاء الصفوف"
+            secondaryHref="/classes"
           />
         ) : subjects.length === 0 ? (
           <EmptyState

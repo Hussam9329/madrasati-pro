@@ -20,11 +20,6 @@ export const dynamic = "force-dynamic";
 
 const setupSteps = [
   {
-    title: "أضيفي بيانات المدرسة",
-    description: "اسم المدرسة، الشعار، العنوان، والسنة الدراسية.",
-    status: "قريبًا",
-  },
-  {
     title: "أضيفي المواد الدراسية",
     description: "المواد هي الأساس قبل ربط المدرسات والدرجات.",
     status: "ابدئي هنا",
@@ -103,13 +98,6 @@ export default async function DashboardPage() {
       description: "إجمالي المدفوعات المسجلة",
       icon: Receipt,
       tone: "amber",
-    },
-    {
-      title: "تنبيهات تحتاج متابعة",
-      value: String(stats.alertsCount),
-      description: "ملاحظة أو إجراء مطلوب",
-      icon: AlertTriangle,
-      tone: "rose",
     },
     {
       title: "جاهزية النظام",
@@ -236,7 +224,7 @@ export default async function DashboardPage() {
                     "flex gap-4 rounded-2xl border p-4 transition",
                     step.active
                       ? "border-rose-200 bg-gradient-to-l to-rose-50/80 from-amber-50/50"
-                      : "border-[var(--app-border-soft)] bg-white",
+                      : "border-[var(--app-border-soft)] bg-[var(--color-app-card)]",
                   ].join(" ")}
                 >
                   <div
@@ -295,7 +283,7 @@ export default async function DashboardPage() {
                 return (
                   <div
                     key={activity.title}
-                    className="flex items-start gap-3 rounded-2xl border border-[var(--app-border-soft)] bg-white p-4"
+                    className="flex items-start gap-3 rounded-2xl border border-[var(--app-border-soft)] bg-[var(--color-app-card)] p-4"
                   >
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-700">
                       <Icon size={19} />

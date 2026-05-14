@@ -31,7 +31,6 @@ type PageHeaderProps = {
 
 const iconMap: Record<NavigationIcon, React.ElementType> = {
   dashboard: School,
-  school: School,
   book: BookOpen,
   classes: Landmark,
   teachers: GraduationCap,

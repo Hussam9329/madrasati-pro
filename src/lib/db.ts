@@ -90,20 +90,6 @@ async function initializeDatabase() {
     )`,
     `CREATE UNIQUE INDEX IF NOT EXISTS admins_username_unique ON admins(username)`,
     
-    // schools
-    `CREATE TABLE IF NOT EXISTS schools (
-      id TEXT PRIMARY KEY NOT NULL,
-      name TEXT NOT NULL,
-      academicYear TEXT,
-      address TEXT,
-      phone TEXT,
-      email TEXT,
-      logoUrl TEXT,
-      notes TEXT,
-      createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-    )`,
-    
     // subjects
     `CREATE TABLE IF NOT EXISTS subjects (
       id TEXT PRIMARY KEY NOT NULL,
@@ -236,6 +222,9 @@ async function initializeDatabase() {
       date DATETIME NOT NULL,
       status TEXT NOT NULL DEFAULT 'present',
       notes TEXT,
+      checkInAt DATETIME,
+      checkOutAt DATETIME,
+      source TEXT DEFAULT 'manual',
       studentId TEXT NOT NULL,
       scheduleId TEXT,
       createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -246,6 +235,7 @@ async function initializeDatabase() {
     `CREATE INDEX IF NOT EXISTS attendance_records_studentId_index ON attendance_records(studentId)`,
     `CREATE INDEX IF NOT EXISTS attendance_records_scheduleId_index ON attendance_records(scheduleId)`,
     `CREATE INDEX IF NOT EXISTS attendance_records_date_index ON attendance_records(date)`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS attendance_records_studentId_date_unique ON attendance_records(studentId, date)`,
     
     // grades
     `CREATE TABLE IF NOT EXISTS grades (
@@ -322,6 +312,10 @@ async function initializeDatabase() {
     "ALTER TABLE grades ADD COLUMN assessmentGroup TEXT",
     "ALTER TABLE grades ADD COLUMN isReviewed BOOLEAN NOT NULL DEFAULT 0",
     "ALTER TABLE grades ADD COLUMN warningLevel TEXT",
+    // attendance_records new columns
+    "ALTER TABLE attendance_records ADD COLUMN checkInAt DATETIME",
+    "ALTER TABLE attendance_records ADD COLUMN checkOutAt DATETIME",
+    "ALTER TABLE attendance_records ADD COLUMN source TEXT DEFAULT 'manual'",
   ];
   
   for (const sql of alterStatements) {
