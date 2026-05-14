@@ -44,6 +44,7 @@ export type ClassListItem = {
   studentsCount: number;
   subjectsCount: number;
   schedulesCount: number;
+  subjectIds: string[];
   createdAt: Date;
 };
 

@@ -510,80 +510,47 @@ export async function getPaymentsCount(): Promise<{
   totalPending: number;
   totalRefunded: number;
 }> {
-  const [total, paid, partial, pending, refunded, aggregateResult] =
-    await Promise.all([
-      db.payment.count(),
-      db.payment.count({
-        where: {
-          status: "paid",
-        },
-      }),
-      db.payment.count({
-        where: {
-          status: "partial",
-        },
-      }),
-      db.payment.count({
-        where: {
-          status: "pending",
-        },
-      }),
-      db.payment.count({
-        where: {
-          status: "refunded",
-        },
-      }),
-      db.payment.aggregate({
-        _sum: {
-          amount: true,
-        },
-        _count: true,
-      }),
-    ]);
+  const [total, paid, partial, pending, refunded] = await Promise.all([
+    db.payment.count(),
+    db.payment.count({ where: { status: "paid" } }),
+    db.payment.count({ where: { status: "partial" } }),
+    db.payment.count({ where: { status: "pending" } }),
+    db.payment.count({ where: { status: "refunded" } }),
+  ]);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
   const overdue = await db.payment.count({
     where: {
-      status: {
-        in: ["pending", "partial"],
-      },
-      dueDate: {
-        lt: today,
-      },
+      status: { in: ["pending", "partial"] },
+      dueDate: { lt: today },
     },
   });
 
-  const [paidAggregate, pendingAggregate, refundedAggregate] =
-    await Promise.all([
-      db.payment.aggregate({
-        where: {
-          status: "paid",
-        },
-        _sum: {
-          amount: true,
-        },
-      }),
-      db.payment.aggregate({
-        where: {
-          status: {
-            in: ["pending", "partial"],
-          },
-        },
-        _sum: {
-          amount: true,
-        },
-      }),
-      db.payment.aggregate({
-        where: {
-          status: "refunded",
-        },
-        _sum: {
-          amount: true,
-        },
-      }),
-    ]);
+  const paymentAmounts = await db.payment.findMany({
+    select: {
+      amount: true,
+      finalAmount: true,
+      originalAmount: true,
+      status: true,
+    },
+  });
+
+  const totalPaid = paymentAmounts
+    .filter((p) => p.status === "paid" || p.status === "partial")
+    .reduce((sum, p) => sum + p.amount, 0);
+
+  const totalPending = paymentAmounts
+    .filter((p) => p.status === "pending" || p.status === "partial")
+    .reduce((sum, p) => {
+      const due = p.finalAmount ?? p.originalAmount ?? p.amount;
+      return sum + Math.max(0, due - p.amount);
+    }, 0);
+
+  const totalRefunded = paymentAmounts
+    .filter((p) => p.status === "refunded")
+    .reduce((sum, p) => sum + p.amount, 0);
 
   return {
     total,
@@ -592,9 +559,9 @@ export async function getPaymentsCount(): Promise<{
     pending,
     refunded,
     overdue,
-    totalPaid: paidAggregate._sum.amount ?? 0,
-    totalPending: pendingAggregate._sum.amount ?? 0,
-    totalRefunded: refundedAggregate._sum.amount ?? 0,
+    totalPaid,
+    totalPending,
+    totalRefunded,
   };
 }
 

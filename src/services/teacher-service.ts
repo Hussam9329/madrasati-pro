@@ -87,6 +87,18 @@ export async function getTeacherDetails(
   };
 }
 
+async function findDuplicateTeacherName(fullName: string, excludeId?: string) {
+  const trimmed = fullName.trim();
+  if (!trimmed) return null;
+  return db.teacher.findFirst({
+    where: {
+      fullName: trimmed,
+      ...(excludeId ? { id: { not: excludeId } } : {}),
+    },
+    select: { id: true },
+  });
+}
+
 export async function createTeacher(
   input: TeacherFormInput,
 ): Promise<TeacherServiceResult<Teacher>> {
@@ -102,6 +114,15 @@ export async function createTeacher(
 
   const data = normalizeTeacherInput(input);
   const subjectIds = await getValidSubjectIds(data.subjectIds ?? []);
+
+  const duplicateName = await findDuplicateTeacherName(data.fullName);
+  if (duplicateName) {
+    return {
+      ok: false,
+      message: "اسم المدرسة مستخدم مسبقًا.",
+      errors: { fullName: "اسم المدرسة مستخدم مسبقًا." },
+    };
+  }
 
   try {
     const teacher = await db.teacher.create({
@@ -127,7 +148,18 @@ export async function createTeacher(
       data: teacher,
       message: "تمت إضافة المدرسة بنجاح.",
     };
-  } catch {
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      return {
+        ok: false,
+        message: "اسم المدرسة أو رقم الهاتف مستخدم مسبقًا.",
+        errors: { fullName: "اسم المدرسة أو رقم الهاتف مستخدم مسبقًا." },
+      };
+    }
+
     return {
       ok: false,
       message: "حدث خطأ أثناء إضافة المدرسة.",
@@ -161,6 +193,15 @@ export async function updateTeacher(
   const data = normalizeTeacherInput(input);
   const subjectIds = await getValidSubjectIds(data.subjectIds ?? []);
 
+  const duplicateName = await findDuplicateTeacherName(data.fullName, id);
+  if (duplicateName) {
+    return {
+      ok: false,
+      message: "اسم المدرسة مستخدم مسبقًا.",
+      errors: { fullName: "اسم المدرسة مستخدم مسبقًا." },
+    };
+  }
+
   try {
     const teacher = await db.$transaction(async (tx) => {
       await tx.teacherSubject.deleteMany({
@@ -190,7 +231,18 @@ export async function updateTeacher(
       data: teacher,
       message: "تم تحديث بيانات المدرسة بنجاح.",
     };
-  } catch {
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      return {
+        ok: false,
+        message: "اسم المدرسة أو رقم الهاتف مستخدم مسبقًا.",
+        errors: { fullName: "اسم المدرسة أو رقم الهاتف مستخدم مسبقًا." },
+      };
+    }
+
     return {
       ok: false,
       message: "حدث خطأ أثناء تحديث بيانات المدرسة.",

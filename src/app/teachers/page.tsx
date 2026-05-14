@@ -159,6 +159,7 @@ async function createTeacherAction(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/teachers");
+  revalidatePath("/reports");
   redirect("/teachers?saved=1");
 }
 
@@ -179,6 +180,7 @@ async function deleteTeacherAction(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/teachers");
+  revalidatePath("/reports");
   redirect("/teachers?deleted=1");
 }
 
@@ -199,6 +201,7 @@ async function toggleTeacherStatusAction(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/teachers");
+  revalidatePath("/reports");
   redirect("/teachers?toggled=1");
 }
 

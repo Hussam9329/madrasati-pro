@@ -103,14 +103,20 @@ export async function getDashboardSummary(
   const failingGrades = grades.filter((g) => (g.score / g.maxScore) * 100 < 50);
   const passingRate = calculateRate(passingGrades.length, totalGradeRecords);
 
-  // Payment calculations — Payment has a single `amount` and `status`
-  const totalFees = payments.reduce((sum, p) => sum + p.amount, 0);
+  // Payment calculations
+  const totalFees = payments.reduce(
+    (sum, p) => sum + (p.finalAmount ?? p.originalAmount ?? p.amount),
+    0,
+  );
   const totalPaid = payments
-    .filter((p) => p.status === "paid")
+    .filter((p) => p.status === "paid" || p.status === "partial")
     .reduce((sum, p) => sum + p.amount, 0);
   const totalRemaining = payments
     .filter((p) => p.status === "pending" || p.status === "partial")
-    .reduce((sum, p) => sum + p.amount, 0);
+    .reduce((sum, p) => {
+      const due = p.finalAmount ?? p.originalAmount ?? p.amount;
+      return sum + Math.max(0, due - p.amount);
+    }, 0);
   const paidCount = payments.filter((p) => p.status === "paid").length;
   const partialCount = payments.filter((p) => p.status === "partial").length;
   const unpaidCount = payments.filter((p) => p.status === "pending").length;
@@ -315,6 +321,17 @@ export async function getAttendanceReport(
           },
         },
       },
+      schedule: {
+        include: {
+          subject: true,
+          teacher: true,
+          section: {
+            include: {
+              class: true,
+            },
+          },
+        },
+      },
     },
     orderBy: {
       createdAt: "desc",
@@ -330,6 +347,9 @@ export async function getAttendanceReport(
       studentCode: string | null;
       className: string | null;
       sectionName: string | null;
+      subjectName: string | null;
+      teacherName: string | null;
+      date: Date | null;
       totalSessions: number;
       present: number;
       absent: number;
@@ -348,6 +368,9 @@ export async function getAttendanceReport(
         studentCode: record.student.studentCode,
         className: record.student.section?.class?.name ?? null,
         sectionName: record.student.section?.name ?? null,
+        subjectName: record.schedule?.subject?.name ?? null,
+        teacherName: record.schedule?.teacher?.fullName ?? null,
+        date: record.date,
         totalSessions: 0,
         present: 0,
         absent: 0,
@@ -378,6 +401,9 @@ export async function getAttendanceReport(
 
     return {
       ...entry,
+      subjectName: entry.subjectName,
+      teacherName: entry.teacherName,
+      date: entry.date,
       attendanceRate,
       attendanceRating: getReportRating(attendanceRate),
     };
@@ -522,18 +548,28 @@ export async function getPaymentsReport(
     },
   });
 
-  return payments.map((payment) => ({
-    studentId: payment.studentId,
-    studentName: payment.student.fullName,
-    studentCode: payment.student.studentCode,
-    className: payment.student.section?.class?.name ?? null,
-    sectionName: payment.student.section?.name ?? null,
-    feeTitle: payment.feeTitle,
-    amount: payment.amount,
-    status: payment.status,
-    statusLabel: getPaymentStatusLabel(payment.status),
-    dueDate: payment.dueDate,
-  }));
+  return payments.map((payment) => {
+    const due = payment.finalAmount ?? payment.originalAmount ?? payment.amount;
+    return {
+      studentId: payment.studentId,
+      studentName: payment.student.fullName,
+      studentCode: payment.student.studentCode,
+      className: payment.student.section?.class?.name ?? null,
+      sectionName: payment.student.section?.name ?? null,
+      feeTitle: payment.feeTitle,
+      amount: payment.amount,
+      paidAmount: payment.amount,
+      originalAmount: payment.originalAmount,
+      discountAmount: payment.discountAmount,
+      discountPercent: payment.discountPercent,
+      discountReason: payment.discountReason,
+      finalAmount: payment.finalAmount,
+      remainingAmount: Math.max(0, due - payment.amount),
+      status: payment.status,
+      statusLabel: getPaymentStatusLabel(payment.status),
+      dueDate: payment.dueDate,
+    };
+  });
 }
 
 // ── Classes Report ───────────────────────────
@@ -773,6 +809,11 @@ async function getPaymentRecords(
     where: whereClause as Prisma.PaymentWhereInput,
     select: {
       amount: true,
+      finalAmount: true,
+      originalAmount: true,
+      discountAmount: true,
+      discountPercent: true,
+      discountReason: true,
       status: true,
     },
   });

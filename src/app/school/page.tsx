@@ -120,6 +120,7 @@ async function saveSchoolAction(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/school");
+  revalidatePath("/reports");
   redirect("/school?saved=1");
 }
 

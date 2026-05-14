@@ -81,6 +81,9 @@ export type AttendanceReportRow = {
   studentCode: string | null;
   className: string | null;
   sectionName: string | null;
+  subjectName: string | null;
+  teacherName: string | null;
+  date: Date | null;
   totalSessions: number;
   present: number;
   absent: number;
@@ -113,6 +116,13 @@ export type PaymentReportRow = {
   sectionName: string | null;
   feeTitle: string;
   amount: number;
+  paidAmount: number;
+  originalAmount: number | null;
+  discountAmount: number;
+  discountPercent: number | null;
+  discountReason: string | null;
+  finalAmount: number | null;
+  remainingAmount: number;
   status: string;
   statusLabel: string;
   dueDate: Date | null;

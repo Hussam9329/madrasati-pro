@@ -33,11 +33,7 @@ import {
   FEE_TYPES,
   PAYMENT_METHODS,
   PAYMENT_STATUSES,
-  calculateDiscountFromPercent,
-  calculateDiscountPercent,
-  calculateFinalAmount,
-  validateDiscount,
-  validateDiscountPercent,
+  resolvePaymentAmounts,
   formatMoney,
   getFeeTypeLabel,
   getPaymentMethodLabel,
@@ -161,51 +157,15 @@ export default async function PaymentsPage({
 async function createPaymentAction(formData: FormData) {
   "use server";
 
-  const originalAmountRaw = String(formData.get("originalAmount") ?? "");
-  const discountPercentRaw = String(formData.get("discountPercent") ?? "");
-  const discountAmountRaw = String(formData.get("discountAmount") ?? "");
-  const discountReason = String(formData.get("discountReason") ?? "").trim();
-
-  const originalAmount = Number(originalAmountRaw) || 0;
-  const amount = originalAmount;
-
-  let discountAmount = 0;
-  let discountPercent = 0;
-  let finalAmount = originalAmount;
-
-  if (originalAmount > 0) {
-    const hasPercent = discountPercentRaw.trim() !== "" && Number(discountPercentRaw) > 0;
-    const hasAmount = discountAmountRaw.trim() !== "" && Number(discountAmountRaw) > 0;
-
-    if (hasPercent && !hasAmount) {
-      discountPercent = Number(discountPercentRaw);
-      const percentValidation = validateDiscountPercent(discountPercent);
-      if (!percentValidation.valid) {
-        redirect("/payments?error=create");
-      }
-      discountAmount = calculateDiscountFromPercent(originalAmount, discountPercent);
-    } else if (hasAmount) {
-      discountAmount = Number(discountAmountRaw);
-      discountPercent = calculateDiscountPercent(originalAmount, discountAmount);
-    }
-
-    const discountValidation = validateDiscount(originalAmount, discountAmount);
-    if (!discountValidation.valid) {
-      redirect("/payments?error=create");
-    }
-
-    finalAmount = calculateFinalAmount(originalAmount, discountAmount);
-  }
-
-  const input: PaymentFormInput = {
+  const rawInput: PaymentFormInput = {
     feeTitle: String(formData.get("feeTitle") ?? ""),
     feeType: String(formData.get("feeType") ?? "tuition"),
-    amount: String(amount),
-    originalAmount: String(originalAmount),
-    discountAmount: String(discountAmount),
-    discountPercent: String(discountPercent),
-    discountReason: discountReason || undefined,
-    finalAmount: String(finalAmount),
+    amount: String(formData.get("paidAmount") ?? "") || String(formData.get("originalAmount") ?? "0"),
+    originalAmount: String(formData.get("originalAmount") ?? ""),
+    discountAmount: String(formData.get("discountAmount") ?? "0"),
+    discountPercent: String(formData.get("discountPercent") ?? "0"),
+    discountReason: String(formData.get("discountReason") ?? "").trim() || undefined,
+    finalAmount: "",
     status: String(formData.get("status") ?? "paid"),
     method: String(formData.get("method") ?? "cash"),
     academicYear: String(formData.get("academicYear") ?? ""),
@@ -213,6 +173,34 @@ async function createPaymentAction(formData: FormData) {
     paidAt: String(formData.get("paidAt") ?? ""),
     notes: String(formData.get("notes") ?? ""),
     studentId: String(formData.get("studentId") ?? ""),
+  };
+
+  // Use resolvePaymentAmounts to calculate everything server-side
+  const resolved = resolvePaymentAmounts(rawInput);
+
+  // Determine paidAmount based on status
+  const status = rawInput.status ?? "paid";
+  let paidAmount = resolved.paidAmount;
+
+  if (status === "paid") {
+    paidAmount = resolved.finalAmount;
+  } else if (status === "pending") {
+    paidAmount = 0;
+  } else if (status === "partial") {
+    // paidAmount stays as entered, but must be > 0 and < finalAmount
+    if (paidAmount <= 0 || paidAmount >= resolved.finalAmount) {
+      paidAmount = Math.min(resolved.paidAmount, resolved.finalAmount - 1);
+      if (paidAmount <= 0) paidAmount = 0;
+    }
+  }
+
+  const input: PaymentFormInput = {
+    ...rawInput,
+    amount: String(paidAmount),
+    originalAmount: String(resolved.originalAmount),
+    discountAmount: String(resolved.discountAmount),
+    discountPercent: String(resolved.discountPercent),
+    finalAmount: String(resolved.finalAmount),
   };
 
   const result = await createPayment(input);
@@ -223,6 +211,7 @@ async function createPaymentAction(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/payments");
+  revalidatePath("/reports");
   redirect("/payments?saved=1");
 }
 
@@ -243,6 +232,7 @@ async function deletePaymentAction(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/payments");
+  revalidatePath("/reports");
   redirect("/payments?deleted=1");
 }
 
@@ -563,7 +553,28 @@ function PaymentCreateForm({ students }: PaymentCreateFormProps) {
             </select>
           </div>
 
-          <div />
+          <div>
+            <label
+              htmlFor="paidAmount"
+              className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
+            >
+              المبلغ المدفوع فعليًا
+            </label>
+
+            <input
+              id="paidAmount"
+              name="paidAmount"
+              type="number"
+              min={0}
+              placeholder="يُحتسب تلقائيًا عند الحالة مدفوع"
+              className="input"
+            />
+
+            <p className="mt-1.5 flex items-start gap-1 text-xs leading-5 text-[var(--app-text-muted)]">
+              <Info size={13} className="mt-0.5 shrink-0 text-indigo-400" />
+              عند الحالة مدفوع يُحسب تلقائيًا = المبلغ النهائي. املئي هذا الحقل فقط عند الدفع الجزئي.
+            </p>
+          </div>
         </div>
 
         <div className="grid gap-5 md:grid-cols-3">

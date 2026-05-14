@@ -167,6 +167,7 @@ async function createScheduleAction(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/schedules");
+  revalidatePath("/reports");
   redirect("/schedules?saved=1");
 }
 
@@ -187,6 +188,7 @@ async function toggleScheduleAction(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/schedules");
+  revalidatePath("/reports");
   redirect("/schedules?toggled=1");
 }
 
@@ -207,6 +209,7 @@ async function deleteScheduleAction(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/schedules");
+  revalidatePath("/reports");
   redirect("/schedules?deleted=1");
 }
 

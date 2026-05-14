@@ -156,6 +156,7 @@ async function createStudentAction(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/students");
+  revalidatePath("/reports");
   redirect("/students?saved=1");
 }
 
@@ -177,6 +178,7 @@ async function updateStudentStatusAction(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/students");
+  revalidatePath("/reports");
   redirect("/students?statusUpdated=1");
 }
 
@@ -197,6 +199,7 @@ async function deleteStudentAction(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/students");
+  revalidatePath("/reports");
   redirect("/students?deleted=1");
 }
 

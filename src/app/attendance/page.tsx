@@ -162,6 +162,7 @@ async function createAttendanceAction(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/attendance");
+  revalidatePath("/reports");
   redirect("/attendance?saved=1");
 }
 
@@ -182,6 +183,7 @@ async function deleteAttendanceAction(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/attendance");
+  revalidatePath("/reports");
   redirect("/attendance?deleted=1");
 }
 

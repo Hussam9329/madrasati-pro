@@ -13,65 +13,10 @@ import {
 import { AppShell } from "@/components/layout/app-shell";
 import { QuickActions } from "@/components/dashboard/quick-actions";
 import { requireAdmin } from "@/lib/auth";
+import { getDashboardStats } from "@/services/dashboard-service";
+import { formatMoney } from "@/types/payment";
 
-const dashboardStats = [
-  {
-    title: "إجمالي الطالبات",
-    value: "0",
-    description: "طالبة مسجلة في النظام",
-    icon: Users,
-    tone: "blue",
-  },
-  {
-    title: "المدرسات",
-    value: "0",
-    description: "مدرسة جاهزة للتوزيع",
-    icon: GraduationCap,
-    tone: "green",
-  },
-  {
-    title: "الصفوف والشُعب",
-    value: "0",
-    description: "صف وشعبة داخل المدرسة",
-    icon: School,
-    tone: "rose",
-  },
-  {
-    title: "حضور اليوم",
-    value: "0%",
-    description: "نسبة الحضور المسجلة اليوم",
-    icon: CalendarCheck,
-    tone: "emerald",
-  },
-  {
-    title: "الدرجات المدخلة",
-    value: "0",
-    description: "درجة محفوظة هذا الشهر",
-    icon: BarChart3,
-    tone: "amber",
-  },
-  {
-    title: "الأقساط المستلمة",
-    value: "0 د.ع",
-    description: "إجمالي المدفوعات المسجلة",
-    icon: Receipt,
-    tone: "amber",
-  },
-  {
-    title: "تنبيهات تحتاج متابعة",
-    value: "0",
-    description: "ملاحظة أو إجراء مطلوب",
-    icon: AlertTriangle,
-    tone: "rose",
-  },
-  {
-    title: "جاهزية النظام",
-    value: "0%",
-    description: "اكتملت خطوات التأسيس",
-    icon: TrendingUp,
-    tone: "cyan",
-  },
-];
+export const dynamic = "force-dynamic";
 
 const setupSteps = [
   {
@@ -114,6 +59,67 @@ const recentActivities = [
 export default async function DashboardPage() {
   await requireAdmin();
 
+  const stats = await getDashboardStats();
+
+  const dashboardStats = [
+    {
+      title: "إجمالي الطالبات",
+      value: String(stats.studentsTotal),
+      description: "طالبة مسجلة في النظام",
+      icon: Users,
+      tone: "blue",
+    },
+    {
+      title: "المدرسات",
+      value: String(stats.teachersTotal),
+      description: "مدرسة جاهزة للتوزيع",
+      icon: GraduationCap,
+      tone: "green",
+    },
+    {
+      title: "الصفوف والشُعب",
+      value: String(stats.classesTotal + stats.sectionsTotal),
+      description: `${stats.classesTotal} صف و ${stats.sectionsTotal} شعبة`,
+      icon: School,
+      tone: "indigo",
+    },
+    {
+      title: "حضور اليوم",
+      value: `${stats.todayAttendanceRate}%`,
+      description: "نسبة الحضور المسجلة اليوم",
+      icon: CalendarCheck,
+      tone: "emerald",
+    },
+    {
+      title: "الدرجات المدخلة",
+      value: String(stats.gradesThisMonth),
+      description: "درجة محفوظة هذا الشهر",
+      icon: BarChart3,
+      tone: "violet",
+    },
+    {
+      title: "الأقساط المستلمة",
+      value: formatMoney(stats.totalPaid),
+      description: "إجمالي المدفوعات المسجلة",
+      icon: Receipt,
+      tone: "amber",
+    },
+    {
+      title: "تنبيهات تحتاج متابعة",
+      value: String(stats.alertsCount),
+      description: "ملاحظة أو إجراء مطلوب",
+      icon: AlertTriangle,
+      tone: "rose",
+    },
+    {
+      title: "جاهزية النظام",
+      value: `${stats.readinessRate}%`,
+      description: "اكتملت خطوات التأسيس",
+      icon: TrendingUp,
+      tone: "cyan",
+    },
+  ];
+
   return (
     <AppShell>
       <div className="mx-auto flex w-full max-w-[1500px] flex-col gap-6">
@@ -130,7 +136,7 @@ export default async function DashboardPage() {
                   </div>
 
                   <h2 className="app-title">
-                    أهلًا بك في لوحة تحكم مدرستي - ثانوية مارينا للبنات
+                    أهلًا بك في لوحة تحكم مارينا
                   </h2>
 
                   <p className="app-subtitle mt-3 max-w-3xl">

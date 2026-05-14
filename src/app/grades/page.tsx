@@ -221,6 +221,7 @@ async function createGradeAction(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/grades");
+  revalidatePath("/reports");
 
   if (percentage < 50) {
     redirect("/grades?saved=1&warning=fail");
@@ -250,6 +251,7 @@ async function deleteGradeAction(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/grades");
+  revalidatePath("/reports");
   redirect("/grades?deleted=1");
 }
 

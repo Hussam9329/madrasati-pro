@@ -99,13 +99,13 @@ export default function ReportsPage() {
 
       const [summaryRes, chartsRes, attendanceRes, gradesRes, paymentsRes, classesRes, teachersRes] =
         await Promise.all([
-          fetch(`/api/reports?type=summary&${params.toString()}`),
-          fetch(`/api/reports?type=charts&${params.toString()}`),
-          fetch(`/api/reports?type=attendance&${params.toString()}`),
-          fetch(`/api/reports?type=grades&${params.toString()}`),
-          fetch(`/api/reports?type=payments&${params.toString()}`),
-          fetch(`/api/reports?type=classes`),
-          fetch(`/api/reports?type=teachers`),
+          fetch(`/api/reports?type=summary&${params.toString()}`, { cache: "no-store" }),
+          fetch(`/api/reports?type=charts&${params.toString()}`, { cache: "no-store" }),
+          fetch(`/api/reports?type=attendance&${params.toString()}`, { cache: "no-store" }),
+          fetch(`/api/reports?type=grades&${params.toString()}`, { cache: "no-store" }),
+          fetch(`/api/reports?type=payments&${params.toString()}`, { cache: "no-store" }),
+          fetch(`/api/reports?type=classes`, { cache: "no-store" }),
+          fetch(`/api/reports?type=teachers`, { cache: "no-store" }),
         ]);
 
       const [summaryData, chartsData, attendanceData, gradesData, paymentsData, classesData, teachersData] =

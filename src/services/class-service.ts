@@ -44,6 +44,11 @@ export async function getClasses(): Promise<ClassListItem[]> {
           },
         },
       },
+      classSubjects: {
+        select: {
+          subjectId: true,
+        },
+      },
       _count: {
         select: {
           sections: true,
@@ -73,6 +78,7 @@ export async function getClasses(): Promise<ClassListItem[]> {
       studentsCount,
       subjectsCount: schoolClass._count.classSubjects,
       schedulesCount,
+      subjectIds: schoolClass.classSubjects.map((cs: { subjectId: string }) => cs.subjectId),
       createdAt: schoolClass.createdAt,
     };
   });
@@ -422,6 +428,11 @@ export async function searchClasses(query: string): Promise<ClassListItem[]> {
           },
         },
       },
+      classSubjects: {
+        select: {
+          subjectId: true,
+        },
+      },
       _count: {
         select: {
           sections: true,
@@ -451,6 +462,7 @@ export async function searchClasses(query: string): Promise<ClassListItem[]> {
       studentsCount,
       subjectsCount: schoolClass._count.classSubjects,
       schedulesCount,
+      subjectIds: schoolClass.classSubjects.map((cs: { subjectId: string }) => cs.subjectId),
       createdAt: schoolClass.createdAt,
     };
   });
@@ -783,6 +795,51 @@ export async function toggleSectionStatus(
       ? "تم تفعيل الشعبة."
       : "تم تعطيل الشعبة.",
   };
+}
+
+export async function assignSubjectsToClass(classId: string, subjectIds: string[]) {
+  const uniqueSubjectIds = Array.from(new Set(subjectIds.filter(Boolean)));
+
+  const schoolClass = await db.schoolClass.findUnique({
+    where: { id: classId },
+    select: { id: true },
+  });
+
+  if (!schoolClass) {
+    return { ok: false as const, message: "لم يتم العثور على الصف." };
+  }
+
+  const validSubjects = await db.subject.findMany({
+    where: {
+      id: { in: uniqueSubjectIds },
+      isActive: true,
+    },
+    select: { id: true },
+  });
+
+  await db.$transaction(async (tx) => {
+    await tx.classSubject.deleteMany({ where: { classId } });
+
+    if (validSubjects.length > 0) {
+      await tx.classSubject.createMany({
+        data: validSubjects.map((subject) => ({
+          classId,
+          subjectId: subject.id,
+        })),
+      });
+    }
+  });
+
+  return { ok: true as const, message: "تم تحديث مواد الصف بنجاح." };
+}
+
+export async function getClassSubjectIds(classId: string) {
+  const rows = await db.classSubject.findMany({
+    where: { classId },
+    select: { subjectId: true },
+  });
+
+  return rows.map((row) => row.subjectId);
 }
 
 function isUniqueConstraintError(error: unknown): boolean {

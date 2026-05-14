@@ -219,6 +219,34 @@ export function calculateFinalAmount(originalAmount: number, discountAmount: num
   return Math.max(0, originalAmount - discountAmount);
 }
 
+export function resolvePaymentAmounts(input: PaymentFormInput) {
+  const originalAmount = Number(input.originalAmount || input.amount || 0);
+  const rawDiscountAmount = Number(input.discountAmount || 0);
+  const rawDiscountPercent = Number(input.discountPercent || 0);
+
+  let discountAmount = rawDiscountAmount;
+  let discountPercent = rawDiscountPercent;
+
+  if (discountPercent > 0 && discountAmount <= 0) {
+    discountAmount = calculateDiscountFromPercent(originalAmount, discountPercent);
+  }
+
+  if (discountAmount > 0 && discountPercent <= 0) {
+    discountPercent = calculateDiscountPercent(originalAmount, discountAmount);
+  }
+
+  const finalAmount = calculateFinalAmount(originalAmount, discountAmount);
+  const paidAmount = Number(input.amount || 0);
+
+  return {
+    originalAmount,
+    discountAmount,
+    discountPercent,
+    finalAmount,
+    paidAmount,
+  };
+}
+
 export function validateDiscount(originalAmount: number, discountAmount: number): { valid: boolean; message?: string } {
   if (discountAmount > originalAmount) {
     return { valid: false, message: "تحذير: قيمة الخصم أكبر من القسط." };
@@ -300,6 +328,7 @@ export function validatePaymentInput(
   input: PaymentFormInput,
 ): PaymentValidationResult {
   const normalized = normalizePaymentInput(input);
+  const resolved = resolvePaymentAmounts(normalized);
   const errors: Partial<Record<keyof PaymentFormInput, string>> = {};
 
   if (!normalized.feeTitle) {
@@ -340,6 +369,36 @@ export function validatePaymentInput(
     Number(normalized.discountPercent) > 100
   ) {
     errors.discountPercent = "نسبة الخصم لا يمكن أن تتجاوز 100%.";
+  }
+
+  if (
+    resolved.discountAmount > 0 &&
+    resolved.originalAmount > 0 &&
+    resolved.discountAmount > resolved.originalAmount
+  ) {
+    errors.discountAmount = "قيمة الخصم لا يمكن أن تتجاوز أصل المبلغ.";
+  }
+
+  if (resolved.finalAmount < 0) {
+    errors.finalAmount = "المبلغ النهائي لا يمكن أن يكون سالبًا.";
+  }
+
+  const status = normalized.status ?? "paid";
+
+  if (status === "paid" && resolved.paidAmount !== resolved.finalAmount) {
+    errors.amount = "المبلغ المدفوع يجب أن يساوي المبلغ النهائي عند الحالة مدفوع.";
+  }
+
+  if (status === "partial" && (resolved.paidAmount <= 0 || resolved.paidAmount >= resolved.finalAmount)) {
+    errors.amount = "المبلغ المدفوع يجب أن يكون أكبر من صفر وأقل من المبلغ النهائي عند الحالة جزئي.";
+  }
+
+  if (status === "pending" && resolved.paidAmount !== 0) {
+    errors.amount = "المبلغ المدفوع يجب أن يكون صفر عند الحالة معلّق.";
+  }
+
+  if (resolved.paidAmount > resolved.finalAmount) {
+    errors.amount = "المبلغ المدفوع لا يمكن أن يتجاوز المبلغ النهائي.";
   }
 
   if (normalized.finalAmount !== undefined && Number.isNaN(Number(normalized.finalAmount))) {

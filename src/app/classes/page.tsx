@@ -20,6 +20,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { SmartAlert } from "@/components/shared/smart-alert";
 import {
+  assignSubjectsToClass,
   createClass,
   createSection,
   deleteClass,
@@ -31,6 +32,7 @@ import {
   toggleClassStatus,
   toggleSectionStatus,
 } from "@/services/class-service";
+import { getActiveSubjects } from "@/services/subject-service";
 import {
   getClassDisplayName,
   getClassStatus,
@@ -59,11 +61,12 @@ export default async function ClassesPage({ searchParams }: ClassesPageProps) {
 
   const query = searchParams?.q?.trim() ?? "";
 
-  const [classes, activeClasses, sections, counts] = await Promise.all([
+  const [classes, activeClasses, sections, counts, subjects] = await Promise.all([
     safeQuery(() => searchClasses(query), []),
     safeQuery(() => getActiveClasses(), []),
     safeQuery(() => getSections(), []),
     safeQuery(() => getClassesCount(), { total: 0, active: 0, inactive: 0, sections: 0 }),
+    safeQuery(() => getActiveSubjects(), []),
   ]);
 
   const hasClasses = counts.total > 0;
@@ -134,7 +137,7 @@ export default async function ClassesPage({ searchParams }: ClassesPageProps) {
             actionHref="/classes"
           />
         ) : (
-          <ClassesList classes={classes} />
+          <ClassesList classes={classes} subjects={subjects} />
         )}
       </div>
     </AppShell>
@@ -159,6 +162,7 @@ async function createClassAction(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/classes");
+  revalidatePath("/reports");
   redirect("/classes?classSaved=1");
 }
 
@@ -181,6 +185,7 @@ async function createSectionAction(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/classes");
+  revalidatePath("/reports");
   redirect("/classes?sectionSaved=1");
 }
 
@@ -201,6 +206,7 @@ async function toggleClassAction(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/classes");
+  revalidatePath("/reports");
   redirect("/classes?toggled=1");
 }
 
@@ -221,6 +227,7 @@ async function deleteClassAction(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/classes");
+  revalidatePath("/reports");
   redirect("/classes?deleted=1");
 }
 
@@ -241,6 +248,7 @@ async function toggleSectionAction(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/classes");
+  revalidatePath("/reports");
   redirect("/classes?toggled=1");
 }
 
@@ -261,7 +269,24 @@ async function deleteSectionAction(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/classes");
+  revalidatePath("/reports");
   redirect("/classes?deleted=1");
+}
+
+async function assignClassSubjectsAction(formData: FormData) {
+  "use server";
+  const classId = String(formData.get("classId") ?? "");
+  const subjectIds = formData.getAll("subjectIds").map(String);
+
+  if (!classId) {
+    redirect("/classes?error=assign");
+  }
+
+  await assignSubjectsToClass(classId, subjectIds);
+  revalidatePath("/");
+  revalidatePath("/classes");
+  revalidatePath("/reports");
+  redirect("/classes?saved=1");
 }
 
 type ClassesFeedbackProps = {
@@ -830,9 +855,10 @@ function SectionRow({ section }: SectionRowProps) {
 
 type ClassesListProps = {
   classes: ClassListItem[];
+  subjects: { id: string; name: string }[];
 };
 
-function ClassesList({ classes }: ClassesListProps) {
+function ClassesList({ classes, subjects }: ClassesListProps) {
   return (
     <section className="app-card overflow-hidden">
       <div className="flex flex-col gap-2 border-b border-[var(--app-border-soft)] p-6 sm:flex-row sm:items-center sm:justify-between">
@@ -851,7 +877,7 @@ function ClassesList({ classes }: ClassesListProps) {
 
       <div className="divide-y divide-[var(--app-border-soft)]">
         {classes.map((schoolClass) => (
-          <ClassRow key={schoolClass.id} schoolClass={schoolClass} />
+          <ClassRow key={schoolClass.id} schoolClass={schoolClass} subjects={subjects} />
         ))}
       </div>
     </section>
@@ -860,9 +886,10 @@ function ClassesList({ classes }: ClassesListProps) {
 
 type ClassRowProps = {
   schoolClass: ClassListItem;
+  subjects: { id: string; name: string }[];
 };
 
-function ClassRow({ schoolClass }: ClassRowProps) {
+function ClassRow({ schoolClass, subjects }: ClassRowProps) {
   const status = getClassStatus(schoolClass);
   const statusLabel = getClassStatusLabel(status);
   const statusClass = status === "active" ? "badge-success" : "badge-warning";
@@ -940,6 +967,34 @@ function ClassRow({ schoolClass }: ClassRowProps) {
           </button>
         </form>
       </div>
+
+      <details className="mt-3">
+        <summary className="cursor-pointer text-sm font-bold text-[var(--primary)] hover:underline">
+          ربط المواد
+        </summary>
+        <form action={assignClassSubjectsAction} className="mt-3 space-y-2">
+          <input type="hidden" name="classId" value={schoolClass.id} />
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            {subjects.map((subject) => (
+              <label key={subject.id} className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  name="subjectIds"
+                  value={subject.id}
+                  defaultChecked={schoolClass.subjectIds?.includes(subject.id) ?? false}
+                />
+                {subject.name}
+              </label>
+            ))}
+          </div>
+          <button
+            type="submit"
+            className="mt-2 rounded-lg bg-[var(--primary)] px-4 py-2 text-sm font-bold text-white hover:bg-[var(--primary-hover)]"
+          >
+            حفظ مواد الصف
+          </button>
+        </form>
+      </details>
     </article>
   );
 }

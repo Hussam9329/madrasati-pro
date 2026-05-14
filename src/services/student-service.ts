@@ -122,6 +122,25 @@ export async function getStudentDetails(
   };
 }
 
+async function findDuplicateStudentPhone(input: StudentFormInput, excludeId?: string) {
+  const data = normalizeStudentInput(input);
+  const phones = [data.phone, data.guardianPhone].filter(Boolean);
+  if (phones.length === 0) return null;
+
+  return db.student.findFirst({
+    where: {
+      ...(excludeId ? { id: { not: excludeId } } : {}),
+      OR: [
+        data.phone ? { phone: data.phone } : undefined,
+        data.phone ? { guardianPhone: data.phone } : undefined,
+        data.guardianPhone ? { phone: data.guardianPhone } : undefined,
+        data.guardianPhone ? { guardianPhone: data.guardianPhone } : undefined,
+      ].filter(Boolean) as any,
+    },
+    select: { id: true },
+  });
+}
+
 export async function createStudent(
   input: StudentFormInput,
 ): Promise<StudentServiceResult<Student>> {
@@ -146,6 +165,15 @@ export async function createStudent(
       errors: {
         sectionId: sectionCheck.message,
       },
+    };
+  }
+
+  const duplicatePhone = await findDuplicateStudentPhone(data);
+  if (duplicatePhone) {
+    return {
+      ok: false,
+      message: "رقم الهاتف مستخدم مسبقًا لطالبة أخرى.",
+      errors: { phone: "رقم الهاتف مستخدم مسبقًا لطالبة أخرى." },
     };
   }
 
@@ -224,6 +252,15 @@ export async function updateStudent(
       errors: {
         sectionId: sectionCheck.message,
       },
+    };
+  }
+
+  const duplicatePhone = await findDuplicateStudentPhone(data, id);
+  if (duplicatePhone) {
+    return {
+      ok: false,
+      message: "رقم الهاتف مستخدم مسبقًا لطالبة أخرى.",
+      errors: { phone: "رقم الهاتف مستخدم مسبقًا لطالبة أخرى." },
     };
   }
 

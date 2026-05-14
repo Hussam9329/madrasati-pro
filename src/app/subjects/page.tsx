@@ -136,6 +136,7 @@ async function createSubjectAction(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/subjects");
+  revalidatePath("/reports");
   redirect("/subjects?saved=1");
 }
 
@@ -156,6 +157,7 @@ async function toggleSubjectAction(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/subjects");
+  revalidatePath("/reports");
   redirect("/subjects?toggled=1");
 }
 
@@ -176,6 +178,7 @@ async function deleteSubjectAction(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/subjects");
+  revalidatePath("/reports");
   redirect("/subjects?deleted=1");
 }
 
