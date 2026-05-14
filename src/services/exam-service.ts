@@ -1,0 +1,146 @@
+import { db } from "@/lib/db";
+import { Prisma } from "@prisma/client";
+
+export type ExamServiceResult<T> = {
+  ok: boolean;
+  data?: T;
+  message: string;
+  errors?: Record<string, string>;
+};
+
+export async function createExam(input: {
+  name: string;
+  type: string;
+  date?: string | Date;
+  maxScore?: number;
+  passScore?: number;
+  failScore?: number;
+  notes?: string;
+  subjectId: string;
+  sectionId: string;
+}): Promise<ExamServiceResult<Prisma.ExamGetPayload<{ include: { subject: true; section: { include: { class: true } } } }>>> {
+  // Validate subject exists
+  const subject = await db.subject.findUnique({ where: { id: input.subjectId } });
+  if (!subject) return { ok: false, message: "المادة غير موجودة." };
+
+  // Validate section exists
+  const section = await db.section.findUnique({ where: { id: input.sectionId } });
+  if (!section) return { ok: false, message: "الشعبة غير موجودة." };
+
+  try {
+    const exam = await db.exam.create({
+      data: {
+        name: input.name.trim(),
+        type: input.type,
+        date: input.date ? new Date(input.date) : new Date(),
+        maxScore: input.maxScore ?? 100,
+        passScore: input.passScore ?? 50,
+        failScore: input.failScore,
+        notes: input.notes?.trim() || null,
+        subjectId: input.subjectId,
+        sectionId: input.sectionId,
+      },
+      include: {
+        subject: true,
+        section: { include: { class: true } },
+      },
+    });
+    return { ok: true, data: exam, message: "تم إنشاء الامتحان بنجاح." };
+  } catch {
+    return { ok: false, message: "حدث خطأ أثناء إنشاء الامتحان." };
+  }
+}
+
+export async function saveExamGrades(
+  examId: string,
+  grades: { studentId: string; score: number; notes?: string }[],
+): Promise<ExamServiceResult<{ created: number; updated: number }>> {
+  // Get exam with passScore
+  const exam = await db.exam.findUnique({ where: { id: examId } });
+  if (!exam) return { ok: false, message: "الامتحان غير موجود." };
+
+  let created = 0;
+  let updated = 0;
+
+  for (const grade of grades) {
+    const existing = await db.grade.findUnique({
+      where: { examId_studentId: { examId, studentId: grade.studentId } },
+    });
+
+    if (existing) {
+      await db.grade.update({
+        where: { id: existing.id },
+        data: {
+          score: grade.score,
+          maxScore: exam.maxScore,
+          notes: grade.notes?.trim() || null,
+        },
+      });
+      updated++;
+    } else {
+      await db.grade.create({
+        data: {
+          title: exam.name,
+          score: grade.score,
+          maxScore: exam.maxScore,
+          examType: exam.type,
+          subjectId: exam.subjectId,
+          studentId: grade.studentId,
+          examId: examId,
+          notes: grade.notes?.trim() || null,
+        },
+      });
+      created++;
+    }
+  }
+
+  return {
+    ok: true,
+    data: { created, updated },
+    message: `تم حفظ الدرجات: ${created} جديد، ${updated} محدّث.`,
+  };
+}
+
+export async function getExams(filter?: { subjectId?: string; sectionId?: string }) {
+  const where: Prisma.ExamWhereInput = {};
+  if (filter?.subjectId) where.subjectId = filter.subjectId;
+  if (filter?.sectionId) where.sectionId = filter.sectionId;
+
+  return db.exam.findMany({
+    where,
+    include: {
+      subject: true,
+      section: { include: { class: true } },
+      _count: { select: { grades: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+export async function getExamById(id: string) {
+  return db.exam.findUnique({
+    where: { id },
+    include: {
+      subject: true,
+      section: {
+        include: {
+          class: true,
+          students: {
+            where: { status: "active" },
+            orderBy: { fullName: "asc" },
+          },
+        },
+      },
+      grades: { include: { student: true } },
+    },
+  });
+}
+
+export async function deleteExam(id: string): Promise<ExamServiceResult<null>> {
+  const exam = await db.exam.findUnique({ where: { id } });
+  if (!exam) return { ok: false, message: "الامتحان غير موجود." };
+
+  await db.grade.deleteMany({ where: { examId: id } });
+  await db.exam.delete({ where: { id } });
+  return { ok: true, data: null, message: "تم حذف الامتحان ودرجاته." };
+}

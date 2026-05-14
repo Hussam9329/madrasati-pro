@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
       status: body.status ?? "present",
       notes: body.notes ?? "",
       studentId: String(body.studentId ?? ""),
-      scheduleId: body.scheduleId ?? "",
+      mode: body.mode ?? "check-in",
     };
 
     const result = await createAttendanceRecord(input);
@@ -164,7 +164,7 @@ export async function PUT(request: NextRequest) {
       status: body.status ?? "present",
       notes: body.notes ?? "",
       studentId: String(body.studentId ?? ""),
-      scheduleId: body.scheduleId ?? "",
+      mode: body.mode ?? "check-in",
     });
 
     if (!result.ok) {

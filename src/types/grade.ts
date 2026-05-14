@@ -98,8 +98,8 @@ export const EXAM_TYPES = [
   { value: "participation", label: "مشاركة" },
   { value: "project", label: "مشروع" },
   { value: "final_exam", label: "امتحان نهائي" },
-  { value: "quiz", label: "اختبار قصير" },
-  { value: "monthly", label: "اختبار شهري" },
+  { value: "quiz", label: "امتحان قصير" },
+  { value: "monthly", label: "امتحان شهري" },
 ] as const;
 
 export const TERMS = [
@@ -201,11 +201,11 @@ export function validateGradeInput(input: GradeFormInput): GradeValidationResult
     normalized.examType &&
     !EXAM_TYPES.some((item) => item.value === normalized.examType)
   ) {
-    errors.examType = "نوع الاختبار غير صحيح.";
+    errors.examType = "نوع الامتحان غير صحيح.";
   }
 
   if (normalized.term && !TERMS.some((item) => item.value === normalized.term)) {
-    errors.term = "الفصل الدراسي غير صحيح.";
+    errors.term = "الفصل غير صحيح.";
   }
 
   if (normalized.date && !parseGradeDate(normalized.date)) {

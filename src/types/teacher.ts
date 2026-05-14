@@ -87,13 +87,13 @@ export function validateTeacherInput(
   }
 
   if (!normalized.phone) {
-    errors.phone = "رقم هاتف المدرسة يجب أن يتكون من 11 رقم ويبدأ بـ 07.";
+    errors.phone = "رقم هاتف المدرس يجب أن يتكون من 11 رقم ويبدأ بـ 07.";
   } else if (!IRAQI_PHONE_REGEX.test(normalized.phone)) {
-    errors.phone = "رقم هاتف المدرسة يجب أن يتكون من 11 رقم ويبدأ بـ 07.";
+    errors.phone = "رقم هاتف المدرس يجب أن يتكون من 11 رقم ويبدأ بـ 07.";
   }
 
   if (!normalized.subjectIds || normalized.subjectIds.length === 0) {
-    errors.subjectIds = "يجب اختيار المادة التي تدرّسها المدرسة.";
+    errors.subjectIds = "يجب اختيار المادة التي يدرّسها المدرس.";
   }
 
   return {
@@ -165,7 +165,7 @@ export function canDeleteTeacher(input: {
     return {
       allowed: false,
       reason:
-        "لا يمكن حذف المدرسةة لأنها مرتبط بحصص في الجدول الدراسي. يمكنك تعطيله بدل حذفه.",
+        "لا يمكن حذف المدرس لأنه مرتبط بمحاضرات في الجدول الدراسي. يمكنك تعطيله بدل حذفه.",
     };
   }
 

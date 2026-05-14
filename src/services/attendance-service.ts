@@ -63,6 +63,7 @@ function toAttendanceListItem(
   return {
     id: record.id,
     date: record.date,
+    mode: record.mode,
     status: record.status,
     statusLabel: getAttendanceStatusLabel(record.status),
     notes: record.notes ?? null,
@@ -338,34 +339,6 @@ async function validateAttendanceRelations(
     };
   }
 
-  if (input.scheduleId) {
-    const schedule = await db.schedule.findUnique({
-      where: {
-        id: input.scheduleId,
-      },
-    });
-
-    if (!schedule) {
-      return {
-        ok: false,
-        message: "الحصة المحددة غير موجودة.",
-        errors: {
-          scheduleId: "الحصة المحددة غير موجودة.",
-        },
-      };
-    }
-
-    if (!schedule.isActive) {
-      return {
-        ok: false,
-        message: "لا يمكن ربط الحضور بحصة متوقفة.",
-        errors: {
-          scheduleId: "الحصة متوقفة.",
-        },
-      };
-    }
-  }
-
   return {
     ok: true,
     message: "العلاقات صحيحة.",
@@ -391,19 +364,16 @@ async function findDuplicateAttendanceRecord(
   const end = new Date(start);
   end.setDate(end.getDate() + 1);
 
+  const mode = input.mode || "check-in";
+
   const where: Prisma.AttendanceRecordWhereInput = {
     date: {
       gte: start,
       lt: end,
     },
     studentId: input.studentId,
+    mode,
   };
-
-  if (input.scheduleId) {
-    where.scheduleId = input.scheduleId;
-  } else {
-    where.scheduleId = null;
-  }
 
   if (excludeId) {
     where.id = { not: excludeId };
@@ -455,6 +425,7 @@ export async function getAttendanceRecordById(
   return {
     id: record.id,
     date: record.date,
+    mode: record.mode,
     status: record.status,
     notes: record.notes,
     checkInAt: record.checkInAt,
@@ -519,7 +490,7 @@ export async function createAttendanceRecord(
   if (isDuplicate) {
     return {
       ok: false,
-      message: "يوجد سجل حضور مكرر لهذا الطالب في نفس اليوم والحصة.",
+      message: "تم تسجيل هذه الحركة مسبقًا لهذه الطالبة في نفس اليوم.",
       errors: {
         studentId: "سجل الحضور موجود مسبقًا لهذا الطالب.",
       },
@@ -528,13 +499,15 @@ export async function createAttendanceRecord(
 
   try {
     const dateValue = normalizeDateOnly(data.date);
+    const mode = data.mode || "check-in";
 
     const record = await db.attendanceRecord.create({
       data: {
         date: dateValue ?? new Date(),
         status: data.status,
         notes: data.notes ?? null,
-        scheduleId: data.scheduleId || null,
+        mode,
+        scheduleId: null,
         studentId: data.studentId,
         source: "manual",
       },
@@ -545,6 +518,7 @@ export async function createAttendanceRecord(
       data: {
         id: record.id,
         date: record.date,
+        mode: record.mode,
         status: record.status,
         notes: record.notes,
         checkInAt: record.checkInAt,
@@ -561,7 +535,7 @@ export async function createAttendanceRecord(
     if (isUniqueConstraintError(error)) {
       return {
         ok: false,
-        message: "يوجد سجل حضور مكرر لهذا الطالب في نفس اليوم والحصة.",
+        message: "تم تسجيل هذه الحركة مسبقًا لهذه الطالبة في نفس اليوم.",
         errors: {
           studentId: "سجل الحضور موجود مسبقًا لهذا الطالب.",
         },
@@ -617,7 +591,7 @@ export async function updateAttendanceRecord(
   if (isDuplicate) {
     return {
       ok: false,
-      message: "يوجد سجل حضور مكرر لهذا الطالب في نفس اليوم والحصة.",
+      message: "تم تسجيل هذه الحركة مسبقًا لهذه الطالبة في نفس اليوم.",
       errors: {
         studentId: "سجل الحضور موجود مسبقًا لهذا الطالب.",
       },
@@ -626,6 +600,7 @@ export async function updateAttendanceRecord(
 
   try {
     const dateValue = normalizeDateOnly(data.date);
+    const mode = data.mode || "check-in";
 
     const record = await db.attendanceRecord.update({
       where: { id },
@@ -633,7 +608,8 @@ export async function updateAttendanceRecord(
         date: dateValue ?? existing.date,
         status: data.status,
         notes: data.notes ?? null,
-        scheduleId: data.scheduleId || null,
+        mode,
+        scheduleId: null,
         studentId: data.studentId,
       },
     });
@@ -643,6 +619,7 @@ export async function updateAttendanceRecord(
       data: {
         id: record.id,
         date: record.date,
+        mode: record.mode,
         status: record.status,
         notes: record.notes,
         checkInAt: record.checkInAt,
@@ -875,14 +852,14 @@ export async function scanAttendanceByStudentCode(
         status: existingRecord.status,
         checkInAt: existingRecord.checkInAt,
         checkOutAt: existingRecord.checkOutAt,
-        message: "تم تسجيل حضور الطالبة مسبقًا اليوم.",
+        message: "تم تسجيل دخول الطالبة مسبقًا اليوم.",
       };
     }
 
     if (existingRecord && !existingRecord.checkInAt) {
       const updated = await db.attendanceRecord.update({
         where: { id: existingRecord.id },
-        data: { checkInAt: now, status: "present", source },
+        data: { checkInAt: now, status: "present", source, mode: "check-in" },
       });
       return {
         ok: true,
@@ -892,7 +869,7 @@ export async function scanAttendanceByStudentCode(
         status: updated.status,
         checkInAt: updated.checkInAt,
         checkOutAt: updated.checkOutAt,
-        message: "تم تسجيل حضور الطالبة بنجاح.",
+        message: "تم تسجيل دخول الطالبة بنجاح.",
       };
     }
 
@@ -901,6 +878,7 @@ export async function scanAttendanceByStudentCode(
         date: today,
         studentId: student.id,
         status: "present",
+        mode: "check-in",
         checkInAt: now,
         source,
       },
@@ -913,7 +891,7 @@ export async function scanAttendanceByStudentCode(
       status: created.status,
       checkInAt: created.checkInAt,
       checkOutAt: created.checkOutAt,
-      message: "تم تسجيل حضور الطالبة بنجاح.",
+      message: "تم تسجيل دخول الطالبة بنجاح.",
     };
   }
 
@@ -946,7 +924,7 @@ export async function scanAttendanceByStudentCode(
 
   const updated = await db.attendanceRecord.update({
     where: { id: existingRecord.id },
-    data: { checkOutAt: now },
+    data: { checkOutAt: now, mode: "check-out" },
   });
 
   return {
@@ -1034,4 +1012,38 @@ function isUniqueConstraintError(error: unknown): boolean {
     error instanceof Prisma.PrismaClientKnownRequestError &&
     error.code === "P2002"
   );
+}
+
+// ─── Student Search for Attendance ──────────────────────────────
+
+export async function findStudentForAttendance(query: string) {
+  const trimmed = query.trim();
+  if (!trimmed) return [];
+
+  const students = await db.student.findMany({
+    where: {
+      OR: [
+        { fullName: { contains: trimmed } },
+        { studentCode: { contains: trimmed } },
+        { guardianPhone: { contains: trimmed } },
+      ],
+    },
+    include: {
+      section: {
+        include: {
+          class: true,
+        },
+      },
+    },
+    take: 20,
+  });
+
+  return students.map((s) => ({
+    id: s.id,
+    fullName: s.fullName,
+    studentCode: s.studentCode,
+    sectionName: s.section?.name ?? null,
+    className: s.section?.class?.name ?? null,
+    status: s.status,
+  }));
 }

@@ -136,12 +136,12 @@ export async function createSchedule(
     return {
       ok: true,
       data: schedule,
-      message: "تمت إضافة الحصة إلى الجدول بنجاح.",
+      message: "تمت إضافة المحاضرة إلى الجدول بنجاح.",
     };
   } catch {
     return {
       ok: false,
-      message: "حدث خطأ أثناء إضافة الحصة.",
+      message: "حدث خطأ أثناء إضافة المحاضرة.",
     };
   }
 }
@@ -165,7 +165,7 @@ export async function updateSchedule(
   if (!existingSchedule) {
     return {
       ok: false,
-      message: "لم يتم العثور على الحصة.",
+      message: "لم يتم العثور على المحاضرة.",
     };
   }
 
@@ -214,12 +214,12 @@ export async function updateSchedule(
     return {
       ok: true,
       data: schedule,
-      message: "تم تحديث الحصة بنجاح.",
+      message: "تم تحديث المحاضرة بنجاح.",
     };
   } catch {
     return {
       ok: false,
-      message: "حدث خطأ أثناء تحديث الحصة.",
+      message: "حدث خطأ أثناء تحديث المحاضرة.",
     };
   }
 }
@@ -232,7 +232,7 @@ export async function deleteSchedule(
   if (!schedule) {
     return {
       ok: false,
-      message: "لم يتم العثور على الحصة.",
+      message: "لم يتم العثور على المحاضرة.",
     };
   }
 
@@ -245,7 +245,7 @@ export async function deleteSchedule(
   return {
     ok: true,
     data: null,
-    message: "تم حذف الحصة من الجدول بنجاح.",
+    message: "تم حذف المحاضرة من الجدول بنجاح.",
   };
 }
 
@@ -257,7 +257,7 @@ export async function toggleScheduleStatus(
   if (!schedule) {
     return {
       ok: false,
-      message: "لم يتم العثور على الحصة.",
+      message: "لم يتم العثور على المحاضرة.",
     };
   }
 
@@ -274,8 +274,8 @@ export async function toggleScheduleStatus(
     ok: true,
     data: updatedSchedule,
     message: updatedSchedule.isActive
-      ? "تم تفعيل الحصة."
-      : "تم تعطيل الحصة.",
+      ? "تم تفعيل المحاضرة."
+      : "تم تعطيل المحاضرة.",
   };
 }
 
@@ -394,8 +394,8 @@ export async function findScheduleConflicts(
       sectionName: schedule.section.name,
       teacherName: schedule.teacher.fullName,
       message: isTeacherConflict
-        ? `يوجد تعارض: المدرس ${schedule.teacher.fullName} لديه حصة أخرى يوم ${getDayLabel(schedule.dayOfWeek)} من ${schedule.startTime} إلى ${schedule.endTime}.`
-        : `يوجد تعارض: الشعبة ${schedule.section.name} لديها حصة أخرى يوم ${getDayLabel(schedule.dayOfWeek)} من ${schedule.startTime} إلى ${schedule.endTime}.`,
+        ? `يوجد تعارض: المدرس ${schedule.teacher.fullName} لديه محاضرة أخرى يوم ${getDayLabel(schedule.dayOfWeek)} من ${schedule.startTime} إلى ${schedule.endTime}.`
+        : `يوجد تعارض: الشعبة ${schedule.section.name} لديها محاضرة أخرى يوم ${getDayLabel(schedule.dayOfWeek)} من ${schedule.startTime} إلى ${schedule.endTime}.`,
     };
   });
 }
@@ -522,7 +522,7 @@ async function validateScheduleRelations(
   if (!section.isActive) {
     return {
       ok: false,
-      message: "لا يمكن إضافة حصة لشعبة متوقفة.",
+      message: "لا يمكن إضافة محاضرة لشعبة متوقفة.",
       errors: {
         sectionId: "الشعبة متوقفة.",
       },
@@ -532,7 +532,7 @@ async function validateScheduleRelations(
   if (!section.class.isActive) {
     return {
       ok: false,
-      message: "لا يمكن إضافة حصة لصف متوقف.",
+      message: "لا يمكن إضافة محاضرة لصف متوقف.",
       errors: {
         sectionId: "الصف المرتبط بهذه الشعبة متوقف.",
       },
@@ -562,9 +562,9 @@ async function validateScheduleRelations(
   if (!teacher) {
     return {
       ok: false,
-      message: "المدرسة المحددة غير موجودة.",
+      message: "المدرس المحدد غير موجود.",
       errors: {
-        teacherId: "المدرسة المحددة غير موجودة.",
+        teacherId: "المدرس المحدد غير موجود.",
       },
     };
   }
@@ -572,9 +572,9 @@ async function validateScheduleRelations(
   if (!teacher.isActive) {
     return {
       ok: false,
-      message: "لا يمكن إسناد الحصة لمدرس متوقف.",
+      message: "لا يمكن إسناد المحاضرة لمدرس متوقف.",
       errors: {
-        teacherId: "المدرسة متوقفة.",
+        teacherId: "المدرس متوقف.",
       },
     };
   }
@@ -589,9 +589,9 @@ async function validateScheduleRelations(
   if (!teacherSubject) {
     return {
       ok: false,
-      message: "هذا المدرسة غير مرتبطة بهذه المادة.",
+      message: "هذا المدرس غير مرتبط بهذه المادة.",
       errors: {
-        teacherId: "اربطي المدرسة بالمادة أولًا من صفحة المدرسات.",
+        teacherId: "اربطي المدرس بالمادة أولًا من صفحة المدرسين.",
         subjectId: "المادة غير مرتبطة بالمدرس.",
       },
     };

@@ -28,6 +28,7 @@ model Subject {
   classSubjects   ClassSubject[]
   grades          Grade[]
   schedules       Schedule[]
+  exams           Exam[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -44,6 +45,7 @@ model SchoolClass {
 
   sections      Section[]
   classSubjects ClassSubject[]
+  feeSettings   ClassFeeSetting[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -62,8 +64,10 @@ model Section {
   classId String
   class   SchoolClass @relation(fields: [classId], references: [id], onDelete: Cascade)
 
-  students  Student[]
-  schedules Schedule[]
+  students        Student[]
+  schedules       Schedule[]
+  teacherSections TeacherSection[]
+  exams           Exam[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -85,6 +89,7 @@ model Teacher {
   isActive  Boolean @default(true)
 
   teacherSubjects TeacherSubject[]
+  teacherSections TeacherSection[]
   schedules       Schedule[]
   grades          Grade[]
 
@@ -110,6 +115,23 @@ model TeacherSubject {
   @@index([teacherId])
   @@index([subjectId])
   @@map("teacher_subjects")
+}
+
+model TeacherSection {
+  id String @id @default(cuid())
+
+  teacherId String
+  teacher   Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  sectionId String
+  section   Section @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([teacherId, sectionId])
+  @@index([teacherId])
+  @@index([sectionId])
+  @@map("teacher_sections")
 }
 
 model ClassSubject {
@@ -191,6 +213,7 @@ model Schedule {
 model AttendanceRecord {
   id     String  @id @default(cuid())
   date   DateTime
+  mode   String  @default("check-in")
   status String  @default("present")
   notes  String?
   checkInAt  DateTime?
@@ -206,11 +229,37 @@ model AttendanceRecord {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([studentId, date])
+  @@unique([studentId, date, mode])
   @@index([studentId])
   @@index([scheduleId])
   @@index([date])
   @@map("attendance_records")
+}
+
+model Exam {
+  id        String   @id @default(cuid())
+  name      String
+  type      String
+  date      DateTime @default(now())
+  maxScore  Float    @default(100)
+  passScore Float    @default(50)
+  failScore Float?
+  notes     String?
+
+  subjectId String
+  subject   Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  sectionId String
+  section   Section @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  grades Grade[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([subjectId])
+  @@index([sectionId])
+  @@map("exams")
 }
 
 model Grade {
@@ -236,31 +285,54 @@ model Grade {
   teacherId String?
   teacher   Teacher? @relation(fields: [teacherId], references: [id], onDelete: SetNull)
 
+  examId String?
+  exam   Exam? @relation(fields: [examId], references: [id], onDelete: Cascade)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([examId, studentId])
   @@index([studentId])
   @@index([subjectId])
   @@index([teacherId])
+  @@index([examId])
   @@map("grades")
 }
 
-model Payment {
-  id           String    @id @default(cuid())
-  feeTitle     String
-  feeType      String    @default("tuition")
+model ClassFeeSetting {
+  id           String   @id @default(cuid())
+  classId      String
+  class        SchoolClass @relation(fields: [classId], references: [id], onDelete: Cascade)
   amount       Float
-  status       String    @default("paid")
-  method       String    @default("cash")
   academicYear String?
-  dueDate      DateTime?
-  paidAt       DateTime?
   notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([classId, academicYear])
+  @@index([classId])
+  @@map("class_fee_settings")
+}
+
+model Payment {
+  id              String    @id @default(cuid())
+  feeTitle        String
+  feeType         String    @default("tuition")
+  amount          Float
+  status          String    @default("paid")
+  method          String    @default("cash")
+  academicYear    String?
+  dueDate         DateTime?
+  paidAt          DateTime?
+  notes           String?
   originalAmount  Float?
-  discountAmount  Float   @default(0)
+  discountAmount  Float     @default(0)
   discountPercent Float?
   discountReason  String?
+  discountNotes   String?
   finalAmount     Float?
+  remainingAmount Float?
+  receiptNumber   String?   @unique
 
   studentId String
   student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)

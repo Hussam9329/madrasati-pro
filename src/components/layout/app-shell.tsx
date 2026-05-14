@@ -289,7 +289,7 @@ function SidebarContent({ pathname, onNavigate }: SidebarContentProps) {
             </div>
 
             <p className="relative text-xs leading-6 text-[var(--color-sidebar-muted)]">
-              اتبعي الترتيب من الأعلى للأسفل: المواد، الصفوف، المدرسات، ثم الطالبات.
+              اتبع الترتيب من الأعلى للأسفل: المواد، الصفوف، المدرسين، ثم الطالبات.
               هكذا يبقى النظام مرتبًا من أول يوم.
             </p>
           </div>
@@ -306,7 +306,7 @@ function TopbarSearch() {
 
       <input
         type="search"
-        placeholder="ابحثي عن طالبة، صف، مدرسة..."
+        placeholder="ابحث عن طالبة، صف، مدرس..."
         className="h-8 min-w-0 flex-1 border-0 bg-transparent text-sm font-medium text-[var(--app-text)] outline-none placeholder:text-[var(--app-text-soft)]"
       />
 

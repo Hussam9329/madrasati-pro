@@ -42,19 +42,19 @@ export const navigationGroups: Record<
     description: "نظرة عامة وسريعة على حالة النظام.",
   },
   foundation: {
-    title: "التأسيس",
+    title: "الإعداد الأول",
     description: "الخطوات الأولى التي تُبنى عليها بقية البيانات.",
   },
   people: {
     title: "الأشخاص",
-    description: "إدارة المدرسات والطالبات بعد تجهيز الأساسيات.",
+    description: "إدارة المدرسين والطالبات بعد تجهيز الأساسيات.",
   },
   operations: {
     title: "التشغيل اليومي",
     description: "الحضور، الجدول، والمتابعة اليومية.",
   },
   results: {
-    title: "النتائج والماليات",
+    title: "الدرجات والأقساط",
     description: "الدرجات، الأقساط، والتقارير.",
   },
   system: {
@@ -68,7 +68,7 @@ export const navigationItems: NavigationItem[] = [
     title: "لوحة التحكم",
     href: "/",
     icon: "dashboard",
-    description: "مركز القيادة: إحصائيات، تنبيهات، وأزرار انتقال سريع.",
+    description: "ملخص المدرسة: إحصائيات، تنبيهات، وأزرار انتقال سريع.",
     priority: 1,
     group: "overview",
     isPrimary: true,
@@ -77,7 +77,7 @@ export const navigationItems: NavigationItem[] = [
     title: "المواد الدراسية",
     href: "/subjects",
     icon: "book",
-    description: "أضيفي المواد أولًا حتى يمكن ربطها بالمدرسات والصفوف.",
+    description: "أضف المواد أولًا حتى يمكن ربطها بالمدرسين والصفوف.",
     priority: 2,
     group: "foundation",
   },
@@ -85,15 +85,15 @@ export const navigationItems: NavigationItem[] = [
     title: "الصفوف والشُعب",
     href: "/classes",
     icon: "classes",
-    description: "أنشئي الصفوف والشعب قبل إضافة الطالبات إليها.",
+    description: "أنشئ الصفوف والشعب قبل إضافة الطالبات إليها.",
     priority: 3,
     group: "foundation",
   },
   {
-    title: "المدرسات",
+    title: "المدرسين",
     href: "/teachers",
     icon: "teachers",
-    description: "أضيفي المدرسات واربطيهن بالمواد والصفوف المناسبة.",
+    description: "أضف المدرسين واربطهم بالمواد والصفوف المناسبة.",
     priority: 4,
     group: "people",
   },
@@ -101,7 +101,7 @@ export const navigationItems: NavigationItem[] = [
     title: "الطالبات",
     href: "/students",
     icon: "students",
-    description: "أضيفي الطالبات بعد تجهيز الصفوف والشعب.",
+    description: "أضف الطالبات بعد تجهيز الصفوف والشعب.",
     priority: 5,
     group: "people",
   },
@@ -109,7 +109,7 @@ export const navigationItems: NavigationItem[] = [
     title: "الجدول الدراسي",
     href: "/schedules",
     icon: "schedule",
-    description: "نظّمي الحصص بعد توفر المواد، الصفوف، والمدرسات.",
+    description: "نظّم المحاضرات بعد توفر المواد، الصفوف، والمدرسين.",
     priority: 6,
     group: "operations",
   },
@@ -117,7 +117,7 @@ export const navigationItems: NavigationItem[] = [
     title: "الحضور",
     href: "/attendance",
     icon: "attendance",
-    description: "سجّلي حضور الطالبات حسب الصف والتاريخ.",
+    description: "سجّل حضور الطالبات حسب الصف والتاريخ.",
     priority: 7,
     group: "operations",
   },
@@ -125,7 +125,7 @@ export const navigationItems: NavigationItem[] = [
     title: "الدرجات",
     href: "/grades",
     icon: "grades",
-    description: "أدخلي درجات الطالبات حسب المادة والاختبار.",
+    description: "أدخل درجات الطالبات حسب المادة والامتحان.",
     priority: 8,
     group: "results",
   },
@@ -133,7 +133,7 @@ export const navigationItems: NavigationItem[] = [
     title: "الأقساط",
     href: "/payments",
     icon: "fees",
-    description: "تابعي المدفوعات والمتبقي لكل طالبة.",
+    description: "تابع المدفوعات والمتبقي لكل طالبة.",
     priority: 9,
     group: "results",
   },
@@ -141,7 +141,7 @@ export const navigationItems: NavigationItem[] = [
     title: "التقارير",
     href: "/reports",
     icon: "reports",
-    description: "استخرجي تقارير الطالبات، الحضور، الدرجات، والأقساط.",
+    description: "استخرج تقارير الطالبات، الحضور، الدرجات، والأقساط.",
     priority: 10,
     group: "results",
   },
@@ -164,25 +164,25 @@ export const primaryQuickActions = [
     title: "إضافة مادة",
     href: "/subjects",
     icon: "book",
-    hint: "ابدئي بتجهيز المواد الدراسية.",
+    hint: "ابدأ بتجهيز المواد الدراسية.",
   },
   {
     title: "إضافة صف",
     href: "/classes",
     icon: "classes",
-    hint: "أنشئي الصفوف والشُعب.",
+    hint: "أنشئ الصفوف والشُعب.",
   },
   {
-    title: "إضافة مدرسة",
+    title: "إضافة مدرس",
     href: "/teachers",
     icon: "teachers",
-    hint: "اربطي المدرسات بالمواد.",
+    hint: "اربط المدرسين بالمواد.",
   },
   {
     title: "إضافة طالبة",
     href: "/students",
     icon: "students",
-    hint: "أضيفي الطالبات إلى صفوفهن.",
+    hint: "أضف الطالبات إلى صفوفهن.",
   },
   {
     title: "تسجيل حضور",
@@ -194,13 +194,13 @@ export const primaryQuickActions = [
     title: "إدخال درجات",
     href: "/grades",
     icon: "grades",
-    hint: "سجّلي نتائج الاختبارات.",
+    hint: "سجّل نتائج الامتحانات.",
   },
   {
     title: "تسجيل دفعة",
     href: "/payments",
     icon: "fees",
-    hint: "حدّثي حالة الأقساط.",
+    hint: "حدّث حالة الأقساط.",
   },
   {
     title: "طباعة تقرير",
@@ -231,9 +231,9 @@ export function getNextSetupStep(existingCounts: {
 
   if (subjects === 0) {
     return {
-      title: "ابدئي بإضافة المواد الدراسية",
+      title: "ابدأ بإضافة المواد الدراسية",
       description:
-        "المواد هي الأساس الذي سنربط به المدرسات والدرجات لاحقًا.",
+        "المواد هي الأساس الذي سنربط به المدرسين والدرجات لاحقًا.",
       href: "/subjects",
       actionLabel: "إضافة أول مادة",
     };
@@ -243,7 +243,7 @@ export function getNextSetupStep(existingCounts: {
     return {
       title: "الخطوة التالية: إنشاء الصفوف والشُعب",
       description:
-        "بعد إضافة المواد، أنشئي الصفوف حتى تتمكني من تنظيم الطالبات والحضور.",
+        "بعد إضافة المواد، أنشئ الصفوف حتى تتمكن من تنظيم الطالبات والحضور.",
       href: "/classes",
       actionLabel: "إنشاء أول صف",
     };
@@ -251,19 +251,19 @@ export function getNextSetupStep(existingCounts: {
 
   if (teachers === 0) {
     return {
-      title: "أضيفي المدرسات الآن",
+      title: "أضف المدرسين الآن",
       description:
-        "اربطي كل مدرسة بالمواد التي تدرّسها حتى يصبح الجدول والدرجات أوضح.",
+        "اربط كل مدرس بالمواد التي يدرّسها حتى يصبح الجدول والدرجات أوضح.",
       href: "/teachers",
-      actionLabel: "إضافة أول مدرسة",
+      actionLabel: "إضافة أول مدرس",
     };
   }
 
   if (students === 0) {
     return {
-      title: "أضيفي الطالبات إلى صفوفهن",
+      title: "أضف الطالبات إلى صفوفهن",
       description:
-        "بعد تجهيز المواد والصفوف والمدرسات، يمكنك إضافة الطالبات بثقة.",
+        "بعد تجهيز المواد والصفوف والمدرسين، يمكنك إضافة الطالبات بثقة.",
       href: "/students",
       actionLabel: "إضافة أول طالبة",
     };

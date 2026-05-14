@@ -119,8 +119,8 @@ export async function createTeacher(
   if (duplicateName) {
     return {
       ok: false,
-      message: "اسم المدرسة مستخدم مسبقًا.",
-      errors: { fullName: "اسم المدرسة مستخدم مسبقًا." },
+      message: "اسم المدرس مستخدم مسبقًا.",
+      errors: { fullName: "اسم المدرس مستخدم مسبقًا." },
     };
   }
 
@@ -146,7 +146,7 @@ export async function createTeacher(
     return {
       ok: true,
       data: teacher,
-      message: "تمت إضافة المدرسة بنجاح.",
+      message: "تمت إضافة المدرس بنجاح.",
     };
   } catch (error) {
     if (
@@ -155,14 +155,14 @@ export async function createTeacher(
     ) {
       return {
         ok: false,
-        message: "اسم المدرسة أو رقم الهاتف مستخدم مسبقًا.",
-        errors: { fullName: "اسم المدرسة أو رقم الهاتف مستخدم مسبقًا." },
+        message: "اسم المدرس أو رقم الهاتف مستخدم مسبقًا.",
+        errors: { fullName: "اسم المدرس أو رقم الهاتف مستخدم مسبقًا." },
       };
     }
 
     return {
       ok: false,
-      message: "حدث خطأ أثناء إضافة المدرسة.",
+      message: "حدث خطأ أثناء إضافة المدرس.",
     };
   }
 }
@@ -197,8 +197,8 @@ export async function updateTeacher(
   if (duplicateName) {
     return {
       ok: false,
-      message: "اسم المدرسة مستخدم مسبقًا.",
-      errors: { fullName: "اسم المدرسة مستخدم مسبقًا." },
+      message: "اسم المدرس مستخدم مسبقًا.",
+      errors: { fullName: "اسم المدرس مستخدم مسبقًا." },
     };
   }
 
@@ -229,7 +229,7 @@ export async function updateTeacher(
     return {
       ok: true,
       data: teacher,
-      message: "تم تحديث بيانات المدرسة بنجاح.",
+      message: "تم تحديث بيانات المدرس بنجاح.",
     };
   } catch (error) {
     if (
@@ -238,14 +238,14 @@ export async function updateTeacher(
     ) {
       return {
         ok: false,
-        message: "اسم المدرسة أو رقم الهاتف مستخدم مسبقًا.",
-        errors: { fullName: "اسم المدرسة أو رقم الهاتف مستخدم مسبقًا." },
+        message: "اسم المدرس أو رقم الهاتف مستخدم مسبقًا.",
+        errors: { fullName: "اسم المدرس أو رقم الهاتف مستخدم مسبقًا." },
       };
     }
 
     return {
       ok: false,
-      message: "حدث خطأ أثناء تحديث بيانات المدرسة.",
+      message: "حدث خطأ أثناء تحديث بيانات المدرس.",
     };
   }
 }
@@ -280,7 +280,7 @@ export async function deleteTeacher(
   if (!deleteCheck.allowed) {
     return {
       ok: false,
-      message: deleteCheck.reason ?? "لا يمكن حذف المدرسةة حاليًا.",
+      message: deleteCheck.reason ?? "لا يمكن حذف المدرس حاليًا.",
     };
   }
 
@@ -293,7 +293,7 @@ export async function deleteTeacher(
   return {
     ok: true,
     data: null,
-    message: "تم حذف المدرسة بنجاح.",
+    message: "تم حذف المدرس بنجاح.",
   };
 }
 
@@ -322,8 +322,8 @@ export async function toggleTeacherStatus(
     ok: true,
     data: updatedTeacher,
     message: updatedTeacher.isActive
-      ? "تم تفعيل المدرسة."
-      : "تم تعطيل المدرسة.",
+      ? "تم تفعيل المدرس."
+      : "تم تعطيل المدرس.",
   };
 }
 
@@ -483,7 +483,7 @@ export async function assignSubjectsToTeacher(
   return {
     ok: true,
     data: updatedTeacher ?? undefined,
-    message: "تم تحديث مواد المدرسة بنجاح.",
+    message: "تم تحديث مواد المدرس بنجاح.",
   };
 }
 

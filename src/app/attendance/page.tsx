@@ -79,7 +79,7 @@ export default async function AttendancePage({
       <div className="mx-auto flex w-full max-w-[1350px] flex-col gap-6">
         <PageHeader
           title="الحضور والغياب"
-          description="سجّلي حضور وغياب الطالبات يوميًا، وتابعي الإحصائيات والنسب المئوية لكل صف وطالبة."
+          description="سجّل حضور وغياب الطالبات يوميًا، وتابع الإحصائيات والنسب المئوية لكل صف وطالبة."
           icon="attendance"
           badge="الخطوة السادسة"
         />
@@ -93,7 +93,7 @@ export default async function AttendancePage({
         <SmartAlert
           tone="info"
           title="الحضور يعتمد على الطالبات داخل الصفوف"
-          description="سجّلي حضور الطالبات بسرعة عبر إدخال رمز الطالبة أو مسح QR بالهاتف. على الحاسوب، يمكنك إدخال رمز الطالبة مباشرة لتسجيل الحضور والانصراف فورًا."
+          description="سجّل حضور الطالبات بسرعة عبر إدخال رمز الطالبة أو مسح QR بالهاتف. على الحاسوب، يمكنك إدخال رمز الطالبة مباشرة لتسجيل الحضور والانصراف فورًا."
           actionLabel="إدارة الطالبات"
           actionHref="/students"
         />
@@ -106,7 +106,6 @@ export default async function AttendancePage({
         <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
           <AttendanceCreateForm
             sections={activeSections}
-            schedules={schedules}
             students={students}
           />
 
@@ -127,7 +126,7 @@ export default async function AttendancePage({
           <EmptyState
             icon="attendance"
             title="لا توجد سجلات حضور بعد"
-            description="اختاري الشعبة والتاريخ، ثم سجّلي حالة كل طالبة: حاضرة، غائبة، متأخرة، أو مجازة."
+            description="اختر الشعبة والتاريخ، ثم سجّل حالة كل طالبة: حاضرة، غائبة، متأخرة، أو مجازة."
             actionLabel="تسجيل حضور اليوم"
             actionHref="#attendance-form"
             secondaryLabel="إدارة الطالبات"
@@ -157,7 +156,7 @@ async function createAttendanceAction(formData: FormData) {
     status: String(formData.get("status") ?? "present"),
     notes: String(formData.get("notes") ?? ""),
     studentId: String(formData.get("studentId") ?? ""),
-    scheduleId: String(formData.get("scheduleId") ?? ""),
+    mode: (String(formData.get("mode") ?? "check-in") as "check-in" | "check-out"),
   };
 
   const result = await createAttendanceRecord(input);
@@ -246,13 +245,11 @@ function AttendanceFeedback({ saved, deleted, error }: AttendanceFeedbackProps) 
 
 type AttendanceCreateFormProps = {
   sections: SectionListItem[];
-  schedules: ScheduleListItem[];
   students: { id: string; fullName: string; studentCode: string | null; sectionId: string | null }[];
 };
 
 function AttendanceCreateForm({
   sections,
-  schedules,
   students,
 }: AttendanceCreateFormProps) {
   const today = new Date().toISOString().split("T")[0];
@@ -275,7 +272,7 @@ function AttendanceCreateForm({
             </h3>
 
             <p className="mt-1 text-sm leading-7 text-[var(--app-text-muted)]">
-              اختاري الطالبة والتاريخ وحالة الحضور. يمكنك ربط السجل بحصة من الجدول اختياريًا.
+              اختر الطالبة وسجّل دخولها صباحًا أو انصرافها ظهرًا. الحضور هنا خاص بدوام الثانوية وليس بالمحاضرات.
             </p>
           </div>
         </div>
@@ -329,7 +326,7 @@ function AttendanceCreateForm({
             </label>
 
             <select id="studentId" name="studentId" required defaultValue="" className="input">
-              <option value="">اختاري الطالبة</option>
+              <option value="">اختر الطالبة</option>
 
               {students.map((student) => (
                 <option key={student.id} value={student.id}>
@@ -342,21 +339,15 @@ function AttendanceCreateForm({
 
           <div>
             <label
-              htmlFor="scheduleId"
+              htmlFor="mode"
               className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
             >
-              الحصة (اختياري)
+              نوع الحركة <span className="text-red-600">*</span>
             </label>
 
-            <select id="scheduleId" name="scheduleId" defaultValue="" className="input">
-              <option value="">بدون حصة محددة</option>
-
-              {schedules.map((schedule) => (
-                <option key={schedule.id} value={schedule.id}>
-                  {schedule.subjectName} - {schedule.dayLabel}{" "}
-                  {schedule.startTime}-{schedule.endTime} ({schedule.teacherName})
-                </option>
-              ))}
+            <select id="mode" name="mode" defaultValue="check-in" className="input">
+              <option value="check-in">دخول صباحي</option>
+              <option value="check-out">انصراف ظهري</option>
             </select>
           </div>
         </div>
@@ -519,7 +510,7 @@ function AttendanceSearchForm({
             id="q"
             name="q"
             defaultValue={query}
-            placeholder="اسم الطالبة، المادة، المدرسة..."
+            placeholder="اسم الطالبة، المادة، المدرس..."
             className="input pr-11"
           />
         </div>
@@ -565,7 +556,7 @@ function AttendanceList({ records }: AttendanceListProps) {
           </h3>
 
           <p className="mt-1 text-sm leading-6 text-[var(--app-text-muted)]">
-            تابعي سجلات الحضور والغياب لكل طالبة مع التفاصيل الكاملة.
+            تابع سجلات الحضور والغياب لكل طالبة مع التفاصيل الكاملة.
           </p>
         </div>
 
@@ -660,7 +651,7 @@ function AttendanceRow({ record }: AttendanceRowProps) {
 
             {record.teacherName ? (
               <p>
-                المدرسة:{" "}
+                المدرس:{" "}
                 <span className="font-bold text-[var(--app-text)]">
                   {record.teacherName}
                 </span>

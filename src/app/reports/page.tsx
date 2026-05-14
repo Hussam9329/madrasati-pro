@@ -156,7 +156,7 @@ export default function ReportsPage() {
                 <h2 className="app-title">التقارير والإحصائيات</h2>
 
                 <p className="app-subtitle mt-2 max-w-3xl">
-                  استخرجي تقارير مفصلة عن الطالبات، الحضور، الدرجات، والأقساط مع
+                  استخرج تقارير مفصلة عن الطالبات، الحضور، الدرجات، والأقساط مع
                   إمكانية الطباعة.
                 </p>
               </div>
@@ -200,7 +200,7 @@ export default function ReportsPage() {
             { key: "grades", label: "الدرجات", icon: ClipboardList },
             { key: "payments", label: "الأقساط", icon: DollarSign },
             { key: "classes", label: "الصفوف", icon: Landmark },
-            { key: "teachers", label: "المدرسات", icon: GraduationCap },
+            { key: "teachers", label: "المدرسين", icon: GraduationCap },
           ] as const).map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.key;
@@ -303,7 +303,7 @@ function ReportFilterForm({
               خيارات التقرير
             </h3>
             <p className="mt-1 text-sm text-[var(--app-text-muted)]">
-              اختاري الفترة الزمنية والفلاتر المطلوبة
+              اختر الفترة الزمنية والفلاتر المطلوبة
             </p>
           </div>
         </div>
@@ -472,7 +472,7 @@ function ReportCover({ filter, summary }: ReportCoverProps) {
             />
             <CoverStat
               icon={GraduationCap}
-              label="المدرسات"
+              label="المدرسين"
               value={summary.teachers.total}
               color="bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-700"
             />
@@ -1039,7 +1039,7 @@ function GradesTable({ rows }: GradesTableProps) {
             تقرير الدرجات
           </h3>
           <p className="mt-1 text-sm text-[var(--app-text-muted)]">
-            درجات الطالبات حسب المادة والاختبار
+            درجات الطالبات حسب المادة والامتحان
           </p>
         </div>
         <span className="badge badge-info">
@@ -1058,7 +1058,7 @@ function GradesTable({ rows }: GradesTableProps) {
                 المادة
               </th>
               <th className="px-5 py-3 text-right font-extrabold text-[var(--app-text-muted)]">
-                الاختبار
+                الامتحان
               </th>
               <th className="px-5 py-3 text-center font-extrabold text-[var(--app-text-muted)]">
                 الدرجة
@@ -1347,10 +1347,10 @@ function TeachersTable({ rows }: TeachersTableProps) {
       <div className="flex flex-col gap-2 border-b border-[var(--app-border-soft)] p-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-lg font-extrabold text-[var(--app-text)]">
-            تقرير المدرسات
+            تقرير المدرسين
           </h3>
           <p className="mt-1 text-sm text-[var(--app-text-muted)]">
-            ملخص المدرسات والمواد والحصص
+            ملخص المدرسين والمواد والمحاضرات
           </p>
         </div>
         <span className="badge badge-info">
@@ -1375,7 +1375,7 @@ function TeachersTable({ rows }: TeachersTableProps) {
                 عدد المواد
               </th>
               <th className="px-5 py-3 text-center font-extrabold text-[var(--app-text-muted)]">
-                عدد الحصص
+                عدد المحاضرات
               </th>
               <th className="px-5 py-3 text-center font-extrabold text-[var(--app-text-muted)]">
                 الحالة

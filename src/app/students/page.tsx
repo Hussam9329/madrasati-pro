@@ -76,7 +76,7 @@ export default async function StudentsPage({
       <div className="mx-auto flex w-full max-w-[1350px] flex-col gap-6">
         <PageHeader
           title="الطالبات"
-          description="أضيفي الطالبات واربطي كل طالبة بالشعبة المناسبة، مع متابعة الحالة والمعلومات الأساسية."
+          description="أضف الطالبات واربط كل طالبة بالشعبة المناسبة، مع متابعة الحالة والمعلومات الأساسية."
           icon="students"
           badge="الخطوة الرابعة"
         />
@@ -117,7 +117,7 @@ export default async function StudentsPage({
           <EmptyState
             icon="students"
             title="لا يوجد طالبات بعد"
-            description="ابدئي بإضافة أول طالبة، ثم اربطيها بالشعبة المناسبة. بعدها يصبح تسجيل الحضور والدرجات والأقساط أسهل."
+            description="ابدأ بإضافة أول طالبة، ثم اربطها بالشعبة المناسبة. بعدها يصبح تسجيل الحضور والدرجات والأقساط أسهل."
             actionLabel="إضافة أول طالبة"
             actionHref="#student-form"
             secondaryLabel="إدارة الشُعب"
@@ -291,7 +291,7 @@ function StudentCreateForm({ sections }: StudentCreateFormProps) {
             </h3>
 
             <p className="mt-1 text-sm leading-7 text-[var(--app-text-muted)]">
-              أدخلي بيانات الطالبة الأساسية المطلوبة فقط.
+              أدخل بيانات الطالبة الأساسية المطلوبة فقط.
             </p>
           </div>
         </div>
@@ -400,7 +400,7 @@ function StudentCreateForm({ sections }: StudentCreateFormProps) {
             </label>
 
             <select id="sectionId" name="sectionId" required className="input" defaultValue="">
-              <option value="">اختاري الصف والشعبة</option>
+              <option value="">اختر الصف والشعبة</option>
 
               {sections.map((section) => (
                 <option key={section.id} value={section.id}>
@@ -616,7 +616,7 @@ function StudentsList({ students }: StudentsListProps) {
           </h3>
 
           <p className="mt-1 text-sm leading-6 text-[var(--app-text-muted)]">
-            تابعي الطالبات وحالاتهن وربطهن بالشُعب والسجلات المرتبطة.
+            تابع الطالبات وحالاتهن وربطهن بالشُعب والسجلات المرتبطة.
           </p>
         </div>
 

@@ -79,7 +79,7 @@ export default async function SchedulesPage({
       <div className="mx-auto flex w-full max-w-[1350px] flex-col gap-6">
         <PageHeader
           title="الجدول الدراسي"
-          description="أنشئي الحصص الدراسية واربطيها بالشُعب والمدرسات والمواد لبناء جدول منظم وخالٍ من التعارضات."
+          description="أنشئ المحاضرات الدراسية واربطها بالشُعب والمدرسين والمواد لبناء جدول منظم وخالٍ من التعارضات."
           icon="schedule"
           badge="الخطوة الرابعة"
         />
@@ -94,7 +94,7 @@ export default async function SchedulesPage({
         <SmartAlert
           tone="info"
           title="بناء الجدول الدراسي"
-          description="أضيفي الحصص واحدة تلو الأخرى. النظام يكتشف تلقائيًا تعارضات الأوقات بين المدرسات والشُعب."
+          description="أضف المحاضرات واحدة تلو الأخرى. النظام يكتشف تلقائيًا تعارضات الأوقات بين المدرسين والشُعب."
           actionLabel="الخطوة التالية: الحضور"
           actionHref="/attendance"
         />
@@ -121,9 +121,9 @@ export default async function SchedulesPage({
         {!hasSchedules ? (
           <EmptyState
             icon="schedule"
-            title="لا توجد حصص في الجدول بعد"
-            description="ابدئي بإضافة أول حصة دراسية. تأكد من إنشاء الصفوف والشُعب والمواد والمدرسات أولًا."
-            actionLabel="إضافة أول حصة"
+            title="لا توجد محاضرات في الجدول بعد"
+            description="ابدأ بإضافة أول محاضرة دراسية. تأكد من إنشاء الصفوف والشُعب والمواد والمدرسين أولًا."
+            actionLabel="إضافة أول محاضرة"
             actionHref="#schedule-form"
             secondaryLabel="الرجوع إلى الصفوف"
             secondaryHref="/classes"
@@ -131,9 +131,9 @@ export default async function SchedulesPage({
         ) : schedules.length === 0 ? (
           <EmptyState
             icon="search"
-            title="لا توجد حصص مطابقة للبحث"
-            description="جرّب البحث باسم المادة أو المدرسة أو الشعبة، أو غيّر فلتر اليوم، أو امسح البحث لعرض كل الحصص."
-            actionLabel="عرض كل الحصص"
+            title="لا توجد محاضرات مطابقة للبحث"
+            description="جرّب البحث باسم المادة أو المدرس أو الشعبة، أو غيّر فلتر اليوم، أو امسح البحث لعرض كل المحاضرات."
+            actionLabel="عرض كل المحاضرات"
             actionHref="/schedules"
           />
         ) : (
@@ -230,8 +230,8 @@ function SchedulesFeedback({
     return (
       <SmartAlert
         tone="success"
-        title="تمت إضافة الحصة بنجاح"
-        description="رائع، تم حفظ الحصة في الجدول الدراسي. يمكنك الآن إضافة حصص أخرى أو مراجعة الجدول."
+        title="تمت إضافة المحاضرة بنجاح"
+        description="رائع، تم حفظ المحاضرة في الجدول الدراسي. يمكنك الآن إضافة محاضرات أخرى أو مراجعة الجدول."
       />
     );
   }
@@ -240,8 +240,8 @@ function SchedulesFeedback({
     return (
       <SmartAlert
         tone="success"
-        title="تم حذف الحصة"
-        description="تم حذف الحصة من الجدول الدراسي بنجاح."
+        title="تم حذف المحاضرة"
+        description="تم حذف المحاضرة من الجدول الدراسي بنجاح."
       />
     );
   }
@@ -250,8 +250,8 @@ function SchedulesFeedback({
     return (
       <SmartAlert
         tone="success"
-        title="تم تحديث حالة الحصة"
-        description="تم تغيير حالة الحصة بين فعّالة ومتوقفة بنجاح."
+        title="تم تحديث حالة المحاضرة"
+        description="تم تغيير حالة المحاضرة بين فعّالة ومتوقفة بنجاح."
       />
     );
   }
@@ -259,10 +259,10 @@ function SchedulesFeedback({
   if (error) {
     const description =
       error === "delete"
-        ? "لا يمكن حذف الحصة حاليًا. جرّب تعطيلها بدل الحذف."
+        ? "لا يمكن حذف المحاضرة حاليًا. جرّب تعطيلها بدل الحذف."
         : error === "toggle"
-          ? "لا يمكن تحديث حالة الحصة. تأكد من أن الحصة موجودة."
-          : "تأكد من إدخال البيانات بشكل صحيح، وأنه لا يوجد تعارض في الأوقات أو أن المدرسة مرتبطة بالمادة.";
+          ? "لا يمكن تحديث حالة المحاضرة. تأكد من أن المحاضرة موجودة."
+          : "تأكد من إدخال البيانات بشكل صحيح، وأنه لا يوجد تعارض في الأوقات أو أن المدرس مرتبط بالمادة.";
 
     return (
       <SmartAlert
@@ -306,11 +306,11 @@ function ScheduleCreateForm({
 
           <div>
             <h3 className="text-xl font-extrabold text-[var(--app-text)]">
-              إضافة حصة دراسية
+              إضافة محاضرة دراسية
             </h3>
 
             <p className="mt-1 text-sm leading-7 text-[var(--app-text-muted)]">
-              حدّدي اليوم والوقت والشعبة والمادة والمدرسة لبناء الجدول.
+              حدّد اليوم والوقت والشعبة والمادة والمدرس لبناء الجدول.
             </p>
           </div>
         </div>
@@ -367,7 +367,7 @@ function ScheduleCreateForm({
             defaultValue=""
           >
             <option value="" disabled>
-              اختاري الشعبة
+              اختر الشعبة
             </option>
 
             {sections.map((section) => (
@@ -379,7 +379,7 @@ function ScheduleCreateForm({
 
           {!hasSections ? (
             <p className="mt-2 text-sm leading-6 text-amber-700">
-              أضيفي صفًا وشعبة فعّالة أولًا حتى تتمكني من اختيار الشعبة.
+              أضف صفًا وشعبة فعّالة أولًا حتى تتمكن من اختيار الشعبة.
             </p>
           ) : null}
         </FormField>
@@ -394,7 +394,7 @@ function ScheduleCreateForm({
             defaultValue=""
           >
             <option value="" disabled>
-              اختاري المادة
+              اختر المادة
             </option>
 
             {subjects.map((subject) => (
@@ -406,12 +406,12 @@ function ScheduleCreateForm({
 
           {!hasSubjects ? (
             <p className="mt-2 text-sm leading-6 text-amber-700">
-              أضيفي مادة فعّالة أولًا حتى تتمكني من اختيار المادة.
+              أضف مادة فعّالة أولًا حتى تتمكن من اختيار المادة.
             </p>
           ) : null}
         </FormField>
 
-        <FormField label="المدرسة" htmlFor="teacherId" required>
+        <FormField label="المدرس" htmlFor="teacherId" required>
           <select
             id="teacherId"
             name="teacherId"
@@ -421,7 +421,7 @@ function ScheduleCreateForm({
             defaultValue=""
           >
             <option value="" disabled>
-              اختاري المدرسة
+              اختر المدرس
             </option>
 
             {teachers.map((teacher) => (
@@ -434,7 +434,7 @@ function ScheduleCreateForm({
 
           {!hasTeachers ? (
             <p className="mt-2 text-sm leading-6 text-amber-700">
-              أضيفي مدرسة فعّالة أولًا حتى تتمكني من اختيار المدرسة.
+              أضف مدرسًا فعّالًا أولًا حتى تتمكن من اختيار المدرس.
             </p>
           ) : null}
         </FormField>
@@ -455,7 +455,7 @@ function ScheduleCreateForm({
             name="notes"
             rows={3}
             maxLength={500}
-            placeholder="ملاحظات إضافية عن الحصة..."
+            placeholder="ملاحظات إضافية عن المحاضرة..."
             className="input min-h-[90px] resize-y leading-7"
           />
         </FormField>
@@ -470,11 +470,11 @@ function ScheduleCreateForm({
 
           <span>
             <span className="block font-extrabold text-[var(--app-text)]">
-              الحصة فعّالة
+              المحاضرة فعّالة
             </span>
 
             <span className="mt-1 block text-sm leading-6 text-[var(--app-text-muted)]">
-              الحصص الفعّالة تظهر في الجدول الدراسي ويمكن تسجيل الحضور فيها.
+              المحاضرات الفعّالة تظهر في الجدول الدراسي ويمكن تسجيل الحضور فيها.
             </span>
           </span>
         </label>
@@ -482,7 +482,7 @@ function ScheduleCreateForm({
 
       <div className="flex flex-col gap-3 border-t border-[var(--app-border-soft)] bg-gradient-to-l to-rose-50/30 to-amber-50/20 p-6 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm leading-7 text-[var(--app-text-muted)]">
-          النظام يكتشف تلقائيًا تعارضات الأوقات بين المدرسات والشُعب.
+          النظام يكتشف تلقائيًا تعارضات الأوقات بين المدرسين والشُعب.
         </p>
 
         <button
@@ -491,7 +491,7 @@ function ScheduleCreateForm({
           className="btn btn-primary disabled:cursor-not-allowed disabled:opacity-60"
         >
           <CheckCircle2 size={18} />
-          حفظ الحصة
+          حفظ المحاضرة
         </button>
       </div>
     </form>
@@ -536,25 +536,25 @@ function SchedulesStats({
 }: SchedulesStatsProps) {
   const stats = [
     {
-      label: "إجمالي الحصص",
+      label: "إجمالي المحاضرات",
       value: total,
       icon: Layers3,
       className: "bg-gradient-to-br from-blue-100 to-rose-100 text-blue-700",
     },
     {
-      label: "حصص فعّالة",
+      label: "محاضرات فعّالة",
       value: active,
       icon: CheckCircle2,
       className: "bg-emerald-100 text-emerald-700",
     },
     {
-      label: "حصص متوقفة",
+      label: "محاضرات متوقفة",
       value: inactive,
       icon: AlertTriangle,
       className: "bg-gradient-to-br from-amber-100 to-orange-100 text-amber-700",
     },
     {
-      label: "حصص اليوم",
+      label: "محاضرات اليوم",
       value: today,
       icon: Clock,
       className: "bg-gradient-to-br from-rose-100 to-amber-100 text-rose-700",
@@ -621,7 +621,7 @@ function ScheduleSearchForm({ query, dayOfWeek }: ScheduleSearchFormProps) {
             id="q"
             name="q"
             defaultValue={query}
-            placeholder="ابحث باسم المادة أو المدرسة أو الشعبة..."
+            placeholder="ابحث باسم المادة أو المدرس أو الشعبة..."
             className="input pr-11"
           />
         </div>
@@ -658,15 +658,15 @@ function SchedulesList({ schedules }: SchedulesListProps) {
       <div className="flex flex-col gap-2 border-b border-[var(--app-border-soft)] p-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-xl font-extrabold text-[var(--app-text)]">
-            قائمة الحصص الدراسية
+            قائمة المحاضرات الدراسية
           </h3>
 
           <p className="mt-1 text-sm leading-6 text-[var(--app-text-muted)]">
-            يمكنك متابعة الحصص، حالتها، وتفاصيل كل حصة في الجدول.
+            يمكنك متابعة المحاضرات، حالتها، وتفاصيل كل محاضرة في الجدول.
           </p>
         </div>
 
-        <span className="badge badge-info">{schedules.length} حصة</span>
+        <span className="badge badge-info">{schedules.length} محاضرة</span>
       </div>
 
       <div className="divide-y divide-[var(--app-border-soft)]">

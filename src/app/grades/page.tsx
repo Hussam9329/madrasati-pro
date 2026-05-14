@@ -115,7 +115,7 @@ export default async function GradesPage({ searchParams }: GradesPageProps) {
       <div className="mx-auto flex w-full max-w-[1350px] flex-col gap-6">
         <PageHeader
           title="الدرجات"
-          description="أدخلي درجات الطالبات وتابعي مستواهن في المواد والاختبارات المختلفة."
+          description="أدخل درجات الطالبات وتابع مستواهن في المواد والامتحانات المختلفة."
           icon="grades"
           badge="الخطوة الخامسة"
         />
@@ -130,7 +130,7 @@ export default async function GradesPage({ searchParams }: GradesPageProps) {
         <SmartAlert
           tone="info"
           title="الدرجات تحتاج مواد وطالبات"
-          description="قبل إدخال الدرجات، تأكدي من إضافة المواد الدراسية والطالبات وربطهن بالصفوف والشُعب."
+          description="قبل إدخال الدرجات، تأكد من إضافة المواد الدراسية والطالبات وربطهن بالصفوف والشُعب."
           actionLabel="إدارة المواد"
           actionHref="/subjects"
         />
@@ -169,7 +169,7 @@ export default async function GradesPage({ searchParams }: GradesPageProps) {
           <EmptyState
             icon="grades"
             title="لا توجد درجات بعد"
-            description="اختاري الصف والمادة والاختبار، ثم أدخلي درجات الطالبات بطريقة سهلة وسريعة."
+            description="اختر الصف والمادة والامتحان، ثم أدخل درجات الطالبات بطريقة سهلة وسريعة."
             actionLabel="إدخال درجات"
             actionHref="#grade-form"
             secondaryLabel="إدارة المواد"
@@ -179,7 +179,7 @@ export default async function GradesPage({ searchParams }: GradesPageProps) {
           <EmptyState
             icon="search"
             title="لا توجد نتائج مطابقة"
-            description="جرّب البحث بعنوان الدرجة أو اسم الطالبة، أو غيّر فلتر الاختبار أو الفصل."
+            description="جرّب البحث بعنوان الدرجة أو اسم الطالبة، أو غيّر فلتر الامتحان أو الفصل."
             actionLabel="عرض كل الدرجات"
             actionHref="/grades"
           />
@@ -365,7 +365,7 @@ function GradeCreateForm({
             </h3>
 
             <p className="mt-1 text-sm leading-7 text-[var(--app-text-muted)]">
-              اختاري الشعبة ثم المادة، ثم أدخلي بيانات الدرجة.
+              اختر الشعبة ثم المادة، ثم أدخل بيانات الدرجة.
             </p>
           </div>
         </div>
@@ -379,7 +379,7 @@ function GradeCreateForm({
               1
             </div>
             <h4 className="text-base font-extrabold text-[var(--app-text)]">
-              اختاري الشعبة والطالبة
+              اختر الشعبة والطالبة
             </h4>
           </div>
 
@@ -392,7 +392,7 @@ function GradeCreateForm({
 
               <CascadingSelect
                 name="sectionIdFilter"
-                placeholder="اختاري الشعبة"
+                placeholder="اختر الشعبة"
                 value={sectionId}
                 paramKey="sectionId"
                 currentParams={cascadeParams}
@@ -416,7 +416,7 @@ function GradeCreateForm({
               {!sectionId ? (
                 <div className="input flex items-center gap-2 text-[var(--app-text-muted)]">
                   <Users size={16} />
-                  <span>اختاري الشعبة أولًا حتى تظهر قائمة الطالبات.</span>
+                  <span>اختر الشعبة أولًا حتى تظهر قائمة الطالبات.</span>
                 </div>
               ) : sectionStudents.length === 0 ? (
                 <div className="input flex items-center gap-2 text-[var(--app-text-muted)]">
@@ -432,7 +432,7 @@ function GradeCreateForm({
                   className="input"
                 >
                   <option value="" disabled>
-                    اختاري الطالبة
+                    اختر الطالبة
                   </option>
 
                   {sectionStudents.map((student) => (
@@ -464,7 +464,7 @@ function GradeCreateForm({
               2
             </div>
             <h4 className="text-base font-extrabold text-[var(--app-text)]">
-              اختاري المادة والمدرسة
+              اختر المادة والمدرس
             </h4>
           </div>
 
@@ -477,7 +477,7 @@ function GradeCreateForm({
 
               <CascadingSelect
                 name="subjectIdFilter"
-                placeholder="اختاري المادة"
+                placeholder="اختر المادة"
                 value={subjectId}
                 paramKey="subjectId"
                 currentParams={cascadeParams}
@@ -495,18 +495,18 @@ function GradeCreateForm({
                 className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
               >
                 <GraduationCap size={14} className="ml-1 inline-block" />
-                المدرسة
+                المدرس
               </label>
 
               {!subjectId ? (
                 <div className="input flex items-center gap-2 text-[var(--app-text-muted)]">
                   <GraduationCap size={16} />
-                  <span>اختاري المادة حتى تظهر المدرسات المرتبطات بها.</span>
+                  <span>اختر المادة حتى يظهر المدرسين المرتبطين بها.</span>
                 </div>
               ) : subjectTeachers.length === 0 ? (
                 <div className="input flex items-center gap-2 text-[var(--app-text-muted)]">
                   <GraduationCap size={16} />
-                  <span>لا توجد مدرسات مرتبطات بهذه المادة.</span>
+                  <span>لا يوجد مدرسين مرتبطين بهذه المادة.</span>
                 </div>
               ) : (
                 <select
@@ -515,7 +515,7 @@ function GradeCreateForm({
                   defaultValue=""
                   className="input"
                 >
-                  <option value="">بدون مدرسة محددة</option>
+                  <option value="">بدون مدرس محدد</option>
 
                   {subjectTeachers.map((teacher) => (
                     <option key={teacher.id} value={teacher.id}>
@@ -531,7 +531,7 @@ function GradeCreateForm({
           {subjectId && subjectTeachers.length > 0 && (
             <p className="mt-3 text-xs text-[var(--app-text-soft)]">
               <GraduationCap size={12} className="ml-1 inline-block" />
-              {subjectTeachers.length} مدرسة تدرّس{" "}
+              {subjectTeachers.length} مدرس يدرّس{" "}
               {selectedSubject?.name ?? "المادة المختارة"}
             </p>
           )}
@@ -547,7 +547,7 @@ function GradeCreateForm({
               3
             </div>
             <h4 className="text-base font-extrabold text-[var(--app-text)]">
-              أدخلي بيانات الدرجة
+              أدخل بيانات الدرجة
             </h4>
           </div>
 
@@ -566,7 +566,7 @@ function GradeCreateForm({
                 required
                 minLength={2}
                 maxLength={120}
-                placeholder="مثال: اختبار الرياضيات الشهري"
+                placeholder="مثال: امتحان الرياضيات الشهري"
                 className="input"
               />
             </div>
@@ -626,7 +626,7 @@ function GradeCreateForm({
                   htmlFor="date"
                   className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
                 >
-                  تاريخ الاختبار
+                  تاريخ الامتحان
                 </label>
 
                 <input
@@ -642,7 +642,7 @@ function GradeCreateForm({
                   htmlFor="examType"
                   className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
                 >
-                  نوع الاختبار
+                  نوع الامتحان
                 </label>
 
                 <select
@@ -876,7 +876,7 @@ function GradeSearchForm({
         </div>
 
         <select name="examType" defaultValue={examType} className="input">
-          <option value="">كل الاختبارات</option>
+          <option value="">كل الامتحانات</option>
           {EXAM_TYPES.map((type) => (
             <option key={type.value} value={type.value}>
               {type.label}
@@ -921,7 +921,7 @@ function GradesList({ grades }: GradesListProps) {
           </h3>
 
           <p className="mt-1 text-sm leading-6 text-[var(--app-text-muted)]">
-            تابعي الدرجات المسجلة وتصنيفاتها ومستويات الطالبات.
+            تابع الدرجات المسجلة وتصنيفاتها ومستويات الطالبات.
           </p>
         </div>
 
@@ -1057,7 +1057,7 @@ function GradeRow({ grade }: GradeRowProps) {
 
           <div className="mt-2 grid gap-2 text-sm leading-6 text-[var(--app-text-muted)] md:grid-cols-3">
             <p>
-              نوع الاختبار:{" "}
+              نوع الامتحان:{" "}
               <span className="font-bold text-[var(--app-text)]">
                 {getExamTypeLabel(grade.examType)}
               </span>

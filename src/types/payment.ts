@@ -154,7 +154,7 @@ export const FEE_TYPES: {
   },
   {
     value: "exam",
-    label: "اختبار",
+    label: "امتحان",
   },
   {
     value: "other",

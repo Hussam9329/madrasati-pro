@@ -86,7 +86,7 @@ export default async function PaymentsPage({
       <div className="mx-auto flex w-full max-w-[1350px] flex-col gap-6">
         <PageHeader
           title="المدفوعات"
-          description="سجّلي المدفوعات والأقساط لكل طالبة، وتابعي حالة الدفع والمبالغ المعلّقة والمستحقة."
+          description="سجّل المدفوعات والأقساط لكل طالبة، وتابع حالة الدفع والمبالغ المعلّقة والمستحقة."
           icon="fees"
           badge="الخطوة الأخيرة"
         />
@@ -100,7 +100,7 @@ export default async function PaymentsPage({
         <SmartAlert
           tone="info"
           title="المدفوعات تعتمد على الطالبات"
-          description="يجب إضافة الطالبات أولًا حتى تتمكني من تسجيل المدفوعات والأقساط المرتبطة بهن."
+          description="يجب إضافة الطالبات أولًا حتى تتمكن من تسجيل المدفوعات والأقساط المرتبطة بهن."
           actionLabel="إدارة الطالبات"
           actionHref="/students"
         />
@@ -132,7 +132,7 @@ export default async function PaymentsPage({
           <EmptyState
             icon="fees"
             title="لا توجد مدفوعات بعد"
-            description="ابدئي بتسجيل أول دفعة بعد إضافة الطالبات. يمكنك متابعة المدفوعات والمتبقي لكل طالبة."
+            description="ابدأ بتسجيل أول دفعة بعد إضافة الطالبات. يمكنك متابعة المدفوعات والمتبقي لكل طالبة."
             actionLabel="تسجيل أول دفعة"
             actionHref="#payment-form"
             secondaryLabel="إدارة الطالبات"
@@ -315,7 +315,7 @@ function PaymentCreateForm({ students }: PaymentCreateFormProps) {
             </h3>
 
             <p className="mt-1 text-sm leading-7 text-[var(--app-text-muted)]">
-              أدخلي بيانات الدفعة واربطيها بالطالبة. عنوان الرسم والمبلغ والطالبة
+              أدخل بيانات الدفعة واربطها بالطالبة. عنوان الرسم والمبلغ والطالبة
               مطلوبون.
             </p>
           </div>
@@ -338,7 +338,7 @@ function PaymentCreateForm({ students }: PaymentCreateFormProps) {
             className="input"
             defaultValue=""
           >
-            <option value="">اختاري الطالبة...</option>
+            <option value="">اختر الطالبة...</option>
 
             {students.map((student) => (
               <option key={student.id} value={student.id}>
@@ -897,7 +897,7 @@ function PaymentsList({ payments }: PaymentsListProps) {
           </h3>
 
           <p className="mt-1 text-sm leading-6 text-[var(--app-text-muted)]">
-            تابعي المدفوعات وحالاتها والمبالغ المرتبطة بكل طالبة.
+            تابع المدفوعات وحالاتها والمبالغ المرتبطة بكل طالبة.
           </p>
         </div>
 

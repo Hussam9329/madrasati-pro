@@ -182,7 +182,7 @@ export function validateSectionInput(
     normalized.capacity !== undefined &&
     (Number.isNaN(Number(normalized.capacity)) || Number(normalized.capacity) < 1)
   ) {
-    errors.capacity = "السعة يجب أن تكون رقمًا أكبر من صفر.";
+    errors.capacity = "عدد الطالبات المسموح يجب أن يكون رقمًا أكبر من صفر.";
   }
 
   if (normalized.description && normalized.description.length > 300) {
@@ -252,7 +252,7 @@ export function canDeleteClass(input: {
     return {
       allowed: false,
       reason:
-        "لا يمكن حذف الصف لأنه مرتبط بجدول دراسي. احذف الحصص المرتبطة أولًا.",
+        "لا يمكن حذف الصف لأنه مرتبط بجدول دراسي. احذف المحاضرات المرتبطة أولًا.",
     };
   }
 
@@ -299,7 +299,7 @@ export function canDeleteSection(input: {
     return {
       allowed: false,
       reason:
-        "لا يمكن حذف الشعبة لأنها مرتبطة بحصص في الجدول الدراسي.",
+        "لا يمكن حذف الشعبة لأنها مرتبطة بمحاضرات في الجدول الدراسي.",
     };
   }
 

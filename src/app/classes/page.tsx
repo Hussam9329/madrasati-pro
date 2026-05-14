@@ -76,7 +76,7 @@ export default async function ClassesPage({ searchParams }: ClassesPageProps) {
       <div className="mx-auto flex w-full max-w-[1350px] flex-col gap-6">
         <PageHeader
           title="الصفوف والشُعب"
-          description="أنشئي الصفوف الدراسية ثم أضيفي الشُعب داخل كل صف، حتى يصبح تسجيل الطالبات وبناء الجدول أكثر ترتيبًا."
+          description="أنشئ الصفوف الدراسية ثم أضف الشُعب داخل كل صف، حتى يصبح تسجيل الطالبات وبناء الجدول أكثر ترتيبًا."
           icon="classes"
           badge="الخطوة الثالثة"
         />
@@ -122,7 +122,7 @@ export default async function ClassesPage({ searchParams }: ClassesPageProps) {
           <EmptyState
             icon="classes"
             title="لا توجد صفوف بعد"
-            description="ابدئي بإضافة أول صف مثل: الأول الابتدائي، الثاني المتوسط، أو السادس الإعدادي. بعد ذلك أضيفي الشُعب."
+            description="ابدأ بإضافة أول صف مثل: الأول الابتدائي، الثاني المتوسط، أو السادس الإعدادي. بعد ذلك أضف الشُعب."
             actionLabel="إضافة أول صف"
             actionHref="#class-form"
             secondaryLabel="الرجوع إلى المواد"
@@ -349,7 +349,7 @@ function ClassesFeedback({
       error === "delete-class"
         ? "لا يمكن حذف الصف إذا كان يحتوي على شُعب أو طالبات أو جدول أو مواد مرتبطة."
         : error === "delete-section"
-          ? "لا يمكن حذف الشعبة إذا كانت تحتوي على طالبات أو حصص في الجدول."
+          ? "لا يمكن حذف الشعبة إذا كانت تحتوي على طالبات أو محاضرات في الجدول."
           : "تأكد من إدخال البيانات بشكل صحيح، وعدم تكرار الصف أو الشعبة.";
 
     return (
@@ -466,7 +466,7 @@ function ClassCreateForm() {
 
       <div className="flex flex-col gap-3 border-t border-[var(--app-border-soft)] bg-gradient-to-l to-rose-50/30 to-amber-50/20 p-6 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm leading-7 text-[var(--app-text-muted)]">
-          بعد حفظ الصف، أضيفي شعبة واحدة على الأقل.
+          بعد حفظ الصف، أضف شعبة واحدة على الأقل.
         </p>
 
         <button type="submit" className="btn btn-primary">
@@ -521,7 +521,7 @@ function SectionCreateForm({ classes }: SectionCreateFormProps) {
             defaultValue=""
           >
             <option value="" disabled>
-              اختاري الصف
+              اختر الصف
             </option>
 
             {classes.map((schoolClass) => (
@@ -533,7 +533,7 @@ function SectionCreateForm({ classes }: SectionCreateFormProps) {
 
           {classes.length === 0 ? (
             <p className="mt-2 text-sm leading-6 text-amber-700">
-              أضيفي صفًا فعّالًا أولًا حتى تتمكن من إنشاء الشُعب.
+              أضف صفًا فعّالًا أولًا حتى تتمكن من إنشاء الشُعب.
             </p>
           ) : null}
         </div>
@@ -765,7 +765,7 @@ function SectionsPanel({ sections }: SectionsPanelProps) {
           <SmartAlert
             tone="info"
             title="لا توجد شُعب بعد"
-            description="بعد إضافة الصف، أنشئي شعبة واحدة على الأقل حتى يمكن تسجيل الطالبات داخلها."
+            description="بعد إضافة الصف، أنشئ شعبة واحدة على الأقل حتى يمكن تسجيل الطالبات داخلها."
           />
         </div>
       ) : (
@@ -811,7 +811,7 @@ function SectionRow({ section }: SectionRowProps) {
             </span>
 
             <span className="badge bg-slate-100 text-slate-600">
-              الحصص: {section.schedulesCount}
+              المحاضرات: {section.schedulesCount}
             </span>
 
             <span className="badge bg-slate-100 text-slate-600">
@@ -868,7 +868,7 @@ function ClassesList({ classes, subjects }: ClassesListProps) {
           </h3>
 
           <p className="mt-1 text-sm leading-6 text-[var(--app-text-muted)]">
-            تابعي الصفوف وعدد الشُعب والطالبات والمواد المرتبطة بها.
+            تابع الصفوف وعدد الشُعب والطالبات والمواد المرتبطة بها.
           </p>
         </div>
 
@@ -939,7 +939,7 @@ function ClassRow({ schoolClass, subjects }: ClassRowProps) {
             </span>
 
             <span className="badge bg-slate-100 text-slate-600">
-              الحصص: {schoolClass.schedulesCount}
+              المحاضرات: {schoolClass.schedulesCount}
             </span>
           </div>
         </div>

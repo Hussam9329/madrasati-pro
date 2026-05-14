@@ -3,6 +3,7 @@ export type AttendanceStatus = "present" | "absent" | "late" | "excused";
 export type AttendanceRecord = {
   id: string;
   date: Date;
+  mode: string;
   status: string;
   notes: string | null;
   checkInAt: Date | null;
@@ -19,7 +20,7 @@ export type AttendanceFormInput = {
   status: AttendanceStatus | string;
   notes?: string;
   studentId: string;
-  scheduleId?: string;
+  mode?: "check-in" | "check-out";
 };
 
 export type AttendanceBatchInput = {
@@ -35,6 +36,7 @@ export type AttendanceBatchInput = {
 export type AttendanceListItem = {
   id: string;
   date: Date;
+  mode: string;
   status: string;
   statusLabel: string;
   notes: string | null;
@@ -149,7 +151,7 @@ export function getEmptyAttendanceForm(): AttendanceFormInput {
     status: "present",
     notes: "",
     studentId: "",
-    scheduleId: "",
+    mode: "check-in",
   };
 }
 
@@ -161,7 +163,7 @@ export function normalizeAttendanceInput(
     status: String(input.status || "present").trim(),
     notes: input.notes?.trim() || undefined,
     studentId: input.studentId.trim(),
-    scheduleId: input.scheduleId?.trim() || undefined,
+    mode: input.mode || "check-in",
   };
 }
 
