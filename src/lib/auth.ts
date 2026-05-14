@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
-import { db } from "@/lib/db";
+import { db, ensureDatabase } from "@/lib/db";
 
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || "madrasati-secret-key-2024-marina-school"
@@ -11,6 +11,9 @@ const SESSION_COOKIE_NAME = "madrasati_session";
 const SESSION_DURATION = 8 * 60 * 60 * 1000; // 8 hours in ms
 
 export async function verifyAdmin(username: string, password: string) {
+  // Ensure database is initialized (especially on Vercel)
+  await ensureDatabase();
+
   const admin = await db.admin.findUnique({ where: { username } });
   if (!admin) return null;
   const isValid = await bcrypt.compare(password, admin.passwordHash);
@@ -49,6 +52,9 @@ export async function getSession() {
 }
 
 export async function requireAdmin() {
+  // Ensure database is initialized (especially on Vercel)
+  await ensureDatabase();
+
   const session = await getSession();
   if (!session?.adminId) {
     const { redirect } = await import("next/navigation");
