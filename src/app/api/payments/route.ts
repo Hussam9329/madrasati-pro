@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { ensureDatabase } from "@/lib/db";
 import {
   createPayment,
   deletePayment,
@@ -8,6 +9,7 @@ import {
 import type { PaymentFormInput } from "@/types/payment";
 
 export async function GET(request: NextRequest) {
+  await ensureDatabase();
   try {
     const searchParams = request.nextUrl.searchParams;
 
@@ -46,6 +48,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  await ensureDatabase();
   try {
     const body = (await request.json()) as Partial<PaymentFormInput>;
 

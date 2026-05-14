@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { ensureDatabase } from "@/lib/db";
 import {
   createOrUpdateSchool,
   deleteSchool,
@@ -7,6 +8,7 @@ import {
 import type { SchoolFormInput } from "@/types/school";
 
 export async function GET() {
+  await ensureDatabase();
   try {
     const overview = await getSchoolOverview();
 
@@ -27,6 +29,7 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  await ensureDatabase();
   try {
     const body = (await request.json()) as Partial<SchoolFormInput>;
 

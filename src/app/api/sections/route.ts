@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { ensureDatabase } from "@/lib/db";
 import {
   createSection,
   deleteSection,
@@ -10,6 +11,7 @@ import {
 import type { SectionFormInput } from "@/types/class";
 
 export async function GET(request: NextRequest) {
+  await ensureDatabase();
   try {
     const searchParams = request.nextUrl.searchParams;
     const classId = searchParams.get("classId");
@@ -35,6 +37,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  await ensureDatabase();
   try {
     const body = (await request.json()) as Partial<SectionFormInput>;
 

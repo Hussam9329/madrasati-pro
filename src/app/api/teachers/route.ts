@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { ensureDatabase } from "@/lib/db";
 import {
   createTeacher,
   deleteTeacher,
@@ -15,6 +16,7 @@ import {
 import type { TeacherFormInput } from "@/types/teacher";
 
 export async function GET(request: NextRequest) {
+  await ensureDatabase();
   try {
     const searchParams = request.nextUrl.searchParams;
     const id = searchParams.get("id");
@@ -98,6 +100,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  await ensureDatabase();
   try {
     const body = await request.json();
 
