@@ -6,18 +6,19 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 function getDatabaseUrl(): string {
-  const defaultUrl = "file:./dev.db";
-
-  if (process.env.DATABASE_URL) {
-    return process.env.DATABASE_URL;
-  }
-
-  // On Vercel, use /tmp for the SQLite database
+  // On Vercel, ALWAYS use /tmp for the SQLite database
+  // This must take priority over any DATABASE_URL env var,
+  // since Vercel's env might have an invalid or PostgreSQL URL
   if (process.env.VERCEL) {
     return "file:/tmp/madrasati.db";
   }
 
-  return defaultUrl;
+  // For local development, use DATABASE_URL if set, otherwise default
+  if (process.env.DATABASE_URL) {
+    return process.env.DATABASE_URL;
+  }
+
+  return "file:./dev.db";
 }
 
 export const db =
@@ -67,6 +68,14 @@ export async function ensureDatabase() {
 }
 
 async function initializeDatabase() {
+  // First, ensure the Prisma client is connected
+  try {
+    await db.$connect();
+  } catch (e) {
+    console.error("[ensureDatabase] Failed to connect:", e);
+    throw e;
+  }
+
   // Use raw SQL to create all tables — much more reliable than execSync on Vercel
   
   const createTablesSQL = [

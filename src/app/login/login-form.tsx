@@ -1,17 +1,47 @@
 "use client";
 
-import { useActionState } from "react";
-import { loginAction } from "./actions";
+import { useState } from "react";
 
 export function LoginForm() {
-  const [state, formAction, isPending] = useActionState(loginAction, {
-    error: undefined,
-  });
+  const [error, setError] = useState<string | undefined>();
+  const [isPending, setIsPending] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError(undefined);
+    setIsPending(true);
+
+    const formData = new FormData(e.currentTarget);
+    const username = formData.get("username") as string;
+    const password = formData.get("password") as string;
+
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "حدث خطأ أثناء تسجيل الدخول.");
+        return;
+      }
+
+      // Success - redirect to dashboard
+      window.location.href = "/";
+    } catch {
+      setError("تعذر الاتصال بالخادم. يرجى المحاولة مرة أخرى.");
+    } finally {
+      setIsPending(false);
+    }
+  }
 
   return (
-    <form action={formAction} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6">
       {/* Error Message */}
-      {state.error ? (
+      {error ? (
         <div className="rounded-2xl border border-red-200 bg-gradient-to-l from-red-50 to-rose-50 p-4 dark:border-red-800/40 dark:from-red-950/30 dark:to-rose-950/30">
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400">
@@ -22,7 +52,7 @@ export function LoginForm() {
               </svg>
             </div>
             <p className="text-sm font-bold text-red-700 dark:text-red-400">
-              {state.error}
+              {error}
             </p>
           </div>
         </div>
