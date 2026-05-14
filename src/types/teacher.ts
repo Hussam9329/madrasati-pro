@@ -1,3 +1,5 @@
+import { IRAQI_PHONE_REGEX, validateQuadrupleName } from "@/lib/validators";
+
 export type Teacher = {
   id: string;
   fullName: string;
@@ -14,14 +16,8 @@ export type Teacher = {
 
 export type TeacherFormInput = {
   fullName: string;
-  phone?: string;
-  email?: string;
-  address?: string;
-  specialty?: string;
-  salary?: number | string;
-  notes?: string;
-  isActive?: boolean;
-  subjectIds?: string[];
+  phone: string;
+  subjectIds: string[];
 };
 
 export type TeacherListItem = {
@@ -62,12 +58,6 @@ export function getEmptyTeacherForm(): TeacherFormInput {
   return {
     fullName: "",
     phone: "",
-    email: "",
-    address: "",
-    specialty: "",
-    salary: "",
-    notes: "",
-    isActive: true,
     subjectIds: [],
   };
 }
@@ -75,21 +65,9 @@ export function getEmptyTeacherForm(): TeacherFormInput {
 export function normalizeTeacherInput(
   input: TeacherFormInput,
 ): TeacherFormInput {
-  const salaryValue =
-    typeof input.salary === "string" ? input.salary.trim() : input.salary;
-
   return {
     fullName: input.fullName.trim(),
-    phone: input.phone?.trim() || undefined,
-    email: input.email?.trim() || undefined,
-    address: input.address?.trim() || undefined,
-    specialty: input.specialty?.trim() || undefined,
-    salary:
-      salaryValue === "" || salaryValue === undefined
-        ? undefined
-        : Number(salaryValue),
-    notes: input.notes?.trim() || undefined,
-    isActive: input.isActive ?? true,
+    phone: input.phone?.trim() || "",
     subjectIds: Array.isArray(input.subjectIds)
       ? input.subjectIds.filter(Boolean)
       : [],
@@ -103,42 +81,19 @@ export function validateTeacherInput(
   const errors: Partial<Record<keyof TeacherFormInput, string>> = {};
 
   if (!normalized.fullName) {
-    errors.fullName = "اسم المدرس مطلوب.";
+    errors.fullName = "الاسم الرباعي للمدرس مطلوب.";
+  } else if (!validateQuadrupleName(normalized.fullName)) {
+    errors.fullName = "يجب إدخال الاسم الرباعي كاملًا.";
   }
 
-  if (normalized.fullName && normalized.fullName.length < 3) {
-    errors.fullName = "اسم المدرس يجب أن يحتوي على 3 أحرف على الأقل.";
+  if (!normalized.phone) {
+    errors.phone = "رقم هاتف المدرس يجب أن يتكون من 11 رقم ويبدأ بـ 07.";
+  } else if (!IRAQI_PHONE_REGEX.test(normalized.phone)) {
+    errors.phone = "رقم هاتف المدرس يجب أن يتكون من 11 رقم ويبدأ بـ 07.";
   }
 
-  if (normalized.fullName && normalized.fullName.length > 120) {
-    errors.fullName = "اسم المدرس طويل جدًا.";
-  }
-
-  if (normalized.phone && normalized.phone.length < 7) {
-    errors.phone = "رقم الهاتف قصير جدًا.";
-  }
-
-  if (normalized.email && !isValidEmail(normalized.email)) {
-    errors.email = "البريد الإلكتروني غير صحيح.";
-  }
-
-  if (normalized.address && normalized.address.length > 300) {
-    errors.address = "العنوان يجب ألا يتجاوز 300 حرف.";
-  }
-
-  if (normalized.specialty && normalized.specialty.length > 100) {
-    errors.specialty = "التخصص طويل جدًا.";
-  }
-
-  if (
-    normalized.salary !== undefined &&
-    (Number.isNaN(Number(normalized.salary)) || Number(normalized.salary) < 0)
-  ) {
-    errors.salary = "الراتب يجب أن يكون رقمًا صحيحًا أو موجبًا.";
-  }
-
-  if (normalized.notes && normalized.notes.length > 500) {
-    errors.notes = "الملاحظات يجب ألا تتجاوز 500 حرف.";
+  if (!normalized.subjectIds || normalized.subjectIds.length === 0) {
+    errors.subjectIds = "يجب اختيار المادة التي يدرسها المدرس.";
   }
 
   return {
@@ -217,8 +172,4 @@ export function canDeleteTeacher(input: {
   return {
     allowed: true,
   };
-}
-
-function isValidEmail(value: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }

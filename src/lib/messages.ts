@@ -10,16 +10,16 @@ export type SmartMessage = {
 
 export const appMessages = {
   welcome: {
-    title: "أهلًا بك في مدرستي برو",
+    title: "أهلًا بك في مدرستي",
     description:
       "ابدأ بتجهيز النظام خطوة خطوة. أضف المواد الدراسية، ثم الصفوف، ثم المدرسين والطلاب.",
     tone: "info",
   } satisfies SmartMessage,
 
   noLoginMode: {
-    title: "النظام يعمل بدون تسجيل دخول",
+    title: "تم تسجيل الدخول بنجاح",
     description:
-      "تم ضبط هذه النسخة للدخول المباشر إلى لوحة التحكم، حتى تكون التجربة أسرع وأسهل.",
+      "أنت الآن في لوحة تحكم ثانوية مارينا للبنات.",
     tone: "success",
   } satisfies SmartMessage,
 
@@ -308,3 +308,25 @@ export function getRequiredFieldMessage(fieldName: string): SmartMessage {
     tone: "warning",
   };
 }
+
+export const APP_MESSAGES = {
+  phoneRule: "رقم الهاتف يجب أن يتكون من 11 رقم ويبدأ بـ 07.",
+  fullNameRule: "يرجى إدخال الاسم الرباعي كاملًا.",
+  saveSuccess: "تم الحفظ بنجاح.",
+  saveError: "تعذر الحفظ، تحقق من البيانات وحاول مرة أخرى.",
+  deleteWarning: "لا يمكن التراجع عن عملية الحذف.",
+  relationWarning: "هذه البيانات مرتبطة بسجلات أخرى، تحقق قبل الحذف.",
+  gradesWarning: "راجع الدرجات المنخفضة قبل اعتماد النتائج.",
+  paymentWarning: "راجع مبلغ الخصم والمبلغ النهائي قبل حفظ الدفعة.",
+  discountCalculated: "تم احتساب الخصم تلقائيًا، راجع المبلغ النهائي قبل الحفظ.",
+  discountTooLarge: "تحذير: قيمة الخصم أكبر من القسط.",
+  discountSuggestion: "اقتراح ذكي: هذا الطالب قد يكون مؤهلًا لخصم.",
+  finalAmountAfterDiscount: "المبلغ النهائي بعد الخصم",
+  classSeedInfo: "تم تجهيز الصفوف الأساسية من الأول إلى السادس، ويمكنك إضافة شعب إضافية عند الحاجة.",
+  selectSectionFirst: "اختر الشعبة أولًا حتى تظهر قائمة الطلاب.",
+  selectSubjectFirst: "اختر المادة حتى تظهر المدرسات المرتبطات بها.",
+  gradeExceedsMax: "لا يمكن حفظ درجة أكبر من الدرجة الكلية.",
+  gradesSaved: "تم حفظ الدرجات بنجاح.",
+  reviewLowGrades: "راجع الدرجات المنخفضة قبل اعتمادها.",
+  studentsWithoutGrades: "يوجد طلاب لم يتم إدخال درجاتهم.",
+};

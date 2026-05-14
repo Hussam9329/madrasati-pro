@@ -12,16 +12,16 @@ const tajawal = Tajawal({
 
 export const metadata: Metadata = {
   title: {
-    default: "مدرستي برو",
-    template: "%s | مدرستي برو",
+    default: "مدرستي",
+    template: "%s | مدرستي",
   },
   description:
-    "نظام مدرسي سريع ومنظم لإدارة الطلاب، الصفوف، المدرسين، الحضور، الدرجات، الأقساط والتقارير.",
-  applicationName: "مدرستي برو",
-  authors: [{ name: "Madrasati Pro" }],
+    "نظام مدرسي ذكي ومتكامل لإدارة ثانوية مارينا للبنات، الطلاب، المدرسات، الصفوف، الدرجات، الأقساط، والمدفوعات.",
+  applicationName: "مدرستي",
+  authors: [{ name: "مدرستي" }],
   generator: "Next.js",
   keywords: [
-    "مدرستي برو",
+    "مدرستي",
     "نظام مدرسة",
     "إدارة الطلاب",
     "الحضور",

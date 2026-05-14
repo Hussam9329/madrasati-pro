@@ -14,6 +14,7 @@ import {
   Users,
 } from "lucide-react";
 import { safeQuery } from "@/lib/db";
+import { requireAdmin } from "@/lib/auth";
 import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -54,6 +55,8 @@ type ClassesPageProps = {
 };
 
 export default async function ClassesPage({ searchParams }: ClassesPageProps) {
+  await requireAdmin();
+
   const query = searchParams?.q?.trim() ?? "";
 
   const [classes, activeClasses, sections, counts] = await Promise.all([
@@ -86,7 +89,7 @@ export default async function ClassesPage({ searchParams }: ClassesPageProps) {
         <SmartAlert
           tone="info"
           title="الترتيب الذكي: صف ثم شعبة ثم طالب"
-          description="يفضل إنشاء الصفوف أولًا، ثم الشُعب، وبعدها إضافة الطلاب داخل الشُعب المناسبة."
+          description="يفضل إنشاء الصفوف أولًا، ثم الشُعب، وبعدها إضافة الطلاب داخل الشُعب المناسبة. تم تجهيز الصفوف الأساسية من الأول إلى السادس، ويمكنك إضافة شعب إضافية عند الحاجة."
           actionLabel="الخطوة التالية: الطلاب"
           actionHref="/students"
         />

@@ -127,7 +127,7 @@ export function getSchoolCompletionPercentage(school: School | null): number {
 }
 
 export function getSchoolDisplayName(school: School | null): string {
-  return school?.name || "مدرستي برو";
+  return school?.name || "مدرستي";
 }
 
 function isValidEmail(value: string): boolean {

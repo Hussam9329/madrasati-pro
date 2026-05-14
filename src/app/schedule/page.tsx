@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
+import { requireAdmin } from "@/lib/auth";
 
-export default function SchedulePage() {
+export default async function SchedulePage() {
+  await requireAdmin();
   redirect("/schedules");
 }

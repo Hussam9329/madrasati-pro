@@ -13,6 +13,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { safeQuery } from "@/lib/db";
+import { requireAdmin } from "@/lib/auth";
 import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -51,6 +52,8 @@ type AttendancePageProps = {
 export default async function AttendancePage({
   searchParams,
 }: AttendancePageProps) {
+  await requireAdmin();
+
   const query = searchParams?.q?.trim() ?? "";
   const status = searchParams?.status?.trim() ?? "";
   const date = searchParams?.date?.trim() ?? "";

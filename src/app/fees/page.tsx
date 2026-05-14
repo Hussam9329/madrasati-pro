@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
+import { requireAdmin } from "@/lib/auth";
 
-export default function FeesPage() {
+export default async function FeesPage() {
+  await requireAdmin();
   redirect("/payments");
 }

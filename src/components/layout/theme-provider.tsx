@@ -5,7 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useState,
+  useSyncExternalStore,
   type ReactNode,
 } from "react";
 
@@ -29,18 +29,23 @@ type ThemeProviderProps = {
   children: ReactNode;
 };
 
+function subscribe() {
+  return () => {};
+}
+
+function getSnapshot(): Theme {
+  if (typeof window === "undefined") return "light";
+  const stored = localStorage.getItem("theme");
+  if (stored === "dark" || stored === "light") return stored;
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
+function getServerSnapshot(): Theme {
+  return "light";
+}
+
 export function ThemeProvider({ children }: ThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme>("light");
-
-  useEffect(() => {
-    const stored = localStorage.getItem("theme") as Theme | null;
-
-    if (stored === "dark" || stored === "light") {
-      setTheme(stored);
-    } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-      setTheme("dark");
-    }
-  }, []);
+  const theme = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -55,7 +60,11 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   }, [theme]);
 
   const toggleTheme = useCallback(() => {
-    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+    const current = localStorage.getItem("theme");
+    const next = current === "dark" ? "light" : "dark";
+    localStorage.setItem("theme", next);
+    // Dispatch a storage event to trigger re-render via useSyncExternalStore
+    window.dispatchEvent(new Event("storage"));
   }, []);
 
   return (

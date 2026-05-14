@@ -7,6 +7,17 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Admin {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String
+  isRoot       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("admins")
+}
+
 model School {
   id           String   @id @default(cuid())
   name         String
@@ -223,6 +234,10 @@ model Grade {
   term      String   @default("first")
   date      DateTime @default(now())
   notes     String?
+  weight          Float?
+  assessmentGroup String?
+  isReviewed      Boolean  @default(false)
+  warningLevel    String?
 
   studentId String
   student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
@@ -253,6 +268,11 @@ model Payment {
   dueDate      DateTime?
   paidAt       DateTime?
   notes        String?
+  originalAmount  Float?
+  discountAmount  Float   @default(0)
+  discountPercent Float?
+  discountReason  String?
+  finalAmount     Float?
 
   studentId String
   student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)

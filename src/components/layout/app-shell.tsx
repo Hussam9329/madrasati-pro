@@ -14,6 +14,7 @@ import {
   Landmark,
   LayoutDashboard,
   Menu,
+  LogOut,
   Moon,
   Receipt,
   School,
@@ -152,6 +153,15 @@ export function AppShell({ children }: AppShellProps) {
 
               <ThemeToggle />
 
+              <a
+                href="/logout"
+                className="hidden h-11 w-11 items-center justify-center rounded-2xl border border-[var(--app-border)] bg-[var(--color-app-card)] text-[var(--app-text-muted)] transition hover:border-red-300 hover:text-red-500 hover:shadow-md hover:shadow-red-200/30 md:inline-flex dark:hover:border-red-500/50 dark:hover:shadow-red-500/20"
+                aria-label="تسجيل الخروج"
+                title="تسجيل الخروج"
+              >
+                <LogOut size={18} />
+              </a>
+
               <div className="hidden items-center gap-3 rounded-2xl border border-[var(--app-border)] bg-[var(--color-app-card)] px-3 py-2 lg:flex">
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-md shadow-indigo-500/20">
                   <School size={18} />
@@ -159,10 +169,10 @@ export function AppShell({ children }: AppShellProps) {
 
                 <div className="leading-none">
                   <p className="text-sm font-extrabold text-[var(--app-text)]">
-                    مدرستي برو
+                    مدرستي
                   </p>
                   <p className="mt-1 text-xs font-medium text-[var(--app-text-muted)]">
-                    نظام المدرسة الأساسي
+                    ثانوية مارينا للبنات
                   </p>
                 </div>
               </div>
@@ -198,10 +208,10 @@ function SidebarContent({ pathname, onNavigate }: SidebarContentProps) {
 
           <div className="min-w-0">
             <p className="truncate text-lg font-extrabold text-white">
-              مدرستي برو
+              مدرستي
             </p>
             <p className="mt-1 truncate text-xs font-medium text-[var(--color-sidebar-muted)]">
-              تجربة مدرسية أسرع وأسهل
+              ثانوية مارينا للبنات
             </p>
           </div>
         </Link>

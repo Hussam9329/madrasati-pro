@@ -2,9 +2,15 @@ export type PaymentStatus = "paid" | "partial" | "pending" | "refunded";
 
 export type PaymentMethod =
   | "cash"
-  | "card"
+  | "zain_cash"
+  | "asia_hawala"
   | "bank_transfer"
-  | "wallet"
+  | "credit_card"
+  | "debit_card"
+  | "pos"
+  | "cheque"
+  | "installment"
+  | "mixed"
   | "other";
 
 export type FeeType =
@@ -21,6 +27,11 @@ export type Payment = {
   feeTitle: string;
   feeType: string;
   amount: number;
+  originalAmount: number | null;
+  discountAmount: number;
+  discountPercent: number | null;
+  discountReason: string | null;
+  finalAmount: number | null;
   status: string;
   method: string;
   academicYear: string | null;
@@ -36,6 +47,11 @@ export type PaymentFormInput = {
   feeTitle: string;
   feeType?: string;
   amount: number | string;
+  originalAmount?: number | string;
+  discountAmount?: number | string;
+  discountPercent?: number | string;
+  discountReason?: string;
+  finalAmount?: number | string;
   status?: string;
   method?: string;
   academicYear?: string;
@@ -169,33 +185,62 @@ export const PAYMENT_METHODS: {
   value: PaymentMethod;
   label: string;
 }[] = [
-  {
-    value: "cash",
-    label: "نقدًا",
-  },
-  {
-    value: "card",
-    label: "بطاقة",
-  },
-  {
-    value: "bank_transfer",
-    label: "تحويل بنكي",
-  },
-  {
-    value: "wallet",
-    label: "محفظة إلكترونية",
-  },
-  {
-    value: "other",
-    label: "أخرى",
-  },
+  { value: "cash", label: "نقدًا" },
+  { value: "zain_cash", label: "زين كاش" },
+  { value: "asia_hawala", label: "آسيا حوالة" },
+  { value: "bank_transfer", label: "تحويل مصرفي" },
+  { value: "credit_card", label: "بطاقة ائتمان" },
+  { value: "debit_card", label: "بطاقة خصم" },
+  { value: "pos", label: "جهاز POS" },
+  { value: "cheque", label: "صك / شيك" },
+  { value: "installment", label: "تقسيط" },
+  { value: "mixed", label: "دفع مختلط" },
+  { value: "other", label: "أخرى" },
 ];
+
+export function calculateDiscountFromPercent(originalAmount: number, discountPercent: number): number {
+  return Math.round((originalAmount * discountPercent) / 100);
+}
+
+export function calculateDiscountPercent(originalAmount: number, discountAmount: number): number {
+  if (originalAmount <= 0) return 0;
+  return Math.round((discountAmount / originalAmount) * 100);
+}
+
+export function calculateFinalAmount(originalAmount: number, discountAmount: number): number {
+  return Math.max(0, originalAmount - discountAmount);
+}
+
+export function validateDiscount(originalAmount: number, discountAmount: number): { valid: boolean; message?: string } {
+  if (discountAmount > originalAmount) {
+    return { valid: false, message: "تحذير: قيمة الخصم أكبر من القسط." };
+  }
+  if (discountAmount < 0) {
+    return { valid: false, message: "قيمة الخصم لا يمكن أن تكون سالبة." };
+  }
+  return { valid: true };
+}
+
+export function validateDiscountPercent(percent: number): { valid: boolean; message?: string } {
+  if (percent > 100) {
+    return { valid: false, message: "نسبة الخصم لا يمكن أن تتجاوز 100%." };
+  }
+  if (percent < 0) {
+    return { valid: false, message: "نسبة الخصم لا يمكن أن تكون سالبة." };
+  }
+  return { valid: true };
+}
 
 export function getEmptyPaymentForm(): PaymentFormInput {
   return {
     feeTitle: "",
     feeType: "tuition",
     amount: "",
+    originalAmount: "",
+    discountAmount: "0",
+    discountPercent: "0",
+    discountReason: "",
+    finalAmount: "",
     status: "paid",
     method: "cash",
     academicYear: getCurrentAcademicYear(),
@@ -216,6 +261,23 @@ export function normalizePaymentInput(
       typeof input.amount === "string"
         ? Number(input.amount.trim())
         : input.amount,
+    originalAmount:
+      typeof input.originalAmount === "string"
+        ? Number(input.originalAmount.trim())
+        : input.originalAmount,
+    discountAmount:
+      typeof input.discountAmount === "string"
+        ? Number(input.discountAmount.trim())
+        : input.discountAmount,
+    discountPercent:
+      typeof input.discountPercent === "string"
+        ? Number(input.discountPercent.trim())
+        : input.discountPercent,
+    discountReason: input.discountReason?.trim() || undefined,
+    finalAmount:
+      typeof input.finalAmount === "string"
+        ? Number(input.finalAmount.trim())
+        : input.finalAmount,
     status: input.status?.trim() || "paid",
     method: input.method?.trim() || "cash",
     academicYear: input.academicYear?.trim() || undefined,
@@ -250,6 +312,30 @@ export function validatePaymentInput(
 
   if (!Number.isNaN(Number(normalized.amount)) && Number(normalized.amount) <= 0) {
     errors.amount = "المبلغ يجب أن يكون أكبر من صفر.";
+  }
+
+  if (normalized.originalAmount !== undefined && Number.isNaN(Number(normalized.originalAmount))) {
+    errors.originalAmount = "المبلغ الأصلي يجب أن يكون رقمًا.";
+  }
+
+  if (normalized.discountAmount !== undefined && Number.isNaN(Number(normalized.discountAmount))) {
+    errors.discountAmount = "قيمة الخصم يجب أن تكون رقمًا.";
+  }
+
+  if (normalized.discountPercent !== undefined && Number.isNaN(Number(normalized.discountPercent))) {
+    errors.discountPercent = "نسبة الخصم يجب أن تكون رقمًا.";
+  }
+
+  if (
+    normalized.discountPercent !== undefined &&
+    !Number.isNaN(Number(normalized.discountPercent)) &&
+    Number(normalized.discountPercent) > 100
+  ) {
+    errors.discountPercent = "نسبة الخصم لا يمكن أن تتجاوز 100%.";
+  }
+
+  if (normalized.finalAmount !== undefined && Number.isNaN(Number(normalized.finalAmount))) {
+    errors.finalAmount = "المبلغ النهائي يجب أن يكون رقمًا.";
   }
 
   if (

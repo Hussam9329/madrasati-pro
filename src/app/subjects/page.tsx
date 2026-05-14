@@ -12,6 +12,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { safeQuery } from "@/lib/db";
+import { requireAdmin } from "@/lib/auth";
 import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -43,6 +44,8 @@ type SubjectsPageProps = {
 export default async function SubjectsPage({
   searchParams,
 }: SubjectsPageProps) {
+  await requireAdmin();
+
   const query = searchParams?.q?.trim() ?? "";
   const [subjects, counts] = await Promise.all([
     safeQuery(() => searchSubjects(query), []),

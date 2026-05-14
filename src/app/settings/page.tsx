@@ -1,8 +1,11 @@
 import { Settings, Database, Globe, ShieldCheck } from "lucide-react";
+import { requireAdmin } from "@/lib/auth";
 import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/layout/page-header";
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
+  await requireAdmin();
+
   return (
     <AppShell>
       <div className="mx-auto flex w-full max-w-[1350px] flex-col gap-6">
@@ -61,7 +64,7 @@ export default function SettingsPage() {
               <div>
                 <h4 className="font-extrabold text-[var(--app-text)]">الصلاحيات</h4>
                 <p className="mt-1 text-sm leading-6 text-[var(--app-text-muted)]">
-                  وضع مفتوح — لا يوجد تسجيل دخول. الوصول الكامل متاح لجميع المستخدمين.
+                  محمي — تسجيل دخول المدير مطلوب للوصول إلى النظام.
                 </p>
               </div>
             </div>
@@ -73,7 +76,7 @@ export default function SettingsPage() {
               <div>
                 <h4 className="font-extrabold text-[var(--app-text)]">الإصدار</h4>
                 <p className="mt-1 text-sm leading-6 text-[var(--app-text-muted)]">
-                  مدرستي برو 2.0 — نظام إدارة مدرسية متكامل.
+                  مدرستي 2.0 — نظام إدارة ثانوية مارينا للبنات.
                 </p>
               </div>
             </div>

@@ -85,30 +85,21 @@ export type GradeFilter = {
 };
 
 export const EXAM_TYPES = [
-  {
-    value: "quiz",
-    label: "اختبار قصير",
-  },
-  {
-    value: "monthly",
-    label: "اختبار شهري",
-  },
-  {
-    value: "midterm",
-    label: "نصف السنة",
-  },
-  {
-    value: "final",
-    label: "نهائي",
-  },
-  {
-    value: "homework",
-    label: "واجب",
-  },
-  {
-    value: "activity",
-    label: "نشاط",
-  },
+  { value: "homework", label: "واجب" },
+  { value: "daily", label: "يومي" },
+  { value: "oral", label: "شفهي" },
+  { value: "written", label: "تحريري" },
+  { value: "monthly1", label: "شهري أول" },
+  { value: "monthly2", label: "شهري ثاني" },
+  { value: "midterm", label: "نصف السنة" },
+  { value: "final", label: "نهاية السنة" },
+  { value: "practical", label: "عملي" },
+  { value: "activity", label: "نشاط" },
+  { value: "participation", label: "مشاركة" },
+  { value: "project", label: "مشروع" },
+  { value: "final_exam", label: "امتحان نهائي" },
+  { value: "quiz", label: "اختبار قصير" },
+  { value: "monthly", label: "اختبار شهري" },
 ] as const;
 
 export const TERMS = [
@@ -265,6 +256,33 @@ export function getGradePercentage(score: number, maxScore: number): number {
   }
 
   return Math.round((score / maxScore) * 100);
+}
+
+export function calculateGradePercentage(score: number, maxScore: number): number {
+  if (!maxScore || maxScore <= 0) return 0;
+  return Math.round((score / maxScore) * 100);
+}
+
+export function getGradeLevelLabel(percentage: number): string {
+  if (percentage >= 90) return "ممتاز";
+  if (percentage >= 80) return "جيد جدًا";
+  if (percentage >= 70) return "جيد";
+  if (percentage >= 60) return "متوسط";
+  if (percentage >= 50) return "مقبول";
+  return "راسب";
+}
+
+export function getGradeWarning(percentage: number): string | null {
+  if (percentage < 50) return "تحذير: الطالب راسب ويحتاج متابعة.";
+  if (percentage < 60) return "تنبيه: الطالب قريب من الرسوب.";
+  if (percentage < 80) return "جيد، يمكن تحسين المستوى.";
+  return "مستوى ممتاز.";
+}
+
+export function suggestGradeReview(score: number, maxScore: number): string | null {
+  const percentage = calculateGradePercentage(score, maxScore);
+  if (percentage < 50) return "راجع الدرجات المنخفضة قبل اعتمادها.";
+  return null;
 }
 
 export function getGradeRating(percentage: number): string {

@@ -179,7 +179,7 @@ export async function hasSchoolData(): Promise<boolean> {
 
 export async function getSchoolName(): Promise<string> {
   const school = await getSchool();
-  return school?.name ?? "مدرستي برو";
+  return school?.name ?? "مدرستي";
 }
 
 export async function getSchoolSetupStatus(): Promise<{

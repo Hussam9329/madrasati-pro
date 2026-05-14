@@ -11,6 +11,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { safeQuery } from "@/lib/db";
+import { requireAdmin } from "@/lib/auth";
 import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/layout/page-header";
 import { SmartAlert } from "@/components/shared/smart-alert";
@@ -25,6 +26,8 @@ type SchoolPageProps = {
 };
 
 export default async function SchoolPage({ searchParams }: SchoolPageProps) {
+  await requireAdmin();
+
   const { school, summary, completionPercentage } = await safeQuery(
     () => getSchoolOverview(),
     { school: null, summary: null, completionPercentage: 0 },

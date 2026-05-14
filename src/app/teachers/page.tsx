@@ -6,7 +6,6 @@ import {
   BookOpen,
   CheckCircle2,
   GraduationCap,
-  Mail,
   Phone,
   Power,
   Search,
@@ -14,6 +13,7 @@ import {
   UserRound,
 } from "lucide-react";
 import { safeQuery } from "@/lib/db";
+import { requireAdmin } from "@/lib/auth";
 import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -27,7 +27,6 @@ import {
 } from "@/services/teacher-service";
 import { getActiveSubjects } from "@/services/subject-service";
 import {
-  formatTeacherSalary,
   formatTeacherSubjects,
   getTeacherStatusBadgeClass,
   getTeacherStatusLabel,
@@ -50,6 +49,8 @@ type TeachersPageProps = {
 export default async function TeachersPage({
   searchParams,
 }: TeachersPageProps) {
+  await requireAdmin();
+
   const query = searchParams?.q?.trim() ?? "";
 
   const [teachers, counts, subjects] = await Promise.all([
@@ -147,11 +148,6 @@ async function createTeacherAction(formData: FormData) {
   const input: TeacherFormInput = {
     fullName: String(formData.get("fullName") ?? ""),
     phone: String(formData.get("phone") ?? ""),
-    email: String(formData.get("email") ?? ""),
-    specialty: String(formData.get("specialty") ?? ""),
-    salary: String(formData.get("salary") ?? ""),
-    notes: String(formData.get("notes") ?? ""),
-    isActive: formData.get("isActive") === "on",
     subjectIds,
   };
 
@@ -308,7 +304,7 @@ function TeacherCreateForm({ subjects }: TeacherCreateFormProps) {
             htmlFor="fullName"
             className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
           >
-            الاسم الكامل <span className="text-red-600">*</span>
+            الاسم الرباعي <span className="text-red-600">*</span>
           </label>
 
           <input
@@ -317,91 +313,38 @@ function TeacherCreateForm({ subjects }: TeacherCreateFormProps) {
             required
             minLength={3}
             maxLength={120}
-            placeholder="مثال: محمد أحمد"
+            placeholder="مثال: زهراء علي حسين كاظم"
             className="input"
           />
+          <p className="mt-1 text-xs text-[var(--app-text-muted)]">يجب إدخال الاسم الرباعي كاملًا (4 أجزاء على الأقل)</p>
         </div>
 
-        <div className="grid gap-5 md:grid-cols-2">
-          <div>
-            <label
-              htmlFor="phone"
-              className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
-            >
-              رقم الهاتف
-            </label>
+        <div>
+          <label
+            htmlFor="phone"
+            className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
+          >
+            رقم الهاتف <span className="text-red-600">*</span>
+          </label>
 
-            <input
-              id="phone"
-              name="phone"
-              type="tel"
-              maxLength={20}
-              placeholder="مثال: 07701234567"
-              className="input ltr text-right"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="email"
-              className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
-            >
-              البريد الإلكتروني
-            </label>
-
-            <input
-              id="email"
-              name="email"
-              type="email"
-              maxLength={120}
-              placeholder="مثال: teacher@school.com"
-              className="input ltr text-right"
-            />
-          </div>
-        </div>
-
-        <div className="grid gap-5 md:grid-cols-2">
-          <div>
-            <label
-              htmlFor="specialty"
-              className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
-            >
-              التخصص
-            </label>
-
-            <input
-              id="specialty"
-              name="specialty"
-              maxLength={100}
-              placeholder="مثال: رياضيات"
-              className="input"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="salary"
-              className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
-            >
-              الراتب
-            </label>
-
-            <input
-              id="salary"
-              name="salary"
-              type="number"
-              min={0}
-              step="0.01"
-              placeholder="مثال: 500000"
-              className="input ltr text-right"
-            />
-          </div>
+          <input
+            id="phone"
+            name="phone"
+            type="tel"
+            required
+            pattern="07\d{9}"
+            maxLength={11}
+            placeholder="مثال: 07701234567"
+            className="input"
+            dir="ltr"
+          />
+          <p className="mt-1 text-xs text-[var(--app-text-muted)]">11 رقم ويبدأ بـ 07</p>
         </div>
 
         {subjects.length > 0 ? (
           <div>
             <label className="mb-2 block text-sm font-extrabold text-[var(--app-text)]">
-              المواد الدراسية
+              المادة التي يدرسها <span className="text-red-600">*</span>
             </label>
 
             <div className="max-h-52 overflow-y-auto rounded-2xl border border-[var(--app-border-soft)] bg-gradient-to-l from-indigo-50/30 to-violet-50/20 p-4">
@@ -434,7 +377,7 @@ function TeacherCreateForm({ subjects }: TeacherCreateFormProps) {
             </div>
 
             <p className="mt-2 text-xs leading-6 text-[var(--app-text-soft)]">
-              اختر المواد التي يدرّسها هذا المدرس. يمكنك تعديلها لاحقًا.
+              اختر المادة أو المواد التي يدرّسها هذا المدرس.
             </p>
           </div>
         ) : (
@@ -451,43 +394,6 @@ function TeacherCreateForm({ subjects }: TeacherCreateFormProps) {
             </p>
           </div>
         )}
-
-        <div>
-          <label
-            htmlFor="notes"
-            className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
-          >
-            ملاحظات
-          </label>
-
-          <textarea
-            id="notes"
-            name="notes"
-            rows={3}
-            maxLength={500}
-            placeholder="أي ملاحظات إضافية..."
-            className="input min-h-[95px] resize-y leading-7"
-          />
-        </div>
-
-        <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-[var(--app-border-soft)] bg-gradient-to-l from-indigo-50/30 to-violet-50/20 p-4">
-          <input
-            type="checkbox"
-            name="isActive"
-            defaultChecked
-            className="h-5 w-5 accent-indigo-600"
-          />
-
-          <span>
-            <span className="block font-extrabold text-[var(--app-text)]">
-              المدرس فعّال
-            </span>
-
-            <span className="mt-1 block text-sm leading-6 text-[var(--app-text-muted)]">
-              المدرسون الفعّالون يظهرون في الجدول الدراسي والتقارير.
-            </span>
-          </span>
-        </label>
       </div>
 
       <div className="flex flex-col gap-3 border-t border-[var(--app-border-soft)] bg-gradient-to-l from-indigo-50/30 to-violet-50/20 p-6 sm:flex-row sm:items-center sm:justify-between">
@@ -681,34 +587,12 @@ function TeacherRow({ teacher }: TeacherRowProps) {
 
           <div className="mt-2 flex flex-wrap gap-2 text-sm text-[var(--app-text-muted)]">
             {teacher.phone ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 font-bold">
+              <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 font-bold" dir="ltr">
                 <Phone size={14} />
                 {teacher.phone}
               </span>
             ) : null}
-
-            {teacher.email ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 font-bold">
-                <Mail size={14} />
-                {teacher.email}
-              </span>
-            ) : null}
-
-            {teacher.specialty ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 font-bold">
-                تخصص: {teacher.specialty}
-              </span>
-            ) : null}
           </div>
-
-          {teacher.salary !== null ? (
-            <p className="mt-2 text-sm leading-6 text-[var(--app-text-muted)]">
-              الراتب:{" "}
-              <span className="font-bold text-[var(--app-text)]">
-                {formatTeacherSalary(teacher.salary)}
-              </span>
-            </p>
-          ) : null}
 
           <div className="mt-3 flex flex-wrap gap-2">
             {teacher.subjects.length > 0 ? (
@@ -730,22 +614,9 @@ function TeacherRow({ teacher }: TeacherRowProps) {
 
           <div className="mt-2 flex flex-wrap gap-2">
             <span className="badge bg-slate-100 text-slate-600">
-              المواد: {teacher.subjectsCount}
-            </span>
-
-            <span className="badge bg-slate-100 text-slate-600">
               الحصص: {teacher.schedulesCount}
             </span>
           </div>
-
-          {teacher.notes ? (
-            <p className="mt-2 text-sm leading-6 text-[var(--app-text-muted)]">
-              ملاحظات:{" "}
-              <span className="font-bold text-[var(--app-text)]">
-                {teacher.notes}
-              </span>
-            </p>
-          ) : null}
         </div>
       </div>
 

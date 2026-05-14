@@ -6,14 +6,13 @@ import {
   CalendarDays,
   CheckCircle2,
   GraduationCap,
-  Hash,
   Phone,
   Search,
-  ShieldCheck,
   Trash2,
   UserRound,
   Users,
 } from "lucide-react";
+import { requireAdmin } from "@/lib/auth";
 import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -31,13 +30,11 @@ import {
 } from "@/services/student-service";
 import {
   calculateAge,
-  getGenderLabel,
   getStudentClassDisplay,
   getStudentStatusBadgeClass,
   getStudentStatusLabel,
   type StudentFormInput,
   type StudentListItem,
-  type StudentStatus,
 } from "@/types/student";
 import type { SectionListItem } from "@/types/class";
 
@@ -55,6 +52,8 @@ type StudentsPageProps = {
 export default async function StudentsPage({
   searchParams,
 }: StudentsPageProps) {
+  await requireAdmin();
+
   const query = searchParams?.q?.trim() ?? "";
   const status = searchParams?.status?.trim() ?? "";
 
@@ -143,16 +142,9 @@ async function createStudentAction(formData: FormData) {
 
   const input: StudentFormInput = {
     fullName: String(formData.get("fullName") ?? ""),
-    studentCode: String(formData.get("studentCode") ?? ""),
-    gender: String(formData.get("gender") ?? "unspecified"),
-    birthDate: String(formData.get("birthDate") ?? ""),
     phone: String(formData.get("phone") ?? ""),
-    guardianName: String(formData.get("guardianName") ?? ""),
     guardianPhone: String(formData.get("guardianPhone") ?? ""),
-    address: String(formData.get("address") ?? ""),
-    enrollmentDate: String(formData.get("enrollmentDate") ?? ""),
-    status: String(formData.get("status") ?? "active") as StudentStatus,
-    notes: String(formData.get("notes") ?? ""),
+    birthDate: String(formData.get("birthDate") ?? ""),
     sectionId: String(formData.get("sectionId") ?? ""),
   };
 
@@ -294,20 +286,31 @@ function StudentCreateForm({ sections }: StudentCreateFormProps) {
             </h3>
 
             <p className="mt-1 text-sm leading-7 text-[var(--app-text-muted)]">
-              أدخل بيانات الطالب الأساسية. الاسم فقط مطلوب، وباقي التفاصيل يمكن
-              إكمالها لاحقًا.
+              أدخل بيانات الطالب الأساسية المطلوبة فقط.
             </p>
           </div>
         </div>
       </div>
 
       <div className="grid gap-5 p-6">
+        {/* Smart Alert */}
+        <div className="rounded-2xl border border-indigo-200 bg-gradient-to-l from-indigo-50/80 to-violet-50/50 p-4">
+          <div className="flex items-start gap-3">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700">
+              <AlertTriangle size={16} />
+            </div>
+            <p className="text-sm leading-7 text-indigo-800">
+              تأكد من اختيار الصف والشعبة قبل حفظ الطالب حتى تظهر بياناته في الحضور والدرجات والأقساط.
+            </p>
+          </div>
+        </div>
+
         <div>
           <label
             htmlFor="fullName"
             className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
           >
-            اسم الطالب <span className="text-red-600">*</span>
+            الاسم الرباعي <span className="text-red-600">*</span>
           </label>
 
           <input
@@ -316,29 +319,83 @@ function StudentCreateForm({ sections }: StudentCreateFormProps) {
             required
             minLength={3}
             maxLength={120}
-            placeholder="مثال: أحمد علي حسين"
+            placeholder="مثال: زهراء علي حسين كاظم"
             className="input"
           />
+          <p className="mt-1 text-xs text-[var(--app-text-muted)]">يجب إدخال الاسم الرباعي كاملًا (4 أجزاء على الأقل)</p>
         </div>
 
         <div className="grid gap-5 md:grid-cols-2">
-          <FormField
-            label="رقم الطالب"
-            name="studentCode"
-            placeholder="مثال: ST-1001"
-            maxLength={40}
-          />
+          <div>
+            <label
+              htmlFor="phone"
+              className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
+            >
+              رقم هاتف الطالب <span className="text-red-600">*</span>
+            </label>
+            <input
+              id="phone"
+              name="phone"
+              type="tel"
+              required
+              pattern="07\d{9}"
+              maxLength={11}
+              placeholder="مثال: 07701234567"
+              className="input"
+              dir="ltr"
+            />
+            <p className="mt-1 text-xs text-[var(--app-text-muted)]">11 رقم ويبدأ بـ 07</p>
+          </div>
+
+          <div>
+            <label
+              htmlFor="guardianPhone"
+              className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
+            >
+              رقم هاتف ولي الأمر <span className="text-red-600">*</span>
+            </label>
+            <input
+              id="guardianPhone"
+              name="guardianPhone"
+              type="tel"
+              required
+              pattern="07\d{9}"
+              maxLength={11}
+              placeholder="مثال: 07801234567"
+              className="input"
+              dir="ltr"
+            />
+            <p className="mt-1 text-xs text-[var(--app-text-muted)]">11 رقم ويبدأ بـ 07</p>
+          </div>
+        </div>
+
+        <div className="grid gap-5 md:grid-cols-2">
+          <div>
+            <label
+              htmlFor="birthDate"
+              className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
+            >
+              تاريخ الميلاد <span className="text-red-600">*</span>
+            </label>
+            <input
+              id="birthDate"
+              name="birthDate"
+              type="date"
+              required
+              className="input"
+            />
+          </div>
 
           <div>
             <label
               htmlFor="sectionId"
               className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
             >
-              الشعبة
+              الصف / الشعبة <span className="text-red-600">*</span>
             </label>
 
-            <select id="sectionId" name="sectionId" className="input" defaultValue="">
-              <option value="">بدون شعبة مؤقتًا</option>
+            <select id="sectionId" name="sectionId" required className="input" defaultValue="">
+              <option value="">اختر الصف والشعبة</option>
 
               {sections.map((section) => (
                 <option key={section.id} value={section.id}>
@@ -350,111 +407,6 @@ function StudentCreateForm({ sections }: StudentCreateFormProps) {
               ))}
             </select>
           </div>
-        </div>
-
-        <div className="grid gap-5 md:grid-cols-3">
-          <div>
-            <label
-              htmlFor="gender"
-              className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
-            >
-              الجنس
-            </label>
-
-            <select
-              id="gender"
-              name="gender"
-              defaultValue="unspecified"
-              className="input"
-            >
-              <option value="unspecified">غير محدد</option>
-              <option value="male">ذكر</option>
-              <option value="female">أنثى</option>
-            </select>
-          </div>
-
-          <FormField label="تاريخ الميلاد" name="birthDate" type="date" />
-
-          <div>
-            <label
-              htmlFor="status"
-              className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
-            >
-              الحالة
-            </label>
-
-            <select id="status" name="status" defaultValue="active" className="input">
-              <option value="active">مستمر</option>
-              <option value="inactive">متوقف</option>
-              <option value="graduated">متخرج</option>
-              <option value="transferred">منقول</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="grid gap-5 md:grid-cols-2">
-          <FormField
-            label="هاتف الطالب"
-            name="phone"
-            placeholder="مثال: 07700000000"
-          />
-
-          <FormField
-            label="تاريخ التسجيل"
-            name="enrollmentDate"
-            type="date"
-          />
-        </div>
-
-        <div className="grid gap-5 md:grid-cols-2">
-          <FormField
-            label="اسم ولي الأمر"
-            name="guardianName"
-            placeholder="مثال: علي حسين"
-            maxLength={120}
-          />
-
-          <FormField
-            label="هاتف ولي الأمر"
-            name="guardianPhone"
-            placeholder="مثال: 07800000000"
-          />
-        </div>
-
-        <div>
-          <label
-            htmlFor="address"
-            className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
-          >
-            العنوان
-          </label>
-
-          <textarea
-            id="address"
-            name="address"
-            rows={3}
-            maxLength={300}
-            placeholder="عنوان الطالب..."
-            className="input min-h-[95px] resize-y leading-7"
-          />
-        </div>
-
-        <div>
-          <label
-            htmlFor="notes"
-            className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
-          >
-            ملاحظات
-          </label>
-
-          <textarea
-            id="notes"
-            name="notes"
-            rows={3}
-            maxLength={500}
-            placeholder="أي ملاحظات إضافية..."
-            className="input min-h-[95px] resize-y leading-7"
-          />
         </div>
       </div>
 
@@ -553,7 +505,7 @@ function StudentsStats({
     {
       label: "منقولون",
       value: transferred,
-      icon: ShieldCheck,
+      icon: AlertTriangle,
       className: "bg-gradient-to-br from-rose-100 to-pink-100 text-rose-700",
     },
     {
@@ -703,11 +655,6 @@ function StudentRow({ student }: StudentRowProps) {
 
           <div className="mt-2 flex flex-wrap gap-2 text-sm text-[var(--app-text-muted)]">
             <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 font-bold">
-              <Hash size={14} />
-              {student.studentCode || "بدون رقم"}
-            </span>
-
-            <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 font-bold">
               <GraduationCap size={14} />
               {getStudentClassDisplay({
                 className: student.className,
@@ -724,29 +671,15 @@ function StudentRow({ student }: StudentRowProps) {
 
           <div className="mt-3 grid gap-2 text-sm leading-6 text-[var(--app-text-muted)] md:grid-cols-2">
             <p>
-              الجنس:{" "}
-              <span className="font-bold text-[var(--app-text)]">
-                {getGenderLabel(student.gender)}
-              </span>
-            </p>
-
-            <p>
               هاتف الطالب:{" "}
-              <span className="font-bold text-[var(--app-text)]">
+              <span className="font-bold text-[var(--app-text)]" dir="ltr">
                 {student.phone || "غير مضاف"}
               </span>
             </p>
 
             <p>
-              ولي الأمر:{" "}
-              <span className="font-bold text-[var(--app-text)]">
-                {student.guardianName || "غير مضاف"}
-              </span>
-            </p>
-
-            <p>
               هاتف ولي الأمر:{" "}
-              <span className="font-bold text-[var(--app-text)]">
+              <span className="font-bold text-[var(--app-text)]" dir="ltr">
                 {student.guardianPhone || "غير مضاف"}
               </span>
             </p>

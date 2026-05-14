@@ -153,17 +153,17 @@ export async function createStudent(
     const student = await db.student.create({
       data: {
         fullName: data.fullName,
-        studentCode: data.studentCode ?? null,
-        gender: data.gender ?? "unspecified",
+        studentCode: null,
+        gender: "female",
         birthDate: parseOptionalDate(data.birthDate) ?? null,
         phone: data.phone ?? null,
-        guardianName: data.guardianName ?? null,
+        guardianName: null,
         guardianPhone: data.guardianPhone ?? null,
-        address: data.address ?? null,
-        enrollmentDate: parseOptionalDate(data.enrollmentDate) ?? new Date(),
-        status: data.status ?? "active",
-        notes: data.notes ?? null,
-        sectionId: data.sectionId ?? null,
+        address: null,
+        enrollmentDate: new Date(),
+        status: "active",
+        notes: null,
+        sectionId: data.sectionId || null,
       },
     });
 
@@ -234,18 +234,10 @@ export async function updateStudent(
       },
       data: {
         fullName: data.fullName,
-        studentCode: data.studentCode ?? null,
-        gender: data.gender ?? "unspecified",
         birthDate: parseOptionalDate(data.birthDate) ?? null,
         phone: data.phone ?? null,
-        guardianName: data.guardianName ?? null,
         guardianPhone: data.guardianPhone ?? null,
-        address: data.address ?? null,
-        enrollmentDate:
-          parseOptionalDate(data.enrollmentDate) ?? existingStudent.enrollmentDate,
-        status: data.status ?? "active",
-        notes: data.notes ?? null,
-        sectionId: data.sectionId ?? null,
+        sectionId: data.sectionId || null,
       },
     });
 

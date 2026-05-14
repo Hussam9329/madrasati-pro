@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { QuickActions } from "@/components/dashboard/quick-actions";
+import { requireAdmin } from "@/lib/auth";
 
 const dashboardStats = [
   {
@@ -103,12 +104,6 @@ const setupSteps = [
 
 const recentActivities = [
   {
-    title: "النظام جاهز للبناء",
-    description: "تم فتح لوحة التحكم بدون تسجيل دخول حسب الإعداد الجديد.",
-    time: "الآن",
-    icon: CheckCircle2,
-  },
-  {
     title: "التوجيه الذكي مفعّل",
     description: "سيظهر للمستخدم ترتيب العمل الصحيح داخل النظام.",
     time: "الآن",
@@ -116,7 +111,9 @@ const recentActivities = [
   },
 ];
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  await requireAdmin();
+
   return (
     <AppShell>
       <div className="mx-auto flex w-full max-w-[1500px] flex-col gap-6">
@@ -129,11 +126,11 @@ export default function DashboardPage() {
                 <div>
                   <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-gradient-to-l from-indigo-50 to-violet-50 px-3 py-2 text-xs font-extrabold text-indigo-700">
                     <span className="h-2 w-2 rounded-full bg-gradient-to-r from-indigo-500 to-violet-500" />
-                    نسخة النظام الأساسية بدون تسجيل دخول
+                    نظام إدارة ثانوية مارينا للبنات
                   </div>
 
                   <h2 className="app-title">
-                    أهلًا بك في لوحة تحكم مدرستي برو
+                    أهلًا بك في لوحة تحكم مدرستي - ثانوية مارينا للبنات
                   </h2>
 
                   <p className="app-subtitle mt-3 max-w-3xl">

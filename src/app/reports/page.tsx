@@ -445,7 +445,7 @@ function ReportCover({ filter, summary }: ReportCoverProps) {
 
         <div>
           <h2 className="text-3xl font-extrabold text-[var(--app-text)]">
-            تقرير مدرستي برو
+            تقرير مدرستي
           </h2>
           <p className="mt-2 text-lg font-bold text-[var(--app-text-muted)]">
             {periodLabel} —{" "}

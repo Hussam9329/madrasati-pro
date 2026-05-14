@@ -42,16 +42,9 @@ export async function POST(request: NextRequest) {
 
     const result = await createStudent({
       fullName: body.fullName ?? "",
-      studentCode: body.studentCode ?? "",
-      gender: body.gender ?? "unspecified",
-      birthDate: body.birthDate ?? "",
       phone: body.phone ?? "",
-      guardianName: body.guardianName ?? "",
       guardianPhone: body.guardianPhone ?? "",
-      address: body.address ?? "",
-      enrollmentDate: body.enrollmentDate ?? "",
-      status: body.status ?? "active",
-      notes: body.notes ?? "",
+      birthDate: body.birthDate ?? "",
       sectionId: body.sectionId ?? "",
     });
 
@@ -90,16 +83,9 @@ export async function PUT(request: NextRequest) {
 
     const result = await updateStudent(id, {
       fullName: body.fullName ?? "",
-      studentCode: body.studentCode ?? "",
-      gender: body.gender ?? "unspecified",
-      birthDate: body.birthDate ?? "",
       phone: body.phone ?? "",
-      guardianName: body.guardianName ?? "",
       guardianPhone: body.guardianPhone ?? "",
-      address: body.address ?? "",
-      enrollmentDate: body.enrollmentDate ?? "",
-      status: body.status ?? "active",
-      notes: body.notes ?? "",
+      birthDate: body.birthDate ?? "",
       sectionId: body.sectionId ?? "",
     });
 

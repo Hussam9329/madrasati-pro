@@ -108,12 +108,12 @@ export async function createTeacher(
       data: {
         fullName: data.fullName,
         phone: data.phone ?? null,
-        email: data.email ?? null,
-        address: data.address ?? null,
-        specialty: data.specialty ?? null,
-        salary: data.salary === undefined ? null : Number(data.salary),
-        notes: data.notes ?? null,
-        isActive: data.isActive ?? true,
+        email: null,
+        address: null,
+        specialty: null,
+        salary: null,
+        notes: null,
+        isActive: true,
         teacherSubjects: {
           create: subjectIds.map((subjectId) => ({
             subjectId,
@@ -176,12 +176,6 @@ export async function updateTeacher(
         data: {
           fullName: data.fullName,
           phone: data.phone ?? null,
-          email: data.email ?? null,
-          address: data.address ?? null,
-          specialty: data.specialty ?? null,
-          salary: data.salary === undefined ? null : Number(data.salary),
-          notes: data.notes ?? null,
-          isActive: data.isActive ?? true,
           teacherSubjects: {
             create: subjectIds.map((subjectId) => ({
               subjectId,

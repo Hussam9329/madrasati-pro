@@ -1,3 +1,5 @@
+import { IRAQI_PHONE_REGEX, validateQuadrupleName } from "@/lib/validators";
+
 export type Student = {
   id: string;
   fullName: string;
@@ -18,17 +20,10 @@ export type Student = {
 
 export type StudentFormInput = {
   fullName: string;
-  studentCode?: string;
-  gender?: string;
-  birthDate?: string | Date;
-  phone?: string;
-  guardianName?: string;
-  guardianPhone?: string;
-  address?: string;
-  enrollmentDate?: string | Date;
-  status?: StudentStatus;
-  notes?: string;
-  sectionId?: string;
+  phone: string;
+  guardianPhone: string;
+  birthDate: string | Date;
+  sectionId: string;
 };
 
 export type StudentStatus = "active" | "inactive" | "graduated" | "transferred";
@@ -82,16 +77,9 @@ export type StudentsFilter = {
 export function getEmptyStudentForm(): StudentFormInput {
   return {
     fullName: "",
-    studentCode: "",
-    gender: "unspecified",
-    birthDate: "",
     phone: "",
-    guardianName: "",
     guardianPhone: "",
-    address: "",
-    enrollmentDate: "",
-    status: "active",
-    notes: "",
+    birthDate: "",
     sectionId: "",
   };
 }
@@ -101,17 +89,10 @@ export function normalizeStudentInput(
 ): StudentFormInput {
   return {
     fullName: input.fullName.trim(),
-    studentCode: input.studentCode?.trim() || undefined,
-    gender: input.gender?.trim() || "unspecified",
-    birthDate: input.birthDate || undefined,
-    phone: input.phone?.trim() || undefined,
-    guardianName: input.guardianName?.trim() || undefined,
-    guardianPhone: input.guardianPhone?.trim() || undefined,
-    address: input.address?.trim() || undefined,
-    enrollmentDate: input.enrollmentDate || undefined,
-    status: input.status ?? "active",
-    notes: input.notes?.trim() || undefined,
-    sectionId: input.sectionId?.trim() || undefined,
+    phone: input.phone?.trim() || "",
+    guardianPhone: input.guardianPhone?.trim() || "",
+    birthDate: input.birthDate || "",
+    sectionId: input.sectionId?.trim() || "",
   };
 }
 
@@ -122,66 +103,29 @@ export function validateStudentInput(
   const errors: Partial<Record<keyof StudentFormInput, string>> = {};
 
   if (!normalized.fullName) {
-    errors.fullName = "اسم الطالب مطلوب.";
+    errors.fullName = "الاسم الرباعي مطلوب.";
+  } else if (!validateQuadrupleName(normalized.fullName)) {
+    errors.fullName = "يجب إدخال الاسم الرباعي كاملًا.";
   }
 
-  if (normalized.fullName && normalized.fullName.length < 3) {
-    errors.fullName = "اسم الطالب يجب أن يحتوي على 3 أحرف على الأقل.";
+  if (!normalized.phone) {
+    errors.phone = "رقم هاتف الطالب يجب أن يتكون من 11 رقم ويبدأ بـ 07.";
+  } else if (!IRAQI_PHONE_REGEX.test(normalized.phone)) {
+    errors.phone = "رقم هاتف الطالب يجب أن يتكون من 11 رقم ويبدأ بـ 07.";
   }
 
-  if (normalized.fullName && normalized.fullName.length > 120) {
-    errors.fullName = "اسم الطالب طويل جدًا.";
+  if (!normalized.guardianPhone) {
+    errors.guardianPhone = "رقم هاتف ولي الأمر يجب أن يتكون من 11 رقم ويبدأ بـ 07.";
+  } else if (!IRAQI_PHONE_REGEX.test(normalized.guardianPhone)) {
+    errors.guardianPhone = "رقم هاتف ولي الأمر يجب أن يتكون من 11 رقم ويبدأ بـ 07.";
   }
 
-  if (normalized.studentCode && normalized.studentCode.length > 40) {
-    errors.studentCode = "رقم الطالب يجب ألا يتجاوز 40 حرفًا.";
+  if (!normalized.birthDate) {
+    errors.birthDate = "تاريخ الميلاد مطلوب.";
   }
 
-  if (normalized.phone && normalized.phone.length < 7) {
-    errors.phone = "رقم هاتف الطالب قصير جدًا.";
-  }
-
-  if (normalized.guardianPhone && normalized.guardianPhone.length < 7) {
-    errors.guardianPhone = "رقم هاتف ولي الأمر قصير جدًا.";
-  }
-
-  if (normalized.guardianName && normalized.guardianName.length > 120) {
-    errors.guardianName = "اسم ولي الأمر طويل جدًا.";
-  }
-
-  if (normalized.address && normalized.address.length > 300) {
-    errors.address = "العنوان يجب ألا يتجاوز 300 حرف.";
-  }
-
-  if (normalized.notes && normalized.notes.length > 500) {
-    errors.notes = "الملاحظات يجب ألا تتجاوز 500 حرف.";
-  }
-
-  if (
-    normalized.gender &&
-    !["male", "female", "unspecified"].includes(normalized.gender)
-  ) {
-    errors.gender = "الجنس غير صحيح.";
-  }
-
-  if (
-    normalized.status &&
-    !["active", "inactive", "graduated", "transferred"].includes(
-      normalized.status,
-    )
-  ) {
-    errors.status = "حالة الطالب غير صحيحة.";
-  }
-
-  if (normalized.birthDate && !isValidDateInput(normalized.birthDate)) {
-    errors.birthDate = "تاريخ الميلاد غير صحيح.";
-  }
-
-  if (
-    normalized.enrollmentDate &&
-    !isValidDateInput(normalized.enrollmentDate)
-  ) {
-    errors.enrollmentDate = "تاريخ التسجيل غير صحيح.";
+  if (!normalized.sectionId) {
+    errors.sectionId = "يجب اختيار الصف والشعبة.";
   }
 
   return {
@@ -332,18 +276,4 @@ export function canDeleteStudent(input: {
   return {
     allowed: true,
   };
-}
-
-function isValidDateInput(value: string | Date): boolean {
-  if (value instanceof Date) {
-    return !Number.isNaN(value.getTime());
-  }
-
-  if (!value.trim()) {
-    return true;
-  }
-
-  const date = new Date(value);
-
-  return !Number.isNaN(date.getTime());
 }

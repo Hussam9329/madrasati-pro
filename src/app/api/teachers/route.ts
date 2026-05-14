@@ -104,12 +104,6 @@ export async function POST(request: NextRequest) {
     const input: TeacherFormInput = {
       fullName: String(body.fullName ?? ""),
       phone: body.phone ?? "",
-      email: body.email ?? "",
-      address: body.address ?? "",
-      specialty: body.specialty ?? "",
-      salary: body.salary ?? "",
-      notes: body.notes ?? "",
-      isActive: body.isActive ?? true,
       subjectIds: Array.isArray(body.subjectIds) ? body.subjectIds : [],
     };
 
@@ -145,12 +139,6 @@ export async function PUT(request: NextRequest) {
     const input: TeacherFormInput = {
       fullName: String(body.fullName ?? ""),
       phone: body.phone ?? "",
-      email: body.email ?? "",
-      address: body.address ?? "",
-      specialty: body.specialty ?? "",
-      salary: body.salary ?? "",
-      notes: body.notes ?? "",
-      isActive: body.isActive ?? true,
       subjectIds: Array.isArray(body.subjectIds) ? body.subjectIds : [],
     };
 
