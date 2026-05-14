@@ -68,6 +68,14 @@ export type PaymentListItem = {
   feeTypeLabel: string;
   amount: number;
   formattedAmount: string;
+  originalAmount: number | null;
+  discountAmount: number;
+  discountPercent: number | null;
+  discountReason: string | null;
+  finalAmount: number | null;
+  formattedOriginalAmount: string;
+  formattedDiscountAmount: string;
+  formattedFinalAmount: string;
   status: string;
   statusLabel: string;
   statusClass: string;

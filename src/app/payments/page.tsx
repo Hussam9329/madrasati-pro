@@ -4,16 +4,16 @@ import { redirect } from "next/navigation";
 import {
   AlertTriangle,
   Banknote,
-  CalendarDays,
   CheckCircle2,
   Clock,
   CreditCard,
-  Hash,
+  Info,
+  Percent,
   Receipt,
   RefreshCcw,
   Search,
+  Tag,
   Trash2,
-  UserRound,
   Wallet,
 } from "lucide-react";
 import { safeQuery } from "@/lib/db";
@@ -33,6 +33,11 @@ import {
   FEE_TYPES,
   PAYMENT_METHODS,
   PAYMENT_STATUSES,
+  calculateDiscountFromPercent,
+  calculateDiscountPercent,
+  calculateFinalAmount,
+  validateDiscount,
+  validateDiscountPercent,
   formatMoney,
   getFeeTypeLabel,
   getPaymentMethodLabel,
@@ -156,10 +161,51 @@ export default async function PaymentsPage({
 async function createPaymentAction(formData: FormData) {
   "use server";
 
+  const originalAmountRaw = String(formData.get("originalAmount") ?? "");
+  const discountPercentRaw = String(formData.get("discountPercent") ?? "");
+  const discountAmountRaw = String(formData.get("discountAmount") ?? "");
+  const discountReason = String(formData.get("discountReason") ?? "").trim();
+
+  const originalAmount = Number(originalAmountRaw) || 0;
+  const amount = originalAmount;
+
+  let discountAmount = 0;
+  let discountPercent = 0;
+  let finalAmount = originalAmount;
+
+  if (originalAmount > 0) {
+    const hasPercent = discountPercentRaw.trim() !== "" && Number(discountPercentRaw) > 0;
+    const hasAmount = discountAmountRaw.trim() !== "" && Number(discountAmountRaw) > 0;
+
+    if (hasPercent && !hasAmount) {
+      discountPercent = Number(discountPercentRaw);
+      const percentValidation = validateDiscountPercent(discountPercent);
+      if (!percentValidation.valid) {
+        redirect("/payments?error=create");
+      }
+      discountAmount = calculateDiscountFromPercent(originalAmount, discountPercent);
+    } else if (hasAmount) {
+      discountAmount = Number(discountAmountRaw);
+      discountPercent = calculateDiscountPercent(originalAmount, discountAmount);
+    }
+
+    const discountValidation = validateDiscount(originalAmount, discountAmount);
+    if (!discountValidation.valid) {
+      redirect("/payments?error=create");
+    }
+
+    finalAmount = calculateFinalAmount(originalAmount, discountAmount);
+  }
+
   const input: PaymentFormInput = {
     feeTitle: String(formData.get("feeTitle") ?? ""),
     feeType: String(formData.get("feeType") ?? "tuition"),
-    amount: String(formData.get("amount") ?? "0"),
+    amount: String(amount),
+    originalAmount: String(originalAmount),
+    discountAmount: String(discountAmount),
+    discountPercent: String(discountPercent),
+    discountReason: discountReason || undefined,
+    finalAmount: String(finalAmount),
     status: String(formData.get("status") ?? "paid"),
     method: String(formData.get("method") ?? "cash"),
     academicYear: String(formData.get("academicYear") ?? ""),
@@ -358,26 +404,148 @@ function PaymentCreateForm({ students }: PaymentCreateFormProps) {
           </div>
         </div>
 
-        <div className="grid gap-5 md:grid-cols-3">
-          <div>
-            <label
-              htmlFor="amount"
-              className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
-            >
-              المبلغ <span className="text-red-600">*</span>
-            </label>
-
-            <input
-              id="amount"
-              name="amount"
-              type="number"
-              required
-              min={1}
-              placeholder="مثال: 500000"
-              className="input"
-            />
+        {/* ── أصل المبلغ والخصم ── */}
+        <div className="rounded-2xl border border-indigo-100 bg-gradient-to-l from-indigo-50/30 to-violet-50/20 p-5">
+          <div className="mb-4 flex items-center gap-2 text-sm font-extrabold text-indigo-700">
+            <Tag size={18} />
+            تفاصيل المبلغ والخصم
           </div>
 
+          <div className="grid gap-5 md:grid-cols-2">
+            <div>
+              <label
+                htmlFor="originalAmount"
+                className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
+              >
+                أصل المبلغ <span className="text-red-600">*</span>
+              </label>
+
+              <input
+                id="originalAmount"
+                name="originalAmount"
+                type="number"
+                required
+                min={1}
+                placeholder="مثال: 500000"
+                className="input"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="method"
+                className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
+              >
+                طريقة الدفع
+              </label>
+
+              <select id="method" name="method" className="input" defaultValue="cash">
+                {PAYMENT_METHODS.map((m) => (
+                  <option key={m.value} value={m.value}>
+                    {m.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-5 md:grid-cols-2">
+            <div>
+              <label
+                htmlFor="discountPercent"
+                className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
+              >
+                <Percent size={14} className="ml-1 inline" />
+                الخصم بالنسبة (٪)
+              </label>
+
+              <input
+                id="discountPercent"
+                name="discountPercent"
+                type="number"
+                min={0}
+                max={100}
+                step={0.1}
+                placeholder="مثال: 10"
+                className="input"
+              />
+
+              <p className="mt-1.5 flex items-start gap-1 text-xs leading-5 text-[var(--app-text-muted)]">
+                <Info size={13} className="mt-0.5 shrink-0 text-indigo-400" />
+                إذا أدخلت نسبة الخصم، سيتم احتساب مبلغ الخصم تلقائيًا.
+              </p>
+            </div>
+
+            <div>
+              <label
+                htmlFor="discountAmount"
+                className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
+              >
+                <Banknote size={14} className="ml-1 inline" />
+                الخصم بالمبلغ
+              </label>
+
+              <input
+                id="discountAmount"
+                name="discountAmount"
+                type="number"
+                min={0}
+                placeholder="مثال: 50000"
+                className="input"
+              />
+
+              <p className="mt-1.5 flex items-start gap-1 text-xs leading-5 text-[var(--app-text-muted)]">
+                <Info size={13} className="mt-0.5 shrink-0 text-indigo-400" />
+                إذا أدخلت مبلغ الخصم، سيتم احتساب النسبة تلقائيًا.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-5 md:grid-cols-2">
+            <div>
+              <label
+                htmlFor="discountReason"
+                className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
+              >
+                سبب الخصم
+              </label>
+
+              <input
+                id="discountReason"
+                name="discountReason"
+                type="text"
+                maxLength={200}
+                placeholder="مثال: خصم أخوين"
+                className="input"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="finalAmount"
+                className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
+              >
+                المبلغ النهائي
+              </label>
+
+              <input
+                id="finalAmount"
+                name="finalAmount"
+                type="text"
+                readOnly
+                placeholder="يُحتسب تلقائيًا بعد الحفظ"
+                className="input cursor-not-allowed bg-slate-50 text-[var(--app-text-muted)]"
+              />
+
+              <p className="mt-1.5 flex items-start gap-1 text-xs leading-5 text-amber-600">
+                <Info size={13} className="mt-0.5 shrink-0" />
+                راجع مبلغ الخصم والمبلغ النهائي قبل حفظ الدفعة.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid gap-5 md:grid-cols-2">
           <div>
             <label
               htmlFor="status"
@@ -395,22 +563,7 @@ function PaymentCreateForm({ students }: PaymentCreateFormProps) {
             </select>
           </div>
 
-          <div>
-            <label
-              htmlFor="method"
-              className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
-            >
-              طريقة الدفع
-            </label>
-
-            <select id="method" name="method" className="input" defaultValue="cash">
-              {PAYMENT_METHODS.map((m) => (
-                <option key={m.value} value={m.value}>
-                  {m.label}
-                </option>
-              ))}
-            </select>
-          </div>
+          <div />
         </div>
 
         <div className="grid gap-5 md:grid-cols-3">
@@ -486,7 +639,7 @@ function PaymentCreateForm({ students }: PaymentCreateFormProps) {
 
       <div className="flex flex-col gap-3 border-t border-[var(--app-border-soft)] bg-gradient-to-l from-indigo-50/30 to-violet-50/20 p-6 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm leading-7 text-[var(--app-text-muted)]">
-          بعد تسجيل الدفعة، يمكنك متابعة حالتها وتحديثها لاحقًا.
+          سيتم حساب المبلغ النهائي تلقائيًا بناءً على أصل المبلغ والخصم عند الحفظ.
         </p>
 
         <button type="submit" className="btn btn-primary">
@@ -788,10 +941,34 @@ function PaymentRow({ payment }: PaymentRowProps) {
           </div>
 
           <div className="mt-2 flex flex-wrap gap-2 text-sm text-[var(--app-text-muted)]">
-            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-1 font-bold text-emerald-800">
-              <Banknote size={14} />
-              {payment.formattedAmount}
-            </span>
+            {payment.originalAmount != null && payment.originalAmount > 0 && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-3 py-1 font-bold text-blue-800">
+                <Banknote size={14} />
+                أصل المبلغ: {payment.formattedOriginalAmount}
+              </span>
+            )}
+
+            {payment.discountAmount > 0 && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 font-bold text-amber-800">
+                <Tag size={14} />
+                خصم: {payment.formattedDiscountAmount}
+                {payment.discountPercent != null && payment.discountPercent > 0 && (
+                  <> ({payment.discountPercent}٪)</>
+                )}
+              </span>
+            )}
+
+            {payment.finalAmount != null && payment.finalAmount > 0 ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-1 font-bold text-emerald-800">
+                <Banknote size={14} />
+                المبلغ النهائي: {payment.formattedFinalAmount}
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-1 font-bold text-emerald-800">
+                <Banknote size={14} />
+                {payment.formattedAmount}
+              </span>
+            )}
 
             <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 font-bold">
               {getFeeTypeLabel(payment.feeType)}
@@ -820,6 +997,22 @@ function PaymentRow({ payment }: PaymentRowProps) {
                 }) || "غير محدد"}
               </span>
             </p>
+
+            <p>
+              طريقة الدفع:{" "}
+              <span className="font-bold text-[var(--app-text)]">
+                {getPaymentMethodLabel(payment.method)}
+              </span>
+            </p>
+
+            {payment.discountReason && (
+              <p>
+                سبب الخصم:{" "}
+                <span className="font-bold text-amber-700">
+                  {payment.discountReason}
+                </span>
+              </p>
+            )}
 
             {payment.dueDate && (
               <p>

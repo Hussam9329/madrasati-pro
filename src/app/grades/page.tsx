@@ -2,18 +2,21 @@ export const dynamic = 'force-dynamic';
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
+  AlertTriangle,
   Award,
   BarChart3,
   BookOpen,
   CheckCircle2,
   ClipboardList,
+  GraduationCap,
+  Layers,
   Search,
   Star,
   TrendingDown,
   TrendingUp,
   Trash2,
   UserRound,
-  XCircle,
+  Users,
 } from "lucide-react";
 import { safeQuery } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
@@ -21,24 +24,29 @@ import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { SmartAlert } from "@/components/shared/smart-alert";
+import { CascadingSelect } from "@/components/shared/cascading-select";
 import {
   createGrade,
   deleteGrade,
   getGrades,
   getGradesCount,
 } from "@/services/grade-service";
-import { getActiveStudents } from "@/services/student-service";
+import { getActiveStudentsBySectionId } from "@/services/student-service";
 import { getActiveSubjects } from "@/services/subject-service";
-import { getActiveTeachers } from "@/services/teacher-service";
+import { getTeachersBySubjectId } from "@/services/teacher-service";
+import { getSections } from "@/services/class-service";
 import {
   EXAM_TYPES,
   TERMS,
   formatGradeShortDate,
   getExamTypeLabel,
-  getTermLabel,
+  calculateGradePercentage,
+  getGradeWarning,
+  getGradeLevelLabel,
   type GradeFormInput,
   type GradeListItem,
 } from "@/types/grade";
+import { getSectionDisplayName } from "@/types/class";
 
 type GradesPageProps = {
   searchParams?: {
@@ -48,6 +56,9 @@ type GradesPageProps = {
     saved?: string;
     deleted?: string;
     error?: string;
+    sectionId?: string;
+    subjectId?: string;
+    warning?: string;
   };
 };
 
@@ -57,20 +68,47 @@ export default async function GradesPage({ searchParams }: GradesPageProps) {
   const query = searchParams?.q?.trim() ?? "";
   const examType = searchParams?.examType?.trim() ?? "";
   const term = searchParams?.term?.trim() ?? "";
+  const sectionId = searchParams?.sectionId?.trim() ?? "";
+  const subjectId = searchParams?.subjectId?.trim() ?? "";
 
-  const [grades, counts, students, subjects, teachers] = await Promise.all([
-    safeQuery(() => getGrades({
-      query,
-      examType: examType || undefined,
-      term: term || undefined,
-    }), []),
-    safeQuery(() => getGradesCount(), { total: 0, excellent: 0, passed: 0, failed: 0, averagePercentage: 0 }),
-    safeQuery(() => getActiveStudents(), []),
-    safeQuery(() => getActiveSubjects(), []),
-    safeQuery(() => getActiveTeachers(), []),
-  ]);
+  const [grades, counts, sections, subjects, sectionStudents, subjectTeachers] =
+    await Promise.all([
+      safeQuery(
+        () =>
+          getGrades({
+            query,
+            examType: examType || undefined,
+            term: term || undefined,
+          }),
+        [],
+      ),
+      safeQuery(() => getGradesCount(), {
+        total: 0,
+        excellent: 0,
+        passed: 0,
+        failed: 0,
+        averagePercentage: 0,
+      }),
+      safeQuery(() => getSections(), []),
+      safeQuery(() => getActiveSubjects(), []),
+      sectionId
+        ? safeQuery(() => getActiveStudentsBySectionId(sectionId), [])
+        : Promise.resolve([]),
+      subjectId
+        ? safeQuery(() => getTeachersBySubjectId(subjectId), [])
+        : Promise.resolve([]),
+    ]);
 
   const hasGrades = counts.total > 0;
+
+  const cascadeParams: Record<string, string> = {};
+  if (sectionId) cascadeParams.sectionId = sectionId;
+  if (subjectId) cascadeParams.subjectId = subjectId;
+  if (query) cascadeParams.q = query;
+  if (examType) cascadeParams.examType = examType;
+  if (term) cascadeParams.term = term;
+
+  const activeSections = sections.filter((s) => s.isActive);
 
   return (
     <AppShell>
@@ -86,21 +124,26 @@ export default async function GradesPage({ searchParams }: GradesPageProps) {
           saved={searchParams?.saved}
           deleted={searchParams?.deleted}
           error={searchParams?.error}
+          warning={searchParams?.warning}
         />
 
         <SmartAlert
           tone="info"
           title="الدرجات تحتاج مواد وطلاب"
-          description="قبل إدخال الدرجات، تأكد من إضافة المواد الدراسية والطلاب وربطهم بالصفوف."
+          description="قبل إدخال الدرجات، تأكد من إضافة المواد الدراسية والطلاب وربطهم بالصفوف والشُعب."
           actionLabel="إدارة المواد"
           actionHref="/subjects"
         />
 
         <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
           <GradeCreateForm
-            students={students}
+            sections={activeSections}
             subjects={subjects}
-            teachers={teachers}
+            sectionStudents={sectionStudents}
+            subjectTeachers={subjectTeachers}
+            sectionId={sectionId}
+            subjectId={subjectId}
+            cascadeParams={cascadeParams}
           />
 
           <div className="flex flex-col gap-6">
@@ -116,6 +159,8 @@ export default async function GradesPage({ searchParams }: GradesPageProps) {
               query={query}
               examType={examType}
               term={term}
+              sectionId={sectionId}
+              subjectId={subjectId}
             />
           </div>
         </section>
@@ -146,6 +191,8 @@ export default async function GradesPage({ searchParams }: GradesPageProps) {
   );
 }
 
+/* ────────────────────────────── Server Actions ────────────────────────────── */
+
 async function createGradeAction(formData: FormData) {
   "use server";
 
@@ -168,8 +215,21 @@ async function createGradeAction(formData: FormData) {
     redirect("/grades?error=create");
   }
 
+  const score = Number(input.score) || 0;
+  const maxScore = Number(input.maxScore) || 100;
+  const percentage = calculateGradePercentage(score, maxScore);
+
   revalidatePath("/");
   revalidatePath("/grades");
+
+  if (percentage < 50) {
+    redirect("/grades?saved=1&warning=fail");
+  }
+
+  if (percentage < 60) {
+    redirect("/grades?saved=1&warning=close-fail");
+  }
+
   redirect("/grades?saved=1");
 }
 
@@ -193,13 +253,36 @@ async function deleteGradeAction(formData: FormData) {
   redirect("/grades?deleted=1");
 }
 
+/* ────────────────────────────── Feedback ────────────────────────────── */
+
 type GradesFeedbackProps = {
   saved?: string;
   deleted?: string;
   error?: string;
+  warning?: string;
 };
 
-function GradesFeedback({ saved, deleted, error }: GradesFeedbackProps) {
+function GradesFeedback({ saved, deleted, error, warning }: GradesFeedbackProps) {
+  if (saved === "1" && warning === "fail") {
+    return (
+      <SmartAlert
+        tone="danger"
+        title="تمت إضافة الدرجة - تحذير: راسب"
+        description="الطالب حصل على نسبة أقل من 50%. يُنصح بمتابعة الطالب وتقديم الدعم اللازم."
+      />
+    );
+  }
+
+  if (saved === "1" && warning === "close-fail") {
+    return (
+      <SmartAlert
+        tone="warning"
+        title="تمت إضافة الدرجة - تنبيه"
+        description="الطالب حصل على نسبة بين 50% و59%، وهي قريبة من حد الرسوب. يُنصح بالمتابعة."
+      />
+    );
+  }
+
   if (saved === "1") {
     return (
       <SmartAlert
@@ -238,13 +321,30 @@ function GradesFeedback({ saved, deleted, error }: GradesFeedbackProps) {
   return null;
 }
 
+/* ────────────────────────────── Create Form ────────────────────────────── */
+
 type GradeCreateFormProps = {
-  students: Awaited<ReturnType<typeof getActiveStudents>>;
+  sections: Awaited<ReturnType<typeof getSections>>;
   subjects: Awaited<ReturnType<typeof getActiveSubjects>>;
-  teachers: Awaited<ReturnType<typeof getActiveTeachers>>;
+  sectionStudents: Awaited<ReturnType<typeof getActiveStudentsBySectionId>>;
+  subjectTeachers: Awaited<ReturnType<typeof getTeachersBySubjectId>>;
+  sectionId: string;
+  subjectId: string;
+  cascadeParams: Record<string, string>;
 };
 
-function GradeCreateForm({ students, subjects, teachers }: GradeCreateFormProps) {
+function GradeCreateForm({
+  sections,
+  subjects,
+  sectionStudents,
+  subjectTeachers,
+  sectionId,
+  subjectId,
+  cascadeParams,
+}: GradeCreateFormProps) {
+  const selectedSection = sections.find((s) => s.id === sectionId);
+  const selectedSubject = subjects.find((s) => s.id === subjectId);
+
   return (
     <form
       id="grade-form"
@@ -263,208 +363,341 @@ function GradeCreateForm({ students, subjects, teachers }: GradeCreateFormProps)
             </h3>
 
             <p className="mt-1 text-sm leading-7 text-[var(--app-text-muted)]">
-              أدخل بيانات الدرجة واختر الطالب والمادة والاختبار.
+              اختر الشعبة ثم المادة، ثم أدخل بيانات الدرجة.
             </p>
           </div>
         </div>
       </div>
 
       <div className="grid gap-5 p-6">
-        <div>
-          <label
-            htmlFor="title"
-            className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
-          >
-            عنوان الدرجة <span className="text-red-600">*</span>
-          </label>
+        {/* ── Step 1: Section & Student ── */}
+        <div className="rounded-2xl border border-indigo-100 bg-gradient-to-l from-indigo-50/30 to-violet-50/10 p-5">
+          <div className="mb-4 flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-blue-100 to-indigo-100 text-sm font-extrabold text-blue-700">
+              1
+            </div>
+            <h4 className="text-base font-extrabold text-[var(--app-text)]">
+              اختر الشعبة والطالب
+            </h4>
+          </div>
 
-          <input
-            id="title"
-            name="title"
-            required
-            minLength={2}
-            maxLength={120}
-            placeholder="مثال: اختبار الرياضيات الشهري"
-            className="input"
-          />
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <label className="mb-2 block text-sm font-extrabold text-[var(--app-text)]">
+                <Layers size={14} className="ml-1 inline-block" />
+                الصف / الشعبة <span className="text-red-600">*</span>
+              </label>
+
+              <CascadingSelect
+                name="sectionIdFilter"
+                placeholder="اختر الشعبة"
+                value={sectionId}
+                paramKey="sectionId"
+                currentParams={cascadeParams}
+                resetKeys={["subjectId"]}
+                options={sections.map((s) => ({
+                  value: s.id,
+                  label: getSectionDisplayName(s),
+                }))}
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="studentId"
+                className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
+              >
+                <UserRound size={14} className="ml-1 inline-block" />
+                الطالب <span className="text-red-600">*</span>
+              </label>
+
+              {!sectionId ? (
+                <div className="input flex items-center gap-2 text-[var(--app-text-muted)]">
+                  <Users size={16} />
+                  <span>اختر الشعبة أولًا حتى تظهر قائمة الطلاب.</span>
+                </div>
+              ) : sectionStudents.length === 0 ? (
+                <div className="input flex items-center gap-2 text-[var(--app-text-muted)]">
+                  <Users size={16} />
+                  <span>لا يوجد طلاب في هذه الشعبة.</span>
+                </div>
+              ) : (
+                <select
+                  id="studentId"
+                  name="studentId"
+                  required
+                  defaultValue=""
+                  className="input"
+                >
+                  <option value="" disabled>
+                    اختر الطالب
+                  </option>
+
+                  {sectionStudents.map((student) => (
+                    <option key={student.id} value={student.id}>
+                      {student.fullName}
+                      {student.studentCode
+                        ? ` - ${student.studentCode}`
+                        : ""}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+          </div>
+
+          {sectionId && sectionStudents.length > 0 && (
+            <p className="mt-3 text-xs text-[var(--app-text-soft)]">
+              <Users size={12} className="ml-1 inline-block" />
+              {sectionStudents.length} طالب في{" "}
+              {selectedSection ? getSectionDisplayName(selectedSection) : "الشعبة المختارة"}
+            </p>
+          )}
         </div>
 
-        <div className="grid gap-5 md:grid-cols-2">
-          <div>
-            <label
-              htmlFor="score"
-              className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
-            >
-              درجة الطالب <span className="text-red-600">*</span>
-            </label>
+        {/* ── Step 2: Subject & Teacher ── */}
+        <div className="rounded-2xl border border-violet-100 bg-gradient-to-l from-violet-50/30 to-purple-50/10 p-5">
+          <div className="mb-4 flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-violet-100 to-purple-100 text-sm font-extrabold text-violet-700">
+              2
+            </div>
+            <h4 className="text-base font-extrabold text-[var(--app-text)]">
+              اختر المادة والمدرسة
+            </h4>
+          </div>
 
-            <input
-              id="score"
-              name="score"
-              type="number"
-              required
-              min={0}
-              step="0.5"
-              placeholder="مثال: 85"
-              className="input ltr text-right"
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <label className="mb-2 block text-sm font-extrabold text-[var(--app-text)]">
+                <BookOpen size={14} className="ml-1 inline-block" />
+                المادة الدراسية <span className="text-red-600">*</span>
+              </label>
+
+              <CascadingSelect
+                name="subjectIdFilter"
+                placeholder="اختر المادة"
+                value={subjectId}
+                paramKey="subjectId"
+                currentParams={cascadeParams}
+                disabled={!sectionId}
+                options={subjects.map((s) => ({
+                  value: s.id,
+                  label: s.name,
+                }))}
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="teacherId"
+                className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
+              >
+                <GraduationCap size={14} className="ml-1 inline-block" />
+                المدرسة
+              </label>
+
+              {!subjectId ? (
+                <div className="input flex items-center gap-2 text-[var(--app-text-muted)]">
+                  <GraduationCap size={16} />
+                  <span>اختر المادة حتى تظهر المدرسات المرتبطات بها.</span>
+                </div>
+              ) : subjectTeachers.length === 0 ? (
+                <div className="input flex items-center gap-2 text-[var(--app-text-muted)]">
+                  <GraduationCap size={16} />
+                  <span>لا توجد مدرسات مرتبطات بهذه المادة.</span>
+                </div>
+              ) : (
+                <select
+                  id="teacherId"
+                  name="teacherId"
+                  defaultValue=""
+                  className="input"
+                >
+                  <option value="">بدون مدرسة محددة</option>
+
+                  {subjectTeachers.map((teacher) => (
+                    <option key={teacher.id} value={teacher.id}>
+                      {teacher.fullName}
+                      {teacher.specialty ? ` - ${teacher.specialty}` : ""}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+          </div>
+
+          {subjectId && subjectTeachers.length > 0 && (
+            <p className="mt-3 text-xs text-[var(--app-text-soft)]">
+              <GraduationCap size={12} className="ml-1 inline-block" />
+              {subjectTeachers.length} مدرسة تدرّس{" "}
+              {selectedSubject?.name ?? "المادة المختارة"}
+            </p>
+          )}
+        </div>
+
+        {/* Hidden fields for selected values */}
+        <input type="hidden" name="subjectId" value={subjectId} />
+
+        {/* ── Step 3: Grade Details ── */}
+        <div className="rounded-2xl border border-emerald-100 bg-gradient-to-l from-emerald-50/20 to-teal-50/10 p-5">
+          <div className="mb-4 flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-100 to-teal-100 text-sm font-extrabold text-emerald-700">
+              3
+            </div>
+            <h4 className="text-base font-extrabold text-[var(--app-text)]">
+              أدخل بيانات الدرجة
+            </h4>
+          </div>
+
+          <div className="grid gap-5">
+            <div>
+              <label
+                htmlFor="title"
+                className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
+              >
+                عنوان الدرجة <span className="text-red-600">*</span>
+              </label>
+
+              <input
+                id="title"
+                name="title"
+                required
+                minLength={2}
+                maxLength={120}
+                placeholder="مثال: اختبار الرياضيات الشهري"
+                className="input"
+              />
+            </div>
+
+            <div className="grid gap-5 md:grid-cols-2">
+              <div>
+                <label
+                  htmlFor="score"
+                  className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
+                >
+                  درجة الطالب <span className="text-red-600">*</span>
+                </label>
+
+                <input
+                  id="score"
+                  name="score"
+                  type="number"
+                  required
+                  min={0}
+                  step="0.5"
+                  placeholder="مثال: 85"
+                  className="input ltr text-right"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="maxScore"
+                  className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
+                >
+                  الدرجة الكلية <span className="text-red-600">*</span>
+                </label>
+
+                <input
+                  id="maxScore"
+                  name="maxScore"
+                  type="number"
+                  required
+                  min={1}
+                  step="0.5"
+                  defaultValue={100}
+                  placeholder="مثال: 100"
+                  className="input ltr text-right"
+                />
+              </div>
+            </div>
+
+            <SmartAlert
+              tone="warning"
+              title="تنبيه"
+              description="لا يمكن حفظ درجة أكبر من الدرجة الكلية."
             />
+
+            <div className="grid gap-5 md:grid-cols-3">
+              <div>
+                <label
+                  htmlFor="date"
+                  className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
+                >
+                  تاريخ الاختبار
+                </label>
+
+                <input
+                  id="date"
+                  name="date"
+                  type="date"
+                  className="input"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="examType"
+                  className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
+                >
+                  نوع الاختبار
+                </label>
+
+                <select
+                  id="examType"
+                  name="examType"
+                  defaultValue="monthly"
+                  className="input"
+                >
+                  {EXAM_TYPES.map((type) => (
+                    <option key={type.value} value={type.value}>
+                      {type.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="term"
+                  className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
+                >
+                  الفصل الدراسي
+                </label>
+
+                <select
+                  id="term"
+                  name="term"
+                  defaultValue="first"
+                  className="input"
+                >
+                  {TERMS.map((t) => (
+                    <option key={t.value} value={t.value}>
+                      {t.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label
+                htmlFor="notes"
+                className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
+              >
+                ملاحظات
+              </label>
+
+              <textarea
+                id="notes"
+                name="notes"
+                rows={3}
+                maxLength={500}
+                placeholder="أي ملاحظات إضافية..."
+                className="input min-h-[95px] resize-y leading-7"
+              />
+            </div>
           </div>
-
-          <div>
-            <label
-              htmlFor="maxScore"
-              className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
-            >
-              الدرجة الكلية <span className="text-red-600">*</span>
-            </label>
-
-            <input
-              id="maxScore"
-              name="maxScore"
-              type="number"
-              required
-              min={1}
-              step="0.5"
-              defaultValue={100}
-              placeholder="مثال: 100"
-              className="input ltr text-right"
-            />
-          </div>
-        </div>
-
-        <div className="grid gap-5 md:grid-cols-3">
-          <div>
-            <label
-              htmlFor="date"
-              className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
-            >
-              تاريخ الاختبار
-            </label>
-
-            <input
-              id="date"
-              name="date"
-              type="date"
-              className="input"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="examType"
-              className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
-            >
-              نوع الاختبار
-            </label>
-
-            <select id="examType" name="examType" defaultValue="monthly" className="input">
-              {EXAM_TYPES.map((type) => (
-                <option key={type.value} value={type.value}>
-                  {type.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label
-              htmlFor="term"
-              className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
-            >
-              الفصل الدراسي
-            </label>
-
-            <select id="term" name="term" defaultValue="first" className="input">
-              {TERMS.map((t) => (
-                <option key={t.value} value={t.value}>
-                  {t.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div className="grid gap-5 md:grid-cols-2">
-          <div>
-            <label
-              htmlFor="studentId"
-              className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
-            >
-              الطالب <span className="text-red-600">*</span>
-            </label>
-
-            <select id="studentId" name="studentId" required defaultValue="" className="input">
-              <option value="" disabled>
-                اختر الطالب
-              </option>
-
-              {students.map((student) => (
-                <option key={student.id} value={student.id}>
-                  {student.fullName}
-                  {student.studentCode ? ` - ${student.studentCode}` : ""}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label
-              htmlFor="subjectId"
-              className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
-            >
-              المادة الدراسية <span className="text-red-600">*</span>
-            </label>
-
-            <select id="subjectId" name="subjectId" required defaultValue="" className="input">
-              <option value="" disabled>
-                اختر المادة
-              </option>
-
-              {subjects.map((subject) => (
-                <option key={subject.id} value={subject.id}>
-                  {subject.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div>
-          <label
-            htmlFor="teacherId"
-            className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
-          >
-            المدرس
-          </label>
-
-          <select id="teacherId" name="teacherId" defaultValue="" className="input">
-            <option value="">بدون مدرس محدد</option>
-
-            {teachers.map((teacher) => (
-              <option key={teacher.id} value={teacher.id}>
-                {teacher.fullName}
-                {teacher.specialty ? ` - ${teacher.specialty}` : ""}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label
-            htmlFor="notes"
-            className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
-          >
-            ملاحظات
-          </label>
-
-          <textarea
-            id="notes"
-            name="notes"
-            rows={3}
-            maxLength={500}
-            placeholder="أي ملاحظات إضافية..."
-            className="input min-h-[95px] resize-y leading-7"
-          />
         </div>
       </div>
 
@@ -481,6 +714,8 @@ function GradeCreateForm({ students, subjects, teachers }: GradeCreateFormProps)
     </form>
   );
 }
+
+/* ────────────────────────────── Stats ────────────────────────────── */
 
 type GradesStatsProps = {
   total: number;
@@ -508,7 +743,8 @@ function GradesStats({
       label: "ممتاز",
       value: excellent,
       icon: Star,
-      className: "bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-700",
+      className:
+        "bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-700",
     },
     {
       label: "ناجح",
@@ -595,13 +831,23 @@ function GradesStats({
   );
 }
 
+/* ────────────────────────────── Search Form ────────────────────────────── */
+
 type GradeSearchFormProps = {
   query: string;
   examType: string;
   term: string;
+  sectionId: string;
+  subjectId: string;
 };
 
-function GradeSearchForm({ query, examType, term }: GradeSearchFormProps) {
+function GradeSearchForm({
+  query,
+  examType,
+  term,
+  sectionId,
+  subjectId,
+}: GradeSearchFormProps) {
   return (
     <form action="/grades" className="app-card p-5">
       <label
@@ -649,9 +895,15 @@ function GradeSearchForm({ query, examType, term }: GradeSearchFormProps) {
           بحث
         </button>
       </div>
+
+      {/* Preserve filter state */}
+      {sectionId && <input type="hidden" name="sectionId" value={sectionId} />}
+      {subjectId && <input type="hidden" name="subjectId" value={subjectId} />}
     </form>
   );
 }
+
+/* ────────────────────────────── Grades List ────────────────────────────── */
 
 type GradesListProps = {
   grades: GradeListItem[];
@@ -683,6 +935,8 @@ function GradesList({ grades }: GradesListProps) {
   );
 }
 
+/* ────────────────────────────── Grade Row ────────────────────────────── */
+
 type GradeRowProps = {
   grade: GradeListItem;
 };
@@ -697,10 +951,26 @@ function GradeRow({ grade }: GradeRowProps) {
           ? "bg-gradient-to-br from-amber-100 to-orange-100 text-amber-700"
           : "bg-rose-100 text-rose-700";
 
+  const percentage = grade.percentage;
+  const warningMessage = getGradeWarning(percentage);
+  const showWarning =
+    warningMessage && (percentage < 60);
+
   return (
     <article className="grid gap-4 p-5 transition hover:bg-indigo-50/40 xl:grid-cols-[1fr_auto] xl:items-center">
       <div className="flex min-w-0 gap-4">
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700">
+        <div
+          className={[
+            "flex h-14 w-14 shrink-0 items-center justify-center rounded-3xl",
+            percentage >= 90
+              ? "bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-700"
+              : percentage >= 70
+                ? "bg-gradient-to-br from-sky-100 to-cyan-100 text-sky-700"
+                : percentage >= 50
+                  ? "bg-gradient-to-br from-amber-100 to-orange-100 text-amber-700"
+                  : "bg-gradient-to-br from-rose-100 to-red-100 text-rose-700",
+          ].join(" ")}
+        >
           <ClipboardList size={25} />
         </div>
 
@@ -729,6 +999,13 @@ function GradeRow({ grade }: GradeRowProps) {
               {grade.studentName}
             </span>
 
+            {grade.sectionName && grade.className && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-3 py-1 font-bold text-indigo-700">
+                <Layers size={14} />
+                {grade.className} / شعبة {grade.sectionName}
+              </span>
+            )}
+
             <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 font-bold">
               <BookOpen size={14} />
               {grade.subjectName}
@@ -736,6 +1013,7 @@ function GradeRow({ grade }: GradeRowProps) {
 
             {grade.teacherName && (
               <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 font-bold">
+                <GraduationCap size={14} />
                 {grade.teacherName}
               </span>
             )}
@@ -751,8 +1029,35 @@ function GradeRow({ grade }: GradeRowProps) {
 
             <p>
               النسبة:{" "}
+              <span
+                className={[
+                  "font-bold",
+                  percentage >= 90
+                    ? "text-emerald-700"
+                    : percentage >= 70
+                      ? "text-sky-700"
+                      : percentage >= 50
+                        ? "text-amber-700"
+                        : "text-rose-700",
+                ].join(" ")}
+              >
+                {percentage}%
+              </span>
+            </p>
+
+            <p>
+              التقويم:{" "}
               <span className="font-bold text-[var(--app-text)]">
-                {grade.percentage}%
+                {getGradeLevelLabel(percentage)}
+              </span>
+            </p>
+          </div>
+
+          <div className="mt-2 grid gap-2 text-sm leading-6 text-[var(--app-text-muted)] md:grid-cols-3">
+            <p>
+              نوع الاختبار:{" "}
+              <span className="font-bold text-[var(--app-text)]">
+                {getExamTypeLabel(grade.examType)}
               </span>
             </p>
 
@@ -764,12 +1069,13 @@ function GradeRow({ grade }: GradeRowProps) {
             </p>
           </div>
 
-          {grade.className && (
-            <div className="mt-2">
-              <span className="badge bg-slate-100 text-slate-600">
-                {grade.className}
-                {grade.sectionName ? ` / شعبة ${grade.sectionName}` : ""}
-              </span>
+          {showWarning && (
+            <div className="mt-3 flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-sm">
+              <AlertTriangle
+                size={16}
+                className="mt-0.5 shrink-0 text-amber-600"
+              />
+              <span className="text-amber-800">{warningMessage}</span>
             </div>
           )}
 
@@ -787,20 +1093,20 @@ function GradeRow({ grade }: GradeRowProps) {
             <div
               className={[
                 "h-full rounded-full transition-all duration-500",
-                grade.percentage >= 90
+                percentage >= 90
                   ? "bg-emerald-500"
-                  : grade.percentage >= 70
+                  : percentage >= 70
                     ? "bg-sky-500"
-                    : grade.percentage >= 50
+                    : percentage >= 50
                       ? "bg-amber-500"
                       : "bg-rose-500",
               ].join(" ")}
-              style={{ width: `${grade.percentage}%` }}
+              style={{ width: `${percentage}%` }}
             />
           </div>
 
           <span className="text-sm font-bold text-[var(--app-text)]">
-            {grade.percentage}%
+            {percentage}%
           </span>
         </div>
 
