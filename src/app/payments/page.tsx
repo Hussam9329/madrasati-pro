@@ -90,7 +90,7 @@ export default async function PaymentsPage({
       <div className="mx-auto flex w-full max-w-[1350px] flex-col gap-6">
         <PageHeader
           title="المدفوعات"
-          description="سجّل المدفوعات والأقساط لكل طالب، وتابع حالة الدفع والمبالغ المعلّقة والمستحقة."
+          description="سجّلي المدفوعات والأقساط لكل طالبة، وتابعي حالة الدفع والمبالغ المعلّقة والمستحقة."
           icon="fees"
           badge="الخطوة الأخيرة"
         />
@@ -103,9 +103,9 @@ export default async function PaymentsPage({
 
         <SmartAlert
           tone="info"
-          title="المدفوعات تعتمد على الطلاب"
-          description="يجب إضافة الطلاب أولًا حتى تتمكن من تسجيل المدفوعات والأقساط المرتبطة بهم."
-          actionLabel="إدارة الطلاب"
+          title="المدفوعات تعتمد على الطالبات"
+          description="يجب إضافة الطالبات أولًا حتى تتمكني من تسجيل المدفوعات والأقساط المرتبطة بهن."
+          actionLabel="إدارة الطالبات"
           actionHref="/students"
         />
 
@@ -136,17 +136,17 @@ export default async function PaymentsPage({
           <EmptyState
             icon="fees"
             title="لا توجد مدفوعات بعد"
-            description="ابدأ بتسجيل أول دفعة بعد إضافة الطلاب. يمكنك متابعة المدفوعات والمتبقي لكل طالب."
+            description="ابدئي بتسجيل أول دفعة بعد إضافة الطالبات. يمكنك متابعة المدفوعات والمتبقي لكل طالبة."
             actionLabel="تسجيل أول دفعة"
             actionHref="#payment-form"
-            secondaryLabel="إدارة الطلاب"
+            secondaryLabel="إدارة الطالبات"
             secondaryHref="/students"
           />
         ) : payments.length === 0 ? (
           <EmptyState
             icon="search"
             title="لا توجد نتائج مطابقة"
-            description="جرّب البحث بعنوان الرسم أو اسم الطالب، أو غيّر فلتر النوع أو الحالة."
+            description="جرّب البحث بعنوان الرسم أو اسم الطالبة، أو غيّر فلتر النوع أو الحالة."
             actionLabel="عرض كل المدفوعات"
             actionHref="/payments"
           />
@@ -258,7 +258,7 @@ function PaymentsFeedback({ saved, deleted, error }: PaymentsFeedbackProps) {
       <SmartAlert
         tone="success"
         title="تمت إضافة الدفعة بنجاح"
-        description="تم حفظ بيانات الدفعة وربطها بالطالب المحدد."
+        description="تم حفظ بيانات الدفعة وربطها بالطالبة المحددة."
       />
     );
   }
@@ -279,7 +279,7 @@ function PaymentsFeedback({ saved, deleted, error }: PaymentsFeedbackProps) {
         ? "لا يمكن حذف الدفعة حاليًا. تحقق من البيانات وحاول مرة أخرى."
         : error === "missing-id"
           ? "لم يتم تحديد الدفعة المراد حذفها."
-          : "تأكد من إدخال بيانات الدفعة بشكل صحيح، وأن الطالب المحدد موجود.";
+          : "تأكد من إدخال بيانات الدفعة بشكل صحيح، وأن الطالبة المحددة موجودة.";
 
     return (
       <SmartAlert
@@ -313,7 +313,7 @@ function PaymentCreateForm({ students }: PaymentCreateFormProps) {
       action={createPaymentAction}
       className="app-card overflow-hidden"
     >
-      <div className="border-b border-[var(--app-border-soft)] bg-gradient-to-l from-indigo-50/40 to-violet-50/20 p-6">
+      <div className="border-b border-[var(--app-border-soft)] bg-gradient-to-l to-rose-50/40 to-amber-50/20 p-6">
         <div className="flex items-start gap-3">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-700">
             <CreditCard size={24} />
@@ -325,7 +325,7 @@ function PaymentCreateForm({ students }: PaymentCreateFormProps) {
             </h3>
 
             <p className="mt-1 text-sm leading-7 text-[var(--app-text-muted)]">
-              أدخل بيانات الدفعة واربطها بالطالب. عنوان الرسم والمبلغ والطالب
+              أدخلي بيانات الدفعة واربطيها بالطالبة. عنوان الرسم والمبلغ والطالبة
               مطلوبون.
             </p>
           </div>
@@ -338,7 +338,7 @@ function PaymentCreateForm({ students }: PaymentCreateFormProps) {
             htmlFor="studentId"
             className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
           >
-            الطالب <span className="text-red-600">*</span>
+            الطالبة <span className="text-red-600">*</span>
           </label>
 
           <select
@@ -348,7 +348,7 @@ function PaymentCreateForm({ students }: PaymentCreateFormProps) {
             className="input"
             defaultValue=""
           >
-            <option value="">اختر الطالب...</option>
+            <option value="">اختاري الطالبة...</option>
 
             {students.map((student) => (
               <option key={student.id} value={student.id}>
@@ -405,8 +405,8 @@ function PaymentCreateForm({ students }: PaymentCreateFormProps) {
         </div>
 
         {/* ── أصل المبلغ والخصم ── */}
-        <div className="rounded-2xl border border-indigo-100 bg-gradient-to-l from-indigo-50/30 to-violet-50/20 p-5">
-          <div className="mb-4 flex items-center gap-2 text-sm font-extrabold text-indigo-700">
+        <div className="rounded-2xl border border-rose-100 bg-gradient-to-l to-rose-50/30 to-amber-50/20 p-5">
+          <div className="mb-4 flex items-center gap-2 text-sm font-extrabold text-rose-700">
             <Tag size={18} />
             تفاصيل المبلغ والخصم
           </div>
@@ -471,7 +471,7 @@ function PaymentCreateForm({ students }: PaymentCreateFormProps) {
               />
 
               <p className="mt-1.5 flex items-start gap-1 text-xs leading-5 text-[var(--app-text-muted)]">
-                <Info size={13} className="mt-0.5 shrink-0 text-indigo-400" />
+                <Info size={13} className="mt-0.5 shrink-0 text-rose-400" />
                 إذا أدخلت نسبة الخصم، سيتم احتساب مبلغ الخصم تلقائيًا.
               </p>
             </div>
@@ -495,7 +495,7 @@ function PaymentCreateForm({ students }: PaymentCreateFormProps) {
               />
 
               <p className="mt-1.5 flex items-start gap-1 text-xs leading-5 text-[var(--app-text-muted)]">
-                <Info size={13} className="mt-0.5 shrink-0 text-indigo-400" />
+                <Info size={13} className="mt-0.5 shrink-0 text-rose-400" />
                 إذا أدخلت مبلغ الخصم، سيتم احتساب النسبة تلقائيًا.
               </p>
             </div>
@@ -637,7 +637,7 @@ function PaymentCreateForm({ students }: PaymentCreateFormProps) {
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 border-t border-[var(--app-border-soft)] bg-gradient-to-l from-indigo-50/30 to-violet-50/20 p-6 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 border-t border-[var(--app-border-soft)] bg-gradient-to-l to-rose-50/30 to-amber-50/20 p-6 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm leading-7 text-[var(--app-text-muted)]">
           سيتم حساب المبلغ النهائي تلقائيًا بناءً على أصل المبلغ والخصم عند الحفظ.
         </p>
@@ -732,7 +732,7 @@ function PaymentsStats({
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="app-card app-card-hover p-5">
           <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-100 to-rose-100 text-blue-700">
               <Receipt size={22} />
             </div>
 
@@ -821,7 +821,7 @@ function PaymentSearchForm({
             id="q"
             name="q"
             defaultValue={query}
-            placeholder="عنوان الرسم، اسم الطالب..."
+            placeholder="عنوان الرسم، اسم الطالبة..."
             className="input pr-11"
           />
         </div>
@@ -886,7 +886,7 @@ function PaymentsList({ payments }: PaymentsListProps) {
           </h3>
 
           <p className="mt-1 text-sm leading-6 text-[var(--app-text-muted)]">
-            تابع المدفوعات وحالاتها والمبالغ المرتبطة بكل طالب.
+            تابعي المدفوعات وحالاتها والمبالغ المرتبطة بكل طالبة.
           </p>
         </div>
 
@@ -917,7 +917,7 @@ function PaymentRow({ payment }: PaymentRowProps) {
   });
 
   return (
-    <article className="grid gap-4 p-5 transition hover:bg-indigo-50/40 xl:grid-cols-[1fr_auto] xl:items-center">
+    <article className="grid gap-4 p-5 transition hover:bg-rose-50/40 xl:grid-cols-[1fr_auto] xl:items-center">
       <div className="flex min-w-0 gap-4">
         <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-3xl bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-700">
           <Wallet size={25} />
@@ -981,7 +981,7 @@ function PaymentRow({ payment }: PaymentRowProps) {
 
           <div className="mt-3 grid gap-2 text-sm leading-6 text-[var(--app-text-muted)] md:grid-cols-2">
             <p>
-              الطالب:{" "}
+              الطالبة:{" "}
               <span className="font-bold text-[var(--app-text)]">
                 {payment.studentName}
               </span>

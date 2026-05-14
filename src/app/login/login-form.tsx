@@ -42,7 +42,7 @@ export function LoginForm() {
           type="text"
           autoComplete="username"
           autoFocus
-          placeholder="أدخل اسم المستخدم"
+          placeholder="أدخلي اسم المستخدم"
           className="input pr-4"
           dir="ltr"
           disabled={isPending}
@@ -62,7 +62,7 @@ export function LoginForm() {
           name="password"
           type="password"
           autoComplete="current-password"
-          placeholder="أدخل كلمة المرور"
+          placeholder="أدخلي كلمة المرور"
           className="input pr-4"
           dir="ltr"
           disabled={isPending}

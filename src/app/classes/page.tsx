@@ -73,7 +73,7 @@ export default async function ClassesPage({ searchParams }: ClassesPageProps) {
       <div className="mx-auto flex w-full max-w-[1350px] flex-col gap-6">
         <PageHeader
           title="الصفوف والشُعب"
-          description="أنشئ الصفوف الدراسية ثم أضف الشُعب داخل كل صف، حتى يصبح تسجيل الطلاب وبناء الجدول أكثر ترتيبًا."
+          description="أنشئي الصفوف الدراسية ثم أضيفي الشُعب داخل كل صف، حتى يصبح تسجيل الطالبات وبناء الجدول أكثر ترتيبًا."
           icon="classes"
           badge="الخطوة الثالثة"
         />
@@ -88,9 +88,9 @@ export default async function ClassesPage({ searchParams }: ClassesPageProps) {
 
         <SmartAlert
           tone="info"
-          title="الترتيب الذكي: صف ثم شعبة ثم طالب"
-          description="يفضل إنشاء الصفوف أولًا، ثم الشُعب، وبعدها إضافة الطلاب داخل الشُعب المناسبة. تم تجهيز الصفوف الأساسية من الأول إلى السادس، ويمكنك إضافة شعب إضافية عند الحاجة."
-          actionLabel="الخطوة التالية: الطلاب"
+          title="الترتيب الذكي: صف ثم شعبة ثم طالبة"
+          description="يفضل إنشاء الصفوف أولًا، ثم الشُعب، وبعدها إضافة الطالبات داخل الشُعب المناسبة. تم تجهيز الصفوف الأساسية من الأول إلى السادس، ويمكنك إضافة شعب إضافية عند الحاجة."
+          actionLabel="الخطوة التالية: الطالبات"
           actionHref="/students"
         />
 
@@ -119,7 +119,7 @@ export default async function ClassesPage({ searchParams }: ClassesPageProps) {
           <EmptyState
             icon="classes"
             title="لا توجد صفوف بعد"
-            description="ابدأ بإضافة أول صف مثل: الأول الابتدائي، الثاني المتوسط، أو السادس الإعدادي. بعد ذلك أضف الشُعب."
+            description="ابدئي بإضافة أول صف مثل: الأول الابتدائي، الثاني المتوسط، أو السادس الإعدادي. بعد ذلك أضيفي الشُعب."
             actionLabel="إضافة أول صف"
             actionHref="#class-form"
             secondaryLabel="الرجوع إلى المواد"
@@ -304,7 +304,7 @@ function ClassesFeedback({
       <SmartAlert
         tone="success"
         title="تم الحذف بنجاح"
-        description="تم حذف العنصر لأنه غير مرتبط بطلاب أو جدول دراسي."
+        description="تم حذف العنصر لأنه غير مرتبط بطالبات أو جدول دراسي."
       />
     );
   }
@@ -322,9 +322,9 @@ function ClassesFeedback({
   if (error) {
     const description =
       error === "delete-class"
-        ? "لا يمكن حذف الصف إذا كان يحتوي على شُعب أو طلاب أو جدول أو مواد مرتبطة."
+        ? "لا يمكن حذف الصف إذا كان يحتوي على شُعب أو طالبات أو جدول أو مواد مرتبطة."
         : error === "delete-section"
-          ? "لا يمكن حذف الشعبة إذا كانت تحتوي على طلاب أو حصص في الجدول."
+          ? "لا يمكن حذف الشعبة إذا كانت تحتوي على طالبات أو حصص في الجدول."
           : "تأكد من إدخال البيانات بشكل صحيح، وعدم تكرار الصف أو الشعبة.";
 
     return (
@@ -346,9 +346,9 @@ function ClassCreateForm() {
       action={createClassAction}
       className="app-card overflow-hidden"
     >
-      <div className="border-b border-[var(--app-border-soft)] bg-gradient-to-l from-indigo-50/40 to-violet-50/20 p-6">
+      <div className="border-b border-[var(--app-border-soft)] bg-gradient-to-l to-rose-50/40 to-amber-50/20 p-6">
         <div className="flex items-start gap-3">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-100 to-rose-100 text-blue-700">
             <GraduationCap size={24} />
           </div>
 
@@ -419,12 +419,12 @@ function ClassCreateForm() {
           />
         </div>
 
-        <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-[var(--app-border-soft)] bg-gradient-to-l from-indigo-50/30 to-violet-50/20 p-4">
+        <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-[var(--app-border-soft)] bg-gradient-to-l to-rose-50/30 to-amber-50/20 p-4">
           <input
             type="checkbox"
             name="isActive"
             defaultChecked
-            className="h-5 w-5 accent-indigo-600"
+            className="h-5 w-5 accent-rose-600"
           />
 
           <span>
@@ -433,15 +433,15 @@ function ClassCreateForm() {
             </span>
 
             <span className="mt-1 block text-sm leading-6 text-[var(--app-text-muted)]">
-              الصفوف الفعّالة تظهر عند إضافة الشُعب والطلاب.
+              الصفوف الفعّالة تظهر عند إضافة الشُعب والطالبات.
             </span>
           </span>
         </label>
       </div>
 
-      <div className="flex flex-col gap-3 border-t border-[var(--app-border-soft)] bg-gradient-to-l from-indigo-50/30 to-violet-50/20 p-6 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 border-t border-[var(--app-border-soft)] bg-gradient-to-l to-rose-50/30 to-amber-50/20 p-6 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm leading-7 text-[var(--app-text-muted)]">
-          بعد حفظ الصف، أضف شعبة واحدة على الأقل.
+          بعد حفظ الصف، أضيفي شعبة واحدة على الأقل.
         </p>
 
         <button type="submit" className="btn btn-primary">
@@ -460,9 +460,9 @@ type SectionCreateFormProps = {
 function SectionCreateForm({ classes }: SectionCreateFormProps) {
   return (
     <form action={createSectionAction} className="app-card overflow-hidden">
-      <div className="border-b border-[var(--app-border-soft)] bg-gradient-to-l from-indigo-50/40 to-violet-50/20 p-6">
+      <div className="border-b border-[var(--app-border-soft)] bg-gradient-to-l to-rose-50/40 to-amber-50/20 p-6">
         <div className="flex items-start gap-3">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-100 to-violet-100 text-indigo-700">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-rose-100 to-amber-100 text-rose-700">
             <DoorOpen size={24} />
           </div>
 
@@ -496,7 +496,7 @@ function SectionCreateForm({ classes }: SectionCreateFormProps) {
             defaultValue=""
           >
             <option value="" disabled>
-              اختر الصف
+              اختاري الصف
             </option>
 
             {classes.map((schoolClass) => (
@@ -508,7 +508,7 @@ function SectionCreateForm({ classes }: SectionCreateFormProps) {
 
           {classes.length === 0 ? (
             <p className="mt-2 text-sm leading-6 text-amber-700">
-              أضف صفًا فعّالًا أولًا حتى تتمكن من إنشاء الشُعب.
+              أضيفي صفًا فعّالًا أولًا حتى تتمكن من إنشاء الشُعب.
             </p>
           ) : null}
         </div>
@@ -569,12 +569,12 @@ function SectionCreateForm({ classes }: SectionCreateFormProps) {
           />
         </div>
 
-        <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-[var(--app-border-soft)] bg-gradient-to-l from-indigo-50/30 to-violet-50/20 p-4">
+        <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-[var(--app-border-soft)] bg-gradient-to-l to-rose-50/30 to-amber-50/20 p-4">
           <input
             type="checkbox"
             name="isActive"
             defaultChecked
-            className="h-5 w-5 accent-indigo-600"
+            className="h-5 w-5 accent-rose-600"
           />
 
           <span>
@@ -583,13 +583,13 @@ function SectionCreateForm({ classes }: SectionCreateFormProps) {
             </span>
 
             <span className="mt-1 block text-sm leading-6 text-[var(--app-text-muted)]">
-              الشُعب الفعّالة تظهر عند تسجيل الطلاب.
+              الشُعب الفعّالة تظهر عند تسجيل الطالبات.
             </span>
           </span>
         </label>
       </div>
 
-      <div className="flex flex-col gap-3 border-t border-[var(--app-border-soft)] bg-gradient-to-l from-indigo-50/30 to-violet-50/20 p-6 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 border-t border-[var(--app-border-soft)] bg-gradient-to-l to-rose-50/30 to-amber-50/20 p-6 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm leading-7 text-[var(--app-text-muted)]">
           الشعبة ستُربط بالصف المختار مباشرة.
         </p>
@@ -620,7 +620,7 @@ function ClassesStats({ total, active, inactive, sections }: ClassesStatsProps) 
       label: "إجمالي الصفوف",
       value: total,
       icon: GraduationCap,
-      className: "bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700",
+      className: "bg-gradient-to-br from-blue-100 to-rose-100 text-blue-700",
     },
     {
       label: "صفوف فعّالة",
@@ -638,7 +638,7 @@ function ClassesStats({ total, active, inactive, sections }: ClassesStatsProps) 
       label: "إجمالي الشُعب",
       value: sections,
       icon: DoorOpen,
-      className: "bg-gradient-to-br from-indigo-100 to-violet-100 text-indigo-700",
+      className: "bg-gradient-to-br from-rose-100 to-amber-100 text-rose-700",
     },
   ];
 
@@ -740,7 +740,7 @@ function SectionsPanel({ sections }: SectionsPanelProps) {
           <SmartAlert
             tone="info"
             title="لا توجد شُعب بعد"
-            description="بعد إضافة الصف، أنشئ شعبة واحدة على الأقل حتى يمكن تسجيل الطلاب داخلها."
+            description="بعد إضافة الصف، أنشئي شعبة واحدة على الأقل حتى يمكن تسجيل الطالبات داخلها."
           />
         </div>
       ) : (
@@ -763,9 +763,9 @@ function SectionRow({ section }: SectionRowProps) {
   const statusLabel = section.isActive ? "فعّالة" : "متوقفة";
 
   return (
-    <article className="grid gap-4 p-5 transition hover:bg-indigo-50/40 lg:grid-cols-[1fr_auto] lg:items-center">
+    <article className="grid gap-4 p-5 transition hover:bg-rose-50/40 lg:grid-cols-[1fr_auto] lg:items-center">
       <div className="flex gap-4">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-3xl bg-gradient-to-br from-indigo-100 to-violet-100 text-indigo-700">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-3xl bg-gradient-to-br from-rose-100 to-amber-100 text-rose-700">
           <DoorOpen size={22} />
         </div>
 
@@ -782,7 +782,7 @@ function SectionRow({ section }: SectionRowProps) {
 
           <div className="mt-2 flex flex-wrap gap-2">
             <span className="badge bg-slate-100 text-slate-600">
-              الطلاب: {section.studentsCount}
+              الطالبات: {section.studentsCount}
             </span>
 
             <span className="badge bg-slate-100 text-slate-600">
@@ -842,7 +842,7 @@ function ClassesList({ classes }: ClassesListProps) {
           </h3>
 
           <p className="mt-1 text-sm leading-6 text-[var(--app-text-muted)]">
-            تابع الصفوف وعدد الشُعب والطلاب والمواد المرتبطة بها.
+            تابعي الصفوف وعدد الشُعب والطالبات والمواد المرتبطة بها.
           </p>
         </div>
 
@@ -868,9 +868,9 @@ function ClassRow({ schoolClass }: ClassRowProps) {
   const statusClass = status === "active" ? "badge-success" : "badge-warning";
 
   return (
-    <article className="grid gap-4 p-5 transition hover:bg-indigo-50/40 lg:grid-cols-[1fr_auto] lg:items-center">
+    <article className="grid gap-4 p-5 transition hover:bg-rose-50/40 lg:grid-cols-[1fr_auto] lg:items-center">
       <div className="flex min-w-0 gap-4">
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700">
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-100 to-rose-100 text-blue-700">
           <GraduationCap size={25} />
         </div>
 
@@ -903,7 +903,7 @@ function ClassRow({ schoolClass }: ClassRowProps) {
 
             <span className="badge bg-slate-100 text-slate-600">
               <Users size={14} />
-              الطلاب: {schoolClass.studentsCount}
+              الطالبات: {schoolClass.studentsCount}
             </span>
 
             <span className="badge bg-slate-100 text-slate-600">

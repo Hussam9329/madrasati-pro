@@ -115,7 +115,7 @@ export default async function GradesPage({ searchParams }: GradesPageProps) {
       <div className="mx-auto flex w-full max-w-[1350px] flex-col gap-6">
         <PageHeader
           title="الدرجات"
-          description="أدخل درجات الطلاب وتابع مستواهم في المواد والاختبارات المختلفة."
+          description="أدخلي درجات الطالبات وتابعي مستواهن في المواد والاختبارات المختلفة."
           icon="grades"
           badge="الخطوة الخامسة"
         />
@@ -129,8 +129,8 @@ export default async function GradesPage({ searchParams }: GradesPageProps) {
 
         <SmartAlert
           tone="info"
-          title="الدرجات تحتاج مواد وطلاب"
-          description="قبل إدخال الدرجات، تأكد من إضافة المواد الدراسية والطلاب وربطهم بالصفوف والشُعب."
+          title="الدرجات تحتاج مواد وطالبات"
+          description="قبل إدخال الدرجات، تأكدي من إضافة المواد الدراسية والطالبات وربطهن بالصفوف والشُعب."
           actionLabel="إدارة المواد"
           actionHref="/subjects"
         />
@@ -169,7 +169,7 @@ export default async function GradesPage({ searchParams }: GradesPageProps) {
           <EmptyState
             icon="grades"
             title="لا توجد درجات بعد"
-            description="اختر الصف والمادة والاختبار، ثم أدخل درجات الطلاب بطريقة سهلة وسريعة."
+            description="اختاري الصف والمادة والاختبار، ثم أدخلي درجات الطالبات بطريقة سهلة وسريعة."
             actionLabel="إدخال درجات"
             actionHref="#grade-form"
             secondaryLabel="إدارة المواد"
@@ -179,7 +179,7 @@ export default async function GradesPage({ searchParams }: GradesPageProps) {
           <EmptyState
             icon="search"
             title="لا توجد نتائج مطابقة"
-            description="جرّب البحث بعنوان الدرجة أو اسم الطالب، أو غيّر فلتر الاختبار أو الفصل."
+            description="جرّب البحث بعنوان الدرجة أو اسم الطالبة، أو غيّر فلتر الاختبار أو الفصل."
             actionLabel="عرض كل الدرجات"
             actionHref="/grades"
           />
@@ -268,7 +268,7 @@ function GradesFeedback({ saved, deleted, error, warning }: GradesFeedbackProps)
       <SmartAlert
         tone="danger"
         title="تمت إضافة الدرجة - تحذير: راسب"
-        description="الطالب حصل على نسبة أقل من 50%. يُنصح بمتابعة الطالب وتقديم الدعم اللازم."
+        description="الطالبة حصلت على نسبة أقل من 50%. يُنصح بمتابعة الطالبة وتقديم الدعم اللازم."
       />
     );
   }
@@ -278,7 +278,7 @@ function GradesFeedback({ saved, deleted, error, warning }: GradesFeedbackProps)
       <SmartAlert
         tone="warning"
         title="تمت إضافة الدرجة - تنبيه"
-        description="الطالب حصل على نسبة بين 50% و59%، وهي قريبة من حد الرسوب. يُنصح بالمتابعة."
+        description="الطالبة حصلت على نسبة بين 50% و59%، وهي قريبة من حد الرسوب. يُنصح بالمتابعة."
       />
     );
   }
@@ -288,7 +288,7 @@ function GradesFeedback({ saved, deleted, error, warning }: GradesFeedbackProps)
       <SmartAlert
         tone="success"
         title="تمت إضافة الدرجة بنجاح"
-        description="تم حفظ الدرجة وربطها بالطالب والمادة المحددة."
+        description="تم حفظ الدرجة وربطها بالطالبة والمادة المحددة."
       />
     );
   }
@@ -307,7 +307,7 @@ function GradesFeedback({ saved, deleted, error, warning }: GradesFeedbackProps)
     const description =
       error === "delete"
         ? "لا يمكن حذف الدرجة حاليًا. تحقق من البيانات وحاول مرة أخرى."
-        : "تأكد من إدخال جميع البيانات المطلوبة بشكل صحيح، وأن الطالب مستمر والمادة فعّالة.";
+        : "تأكد من إدخال جميع البيانات المطلوبة بشكل صحيح، وأن الطالبة مستمرة والمادة فعّالة.";
 
     return (
       <SmartAlert
@@ -351,9 +351,9 @@ function GradeCreateForm({
       action={createGradeAction}
       className="app-card overflow-hidden"
     >
-      <div className="border-b border-[var(--app-border-soft)] bg-gradient-to-l from-indigo-50/40 to-violet-50/20 p-6">
+      <div className="border-b border-[var(--app-border-soft)] bg-gradient-to-l to-rose-50/40 to-amber-50/20 p-6">
         <div className="flex items-start gap-3">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-100 to-rose-100 text-blue-700">
             <ClipboardList size={24} />
           </div>
 
@@ -363,7 +363,7 @@ function GradeCreateForm({
             </h3>
 
             <p className="mt-1 text-sm leading-7 text-[var(--app-text-muted)]">
-              اختر الشعبة ثم المادة، ثم أدخل بيانات الدرجة.
+              اختاري الشعبة ثم المادة، ثم أدخلي بيانات الدرجة.
             </p>
           </div>
         </div>
@@ -371,13 +371,13 @@ function GradeCreateForm({
 
       <div className="grid gap-5 p-6">
         {/* ── Step 1: Section & Student ── */}
-        <div className="rounded-2xl border border-indigo-100 bg-gradient-to-l from-indigo-50/30 to-violet-50/10 p-5">
+        <div className="rounded-2xl border border-rose-100 bg-gradient-to-l to-rose-50/30 to-amber-50/10 p-5">
           <div className="mb-4 flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-blue-100 to-indigo-100 text-sm font-extrabold text-blue-700">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-blue-100 to-rose-100 text-sm font-extrabold text-blue-700">
               1
             </div>
             <h4 className="text-base font-extrabold text-[var(--app-text)]">
-              اختر الشعبة والطالب
+              اختاري الشعبة والطالبة
             </h4>
           </div>
 
@@ -390,7 +390,7 @@ function GradeCreateForm({
 
               <CascadingSelect
                 name="sectionIdFilter"
-                placeholder="اختر الشعبة"
+                placeholder="اختاري الشعبة"
                 value={sectionId}
                 paramKey="sectionId"
                 currentParams={cascadeParams}
@@ -408,13 +408,13 @@ function GradeCreateForm({
                 className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
               >
                 <UserRound size={14} className="ml-1 inline-block" />
-                الطالب <span className="text-red-600">*</span>
+                الطالبة <span className="text-red-600">*</span>
               </label>
 
               {!sectionId ? (
                 <div className="input flex items-center gap-2 text-[var(--app-text-muted)]">
                   <Users size={16} />
-                  <span>اختر الشعبة أولًا حتى تظهر قائمة الطلاب.</span>
+                  <span>اختاري الشعبة أولًا حتى تظهر قائمة الطالبات.</span>
                 </div>
               ) : sectionStudents.length === 0 ? (
                 <div className="input flex items-center gap-2 text-[var(--app-text-muted)]">
@@ -430,7 +430,7 @@ function GradeCreateForm({
                   className="input"
                 >
                   <option value="" disabled>
-                    اختر الطالب
+                    اختاري الطالبة
                   </option>
 
                   {sectionStudents.map((student) => (
@@ -449,20 +449,20 @@ function GradeCreateForm({
           {sectionId && sectionStudents.length > 0 && (
             <p className="mt-3 text-xs text-[var(--app-text-soft)]">
               <Users size={12} className="ml-1 inline-block" />
-              {sectionStudents.length} طالب في{" "}
+              {sectionStudents.length} طالبة في{" "}
               {selectedSection ? getSectionDisplayName(selectedSection) : "الشعبة المختارة"}
             </p>
           )}
         </div>
 
         {/* ── Step 2: Subject & Teacher ── */}
-        <div className="rounded-2xl border border-violet-100 bg-gradient-to-l from-violet-50/30 to-purple-50/10 p-5">
+        <div className="rounded-2xl border border-amber-100 bg-gradient-to-l from-amber-50/30 to-rose-50/10 p-5">
           <div className="mb-4 flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-violet-100 to-purple-100 text-sm font-extrabold text-violet-700">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br to-amber-100 to-rose-100 text-sm font-extrabold text-rose-700">
               2
             </div>
             <h4 className="text-base font-extrabold text-[var(--app-text)]">
-              اختر المادة والمدرسة
+              اختاري المادة والمدرسة
             </h4>
           </div>
 
@@ -475,7 +475,7 @@ function GradeCreateForm({
 
               <CascadingSelect
                 name="subjectIdFilter"
-                placeholder="اختر المادة"
+                placeholder="اختاري المادة"
                 value={subjectId}
                 paramKey="subjectId"
                 currentParams={cascadeParams}
@@ -499,7 +499,7 @@ function GradeCreateForm({
               {!subjectId ? (
                 <div className="input flex items-center gap-2 text-[var(--app-text-muted)]">
                   <GraduationCap size={16} />
-                  <span>اختر المادة حتى تظهر المدرسات المرتبطات بها.</span>
+                  <span>اختاري المادة حتى تظهر المدرسات المرتبطات بها.</span>
                 </div>
               ) : subjectTeachers.length === 0 ? (
                 <div className="input flex items-center gap-2 text-[var(--app-text-muted)]">
@@ -545,7 +545,7 @@ function GradeCreateForm({
               3
             </div>
             <h4 className="text-base font-extrabold text-[var(--app-text)]">
-              أدخل بيانات الدرجة
+              أدخلي بيانات الدرجة
             </h4>
           </div>
 
@@ -575,7 +575,7 @@ function GradeCreateForm({
                   htmlFor="score"
                   className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
                 >
-                  درجة الطالب <span className="text-red-600">*</span>
+                  درجة الطالبة <span className="text-red-600">*</span>
                 </label>
 
                 <input
@@ -701,9 +701,9 @@ function GradeCreateForm({
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 border-t border-[var(--app-border-soft)] bg-gradient-to-l from-indigo-50/30 to-violet-50/20 p-6 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 border-t border-[var(--app-border-soft)] bg-gradient-to-l to-rose-50/30 to-amber-50/20 p-6 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm leading-7 text-[var(--app-text-muted)]">
-          بعد إدخال الدرجات، يمكنك متابعة مستوى الطلاب والتقارير.
+          بعد إدخال الدرجات، يمكنك متابعة مستوى الطالبات والتقارير.
         </p>
 
         <button type="submit" className="btn btn-primary">
@@ -737,7 +737,7 @@ function GradesStats({
       label: "إجمالي الدرجات",
       value: total,
       icon: BarChart3,
-      className: "bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700",
+      className: "bg-gradient-to-br from-blue-100 to-rose-100 text-blue-700",
     },
     {
       label: "ممتاز",
@@ -868,7 +868,7 @@ function GradeSearchForm({
             id="q"
             name="q"
             defaultValue={query}
-            placeholder="عنوان الدرجة، اسم الطالب، المادة..."
+            placeholder="عنوان الدرجة، اسم الطالبة، المادة..."
             className="input pr-11"
           />
         </div>
@@ -919,7 +919,7 @@ function GradesList({ grades }: GradesListProps) {
           </h3>
 
           <p className="mt-1 text-sm leading-6 text-[var(--app-text-muted)]">
-            تابع الدرجات المسجلة وتصنيفاتها ومستويات الطلاب.
+            تابعي الدرجات المسجلة وتصنيفاتها ومستويات الطالبات.
           </p>
         </div>
 
@@ -957,7 +957,7 @@ function GradeRow({ grade }: GradeRowProps) {
     warningMessage && (percentage < 60);
 
   return (
-    <article className="grid gap-4 p-5 transition hover:bg-indigo-50/40 xl:grid-cols-[1fr_auto] xl:items-center">
+    <article className="grid gap-4 p-5 transition hover:bg-rose-50/40 xl:grid-cols-[1fr_auto] xl:items-center">
       <div className="flex min-w-0 gap-4">
         <div
           className={[
@@ -1000,7 +1000,7 @@ function GradeRow({ grade }: GradeRowProps) {
             </span>
 
             {grade.sectionName && grade.className && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-3 py-1 font-bold text-indigo-700">
+              <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-3 py-1 font-bold text-rose-700">
                 <Layers size={14} />
                 {grade.className} / شعبة {grade.sectionName}
               </span>

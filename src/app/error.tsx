@@ -34,7 +34,7 @@ export default function GlobalError({
         <button
           type="button"
           onClick={reset}
-          className="mt-6 inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-gradient-to-l from-indigo-600 to-violet-600 px-6 text-sm font-extrabold text-white shadow-lg shadow-indigo-600/25 transition hover:from-indigo-700 hover:to-violet-700 hover:shadow-xl"
+          className="mt-6 inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-gradient-to-l from-rose-700 to-amber-600 px-6 text-sm font-extrabold text-white shadow-lg shadow-rose-600/25 transition hover:from-rose-800 hover:to-amber-700 hover:shadow-xl"
         >
           <RefreshCw size={18} />
           إعادة المحاولة

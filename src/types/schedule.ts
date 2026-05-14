@@ -204,7 +204,7 @@ export function validateScheduleInput(
   }
 
   if (!normalized.teacherId) {
-    errors.teacherId = "المدرس مطلوب.";
+    errors.teacherId = "المدرسة مطلوبة.";
   }
 
   if (normalized.room && normalized.room.length > 80) {

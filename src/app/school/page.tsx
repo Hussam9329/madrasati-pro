@@ -41,7 +41,7 @@ export default async function SchoolPage({ searchParams }: SchoolPageProps) {
       <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-6">
         <PageHeader
           title="بيانات المدرسة"
-          description="أضف معلومات المدرسة الأساسية حتى تظهر لاحقًا في التقارير والواجهات الرسمية."
+          description="أضيفي معلومات المدرسة الأساسية حتى تظهر لاحقًا في التقارير والواجهات الرسمية."
           icon="school"
           badge="خطوة تأسيسية"
         />
@@ -67,7 +67,7 @@ export default async function SchoolPage({ searchParams }: SchoolPageProps) {
         {!school ? (
           <SmartAlert
             tone="info"
-            title="ابدأ بتسجيل بيانات المدرسة"
+            title="ابدئي بتسجيل بيانات المدرسة"
             description="هذه الخطوة ليست معقدة. اسم المدرسة يكفي كبداية، ويمكنك إكمال الهاتف والعنوان والشعار لاحقًا."
           />
         ) : (
@@ -130,7 +130,7 @@ type SchoolFormProps = {
 function SchoolForm({ defaultValues }: SchoolFormProps) {
   return (
     <form action={saveSchoolAction} className="app-card overflow-hidden">
-      <div className="border-b border-[var(--app-border-soft)] bg-gradient-to-l from-indigo-50/40 to-violet-50/20 p-6">
+      <div className="border-b border-[var(--app-border-soft)] bg-gradient-to-l to-rose-50/40 to-amber-50/20 p-6">
         <h3 className="text-xl font-extrabold text-[var(--app-text)]">
           معلومات المدرسة
         </h3>
@@ -210,7 +210,7 @@ function SchoolForm({ defaultValues }: SchoolFormProps) {
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 border-t border-[var(--app-border-soft)] bg-gradient-to-l from-indigo-50/30 to-violet-50/20 p-6 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 border-t border-[var(--app-border-soft)] bg-gradient-to-l to-rose-50/30 to-amber-50/20 p-6 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm leading-7 text-[var(--app-text-muted)]">
           سيتم استخدام هذه البيانات لاحقًا في التقارير والطباعة.
         </p>
@@ -295,7 +295,7 @@ function SchoolOverviewCard({
     <section className="app-card p-6">
       <div className="grid gap-5 md:grid-cols-[1fr_220px] md:items-center">
         <div className="flex items-start gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-100 to-rose-100 text-blue-700">
             <School size={27} />
           </div>
 
@@ -331,7 +331,7 @@ function SchoolOverviewCard({
 
           <div className="h-3 overflow-hidden rounded-full bg-slate-100">
             <div
-              className="h-full rounded-full bg-gradient-to-l from-indigo-500 to-violet-500 transition-all"
+              className="h-full rounded-full bg-gradient-to-l to-rose-500 to-amber-500 transition-all"
               style={{ width: `${completionPercentage}%` }}
             />
           </div>
@@ -369,7 +369,7 @@ function SchoolTips() {
     <aside className="flex flex-col gap-5">
       <div className="app-card p-6">
         <div className="mb-5 flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-100 to-violet-100 text-indigo-700">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-rose-100 to-amber-100 text-rose-700">
             <Sparkles size={21} />
           </div>
 
@@ -415,7 +415,7 @@ function SchoolTips() {
       <SmartAlert
         tone="info"
         title="بعد حفظ بيانات المدرسة"
-        description="الخطوة التالية هي إضافة المواد الدراسية، لأنها الأساس الذي تعتمد عليه الصفوف والمدرسون والدرجات."
+        description="الخطوة التالية هي إضافة المواد الدراسية، لأنها الأساس الذي تعتمد عليه الصفوف والمدرسات والدرجات."
         actionLabel="إدارة المواد"
         actionHref="/subjects"
       />

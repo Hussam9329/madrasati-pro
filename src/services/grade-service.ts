@@ -183,9 +183,9 @@ async function validateGradeRelations(input: {
     });
 
     if (!teacher) {
-      errors.teacherId = "المدرس غير موجود.";
+      errors.teacherId = "المدرسة غير موجودة.";
     } else if (!teacher.isActive) {
-      errors.teacherId = "المدرس متوقف. لا يمكن ربط الدرجة بمدرس متوقف.";
+      errors.teacherId = "المدرسة متوقفة. لا يمكن ربط الدرجة بمدرس متوقف.";
     }
 
     if (teacher && subject) {
@@ -199,7 +199,7 @@ async function validateGradeRelations(input: {
       });
 
       if (!teacherSubject) {
-        errors.teacherId = "المدرس غير مرتبط بهذه المادة الدراسية. لا يمكن إضافة درجة لهذا المدرس في مادة لا يدرّسها.";
+        errors.teacherId = "المدرسة غير مرتبطة بهذه المادة الدراسية. لا يمكن إضافة درجة لهذه المدرسة في مادة لا يدرّسها.";
       }
     }
   }

@@ -79,7 +79,7 @@ export default async function SchedulesPage({
       <div className="mx-auto flex w-full max-w-[1350px] flex-col gap-6">
         <PageHeader
           title="الجدول الدراسي"
-          description="أنشئ الحصص الدراسية وربطها بالشُعب والمدرسين والمواد لبناء جدول منظم وخالٍ من التعارضات."
+          description="أنشئي الحصص الدراسية واربطيها بالشُعب والمدرسات والمواد لبناء جدول منظم وخالٍ من التعارضات."
           icon="schedule"
           badge="الخطوة الرابعة"
         />
@@ -94,7 +94,7 @@ export default async function SchedulesPage({
         <SmartAlert
           tone="info"
           title="بناء الجدول الدراسي"
-          description="أضف الحصص واحدة تلو الأخرى. النظام يكتشف تلقائيًا تعارضات الأوقات بين المدرسين والشُعب."
+          description="أضيفي الحصص واحدة تلو الأخرى. النظام يكتشف تلقائيًا تعارضات الأوقات بين المدرسات والشُعب."
           actionLabel="الخطوة التالية: الحضور"
           actionHref="/attendance"
         />
@@ -122,7 +122,7 @@ export default async function SchedulesPage({
           <EmptyState
             icon="schedule"
             title="لا توجد حصص في الجدول بعد"
-            description="ابدأ بإضافة أول حصة دراسية. تأكد من إنشاء الصفوف والشُعب والمواد والمدرسين أولًا."
+            description="ابدئي بإضافة أول حصة دراسية. تأكد من إنشاء الصفوف والشُعب والمواد والمدرسات أولًا."
             actionLabel="إضافة أول حصة"
             actionHref="#schedule-form"
             secondaryLabel="الرجوع إلى الصفوف"
@@ -132,7 +132,7 @@ export default async function SchedulesPage({
           <EmptyState
             icon="search"
             title="لا توجد حصص مطابقة للبحث"
-            description="جرّب البحث باسم المادة أو المدرس أو الشعبة، أو غيّر فلتر اليوم، أو امسح البحث لعرض كل الحصص."
+            description="جرّب البحث باسم المادة أو المدرسة أو الشعبة، أو غيّر فلتر اليوم، أو امسح البحث لعرض كل الحصص."
             actionLabel="عرض كل الحصص"
             actionHref="/schedules"
           />
@@ -259,7 +259,7 @@ function SchedulesFeedback({
         ? "لا يمكن حذف الحصة حاليًا. جرّب تعطيلها بدل الحذف."
         : error === "toggle"
           ? "لا يمكن تحديث حالة الحصة. تأكد من أن الحصة موجودة."
-          : "تأكد من إدخال البيانات بشكل صحيح، وأنه لا يوجد تعارض في الأوقات أو أن المدرس مرتبط بالمادة.";
+          : "تأكد من إدخال البيانات بشكل صحيح، وأنه لا يوجد تعارض في الأوقات أو أن المدرسة مرتبطة بالمادة.";
 
     return (
       <SmartAlert
@@ -295,9 +295,9 @@ function ScheduleCreateForm({
       action={createScheduleAction}
       className="app-card overflow-hidden"
     >
-      <div className="border-b border-[var(--app-border-soft)] bg-gradient-to-l from-indigo-50/40 to-violet-50/20 p-6">
+      <div className="border-b border-[var(--app-border-soft)] bg-gradient-to-l to-rose-50/40 to-amber-50/20 p-6">
         <div className="flex items-start gap-3">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-100 to-rose-100 text-blue-700">
             <CalendarClock size={23} />
           </div>
 
@@ -307,7 +307,7 @@ function ScheduleCreateForm({
             </h3>
 
             <p className="mt-1 text-sm leading-7 text-[var(--app-text-muted)]">
-              حدد اليوم والوقت والشعبة والمادة والمدرس لبناء الجدول.
+              حدّدي اليوم والوقت والشعبة والمادة والمدرسة لبناء الجدول.
             </p>
           </div>
         </div>
@@ -364,7 +364,7 @@ function ScheduleCreateForm({
             defaultValue=""
           >
             <option value="" disabled>
-              اختر الشعبة
+              اختاري الشعبة
             </option>
 
             {sections.map((section) => (
@@ -376,7 +376,7 @@ function ScheduleCreateForm({
 
           {!hasSections ? (
             <p className="mt-2 text-sm leading-6 text-amber-700">
-              أضف صفًا وشعبة فعّالة أولًا حتى تتمكن من اختيار الشعبة.
+              أضيفي صفًا وشعبة فعّالة أولًا حتى تتمكني من اختيار الشعبة.
             </p>
           ) : null}
         </FormField>
@@ -391,7 +391,7 @@ function ScheduleCreateForm({
             defaultValue=""
           >
             <option value="" disabled>
-              اختر المادة
+              اختاري المادة
             </option>
 
             {subjects.map((subject) => (
@@ -403,12 +403,12 @@ function ScheduleCreateForm({
 
           {!hasSubjects ? (
             <p className="mt-2 text-sm leading-6 text-amber-700">
-              أضف مادة فعّالة أولًا حتى تتمكن من اختيار المادة.
+              أضيفي مادة فعّالة أولًا حتى تتمكني من اختيار المادة.
             </p>
           ) : null}
         </FormField>
 
-        <FormField label="المدرس" htmlFor="teacherId" required>
+        <FormField label="المدرسة" htmlFor="teacherId" required>
           <select
             id="teacherId"
             name="teacherId"
@@ -418,7 +418,7 @@ function ScheduleCreateForm({
             defaultValue=""
           >
             <option value="" disabled>
-              اختر المدرس
+              اختاري المدرسة
             </option>
 
             {teachers.map((teacher) => (
@@ -431,7 +431,7 @@ function ScheduleCreateForm({
 
           {!hasTeachers ? (
             <p className="mt-2 text-sm leading-6 text-amber-700">
-              أضف مدرسًا فعّالًا أولًا حتى تتمكن من اختيار المدرس.
+              أضيفي مدرسة فعّالة أولًا حتى تتمكني من اختيار المدرسة.
             </p>
           ) : null}
         </FormField>
@@ -457,12 +457,12 @@ function ScheduleCreateForm({
           />
         </FormField>
 
-        <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-[var(--app-border-soft)] bg-gradient-to-l from-indigo-50/30 to-violet-50/20 p-4">
+        <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-[var(--app-border-soft)] bg-gradient-to-l to-rose-50/30 to-amber-50/20 p-4">
           <input
             type="checkbox"
             name="isActive"
             defaultChecked
-            className="h-5 w-5 accent-indigo-600"
+            className="h-5 w-5 accent-rose-600"
           />
 
           <span>
@@ -477,9 +477,9 @@ function ScheduleCreateForm({
         </label>
       </div>
 
-      <div className="flex flex-col gap-3 border-t border-[var(--app-border-soft)] bg-gradient-to-l from-indigo-50/30 to-violet-50/20 p-6 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 border-t border-[var(--app-border-soft)] bg-gradient-to-l to-rose-50/30 to-amber-50/20 p-6 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm leading-7 text-[var(--app-text-muted)]">
-          النظام يكتشف تلقائيًا تعارضات الأوقات بين المدرسين والشُعب.
+          النظام يكتشف تلقائيًا تعارضات الأوقات بين المدرسات والشُعب.
         </p>
 
         <button
@@ -536,7 +536,7 @@ function SchedulesStats({
       label: "إجمالي الحصص",
       value: total,
       icon: Layers3,
-      className: "bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700",
+      className: "bg-gradient-to-br from-blue-100 to-rose-100 text-blue-700",
     },
     {
       label: "حصص فعّالة",
@@ -554,7 +554,7 @@ function SchedulesStats({
       label: "حصص اليوم",
       value: today,
       icon: Clock,
-      className: "bg-gradient-to-br from-indigo-100 to-violet-100 text-indigo-700",
+      className: "bg-gradient-to-br from-rose-100 to-amber-100 text-rose-700",
     },
   ];
 
@@ -618,7 +618,7 @@ function ScheduleSearchForm({ query, dayOfWeek }: ScheduleSearchFormProps) {
             id="q"
             name="q"
             defaultValue={query}
-            placeholder="ابحث باسم المادة أو المدرس أو الشعبة..."
+            placeholder="ابحث باسم المادة أو المدرسة أو الشعبة..."
             className="input pr-11"
           />
         </div>
@@ -684,9 +684,9 @@ function ScheduleRow({ schedule }: ScheduleRowProps) {
   const statusBadgeClass = getScheduleStatusBadgeClass(schedule.isActive);
 
   return (
-    <article className="grid gap-4 p-5 transition hover:bg-indigo-50/40 lg:grid-cols-[1fr_auto] lg:items-center">
+    <article className="grid gap-4 p-5 transition hover:bg-rose-50/40 lg:grid-cols-[1fr_auto] lg:items-center">
       <div className="flex min-w-0 gap-4">
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700">
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-100 to-rose-100 text-blue-700">
           <CalendarClock size={25} />
         </div>
 

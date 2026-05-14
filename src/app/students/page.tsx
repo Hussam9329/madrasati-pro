@@ -73,8 +73,8 @@ export default async function StudentsPage({
     <AppShell>
       <div className="mx-auto flex w-full max-w-[1350px] flex-col gap-6">
         <PageHeader
-          title="الطلاب"
-          description="أضف الطلاب واربط كل طالب بالشعبة المناسبة، مع متابعة الحالة والمعلومات الأساسية."
+          title="الطالبات"
+          description="أضيفي الطالبات واربطي كل طالبة بالشعبة المناسبة، مع متابعة الحالة والمعلومات الأساسية."
           icon="students"
           badge="الخطوة الرابعة"
         />
@@ -88,8 +88,8 @@ export default async function StudentsPage({
 
         <SmartAlert
           tone="info"
-          title="الطلاب يعتمدون على الشُعب"
-          description="يمكنك إضافة الطالب بدون شعبة مؤقتًا، لكن الأفضل ربطه بشعبة حتى تعمل الحضور والدرجات والتقارير بشكل أدق."
+          title="الطالبات يعتمدن على الشُعب"
+          description="يمكنك إضافة الطالبة بدون شعبة مؤقتًا، لكن الأفضل ربطها بشعبة حتى تعمل الحضور والدرجات والتقارير بشكل أدق."
           actionLabel="إدارة الصفوف والشُعب"
           actionHref="/classes"
         />
@@ -114,9 +114,9 @@ export default async function StudentsPage({
         {!hasStudents ? (
           <EmptyState
             icon="students"
-            title="لا يوجد طلاب بعد"
-            description="ابدأ بإضافة أول طالب، ثم اربطه بالشعبة المناسبة. بعدها يصبح تسجيل الحضور والدرجات والأقساط أسهل."
-            actionLabel="إضافة أول طالب"
+            title="لا يوجد طالبات بعد"
+            description="ابدئي بإضافة أول طالبة، ثم اربطيها بالشعبة المناسبة. بعدها يصبح تسجيل الحضور والدرجات والأقساط أسهل."
+            actionLabel="إضافة أول طالبة"
             actionHref="#student-form"
             secondaryLabel="إدارة الشُعب"
             secondaryHref="/classes"
@@ -125,8 +125,8 @@ export default async function StudentsPage({
           <EmptyState
             icon="search"
             title="لا توجد نتائج مطابقة"
-            description="جرّب البحث باسم الطالب أو رقم الطالب أو ولي الأمر، أو غيّر فلتر الحالة."
-            actionLabel="عرض كل الطلاب"
+            description="جرّب البحث باسم الطالبة أو رقم الطالبة أو ولي الأمر، أو غيّر فلتر الحالة."
+            actionLabel="عرض كل الطالبات"
             actionHref="/students"
           />
         ) : (
@@ -217,8 +217,8 @@ function StudentsFeedback({
     return (
       <SmartAlert
         tone="success"
-        title="تمت إضافة الطالب بنجاح"
-        description="تم حفظ بيانات الطالب وربطه بالشعبة المحددة إن وُجدت."
+        title="تمت إضافة الطالبة بنجاح"
+        description="تم حفظ بيانات الطالبة وربطها بالشعبة المحددة إن وُجدت."
       />
     );
   }
@@ -227,8 +227,8 @@ function StudentsFeedback({
     return (
       <SmartAlert
         tone="success"
-        title="تم حذف الطالب"
-        description="تم حذف الطالب لأنه لا يملك سجلات حضور أو درجات أو أقساط مرتبطة."
+        title="تم حذف الطالبة"
+        description="تم حذف الطالبة لأنها لا تملك سجلات حضور أو درجات أو أقساط مرتبطة."
       />
     );
   }
@@ -237,8 +237,8 @@ function StudentsFeedback({
     return (
       <SmartAlert
         tone="success"
-        title="تم تحديث حالة الطالب"
-        description="تم تغيير حالة الطالب بنجاح."
+        title="تم تحديث حالة الطالبة"
+        description="تم تغيير حالة الطالبة بنجاح."
       />
     );
   }
@@ -246,10 +246,10 @@ function StudentsFeedback({
   if (error) {
     const description =
       error === "delete"
-        ? "لا يمكن حذف الطالب إذا كانت لديه درجات أو حضور أو أقساط. غيّر حالته بدل الحذف."
+        ? "لا يمكن حذف الطالبة إذا كانت لديها درجات أو حضور أو أقساط. غيّر حالتها بدل الحذف."
         : error === "status"
-          ? "تعذر تغيير حالة الطالب. تأكد من اختيار حالة صحيحة."
-          : "تأكد من إدخال اسم الطالب بشكل صحيح، وأن رقم الطالب غير مكرر.";
+          ? "تعذر تغيير حالة الطالبة. تأكد من اختيار حالة صحيحة."
+          : "تأكد من إدخال اسم الطالبة بشكل صحيح، وأن رقم الطالبة غير مكرر.";
 
     return (
       <SmartAlert
@@ -274,19 +274,19 @@ function StudentCreateForm({ sections }: StudentCreateFormProps) {
       action={createStudentAction}
       className="app-card overflow-hidden"
     >
-      <div className="border-b border-[var(--app-border-soft)] bg-gradient-to-l from-indigo-50/40 to-violet-50/20 p-6">
+      <div className="border-b border-[var(--app-border-soft)] bg-gradient-to-l to-rose-50/40 to-amber-50/20 p-6">
         <div className="flex items-start gap-3">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-100 to-rose-100 text-blue-700">
             <UserRound size={24} />
           </div>
 
           <div>
             <h3 className="text-xl font-extrabold text-[var(--app-text)]">
-              إضافة طالب
+              إضافة طالبة
             </h3>
 
             <p className="mt-1 text-sm leading-7 text-[var(--app-text-muted)]">
-              أدخل بيانات الطالب الأساسية المطلوبة فقط.
+              أدخلي بيانات الطالبة الأساسية المطلوبة فقط.
             </p>
           </div>
         </div>
@@ -294,13 +294,13 @@ function StudentCreateForm({ sections }: StudentCreateFormProps) {
 
       <div className="grid gap-5 p-6">
         {/* Smart Alert */}
-        <div className="rounded-2xl border border-indigo-200 bg-gradient-to-l from-indigo-50/80 to-violet-50/50 p-4">
+        <div className="rounded-2xl border border-rose-200 bg-gradient-to-l to-rose-50/80 from-amber-50/50 p-4">
           <div className="flex items-start gap-3">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-rose-100 text-rose-700">
               <AlertTriangle size={16} />
             </div>
-            <p className="text-sm leading-7 text-indigo-800">
-              تأكد من اختيار الصف والشعبة قبل حفظ الطالب حتى تظهر بياناته في الحضور والدرجات والأقساط.
+            <p className="text-sm leading-7 text-rose-800">
+              تأكد من اختيار الصف والشعبة قبل حفظ الطالبة حتى تظهر بياناتها في الحضور والدرجات والأقساط.
             </p>
           </div>
         </div>
@@ -331,7 +331,7 @@ function StudentCreateForm({ sections }: StudentCreateFormProps) {
               htmlFor="phone"
               className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
             >
-              رقم هاتف الطالب <span className="text-red-600">*</span>
+              رقم هاتف الطالبة <span className="text-red-600">*</span>
             </label>
             <input
               id="phone"
@@ -395,7 +395,7 @@ function StudentCreateForm({ sections }: StudentCreateFormProps) {
             </label>
 
             <select id="sectionId" name="sectionId" required className="input" defaultValue="">
-              <option value="">اختر الصف والشعبة</option>
+              <option value="">اختاري الصف والشعبة</option>
 
               {sections.map((section) => (
                 <option key={section.id} value={section.id}>
@@ -410,14 +410,14 @@ function StudentCreateForm({ sections }: StudentCreateFormProps) {
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 border-t border-[var(--app-border-soft)] bg-gradient-to-l from-indigo-50/30 to-violet-50/20 p-6 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 border-t border-[var(--app-border-soft)] bg-gradient-to-l to-rose-50/30 to-amber-50/20 p-6 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm leading-7 text-[var(--app-text-muted)]">
-          بعد إضافة الطلاب، يمكن استخدامهم في الحضور والدرجات والأقساط.
+          بعد إضافة الطالبات، يمكن استخدامهن في الحضور والدرجات والأقساط.
         </p>
 
         <button type="submit" className="btn btn-primary">
           <CheckCircle2 size={18} />
-          حفظ الطالب
+          حفظ الطالبة
         </button>
       </div>
     </form>
@@ -479,10 +479,10 @@ function StudentsStats({
 }: StudentsStatsProps) {
   const stats = [
     {
-      label: "إجمالي الطلاب",
+      label: "إجمالي الطالبات",
       value: total,
       icon: Users,
-      className: "bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700",
+      className: "bg-gradient-to-br from-blue-100 to-rose-100 text-blue-700",
     },
     {
       label: "مستمرون",
@@ -500,7 +500,7 @@ function StudentsStats({
       label: "متخرجون",
       value: graduated,
       icon: GraduationCap,
-      className: "bg-gradient-to-br from-indigo-100 to-violet-100 text-indigo-700",
+      className: "bg-gradient-to-br from-rose-100 to-amber-100 text-rose-700",
     },
     {
       label: "منقولون",
@@ -576,7 +576,7 @@ function StudentSearchForm({ query, status }: StudentSearchFormProps) {
             id="q"
             name="q"
             defaultValue={query}
-            placeholder="اسم الطالب، الرقم، الهاتف، ولي الأمر..."
+            placeholder="اسم الطالبة، الرقم، الهاتف، ولي الأمر..."
             className="input pr-11"
           />
         </div>
@@ -607,15 +607,15 @@ function StudentsList({ students }: StudentsListProps) {
       <div className="flex flex-col gap-2 border-b border-[var(--app-border-soft)] p-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-xl font-extrabold text-[var(--app-text)]">
-            قائمة الطلاب
+            قائمة الطالبات
           </h3>
 
           <p className="mt-1 text-sm leading-6 text-[var(--app-text-muted)]">
-            تابع الطلاب وحالاتهم وربطهم بالشُعب والسجلات المرتبطة.
+            تابعي الطالبات وحالاتهن وربطهن بالشُعب والسجلات المرتبطة.
           </p>
         </div>
 
-        <span className="badge badge-info">{students.length} طالب</span>
+        <span className="badge badge-info">{students.length} طالبة</span>
       </div>
 
       <div className="divide-y divide-[var(--app-border-soft)]">
@@ -636,9 +636,9 @@ function StudentRow({ student }: StudentRowProps) {
   const statusClass = getStudentStatusBadgeClass(student.status);
 
   return (
-    <article className="grid gap-4 p-5 transition hover:bg-indigo-50/40 xl:grid-cols-[1fr_auto] xl:items-center">
+    <article className="grid gap-4 p-5 transition hover:bg-rose-50/40 xl:grid-cols-[1fr_auto] xl:items-center">
       <div className="flex min-w-0 gap-4">
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700">
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-100 to-rose-100 text-blue-700">
           <UserRound size={25} />
         </div>
 
@@ -671,7 +671,7 @@ function StudentRow({ student }: StudentRowProps) {
 
           <div className="mt-3 grid gap-2 text-sm leading-6 text-[var(--app-text-muted)] md:grid-cols-2">
             <p>
-              هاتف الطالب:{" "}
+              هاتف الطالبة:{" "}
               <span className="font-bold text-[var(--app-text)]" dir="ltr">
                 {student.phone || "غير مضاف"}
               </span>

@@ -59,7 +59,7 @@ export default async function SubjectsPage({
       <div className="mx-auto flex w-full max-w-[1350px] flex-col gap-6">
         <PageHeader
           title="المواد الدراسية"
-          description="أضف المواد التي يتم تدريسها في المدرسة. هذه الخطوة تأتي قبل ربط المدرسين والصفوف والدرجات."
+          description="أضيفي المواد التي يتم تدريسها في المدرسة. هذه الخطوة تأتي قبل ربط المدرسات والصفوف والدرجات."
           icon="book"
           badge="الخطوة الثانية"
         />
@@ -74,7 +74,7 @@ export default async function SubjectsPage({
         <SmartAlert
           tone="info"
           title="المواد أولًا، ثم الصفوف"
-          description="إضافة المواد الدراسية في البداية تجعل ربط المدرسين، بناء الجدول، وإدخال الدرجات أسهل وأكثر تنظيمًا."
+          description="إضافة المواد الدراسية في البداية تجعل ربط المدرسات، بناء الجدول، وإدخال الدرجات أسهل وأكثر تنظيمًا."
           actionLabel="الخطوة التالية: الصفوف"
           actionHref="/classes"
         />
@@ -97,7 +97,7 @@ export default async function SubjectsPage({
           <EmptyState
             icon="book"
             title="لا توجد مواد دراسية بعد"
-            description="ابدأ بإضافة أول مادة مثل الرياضيات أو اللغة العربية أو العلوم. بعد ذلك يمكنك إنشاء الصفوف وربط المدرسين."
+            description="ابدئي بإضافة أول مادة مثل الرياضيات أو اللغة العربية أو العلوم. بعد ذلك يمكنك إنشاء الصفوف وربط المدرسات."
             actionLabel="إضافة أول مادة"
             actionHref="#subject-form"
             secondaryLabel="الذهاب إلى بيانات المدرسة"
@@ -207,7 +207,7 @@ function SubjectsFeedback({
       <SmartAlert
         tone="success"
         title="تم حذف المادة الدراسية"
-        description="تم حذف المادة لأنها غير مرتبطة بدرجات أو صفوف أو مدرسين."
+        description="تم حذف المادة لأنها غير مرتبطة بدرجات أو صفوف أو مدرسات."
       />
     );
   }
@@ -225,7 +225,7 @@ function SubjectsFeedback({
   if (error) {
     const description =
       error === "delete"
-        ? "لا يمكن حذف المادة إذا كانت مرتبطة بمدرسين أو صفوف أو درجات. عطّلها بدل حذفها."
+        ? "لا يمكن حذف المادة إذا كانت مرتبطة بمدرسات أو صفوف أو درجات. عطّلها بدل حذفها."
         : "تأكد من إدخال اسم المادة بشكل صحيح، وأن الاسم غير مكرر.";
 
     return (
@@ -247,9 +247,9 @@ function SubjectCreateForm() {
       action={createSubjectAction}
       className="app-card overflow-hidden"
     >
-      <div className="border-b border-[var(--app-border-soft)] bg-gradient-to-l from-indigo-50/40 to-violet-50/20 p-6">
+      <div className="border-b border-[var(--app-border-soft)] bg-gradient-to-l to-rose-50/40 to-amber-50/20 p-6">
         <div className="flex items-start gap-3">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-100 to-violet-100 text-indigo-700">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-rose-100 to-amber-100 text-rose-700">
             <BookOpen size={23} />
           </div>
 
@@ -303,12 +303,12 @@ function SubjectCreateForm() {
           />
         </div>
 
-        <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-[var(--app-border-soft)] bg-gradient-to-l from-indigo-50/30 to-violet-50/20 p-4">
+        <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-[var(--app-border-soft)] bg-gradient-to-l to-rose-50/30 to-amber-50/20 p-4">
           <input
             type="checkbox"
             name="isActive"
             defaultChecked
-            className="h-5 w-5 accent-indigo-600"
+            className="h-5 w-5 accent-rose-600"
           />
 
           <span>
@@ -317,13 +317,13 @@ function SubjectCreateForm() {
             </span>
 
             <span className="mt-1 block text-sm leading-6 text-[var(--app-text-muted)]">
-              المواد الفعّالة تظهر في الربط مع المدرسين والصفوف.
+              المواد الفعّالة تظهر في الربط مع المدرسات والصفوف.
             </span>
           </span>
         </label>
       </div>
 
-      <div className="flex flex-col gap-3 border-t border-[var(--app-border-soft)] bg-gradient-to-l from-indigo-50/30 to-violet-50/20 p-6 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 border-t border-[var(--app-border-soft)] bg-gradient-to-l to-rose-50/30 to-amber-50/20 p-6 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm leading-7 text-[var(--app-text-muted)]">
           بعد إضافة المواد، ستكون الخطوة التالية إنشاء الصفوف والشُعب.
         </p>
@@ -349,7 +349,7 @@ function SubjectStats({ total, active, inactive }: SubjectStatsProps) {
       label: "إجمالي المواد",
       value: total,
       icon: Layers3,
-      className: "bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700",
+      className: "bg-gradient-to-br from-blue-100 to-rose-100 text-blue-700",
     },
     {
       label: "مواد فعّالة",
@@ -479,9 +479,9 @@ function SubjectRow({ subject }: SubjectRowProps) {
     status === "active" ? "badge-success" : "badge-warning";
 
   return (
-    <article className="grid gap-4 p-5 transition hover:bg-indigo-50/40 lg:grid-cols-[1fr_auto] lg:items-center">
+    <article className="grid gap-4 p-5 transition hover:bg-rose-50/40 lg:grid-cols-[1fr_auto] lg:items-center">
       <div className="flex min-w-0 gap-4">
-        <div className="flex h-13 w-13 shrink-0 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700">
+        <div className="flex h-13 w-13 shrink-0 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-100 to-rose-100 text-blue-700">
           <BookOpen size={24} />
         </div>
 
@@ -515,7 +515,7 @@ function SubjectRow({ subject }: SubjectRowProps) {
 
           <div className="mt-3 flex flex-wrap gap-2">
             <span className="badge bg-slate-100 text-slate-600">
-              المدرسون: {subject.teachersCount}
+              المدرسات: {subject.teachersCount}
             </span>
 
             <span className="badge bg-slate-100 text-slate-600">

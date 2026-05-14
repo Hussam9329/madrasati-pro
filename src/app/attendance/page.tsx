@@ -78,7 +78,7 @@ export default async function AttendancePage({
       <div className="mx-auto flex w-full max-w-[1350px] flex-col gap-6">
         <PageHeader
           title="الحضور والغياب"
-          description="سجّل حضور وغياب الطلاب يوميًا، وتابع الإحصائيات والنسب المئوية لكل صف وطالب."
+          description="سجّلي حضور وغياب الطالبات يوميًا، وتابعي الإحصائيات والنسب المئوية لكل صف وطالبة."
           icon="attendance"
           badge="الخطوة السادسة"
         />
@@ -91,9 +91,9 @@ export default async function AttendancePage({
 
         <SmartAlert
           tone="info"
-          title="الحضور يعتمد على الطلاب داخل الصفوف"
-          description="اختر الشعبة والتاريخ، ثم سجّل حالة كل طالب. يمكنك أيضًا ربط الحضور بحصة معينة من الجدول."
-          actionLabel="إدارة الطلاب"
+          title="الحضور يعتمد على الطالبات داخل الصفوف"
+          description="اختاري الشعبة والتاريخ، ثم سجّلي حالة كل طالبة. يمكنك أيضًا ربط الحضور بحصة معينة من الجدول."
+          actionLabel="إدارة الطالبات"
           actionHref="/students"
         />
 
@@ -121,17 +121,17 @@ export default async function AttendancePage({
           <EmptyState
             icon="attendance"
             title="لا توجد سجلات حضور بعد"
-            description="اختر الشعبة والتاريخ، ثم سجّل حالة كل طالب: حاضر، غائب، متأخر، أو مجاز."
+            description="اختاري الشعبة والتاريخ، ثم سجّلي حالة كل طالبة: حاضرة، غائبة، متأخرة، أو مجازة."
             actionLabel="تسجيل حضور اليوم"
             actionHref="#attendance-form"
-            secondaryLabel="إدارة الطلاب"
+            secondaryLabel="إدارة الطالبات"
             secondaryHref="/students"
           />
         ) : records.length === 0 ? (
           <EmptyState
             icon="search"
             title="لا توجد نتائج مطابقة"
-            description="جرّب البحث باسم الطالب، أو غيّر فلتر الحالة أو التاريخ."
+            description="جرّب البحث باسم الطالبة، أو غيّر فلتر الحالة أو التاريخ."
             actionLabel="عرض كل السجلات"
             actionHref="/attendance"
           />
@@ -199,7 +199,7 @@ function AttendanceFeedback({ saved, deleted, error }: AttendanceFeedbackProps) 
       <SmartAlert
         tone="success"
         title="تم تسجيل الحضور بنجاح"
-        description="تم حفظ سجل الحضور للطالب المحدد."
+        description="تم حفظ سجل الحضور للطالبة المحددة."
       />
     );
   }
@@ -220,7 +220,7 @@ function AttendanceFeedback({ saved, deleted, error }: AttendanceFeedbackProps) 
         ? "لا يمكن حذف سجل الحضور. حاول مرة أخرى."
         : error === "missing-id"
           ? "معرّف سجل الحضور مطلوب."
-          : "تأكد من إدخال البيانات بشكل صحيح، وأن الطالب مسجل في النظام.";
+          : "تأكد من إدخال البيانات بشكل صحيح، وأن الطالبة مسجلة في النظام.";
 
     return (
       <SmartAlert
@@ -255,7 +255,7 @@ function AttendanceCreateForm({
       action={createAttendanceAction}
       className="app-card overflow-hidden"
     >
-      <div className="border-b border-[var(--app-border-soft)] bg-gradient-to-l from-indigo-50/40 to-violet-50/20 p-6">
+      <div className="border-b border-[var(--app-border-soft)] bg-gradient-to-l to-rose-50/40 to-amber-50/20 p-6">
         <div className="flex items-start gap-3">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-700">
             <CheckSquare size={24} />
@@ -267,7 +267,7 @@ function AttendanceCreateForm({
             </h3>
 
             <p className="mt-1 text-sm leading-7 text-[var(--app-text-muted)]">
-              اختر الطالب والتاريخ وحالة الحضور. يمكنك ربط السجل بحصة من الجدول اختياريًا.
+              اختاري الطالبة والتاريخ وحالة الحضور. يمكنك ربط السجل بحصة من الجدول اختياريًا.
             </p>
           </div>
         </div>
@@ -317,11 +317,11 @@ function AttendanceCreateForm({
               htmlFor="studentId"
               className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
             >
-              الطالب <span className="text-red-600">*</span>
+              الطالبة <span className="text-red-600">*</span>
             </label>
 
             <select id="studentId" name="studentId" required defaultValue="" className="input">
-              <option value="">اختر الطالب</option>
+              <option value="">اختاري الطالبة</option>
 
               {students.map((student) => (
                 <option key={student.id} value={student.id}>
@@ -372,7 +372,7 @@ function AttendanceCreateForm({
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 border-t border-[var(--app-border-soft)] bg-gradient-to-l from-indigo-50/30 to-violet-50/20 p-6 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 border-t border-[var(--app-border-soft)] bg-gradient-to-l to-rose-50/30 to-amber-50/20 p-6 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm leading-7 text-[var(--app-text-muted)]">
           بعد تسجيل الحضور، يظهر السجل في القائمة أدناه مع الإحصائيات.
         </p>
@@ -410,7 +410,7 @@ function AttendanceStats({
       label: "إجمالي السجلات",
       value: total,
       icon: ClipboardList,
-      className: "bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700",
+      className: "bg-gradient-to-br from-blue-100 to-rose-100 text-blue-700",
     },
     {
       label: "حاضرون",
@@ -511,7 +511,7 @@ function AttendanceSearchForm({
             id="q"
             name="q"
             defaultValue={query}
-            placeholder="اسم الطالب، المادة، المدرس..."
+            placeholder="اسم الطالبة، المادة، المدرسة..."
             className="input pr-11"
           />
         </div>
@@ -557,7 +557,7 @@ function AttendanceList({ records }: AttendanceListProps) {
           </h3>
 
           <p className="mt-1 text-sm leading-6 text-[var(--app-text-muted)]">
-            تابع سجلات الحضور والغياب لكل طالب مع التفاصيل الكاملة.
+            تابعي سجلات الحضور والغياب لكل طالبة مع التفاصيل الكاملة.
           </p>
         </div>
 
@@ -581,7 +581,7 @@ function AttendanceRow({ record }: AttendanceRowProps) {
   const statusClass = getAttendanceStatusBadgeClass(record.status);
 
   return (
-    <article className="grid gap-4 p-5 transition hover:bg-indigo-50/40 xl:grid-cols-[1fr_auto] xl:items-center">
+    <article className="grid gap-4 p-5 transition hover:bg-rose-50/40 xl:grid-cols-[1fr_auto] xl:items-center">
       <div className="flex min-w-0 gap-4">
         <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-3xl bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-700">
           <UserRound size={25} />
@@ -630,7 +630,7 @@ function AttendanceRow({ record }: AttendanceRowProps) {
 
             {record.teacherName ? (
               <p>
-                المدرس:{" "}
+                المدرسة:{" "}
                 <span className="font-bold text-[var(--app-text)]">
                   {record.teacherName}
                 </span>

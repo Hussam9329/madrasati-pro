@@ -125,12 +125,12 @@ export async function createTeacher(
     return {
       ok: true,
       data: teacher,
-      message: "تمت إضافة المدرس بنجاح.",
+      message: "تمت إضافة المدرسة بنجاح.",
     };
   } catch {
     return {
       ok: false,
-      message: "حدث خطأ أثناء إضافة المدرس.",
+      message: "حدث خطأ أثناء إضافة المدرسة.",
     };
   }
 }
@@ -188,12 +188,12 @@ export async function updateTeacher(
     return {
       ok: true,
       data: teacher,
-      message: "تم تحديث بيانات المدرس بنجاح.",
+      message: "تم تحديث بيانات المدرسة بنجاح.",
     };
   } catch {
     return {
       ok: false,
-      message: "حدث خطأ أثناء تحديث بيانات المدرس.",
+      message: "حدث خطأ أثناء تحديث بيانات المدرسة.",
     };
   }
 }
@@ -228,7 +228,7 @@ export async function deleteTeacher(
   if (!deleteCheck.allowed) {
     return {
       ok: false,
-      message: deleteCheck.reason ?? "لا يمكن حذف المدرس حاليًا.",
+      message: deleteCheck.reason ?? "لا يمكن حذف المدرسةة حاليًا.",
     };
   }
 
@@ -241,7 +241,7 @@ export async function deleteTeacher(
   return {
     ok: true,
     data: null,
-    message: "تم حذف المدرس بنجاح.",
+    message: "تم حذف المدرسة بنجاح.",
   };
 }
 
@@ -270,8 +270,8 @@ export async function toggleTeacherStatus(
     ok: true,
     data: updatedTeacher,
     message: updatedTeacher.isActive
-      ? "تم تفعيل المدرس."
-      : "تم تعطيل المدرس.",
+      ? "تم تفعيل المدرسة."
+      : "تم تعطيل المدرسة.",
   };
 }
 
@@ -431,7 +431,7 @@ export async function assignSubjectsToTeacher(
   return {
     ok: true,
     data: updatedTeacher ?? undefined,
-    message: "تم تحديث مواد المدرس بنجاح.",
+    message: "تم تحديث مواد المدرسة بنجاح.",
   };
 }
 

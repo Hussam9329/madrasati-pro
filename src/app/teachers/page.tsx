@@ -76,8 +76,8 @@ export default async function TeachersPage({
     <AppShell>
       <div className="mx-auto flex w-full max-w-[1350px] flex-col gap-6">
         <PageHeader
-          title="المدرسون"
-          description="أضف المدرسين واربطهم بالمواد الدراسية."
+          title="المدرسات"
+          description="أضيفي المدرسات واربطيهن بالمواد الدراسية."
           icon="teachers"
           badge="الخطوة الثالثة"
         />
@@ -91,8 +91,8 @@ export default async function TeachersPage({
 
         <SmartAlert
           tone="info"
-          title="المدرسون يُربطون بالمواد أولاً"
-          description="أضف المدرس وحدّد المواد التي يدرّسها، ثم يمكنك استخدامه في بناء الجدول الدراسي."
+          title="المدرسات يُربطن بالمواد أولاً"
+          description="أضيفي المدرسة وحدّدي المواد التي تدرّسها، ثم يمكنك استخدامها في بناء الجدول الدراسي."
           actionLabel="إدارة المواد"
           actionHref="/subjects"
         />
@@ -115,9 +115,9 @@ export default async function TeachersPage({
         {!hasTeachers ? (
           <EmptyState
             icon="teachers"
-            title="لا يوجد مدرسون بعد"
-            description="ابدأ بإضافة أول مدرس وربطه بالمواد الدراسية. بعد ذلك يمكنك بناء الجدول الدراسي."
-            actionLabel="إضافة أول مدرس"
+            title="لا يوجد مدرسات بعد"
+            description="ابدئي بإضافة أول مدرسة وربطها بالمواد الدراسية. بعد ذلك يمكنك بناء الجدول الدراسي."
+            actionLabel="إضافة أول مدرسة"
             actionHref="#teacher-form"
             secondaryLabel="إدارة المواد"
             secondaryHref="/subjects"
@@ -126,8 +126,8 @@ export default async function TeachersPage({
           <EmptyState
             icon="search"
             title="لا توجد نتائج مطابقة للبحث"
-            description="جرّب البحث باسم المدرس أو هاتفه أو تخصصه أو المادة، أو امسح حقل البحث لعرض الكل."
-            actionLabel="عرض كل المدرسين"
+            description="جرّب البحث باسم المدرسة أو هاتفها أو تخصصها أو المادة، أو امسح حقل البحث لعرض الكل."
+            actionLabel="عرض كل المدرسات"
             actionHref="/teachers"
           />
         ) : (
@@ -221,8 +221,8 @@ function TeachersFeedback({
     return (
       <SmartAlert
         tone="success"
-        title="تمت إضافة المدرس بنجاح"
-        description="رائع، تم حفظ بيانات المدرس. يمكنك الآن إضافة مدرسين آخرين أو بناء الجدول الدراسي."
+        title="تمت إضافة المدرسةة بنجاح"
+        description="رائع، تم حفظ بيانات المدرسة. يمكنك الآن إضافة مدرسات أخريات أو بناء الجدول الدراسي."
       />
     );
   }
@@ -231,8 +231,8 @@ function TeachersFeedback({
     return (
       <SmartAlert
         tone="success"
-        title="تم حذف المدرس"
-        description="تم حذف المدرس من النظام لأنه غير مرتبط بحصص في الجدول."
+        title="تم حذف المدرسةة"
+        description="تم حذف المدرسةة من النظام لأنها غير مرتبطة بحصص في الجدول."
       />
     );
   }
@@ -241,8 +241,8 @@ function TeachersFeedback({
     return (
       <SmartAlert
         tone="success"
-        title="تم تحديث حالة المدرس"
-        description="تم تغيير حالة المدرس بين فعّال ومتوقف بنجاح."
+        title="تم تحديث حالة المدرسة"
+        description="تم تغيير حالة المدرسة بين فعّالة ومتوقفة بنجاح."
       />
     );
   }
@@ -250,10 +250,10 @@ function TeachersFeedback({
   if (error) {
     const description =
       error === "delete"
-        ? "لا يمكن حذف المدرس إذا كان مرتبطًا بحصص في الجدول. عطّله بدل حذفه."
+        ? "لا يمكن حذف المدرسةة إذا كانت مرتبطة بحصص في الجدول. عطّلها بدل حذفها."
         : error === "toggle"
-          ? "لا يمكن تحديث حالة المدرس. حاول مرة أخرى."
-          : "تأكد من إدخال اسم المدرس بشكل صحيح (3 أحرف على الأقل).";
+          ? "لا يمكن تحديث حالة المدرسة. حاول مرة أخرى."
+          : "تأكد من إدخال اسم المدرسة بشكل صحيح (3 أحرف على الأقل).";
 
     return (
       <SmartAlert
@@ -280,7 +280,7 @@ function TeacherCreateForm({ subjects }: TeacherCreateFormProps) {
       action={createTeacherAction}
       className="app-card overflow-hidden"
     >
-      <div className="border-b border-[var(--app-border-soft)] bg-gradient-to-l from-indigo-50/40 to-violet-50/20 p-6">
+      <div className="border-b border-[var(--app-border-soft)] bg-gradient-to-l to-rose-50/40 to-amber-50/20 p-6">
         <div className="flex items-start gap-3">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-700">
             <GraduationCap size={24} />
@@ -288,11 +288,11 @@ function TeacherCreateForm({ subjects }: TeacherCreateFormProps) {
 
           <div>
             <h3 className="text-xl font-extrabold text-[var(--app-text)]">
-              إضافة مدرس
+              إضافة مدرسة
             </h3>
 
             <p className="mt-1 text-sm leading-7 text-[var(--app-text-muted)]">
-              أدخل بيانات المدرس واربطه بالمواد الدراسية التي يدرّسها.
+              أدخلي بيانات المدرسة واربطيها بالمواد الدراسية التي تدرّسها.
             </p>
           </div>
         </div>
@@ -344,21 +344,21 @@ function TeacherCreateForm({ subjects }: TeacherCreateFormProps) {
         {subjects.length > 0 ? (
           <div>
             <label className="mb-2 block text-sm font-extrabold text-[var(--app-text)]">
-              المادة التي يدرسها <span className="text-red-600">*</span>
+              المادة التي تدرّسها <span className="text-red-600">*</span>
             </label>
 
-            <div className="max-h-52 overflow-y-auto rounded-2xl border border-[var(--app-border-soft)] bg-gradient-to-l from-indigo-50/30 to-violet-50/20 p-4">
+            <div className="max-h-52 overflow-y-auto rounded-2xl border border-[var(--app-border-soft)] bg-gradient-to-l to-rose-50/30 to-amber-50/20 p-4">
               <div className="grid gap-3 sm:grid-cols-2">
                 {subjects.map((subject) => (
                   <label
                     key={subject.id}
-                    className="flex cursor-pointer items-center gap-3 rounded-xl border border-[var(--app-border-soft)] bg-white p-3 transition hover:border-indigo-200 hover:bg-indigo-50/40"
+                    className="flex cursor-pointer items-center gap-3 rounded-xl border border-[var(--app-border-soft)] bg-white p-3 transition hover:border-rose-200 hover:bg-rose-50/40"
                   >
                     <input
                       type="checkbox"
                       name="subjectIds"
                       value={subject.id}
-                      className="h-4 w-4 accent-indigo-600"
+                      className="h-4 w-4 accent-rose-600"
                     />
 
                     <span className="flex items-center gap-2">
@@ -377,7 +377,7 @@ function TeacherCreateForm({ subjects }: TeacherCreateFormProps) {
             </div>
 
             <p className="mt-2 text-xs leading-6 text-[var(--app-text-soft)]">
-              اختر المادة أو المواد التي يدرّسها هذا المدرس.
+              اختاري المادة أو المواد التي تدرّسها هذه المدرسة.
             </p>
           </div>
         ) : (
@@ -388,22 +388,22 @@ function TeacherCreateForm({ subjects }: TeacherCreateFormProps) {
                 href="/subjects"
                 className="font-extrabold underline underline-offset-2 hover:text-amber-900"
               >
-                أضف مواد أولًا
+                أضيفي مواد أولًا
               </a>{" "}
-              لربطها بالمدرسين.
+              لربطها بالمدرسات.
             </p>
           </div>
         )}
       </div>
 
-      <div className="flex flex-col gap-3 border-t border-[var(--app-border-soft)] bg-gradient-to-l from-indigo-50/30 to-violet-50/20 p-6 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 border-t border-[var(--app-border-soft)] bg-gradient-to-l to-rose-50/30 to-amber-50/20 p-6 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm leading-7 text-[var(--app-text-muted)]">
-          بعد إضافة المدرس، يمكنك بناء الجدول الدراسي وربطه بالحصص.
+          بعد إضافة المدرسةة، يمكنك بناء الجدول الدراسي وربطها بالحصص.
         </p>
 
         <button type="submit" className="btn btn-primary">
           <CheckCircle2 size={18} />
-          حفظ المدرس
+          حفظ المدرسة
         </button>
       </div>
     </form>
@@ -427,19 +427,19 @@ function TeacherStats({
 }: TeacherStatsProps) {
   const stats = [
     {
-      label: "إجمالي المدرسين",
+      label: "إجمالي المدرسات",
       value: total,
       icon: GraduationCap,
-      className: "bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700",
+      className: "bg-gradient-to-br from-blue-100 to-rose-100 text-blue-700",
     },
     {
-      label: "مدرسون فعّالون",
+      label: "مدرسات فعّالات",
       value: active,
       icon: CheckCircle2,
       className: "bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-700",
     },
     {
-      label: "مدرسون متوقفون",
+      label: "مدرسات متوقفات",
       value: inactive,
       icon: AlertTriangle,
       className: "bg-gradient-to-br from-amber-100 to-orange-100 text-amber-700",
@@ -499,7 +499,7 @@ function TeacherSearchForm({ query }: TeacherSearchFormProps) {
         htmlFor="q"
         className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
       >
-        البحث في المدرسين
+        البحث في المدرسات
       </label>
 
       <div className="flex flex-col gap-3 sm:flex-row">
@@ -538,15 +538,15 @@ function TeacherList({ teachers }: TeacherListProps) {
       <div className="flex flex-col gap-2 border-b border-[var(--app-border-soft)] p-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-xl font-extrabold text-[var(--app-text)]">
-            قائمة المدرسين
+            قائمة المدرسات
           </h3>
 
           <p className="mt-1 text-sm leading-6 text-[var(--app-text-muted)]">
-            تابع بيانات المدرسين وحالتهم والمواد المرتبطة بهم.
+            تابعي بيانات المدرسات وحالتهن والمواد المرتبطة بهن.
           </p>
         </div>
 
-        <span className="badge badge-info">{teachers.length} مدرس</span>
+        <span className="badge badge-info">{teachers.length} مدرسة</span>
       </div>
 
       <div className="divide-y divide-[var(--app-border-soft)]">
@@ -568,7 +568,7 @@ function TeacherRow({ teacher }: TeacherRowProps) {
   const statusClass = getTeacherStatusBadgeClass(status);
 
   return (
-    <article className="grid gap-4 p-5 transition hover:bg-indigo-50/40 lg:grid-cols-[1fr_auto] lg:items-center">
+    <article className="grid gap-4 p-5 transition hover:bg-rose-50/40 lg:grid-cols-[1fr_auto] lg:items-center">
       <div className="flex min-w-0 gap-4">
         <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-3xl bg-emerald-100 text-emerald-700">
           <UserRound size={25} />

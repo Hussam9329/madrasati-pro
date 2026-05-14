@@ -75,7 +75,7 @@ export async function createOrUpdateSchool(
     return {
       ok: true,
       data: updatedSchool,
-      message: "تم تحديث بيانات المدرسة بنجاح.",
+      message: "تم تحديث بيانات المدرسةة بنجاح.",
     };
   }
 
@@ -145,7 +145,7 @@ export async function updateSchoolById(
   return {
     ok: true,
     data: updatedSchool,
-    message: "تم تحديث بيانات المدرسة بنجاح.",
+    message: "تم تحديث بيانات المدرسةة بنجاح.",
   };
 }
 
@@ -194,7 +194,7 @@ export async function getSchoolSetupStatus(): Promise<{
     return {
       hasSchool: false,
       completionPercentage: 0,
-      nextMessage: "أضف بيانات المدرسة حتى تظهر في التقارير والواجهات.",
+      nextMessage: "أضيفي بيانات المدرسة حتى تظهر في التقارير والواجهات.",
     };
   }
 

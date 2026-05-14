@@ -562,9 +562,9 @@ async function validateScheduleRelations(
   if (!teacher) {
     return {
       ok: false,
-      message: "المدرس المحدد غير موجود.",
+      message: "المدرسة المحددة غير موجودة.",
       errors: {
-        teacherId: "المدرس المحدد غير موجود.",
+        teacherId: "المدرسة المحددة غير موجودة.",
       },
     };
   }
@@ -574,7 +574,7 @@ async function validateScheduleRelations(
       ok: false,
       message: "لا يمكن إسناد الحصة لمدرس متوقف.",
       errors: {
-        teacherId: "المدرس متوقف.",
+        teacherId: "المدرسة متوقفة.",
       },
     };
   }
@@ -589,9 +589,9 @@ async function validateScheduleRelations(
   if (!teacherSubject) {
     return {
       ok: false,
-      message: "هذا المدرس غير مرتبط بهذه المادة.",
+      message: "هذا المدرسة غير مرتبطة بهذه المادة.",
       errors: {
-        teacherId: "اربط المدرس بالمادة أولًا من صفحة المدرسين.",
+        teacherId: "اربطي المدرسة بالمادة أولًا من صفحة المدرسات.",
         subjectId: "المادة غير مرتبطة بالمدرس.",
       },
     };

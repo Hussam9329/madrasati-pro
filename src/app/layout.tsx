@@ -12,18 +12,18 @@ const tajawal = Tajawal({
 
 export const metadata: Metadata = {
   title: {
-    default: "مدرستي",
-    template: "%s | مدرستي",
+    default: "مارينا",
+    template: "%s | مارينا",
   },
   description:
-    "نظام مدرسي ذكي ومتكامل لإدارة ثانوية مارينا للبنات، الطلاب، المدرسات، الصفوف، الدرجات، الأقساط، والمدفوعات.",
-  applicationName: "مدرستي",
-  authors: [{ name: "مدرستي" }],
+    "نظام مدرسي ذكي ومتكامل لإدارة ثانوية مارينا للبنات، الطالبات، المدرسات، الصفوف، الدرجات، الأقساط، والمدفوعات.",
+  applicationName: "مارينا",
+  authors: [{ name: "مارينا" }],
   generator: "Next.js",
   keywords: [
-    "مدرستي",
+    "مارينا",
     "نظام مدرسة",
-    "إدارة الطلاب",
+    "إدارة الطالبات",
     "الحضور",
     "الدرجات",
     "الأقساط",
@@ -35,7 +35,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-  themeColor: "#6366f1",
+  themeColor: "#b01849",
 };
 
 type RootLayoutProps = {
