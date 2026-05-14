@@ -99,10 +99,10 @@ export function QuickCodeAttendance({ qrAvailable }: QuickCodeAttendanceProps) {
           </div>
           <div>
             <h3 className="text-xl font-extrabold text-[var(--app-text)]">
-              تسجيل حضور برمز الطالبة
+              تسجيل حضور برمز الطالب
             </h3>
             <p className="mt-1 text-sm leading-7 text-[var(--app-text-muted)]">
-              أدخلي رمز الطالبة (مثل: MarinaSchoolStd-0001) وسيتم تسجيل حضورها أو انصرافها فورًا.
+              أدخل رمز الطالب (مثل: MarinaSchoolStd-0001) وسيتم تسجيل حضوره أو انصرافه فورًا.
               {qrAvailable && " يمكنك أيضًا استخدام الكاميرا لمسح رمز QR."}
             </p>
           </div>
@@ -148,7 +148,7 @@ export function QuickCodeAttendance({ qrAvailable }: QuickCodeAttendanceProps) {
                 type="text"
                 value={studentCode}
                 onChange={(e) => setStudentCode(e.target.value)}
-                placeholder="أدخلي رمز الطالبة... (مثل: MarinaSchoolStd-0001)"
+                placeholder="أدخل رمز الطالب... (مثل: MarinaSchoolStd-0001)"
                 className="input ltr text-left placeholder:text-right"
                 dir="ltr"
                 disabled={loading}
@@ -178,7 +178,7 @@ export function QuickCodeAttendance({ qrAvailable }: QuickCodeAttendanceProps) {
 
           {/* Quick tip */}
           <p className="mt-2 text-xs text-[var(--app-text-soft)]">
-            اضغطي Enter بعد كتابة الرمز للتسجيل السريع
+            اضغط Enter بعد كتابة الرمز للتسجيل السريع
           </p>
         </form>
 
@@ -212,7 +212,7 @@ export function QuickCodeAttendance({ qrAvailable }: QuickCodeAttendanceProps) {
                 {result.ok && (
                   <div className="mt-2 grid gap-1 text-sm text-emerald-800">
                     <p>
-                      الطالبة: <span className="font-bold">{result.studentName}</span>
+                      الطالب: <span className="font-bold">{result.studentName}</span>
                     </p>
                     <p>
                       الرمز: <span className="font-bold ltr inline-block" dir="ltr">{result.studentCode}</span>

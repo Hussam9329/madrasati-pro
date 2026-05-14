@@ -115,7 +115,7 @@ export default async function GradesPage({ searchParams }: GradesPageProps) {
       <div className="mx-auto flex w-full max-w-[1350px] flex-col gap-6">
         <PageHeader
           title="الدرجات"
-          description="أدخل درجات الطالبات وتابع مستواهن في المواد والامتحانات المختلفة."
+          description="أدخل درجات الطلاب وتابع مستواهم في المواد والامتحانات المختلفة."
           icon="grades"
           badge="الخطوة الخامسة"
         />
@@ -129,8 +129,8 @@ export default async function GradesPage({ searchParams }: GradesPageProps) {
 
         <SmartAlert
           tone="info"
-          title="الدرجات تحتاج مواد وطالبات"
-          description="قبل إدخال الدرجات، تأكد من إضافة المواد الدراسية والطالبات وربطهن بالصفوف والشُعب."
+          title="الدرجات تحتاج مواد وطلاب"
+          description="قبل إدخال الدرجات، تأكد من إضافة المواد الدراسية والطلاب وربطهم بالصفوف والشُعب."
           actionLabel="إدارة المواد"
           actionHref="/subjects"
         />
@@ -169,7 +169,7 @@ export default async function GradesPage({ searchParams }: GradesPageProps) {
           <EmptyState
             icon="grades"
             title="لا توجد درجات بعد"
-            description="اختر الصف والمادة والامتحان، ثم أدخل درجات الطالبات بطريقة سهلة وسريعة."
+            description="اختر الصف والمادة والامتحان، ثم أدخل درجات الطلاب بطريقة سهلة وسريعة."
             actionLabel="إدخال درجات"
             actionHref="#grade-form"
             secondaryLabel="إدارة المواد"
@@ -179,7 +179,7 @@ export default async function GradesPage({ searchParams }: GradesPageProps) {
           <EmptyState
             icon="search"
             title="لا توجد نتائج مطابقة"
-            description="جرّب البحث بعنوان الدرجة أو اسم الطالبة، أو غيّر فلتر الامتحان أو الفصل."
+            description="جرّب البحث بعنوان الدرجة أو اسم الطالب، أو غيّر فلتر الامتحان أو الفصل."
             actionLabel="عرض كل الدرجات"
             actionHref="/grades"
           />
@@ -270,7 +270,7 @@ function GradesFeedback({ saved, deleted, error, warning }: GradesFeedbackProps)
       <SmartAlert
         tone="danger"
         title="تمت إضافة الدرجة - تحذير: راسب"
-        description="الطالبة حصلت على نسبة أقل من 50%. يُنصح بمتابعة الطالبة وتقديم الدعم اللازم."
+        description="الطالب حصل على نسبة أقل من 50%. يُنصح بمتابعة الطالب وتقديم الدعم اللازم."
       />
     );
   }
@@ -280,7 +280,7 @@ function GradesFeedback({ saved, deleted, error, warning }: GradesFeedbackProps)
       <SmartAlert
         tone="warning"
         title="تمت إضافة الدرجة - تنبيه"
-        description="الطالبة حصلت على نسبة بين 50% و59%، وهي قريبة من حد الرسوب. يُنصح بالمتابعة."
+        description="الطالب حصل على نسبة بين 50% و59%، وهي قريبة من حد الرسوب. يُنصح بالمتابعة."
       />
     );
   }
@@ -290,7 +290,7 @@ function GradesFeedback({ saved, deleted, error, warning }: GradesFeedbackProps)
       <SmartAlert
         tone="success"
         title="تمت إضافة الدرجة بنجاح"
-        description="تم حفظ الدرجة وربطها بالطالبة والمادة المحددة."
+        description="تم حفظ الدرجة وربطها بالطالب والمادة المحددة."
       />
     );
   }
@@ -309,7 +309,7 @@ function GradesFeedback({ saved, deleted, error, warning }: GradesFeedbackProps)
     const description =
       error === "delete"
         ? "لا يمكن حذف الدرجة حاليًا. تحقق من البيانات وحاول مرة أخرى."
-        : "تأكد من إدخال جميع البيانات المطلوبة بشكل صحيح، وأن الطالبة مستمرة والمادة فعّالة.";
+        : "تأكد من إدخال جميع البيانات المطلوبة بشكل صحيح، وأن الطالب مستمر والمادة فعّال.";
 
     return (
       <SmartAlert
@@ -379,7 +379,7 @@ function GradeCreateForm({
               1
             </div>
             <h4 className="text-base font-extrabold text-[var(--app-text)]">
-              اختر الشعبة والطالبة
+              اختر الشعبة والطالب
             </h4>
           </div>
 
@@ -410,13 +410,13 @@ function GradeCreateForm({
                 className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
               >
                 <UserRound size={14} className="ml-1 inline-block" />
-                الطالبة <span className="text-red-600">*</span>
+                الطالب <span className="text-red-600">*</span>
               </label>
 
               {!sectionId ? (
                 <div className="input flex items-center gap-2 text-[var(--app-text-muted)]">
                   <Users size={16} />
-                  <span>اختر الشعبة أولًا حتى تظهر قائمة الطالبات.</span>
+                  <span>اختر الشعبة أولًا حتى تظهر قائمة الطلاب.</span>
                 </div>
               ) : sectionStudents.length === 0 ? (
                 <div className="input flex items-center gap-2 text-[var(--app-text-muted)]">
@@ -432,7 +432,7 @@ function GradeCreateForm({
                   className="input"
                 >
                   <option value="" disabled>
-                    اختر الطالبة
+                    اختر الطالب
                   </option>
 
                   {sectionStudents.map((student) => (
@@ -451,7 +451,7 @@ function GradeCreateForm({
           {sectionId && sectionStudents.length > 0 && (
             <p className="mt-3 text-xs text-[var(--app-text-soft)]">
               <Users size={12} className="ml-1 inline-block" />
-              {sectionStudents.length} طالبة في{" "}
+              {sectionStudents.length} طالب في{" "}
               {selectedSection ? getSectionDisplayName(selectedSection) : "الشعبة المختارة"}
             </p>
           )}
@@ -577,7 +577,7 @@ function GradeCreateForm({
                   htmlFor="score"
                   className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
                 >
-                  درجة الطالبة <span className="text-red-600">*</span>
+                  درجة الطالب <span className="text-red-600">*</span>
                 </label>
 
                 <input
@@ -705,7 +705,7 @@ function GradeCreateForm({
 
       <div className="flex flex-col gap-3 border-t border-[var(--app-border-soft)] bg-gradient-to-l to-rose-50/30 to-amber-50/20 p-6 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm leading-7 text-[var(--app-text-muted)]">
-          بعد إدخال الدرجات، يمكنك متابعة مستوى الطالبات والتقارير.
+          بعد إدخال الدرجات، يمكنك متابعة مستوى الطلاب والتقارير.
         </p>
 
         <button type="submit" className="btn btn-primary">
@@ -870,7 +870,7 @@ function GradeSearchForm({
             id="q"
             name="q"
             defaultValue={query}
-            placeholder="عنوان الدرجة، اسم الطالبة، المادة..."
+            placeholder="عنوان الدرجة، اسم الطالب، المادة..."
             className="input pr-11"
           />
         </div>
@@ -921,7 +921,7 @@ function GradesList({ grades }: GradesListProps) {
           </h3>
 
           <p className="mt-1 text-sm leading-6 text-[var(--app-text-muted)]">
-            تابع الدرجات المسجلة وتصنيفاتها ومستويات الطالبات.
+            تابع الدرجات المسجلة وتصنيفاتها ومستويات الطلاب.
           </p>
         </div>
 

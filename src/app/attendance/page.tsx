@@ -79,7 +79,7 @@ export default async function AttendancePage({
       <div className="mx-auto flex w-full max-w-[1350px] flex-col gap-6">
         <PageHeader
           title="الحضور والغياب"
-          description="سجّل حضور وغياب الطالبات يوميًا، وتابع الإحصائيات والنسب المئوية لكل صف وطالبة."
+          description="سجّل حضور وغياب الطلاب يوميًا، وتابع الإحصائيات والنسب المئوية لكل صف وطالب."
           icon="attendance"
           badge="الخطوة السادسة"
         />
@@ -92,9 +92,9 @@ export default async function AttendancePage({
 
         <SmartAlert
           tone="info"
-          title="الحضور يعتمد على الطالبات داخل الصفوف"
-          description="سجّل حضور الطالبات بسرعة عبر إدخال رمز الطالبة أو مسح QR بالهاتف. على الحاسوب، يمكنك إدخال رمز الطالبة مباشرة لتسجيل الحضور والانصراف فورًا."
-          actionLabel="إدارة الطالبات"
+          title="الحضور يعتمد على الطلاب داخل الصفوف"
+          description="سجّل حضور الطلاب بسرعة عبر إدخال رمز الطالب أو مسح QR بالهاتف. على الحاسوب، يمكنك إدخال رمز الطالب مباشرة لتسجيل الحضور والانصراف فورًا."
+          actionLabel="إدارة الطلاب"
           actionHref="/students"
         />
 
@@ -126,17 +126,17 @@ export default async function AttendancePage({
           <EmptyState
             icon="attendance"
             title="لا توجد سجلات حضور بعد"
-            description="اختر الشعبة والتاريخ، ثم سجّل حالة كل طالبة: حاضرة، غائبة، متأخرة، أو مجازة."
+            description="اختر الشعبة والتاريخ، ثم سجّل حالة كل طالب: حاضر، غائب، متأخر، أو مجاز."
             actionLabel="تسجيل حضور اليوم"
             actionHref="#attendance-form"
-            secondaryLabel="إدارة الطالبات"
+            secondaryLabel="إدارة الطلاب"
             secondaryHref="/students"
           />
         ) : records.length === 0 ? (
           <EmptyState
             icon="search"
             title="لا توجد نتائج مطابقة"
-            description="جرّب البحث باسم الطالبة، أو غيّر فلتر الحالة أو التاريخ."
+            description="جرّب البحث باسم الطالب، أو غيّر فلتر الحالة أو التاريخ."
             actionLabel="عرض كل السجلات"
             actionHref="/attendance"
           />
@@ -206,7 +206,7 @@ function AttendanceFeedback({ saved, deleted, error }: AttendanceFeedbackProps) 
       <SmartAlert
         tone="success"
         title="تم تسجيل الحضور بنجاح"
-        description="تم حفظ سجل الحضور للطالبة المحددة."
+        description="تم حفظ سجل الحضور للطالب المحدد."
       />
     );
   }
@@ -227,7 +227,7 @@ function AttendanceFeedback({ saved, deleted, error }: AttendanceFeedbackProps) 
         ? "لا يمكن حذف سجل الحضور. حاول مرة أخرى."
         : error === "missing-id"
           ? "معرّف سجل الحضور مطلوب."
-          : "تأكد من إدخال البيانات بشكل صحيح، وأن الطالبة مسجلة في النظام.";
+          : "تأكد من إدخال البيانات بشكل صحيح، وأن الطالب مسجل في النظام.";
 
     return (
       <SmartAlert
@@ -272,7 +272,7 @@ function AttendanceCreateForm({
             </h3>
 
             <p className="mt-1 text-sm leading-7 text-[var(--app-text-muted)]">
-              اختر الطالبة وسجّل دخولها صباحًا أو انصرافها ظهرًا. الحضور هنا خاص بدوام الثانوية وليس بالمحاضرات.
+              اختر الطالب وسجّل دخوله صباحًا أو انصرافه ظهرًا. الحضور هنا خاص بدوام الثانوية وليس بالمحاضرات.
             </p>
           </div>
         </div>
@@ -322,11 +322,11 @@ function AttendanceCreateForm({
               htmlFor="studentId"
               className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
             >
-              الطالبة <span className="text-red-600">*</span>
+              الطالب <span className="text-red-600">*</span>
             </label>
 
             <select id="studentId" name="studentId" required defaultValue="" className="input">
-              <option value="">اختر الطالبة</option>
+              <option value="">اختر الطالب</option>
 
               {students.map((student) => (
                 <option key={student.id} value={student.id}>
@@ -510,7 +510,7 @@ function AttendanceSearchForm({
             id="q"
             name="q"
             defaultValue={query}
-            placeholder="اسم الطالبة، المادة، المدرس..."
+            placeholder="اسم الطالب، المادة، المدرس..."
             className="input pr-11"
           />
         </div>
@@ -556,7 +556,7 @@ function AttendanceList({ records }: AttendanceListProps) {
           </h3>
 
           <p className="mt-1 text-sm leading-6 text-[var(--app-text-muted)]">
-            تابع سجلات الحضور والغياب لكل طالبة مع التفاصيل الكاملة.
+            تابع سجلات الحضور والغياب لكل طالب مع التفاصيل الكاملة.
           </p>
         </div>
 

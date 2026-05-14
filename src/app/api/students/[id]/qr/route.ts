@@ -15,7 +15,7 @@ export async function GET(
 
   if (!student || !student.studentCode) {
     return NextResponse.json(
-      { ok: false, message: "الطالبة غير موجودة أو لا تملك رمزًا." },
+      { ok: false, message: "الطالب غير موجود أو لا يملك رمزًا." },
       { status: 404 },
     );
   }

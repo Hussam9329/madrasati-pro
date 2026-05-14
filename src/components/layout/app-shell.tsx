@@ -161,7 +161,7 @@ export function AppShell({ children }: AppShellProps) {
                     مارينا
                   </p>
                   <p className="mt-1 text-xs font-medium text-[var(--app-text-muted)]">
-                    ثانوية مارينا الأهلية للبنات
+                    ثانوية مارينا الأهلية
                   </p>
                 </div>
               </div>
@@ -200,7 +200,7 @@ function SidebarContent({ pathname, onNavigate }: SidebarContentProps) {
               مارينا
             </p>
             <p className="mt-1 truncate text-xs font-medium text-[var(--color-sidebar-muted)]">
-              ثانوية مارينا الأهلية للبنات
+              ثانوية مارينا الأهلية
             </p>
           </div>
         </Link>
@@ -289,7 +289,7 @@ function SidebarContent({ pathname, onNavigate }: SidebarContentProps) {
             </div>
 
             <p className="relative text-xs leading-6 text-[var(--color-sidebar-muted)]">
-              اتبع الترتيب من الأعلى للأسفل: المواد، الصفوف، المدرسين، ثم الطالبات.
+              اتبع الترتيب من الأعلى للأسفل: المواد، الصفوف، المدرسين، ثم الطلاب.
               هكذا يبقى النظام مرتبًا من أول يوم.
             </p>
           </div>
@@ -306,7 +306,7 @@ function TopbarSearch() {
 
       <input
         type="search"
-        placeholder="ابحث عن طالبة، صف، مدرس..."
+        placeholder="ابحث عن طالب، صف، مدرس..."
         className="h-8 min-w-0 flex-1 border-0 bg-transparent text-sm font-medium text-[var(--app-text)] outline-none placeholder:text-[var(--app-text-soft)]"
       />
 

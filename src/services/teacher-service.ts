@@ -114,6 +114,7 @@ export async function createTeacher(
 
   const data = normalizeTeacherInput(input);
   const subjectIds = await getValidSubjectIds(data.subjectIds ?? []);
+  const sectionIds = await getValidSectionIds(data.sectionIds ?? []);
 
   const duplicateName = await findDuplicateTeacherName(data.fullName);
   if (duplicateName) {
@@ -138,6 +139,11 @@ export async function createTeacher(
         teacherSubjects: {
           create: subjectIds.map((subjectId) => ({
             subjectId,
+          })),
+        },
+        teacherSections: {
+          create: sectionIds.map((sectionId) => ({
+            sectionId,
           })),
         },
       },
@@ -192,6 +198,7 @@ export async function updateTeacher(
 
   const data = normalizeTeacherInput(input);
   const subjectIds = await getValidSubjectIds(data.subjectIds ?? []);
+  const sectionIds = await getValidSectionIds(data.sectionIds ?? []);
 
   const duplicateName = await findDuplicateTeacherName(data.fullName, id);
   if (duplicateName) {
@@ -209,6 +216,11 @@ export async function updateTeacher(
           teacherId: id,
         },
       });
+      await tx.teacherSection.deleteMany({
+        where: {
+          teacherId: id,
+        },
+      });
 
       return tx.teacher.update({
         where: {
@@ -220,6 +232,11 @@ export async function updateTeacher(
           teacherSubjects: {
             create: subjectIds.map((subjectId) => ({
               subjectId,
+            })),
+          },
+          teacherSections: {
+            create: sectionIds.map((sectionId) => ({
+              sectionId,
             })),
           },
         },
@@ -514,10 +531,44 @@ async function getValidSubjectIds(subjectIds: string[]): Promise<string[]> {
   return subjects.map((subject) => subject.id);
 }
 
+async function getValidSectionIds(sectionIds: string[]): Promise<string[]> {
+  const uniqueIds = Array.from(new Set(sectionIds.filter(Boolean)));
+
+  if (uniqueIds.length === 0) {
+    return [];
+  }
+
+  const sections = await db.section.findMany({
+    where: {
+      id: {
+        in: uniqueIds,
+      },
+      isActive: true,
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  return sections.map((section) => section.id);
+}
+
 const teacherListInclude = {
   teacherSubjects: {
     include: {
       subject: true,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  },
+  teacherSections: {
+    include: {
+      section: {
+        include: {
+          class: true,
+        },
+      },
     },
     orderBy: {
       createdAt: "desc",
@@ -548,6 +599,11 @@ function toTeacherListItem(teacher: TeacherWithRelations): TeacherListItem {
     subjects: teacher.teacherSubjects.map((item) => ({
       id: item.subject.id,
       name: item.subject.name,
+    })),
+    sections: teacher.teacherSections.map((item) => ({
+      id: item.section.id,
+      name: item.section.name,
+      className: item.section.class.name,
     })),
     subjectsCount: teacher._count.teacherSubjects,
     schedulesCount: teacher._count.schedules,

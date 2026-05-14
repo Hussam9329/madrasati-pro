@@ -18,6 +18,7 @@ export type TeacherFormInput = {
   fullName: string;
   phone: string;
   subjectIds: string[];
+  sectionIds?: string[];
 };
 
 export type TeacherListItem = {
@@ -32,6 +33,11 @@ export type TeacherListItem = {
   subjects: {
     id: string;
     name: string;
+  }[];
+  sections: {
+    id: string;
+    name: string;
+    className: string;
   }[];
   subjectsCount: number;
   schedulesCount: number;
@@ -59,6 +65,7 @@ export function getEmptyTeacherForm(): TeacherFormInput {
     fullName: "",
     phone: "",
     subjectIds: [],
+    sectionIds: [],
   };
 }
 
@@ -70,6 +77,9 @@ export function normalizeTeacherInput(
     phone: input.phone?.trim() || "",
     subjectIds: Array.isArray(input.subjectIds)
       ? input.subjectIds.filter(Boolean)
+      : [],
+    sectionIds: Array.isArray(input.sectionIds)
+      ? input.sectionIds.filter(Boolean)
       : [],
   };
 }

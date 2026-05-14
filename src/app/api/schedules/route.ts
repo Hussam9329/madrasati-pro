@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         ok: false,
-        message: "حدث خطأ أثناء إضافة الحصة.",
+        message: "حدث خطأ أثناء إضافة المحاضرة.",
       },
       { status: 500 },
     );
@@ -82,7 +82,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json(
         {
           ok: false,
-          message: "معرّف الحصة مطلوب.",
+          message: "معرّف المحاضرة مطلوب.",
         },
         { status: 400 },
       );
@@ -111,7 +111,7 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json(
       {
         ok: false,
-        message: "حدث خطأ أثناء تحديث الحصة.",
+        message: "حدث خطأ أثناء تحديث المحاضرة.",
       },
       { status: 500 },
     );
@@ -153,7 +153,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json(
         {
           ok: false,
-          message: "معرّف الحصة مطلوب.",
+          message: "معرّف المحاضرة مطلوب.",
         },
         { status: 400 },
       );
@@ -196,7 +196,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json(
         {
           ok: false,
-          message: "معرّف الحصة مطلوب.",
+          message: "معرّف المحاضرة مطلوب.",
         },
         { status: 400 },
       );
@@ -213,7 +213,7 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json(
       {
         ok: false,
-        message: "حدث خطأ أثناء حذف الحصة.",
+        message: "حدث خطأ أثناء حذف المحاضرة.",
       },
       { status: 500 },
     );

@@ -24,14 +24,14 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       ok: true,
-      message: "تم جلب الطالبات بنجاح.",
+      message: "تم جلب الطلاب بنجاح.",
       data: students,
     });
   } catch {
     return NextResponse.json(
       {
         ok: false,
-        message: "حدث خطأ أثناء جلب الطالبات.",
+        message: "حدث خطأ أثناء جلب الطلاب.",
       },
       { status: 500 },
     );

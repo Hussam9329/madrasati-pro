@@ -70,7 +70,7 @@ export function generatePaymentReceiptHtml(
   </div>
   <div class="body">
     ${payment.receiptNumber ? `<div class="row"><span class="label">رقم الفاتورة</span><span class="value">${payment.receiptNumber}</span></div>` : ""}
-    <div class="row"><span class="label">اسم الطالبة</span><span class="value">${student.fullName}</span></div>
+    <div class="row"><span class="label">اسم الطالب</span><span class="value">${student.fullName}</span></div>
     ${student.studentCode ? `<div class="row"><span class="label">الرقم التعريفي</span><span class="value">${student.studentCode}</span></div>` : ""}
     ${student.className ? `<div class="row"><span class="label">الصف</span><span class="value">${student.className}${student.sectionName ? " / " + student.sectionName : ""}</span></div>` : ""}
     ${payment.academicYear ? `<div class="row"><span class="label">السنة الدراسية</span><span class="value">${payment.academicYear}</span></div>` : ""}
@@ -84,7 +84,7 @@ export function generatePaymentReceiptHtml(
     <div class="row"><span class="label">تاريخ الدفع</span><span class="value">${payment.paidAt ? formatDate(payment.paidAt) : formatDate(payment.createdAt)}</span></div>
     ${payment.notes ? `<div class="row"><span class="label">ملاحظات</span><span class="value">${payment.notes}</span></div>` : ""}
   </div>
-  <div class="footer">ثانوية مارينا للبنات — تم إنشاء هذه الفاتورة إلكترونيًا</div>
+  <div class="footer">ثانوية مارينا — تم إنشاء هذه الفاتورة إلكترونيًا</div>
 </div>
 <button class="print-btn" onclick="window.print()">طباعة الفاتورة</button>
 </body>

@@ -26,6 +26,7 @@ import {
   toggleTeacherStatus,
 } from "@/services/teacher-service";
 import { getActiveSubjects } from "@/services/subject-service";
+import { getSections } from "@/services/class-service";
 import {
   formatTeacherSubjects,
   getTeacherStatusBadgeClass,
@@ -35,6 +36,7 @@ import {
   type TeacherStatus,
 } from "@/types/teacher";
 import type { Subject } from "@/types/subject";
+import type { SectionListItem } from "@/types/class";
 
 type TeachersPageProps = {
   searchParams?: {
@@ -53,10 +55,11 @@ export default async function TeachersPage({
 
   const query = searchParams?.q?.trim() ?? "";
 
-  const [teachers, counts, subjects] = await Promise.all([
+  const [teachers, counts, subjects, sections] = await Promise.all([
     safeQuery(() => getTeachers(), []),
     safeQuery(() => getTeachersCount(), { total: 0, active: 0, inactive: 0, withSubjects: 0, withoutSubjects: 0 }),
     safeQuery(() => getActiveSubjects(), []),
+    safeQuery(() => getSections(), []),
   ]);
 
   const filteredTeachers = query
@@ -91,14 +94,14 @@ export default async function TeachersPage({
 
         <SmartAlert
           tone="info"
-          title="المدرسين يُربطن بالمواد أولاً"
-          description="أضف المدرس وحدّدي المواد التي يدرّسها، ثم يمكنك استخدامها في بناء الجدول الدراسي."
+          title="المدرسين يُربطون بالمواد أولاً"
+          description="أضف المدرس وحدّد المواد التي يدرّسها، ثم يمكنك استخدامها في بناء الجدول الدراسي."
           actionLabel="إدارة المواد"
           actionHref="/subjects"
         />
 
         <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-          <TeacherCreateForm subjects={subjects} />
+          <TeacherCreateForm subjects={subjects} sections={sections} />
 
           <div className="flex flex-col gap-6">
             <TeacherStats
@@ -144,11 +147,13 @@ async function createTeacherAction(formData: FormData) {
   "use server";
 
   const subjectIds = formData.getAll("subjectIds").map(String).filter(Boolean);
+  const sectionIds = formData.getAll("sectionIds").map(String).filter(Boolean);
 
   const input: TeacherFormInput = {
     fullName: String(formData.get("fullName") ?? ""),
     phone: String(formData.get("phone") ?? ""),
     subjectIds,
+    sectionIds,
   };
 
   const result = await createTeacher(input);
@@ -245,7 +250,7 @@ function TeachersFeedback({
       <SmartAlert
         tone="success"
         title="تم تحديث حالة المدرس"
-        description="تم تغيير حالة المدرس بين فعّالة ومتوقفة بنجاح."
+        description="تم تغيير حالة المدرس بين فعّال ومتوقف بنجاح."
       />
     );
   }
@@ -274,9 +279,10 @@ function TeachersFeedback({
 
 type TeacherCreateFormProps = {
   subjects: Subject[];
+  sections: SectionListItem[];
 };
 
-function TeacherCreateForm({ subjects }: TeacherCreateFormProps) {
+function TeacherCreateForm({ subjects, sections }: TeacherCreateFormProps) {
   return (
     <form
       id="teacher-form"
@@ -386,7 +392,7 @@ function TeacherCreateForm({ subjects }: TeacherCreateFormProps) {
         ) : (
           <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4">
             <p className="text-sm leading-7 text-amber-800">
-              لا توجد مواد فعّالة حاليًا.{" "}
+              لا توجد مواد فعّال حاليًا.{" "}
               <a
                 href="/subjects"
                 className="font-extrabold underline underline-offset-2 hover:text-amber-900"
@@ -397,6 +403,47 @@ function TeacherCreateForm({ subjects }: TeacherCreateFormProps) {
             </p>
           </div>
         )}
+
+        {sections.length > 0 ? (
+          <div>
+            <label className="mb-2 block text-sm font-extrabold text-[var(--app-text)]">
+              الأقسام (الشُعب) التي يدرّسها
+            </label>
+
+            <div className="max-h-52 overflow-y-auto rounded-2xl border border-[var(--app-border-soft)] bg-gradient-to-l from-blue-50/30 to-teal-50/20 p-4">
+              <div className="grid gap-3 sm:grid-cols-2">
+                {sections.map((section) => (
+                  <label
+                    key={section.id}
+                    className="flex cursor-pointer items-center gap-3 rounded-xl border border-[var(--app-border-soft)] bg-white p-3 transition hover:border-blue-200 hover:bg-blue-50/40"
+                  >
+                    <input
+                      type="checkbox"
+                      name="sectionIds"
+                      value={section.id}
+                      className="h-4 w-4 accent-blue-600"
+                    />
+
+                    <span className="flex items-center gap-2">
+                      <UserRound
+                        size={15}
+                        className="text-[var(--app-text-soft)]"
+                      />
+
+                      <span className="text-sm font-bold text-[var(--app-text)]">
+                        {section.className} - {section.name}
+                      </span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <p className="mt-2 text-xs leading-6 text-[var(--app-text-soft)]">
+              اختر الشُعب التي يدرّس فيها هذا المدرس (اختياري).
+            </p>
+          </div>
+        ) : null}
       </div>
 
       <div className="flex flex-col gap-3 border-t border-[var(--app-border-soft)] bg-gradient-to-l to-rose-50/30 to-amber-50/20 p-6 sm:flex-row sm:items-center sm:justify-between">
@@ -614,6 +661,19 @@ function TeacherRow({ teacher }: TeacherRowProps) {
               </span>
             )}
           </div>
+
+          {teacher.sections.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {teacher.sections.map((section) => (
+                <span
+                  key={section.id}
+                  className="badge bg-purple-50 text-purple-700"
+                >
+                  {section.className} - {section.name}
+                </span>
+              ))}
+            </div>
+          )}
 
           <div className="mt-2 flex flex-wrap gap-2">
             <span className="badge bg-slate-100 text-slate-600">

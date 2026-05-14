@@ -20,24 +20,24 @@ export const dynamic = "force-dynamic";
 
 const setupSteps = [
   {
-    title: "أضيفي المواد الدراسية",
-    description: "المواد هي الأساس قبل ربط المدرسات والدرجات.",
-    status: "ابدئي هنا",
+    title: "أضف المواد الدراسية",
+    description: "المواد هي الأساس قبل ربط المدرسين والدرجات.",
+    status: "ابدأ هنا",
     active: true,
   },
   {
-    title: "أنشئي الصفوف والشُعب",
-    description: "حتى تتمكني من توزيع الطالبات وتنظيم الحضور.",
+    title: "أنشئ الصفوف والشُعب",
+    description: "حتى تتمكن من توزيع الطلاب وتنظيم الحضور.",
     status: "بعد المواد",
   },
   {
-    title: "أضيفي المدرسات",
-    description: "اربطي المدرسات بالمواد والصفوف المناسبة.",
+    title: "أضف المدرسين",
+    description: "اربط المدرسين بالمواد والصفوف المناسبة.",
     status: "بعد الصفوف",
   },
   {
-    title: "أضيفي الطالبات",
-    description: "أدخلي الطالبات واربطي كل طالبة بصفه وشعبته.",
+    title: "أضف الطلاب",
+    description: "أدخل الطلاب واربط كل طالب بصفه وشعبته.",
     status: "بعد الصفوف",
   },
 ];
@@ -58,16 +58,16 @@ export default async function DashboardPage() {
 
   const dashboardStats = [
     {
-      title: "إجمالي الطالبات",
+      title: "إجمالي الطلاب",
       value: String(stats.studentsTotal),
-      description: "طالبة مسجلة في النظام",
+      description: "طالب مسجل في النظام",
       icon: Users,
       tone: "blue",
     },
     {
-      title: "المدرسات",
+      title: "المدرسين",
       value: String(stats.teachersTotal),
-      description: "مدرسة جاهزة للتوزيع",
+      description: "مدرس جاهز للتوزيع",
       icon: GraduationCap,
       tone: "green",
     },
@@ -120,7 +120,7 @@ export default async function DashboardPage() {
                 <div>
                   <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-rose-100 bg-gradient-to-l to-rose-50 to-amber-50 px-3 py-2 text-xs font-extrabold text-rose-700">
                     <span className="h-2 w-2 rounded-full bg-gradient-to-r to-rose-500 to-amber-500" />
-                    نظام إدارة ثانوية مارينا للبنات
+                    نظام إدارة ثانوية مارينا
                   </div>
 
                   <h2 className="app-title">
@@ -145,11 +145,11 @@ export default async function DashboardPage() {
                     </p>
 
                     <h3 className="mt-3 text-xl font-extrabold">
-                      أضيفي المواد الدراسية أولًا
+                      أضف المواد الدراسية أولًا
                     </h3>
 
                     <p className="mt-2 text-sm leading-7 text-rose-100">
-                      لأن المدرسات والدرجات والجدول يعتمدون عليها لاحقًا.
+                      لأن المدرسين والدرجات والجدول يعتمدون عليها لاحقًا.
                     </p>
 
                     <a
@@ -177,7 +177,7 @@ export default async function DashboardPage() {
                 </h3>
 
                 <p className="mt-2 text-sm leading-7 text-[var(--app-text-muted)]">
-                  لا تضيفي الطالبات قبل إنشاء الصفوف والشُعب. الترتيب الصحيح يجعل
+                  لا تضف الطلاب قبل إنشاء الصفوف والشُعب. الترتيب الصحيح يجعل
                   النظام أسهل وأسرع ويمنع الأخطاء لاحقًا.
                 </p>
               </div>
@@ -209,7 +209,7 @@ export default async function DashboardPage() {
                 </h3>
 
                 <p className="mt-1 text-sm leading-6 text-[var(--app-text-muted)]">
-                  اتبعي هذه الخطوات بالترتيب حتى تبنيي النظام بدون ارتباك.
+                  اتبع هذه الخطوات بالترتيب حتى تبني النظام بدون ارتباك.
                 </p>
               </div>
 
@@ -325,7 +325,7 @@ export default async function DashboardPage() {
               <StatusTile
                 label="التأسيس"
                 value="غير مكتمل"
-                description="ابدئي بالمواد والصفوف"
+                description="ابدأ بالمواد والصفوف"
                 tone="warning"
               />
 
@@ -339,14 +339,14 @@ export default async function DashboardPage() {
               <StatusTile
                 label="الدرجات"
                 value="بانتظار المواد"
-                description="أضيفي المواد أولًا"
+                description="أضف المواد أولًا"
                 tone="info"
               />
 
               <StatusTile
                 label="الأقساط"
-                value="بانتظار الطالبات"
-                description="أضيفي الطالبات ثم الأقساط"
+                value="بانتظار الطلاب"
+                description="أضف الطلاب ثم الأقساط"
                 tone="success"
               />
             </div>

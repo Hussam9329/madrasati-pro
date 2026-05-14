@@ -213,7 +213,7 @@ export function QrAttendanceScanner({
             {result.ok && (
               <div className="mt-2 text-sm text-emerald-800">
                 <p>
-                  الطالبة: <span className="font-bold">{result.studentName}</span>
+                  الطالب: <span className="font-bold">{result.studentName}</span>
                 </p>
                 <p>
                   الرمز: <span className="font-bold">{result.studentCode}</span>

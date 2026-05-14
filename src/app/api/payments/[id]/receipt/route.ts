@@ -61,7 +61,7 @@ export async function GET(
         createdAt: payment.createdAt,
       },
       student,
-      { name: "ثانوية مارينا للبنات" },
+      { name: "ثانوية مارينا" },
     );
 
     return new NextResponse(html, {

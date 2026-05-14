@@ -77,12 +77,12 @@ export function AttendanceEntryPanel() {
             <QrAttendanceScanner
               mode="check-in"
               title="تسجيل حضور (QR)"
-              description="وجّهي الكاميرا نحو رمز QR الخاص بالطالبة لتسجيل حضورها."
+              description="وجّه الكاميرا نحو رمز QR الخاص بالطالب لتسجيل حضوره."
             />
             <QrAttendanceScanner
               mode="check-out"
               title="تسجيل انصراف (QR)"
-              description="وجّهي الكاميرا نحو رمز QR الخاص بالطالبة لتسجيل انصرافها."
+              description="وجّه الكاميرا نحو رمز QR الخاص بالطالب لتسجيل انصرافه."
             />
           </div>
 
@@ -102,7 +102,7 @@ export function AttendanceEntryPanel() {
                 مسح QR متاح على الهاتف فقط
               </p>
               <p className="mt-1 text-xs leading-6 text-blue-600">
-                لاستخدام ماسح رمز QR بالكاميرا، افتحي الموقع من هاتفك أو جهازك اللوحي. على الحاسوب يمكنك تسجيل الحضور والانصراف بإدخال رمز الطالبة مباشرة.
+                لاستخدام ماسح رمز QR بالكاميرا، افتح الموقع من هاتفك أو جهازك اللوحي. على الحاسوب يمكنك تسجيل الحضور والانصراف بإدخال رمز الطالب مباشرة.
               </p>
             </div>
           </div>

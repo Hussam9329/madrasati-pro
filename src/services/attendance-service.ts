@@ -334,7 +334,7 @@ async function validateAttendanceRelations(
       ok: false,
       message: "لا يمكن تسجيل الحضور لطالب غير مستمر.",
       errors: {
-        studentId: "حالة الطالب ليست مستمرة.",
+        studentId: "حالة الطالب ليست مستمر.",
       },
     };
   }
@@ -490,7 +490,7 @@ export async function createAttendanceRecord(
   if (isDuplicate) {
     return {
       ok: false,
-      message: "تم تسجيل هذه الحركة مسبقًا لهذه الطالبة في نفس اليوم.",
+      message: "تم تسجيل هذه الحركة مسبقًا لهذا الطالب في نفس اليوم.",
       errors: {
         studentId: "سجل الحضور موجود مسبقًا لهذا الطالب.",
       },
@@ -535,7 +535,7 @@ export async function createAttendanceRecord(
     if (isUniqueConstraintError(error)) {
       return {
         ok: false,
-        message: "تم تسجيل هذه الحركة مسبقًا لهذه الطالبة في نفس اليوم.",
+        message: "تم تسجيل هذه الحركة مسبقًا لهذا الطالب في نفس اليوم.",
         errors: {
           studentId: "سجل الحضور موجود مسبقًا لهذا الطالب.",
         },
@@ -591,7 +591,7 @@ export async function updateAttendanceRecord(
   if (isDuplicate) {
     return {
       ok: false,
-      message: "تم تسجيل هذه الحركة مسبقًا لهذه الطالبة في نفس اليوم.",
+      message: "تم تسجيل هذه الحركة مسبقًا لهذا الطالب في نفس اليوم.",
       errors: {
         studentId: "سجل الحضور موجود مسبقًا لهذا الطالب.",
       },
@@ -798,7 +798,7 @@ export async function scanAttendanceByStudentCode(
       status: "",
       checkInAt: null,
       checkOutAt: null,
-      message: "لم يتم العثور على طالبة بهذا الرمز.",
+      message: "لم يتم العثور على طالب بهذا الرمز.",
     };
   }
 
@@ -811,7 +811,7 @@ export async function scanAttendanceByStudentCode(
       status: student.status,
       checkInAt: null,
       checkOutAt: null,
-      message: "لا يمكن تسجيل الحضور لطالبة غير مستمرة.",
+      message: "لا يمكن تسجيل الحضور لطالب غير مستمر.",
     };
   }
 
@@ -852,7 +852,7 @@ export async function scanAttendanceByStudentCode(
         status: existingRecord.status,
         checkInAt: existingRecord.checkInAt,
         checkOutAt: existingRecord.checkOutAt,
-        message: "تم تسجيل دخول الطالبة مسبقًا اليوم.",
+        message: "تم تسجيل دخول الطالب مسبقًا اليوم.",
       };
     }
 
@@ -869,7 +869,7 @@ export async function scanAttendanceByStudentCode(
         status: updated.status,
         checkInAt: updated.checkInAt,
         checkOutAt: updated.checkOutAt,
-        message: "تم تسجيل دخول الطالبة بنجاح.",
+        message: "تم تسجيل دخول الطالب بنجاح.",
       };
     }
 
@@ -891,7 +891,7 @@ export async function scanAttendanceByStudentCode(
       status: created.status,
       checkInAt: created.checkInAt,
       checkOutAt: created.checkOutAt,
-      message: "تم تسجيل دخول الطالبة بنجاح.",
+      message: "تم تسجيل دخول الطالب بنجاح.",
     };
   }
 
@@ -918,7 +918,7 @@ export async function scanAttendanceByStudentCode(
       status: existingRecord.status,
       checkInAt: existingRecord.checkInAt,
       checkOutAt: existingRecord.checkOutAt,
-      message: "تم تسجيل انصراف الطالبة مسبقًا اليوم.",
+      message: "تم تسجيل انصراف الطالب مسبقًا اليوم.",
     };
   }
 
@@ -935,7 +935,7 @@ export async function scanAttendanceByStudentCode(
     status: updated.status,
     checkInAt: updated.checkInAt,
     checkOutAt: updated.checkOutAt,
-    message: "تم تسجيل انصراف الطالبة بنجاح.",
+    message: "تم تسجيل انصراف الطالب بنجاح.",
   };
 }
 

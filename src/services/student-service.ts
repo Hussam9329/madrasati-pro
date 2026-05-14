@@ -198,8 +198,8 @@ export async function createStudent(
   if (duplicatePhone) {
     return {
       ok: false,
-      message: "رقم الهاتف مستخدم مسبقًا لطالبة أخرى.",
-      errors: { phone: "رقم الهاتف مستخدم مسبقًا لطالبة أخرى." },
+      message: "رقم الهاتف مستخدم مسبقًا لطالب آخر.",
+      errors: { phone: "رقم الهاتف مستخدم مسبقًا لطالب آخر." },
     };
   }
 
@@ -234,8 +234,8 @@ export async function createStudent(
         if (isUniqueConstraintError(error)) {
           return {
             ok: false,
-            message: "رقم الطالبة مستخدم مسبقًا.",
-            errors: { studentCode: "رقم الطالبة مستخدم مسبقًا." },
+            message: "رقم الطالب مستخدم مسبقًا.",
+            errors: { studentCode: "رقم الطالب مستخدم مسبقًا." },
           };
         }
         return {
@@ -309,8 +309,8 @@ export async function updateStudent(
   if (duplicatePhone) {
     return {
       ok: false,
-      message: "رقم الهاتف مستخدم مسبقًا لطالبة أخرى.",
-      errors: { phone: "رقم الهاتف مستخدم مسبقًا لطالبة أخرى." },
+      message: "رقم الهاتف مستخدم مسبقًا لطالب آخر.",
+      errors: { phone: "رقم الهاتف مستخدم مسبقًا لطالب آخر." },
     };
   }
 
@@ -648,7 +648,7 @@ async function validateSectionIfProvided(
   if (!section.isActive) {
     return {
       ok: false,
-      message: "لا يمكن ربط الطالب بشعبة متوقفة.",
+      message: "لا يمكن ربط الطالب بشعبة متوقف.",
     };
   }
 

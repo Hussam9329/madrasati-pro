@@ -1,4 +1,4 @@
-import { Settings, Database, Globe, ShieldCheck } from "lucide-react";
+import { Settings, Database, Globe, ShieldCheck, DollarSign } from "lucide-react";
 import { requireAdmin } from "@/lib/auth";
 import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/layout/page-header";
@@ -14,6 +14,23 @@ export default async function SettingsPage() {
           description="خيارات النظام العامة والتخصيص."
           icon="settings"
         />
+
+        <a
+          href="/settings/fees"
+          className="app-card app-card-hover flex items-center gap-4 p-6 transition hover:border-emerald-200"
+        >
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-700">
+            <DollarSign size={26} />
+          </div>
+          <div>
+            <h3 className="text-lg font-extrabold text-[var(--app-text)]">
+              إعدادات الأقساط
+            </h3>
+            <p className="mt-1 text-sm leading-6 text-[var(--app-text-muted)]">
+              حدد مبلغ القسط لكل صف دراسي حسب السنة الأكاديمية.
+            </p>
+          </div>
+        </a>
 
         <section className="app-card overflow-hidden">
           <div className="border-b border-[var(--app-border-soft)] bg-gradient-to-l to-rose-50/40 to-amber-50/20 p-6">
@@ -76,7 +93,7 @@ export default async function SettingsPage() {
               <div>
                 <h4 className="font-extrabold text-[var(--app-text)]">الإصدار</h4>
                 <p className="mt-1 text-sm leading-6 text-[var(--app-text-muted)]">
-                  مدرستي 2.0 — نظام إدارة ثانوية مارينا للبنات.
+                  مدرستي 2.0 — نظام إدارة ثانوية مارينا.
                 </p>
               </div>
             </div>

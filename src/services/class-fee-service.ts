@@ -84,7 +84,7 @@ export async function getStudentFeePlan(
   });
 
   if (!student || !student.section) {
-    return { ok: false, message: "الطالبة غير موجودة أو غير مرتبطة بشعبة." };
+    return { ok: false, message: "الطالب غير موجود أو غير مرتبط بشعبة." };
   }
 
   const year = academicYear || new Date().getFullYear().toString();

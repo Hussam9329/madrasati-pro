@@ -12,21 +12,21 @@ export const appMessages = {
   welcome: {
     title: "أهلًا بك في مدرستي",
     description:
-      "ابدأ بتجهيز النظام خطوة خطوة. أضف المواد الدراسية، ثم الصفوف، ثم المدرسين والطالبات.",
+      "ابدأ بتجهيز النظام خطوة خطوة. أضف المواد الدراسية، ثم الصفوف، ثم المدرسين والطلاب.",
     tone: "info",
   } satisfies SmartMessage,
 
   noLoginMode: {
     title: "تم تسجيل الدخول بنجاح",
     description:
-      "أنت الآن في لوحة تحكم ثانوية مارينا للبنات.",
+      "أنت الآن في لوحة تحكم ثانوية مارينا.",
     tone: "success",
   } satisfies SmartMessage,
 
   setupOrder: {
     title: "اتبع ترتيب التأسيس الصحيح",
     description:
-      "ابدأ بالمواد الدراسية، ثم الصفوف والشُعب، بعدها أضف المدرسين والطالبات. هذا الترتيب يمنع الأخطاء لاحقًا.",
+      "ابدأ بالمواد الدراسية، ثم الصفوف والشُعب، بعدها أضف المدرسين والطلاب. هذا الترتيب يمنع الأخطاء لاحقًا.",
     tone: "info",
     actionLabel: "ابدأ بإضافة مادة",
     actionHref: "/subjects",
@@ -42,9 +42,9 @@ export const appMessages = {
   } satisfies SmartMessage,
 
   classesBeforeStudents: {
-    title: "لا تضيفي الطالبات قبل إنشاء الصفوف",
+    title: "لا تضف الطلاب قبل إنشاء الصفوف",
     description:
-      "كل طالبة تحتاج صفًا وشعبة. أنشئ الصفوف أولًا حتى تكون بيانات الطالبات منظمة من البداية.",
+      "كل طالب يحتاج صفًا وشعبة. أنشئ الصفوف أولًا حتى تكون بيانات الطلاب منظمة من البداية.",
     tone: "warning",
     actionLabel: "إنشاء صف",
     actionHref: "/classes",
@@ -60,27 +60,27 @@ export const appMessages = {
   } satisfies SmartMessage,
 
   attendanceNeedsStudents: {
-    title: "الحضور يحتاج طالبات داخل الصفوف",
+    title: "الحضور يحتاج طلاب داخل الصفوف",
     description:
-      "حتى تسجل الحضور، يجب أن تكون لديك صفوف وشُعب وطالبات مسجلات داخلها.",
+      "حتى تسجل الحضور، يجب أن تكون لديك صفوف وشُعب وطلاب مسجلين داخلها.",
     tone: "warning",
-    actionLabel: "إدارة الطالبات",
+    actionLabel: "إدارة الطلاب",
     actionHref: "/students",
   } satisfies SmartMessage,
 
   gradesNeedSubjectsAndStudents: {
-    title: "الدرجات تحتاج مواد وطالبات",
+    title: "الدرجات تحتاج مواد وطلاب",
     description:
-      "لإدخال الدرجات بشكل صحيح، تأكد من إضافة المواد الدراسية والطالبات وربطهن بالصفوف.",
+      "لإدخال الدرجات بشكل صحيح، تأكد من إضافة المواد الدراسية والطلاب وربطهم بالصفوف.",
     tone: "warning",
     actionLabel: "إدارة الدرجات",
     actionHref: "/grades",
   } satisfies SmartMessage,
 
   feesNeedStudents: {
-    title: "الأقساط تبدأ بعد إضافة الطالبات",
+    title: "الأقساط تبدأ بعد إضافة الطلاب",
     description:
-      "بعد تسجيل الطالبات داخل النظام، يمكنك إنشاء الأقساط وتسجيل الدفعات لكل طالبة.",
+      "بعد تسجيل الطلاب داخل النظام، يمكنك إنشاء الأقساط وتسجيل الدفعات لكل طالب.",
     tone: "info",
     actionLabel: "إدارة الأقساط",
     actionHref: "/fees",
@@ -105,7 +105,7 @@ export const emptyStateMessages = {
   classes: {
     title: "لا توجد صفوف أو شُعب بعد",
     description:
-      "أنشئ الصفوف والشُعب حتى تتمكن من إضافة الطالبات وتنظيم الحضور والدرجات.",
+      "أنشئ الصفوف والشُعب حتى تتمكن من إضافة الطلاب وتنظيم الحضور والدرجات.",
     actionLabel: "إنشاء أول صف",
   },
 
@@ -117,10 +117,10 @@ export const emptyStateMessages = {
   },
 
   students: {
-    title: "لا يوجد طالبات بعد",
+    title: "لا يوجد طلاب بعد",
     description:
-      "بعد إنشاء الصفوف، أضف الطالبات واربط كل طالبة بصفها وشعبتها.",
-    actionLabel: "إضافة أول طالبة",
+      "بعد إنشاء الصفوف، أضف الطلاب واربط كل طالب بصفه وشعبتها.",
+    actionLabel: "إضافة أول طالب",
   },
 
   schedule: {
@@ -133,28 +133,28 @@ export const emptyStateMessages = {
   attendance: {
     title: "لا توجد سجلات حضور بعد",
     description:
-      "اختر الصف والتاريخ، ثم سجل حالة كل طالبة: حاضرة، غائبة، متأخرة، أو مجازة.",
+      "اختر الصف والتاريخ، ثم سجل حالة كل طالب: حاضر، غائب، متأخر، أو مجاز.",
     actionLabel: "تسجيل حضور اليوم",
   },
 
   grades: {
     title: "لا توجد درجات بعد",
     description:
-      "اختر الصف والمادة والامتحان، ثم أدخل درجات الطالبات بطريقة سهلة وسريعة.",
+      "اختر الصف والمادة والامتحان، ثم أدخل درجات الطلاب بطريقة سهلة وسريعة.",
     actionLabel: "إدخال درجات",
   },
 
   fees: {
     title: "لا توجد أقساط بعد",
     description:
-      "بعد إضافة الطالبات، يمكنك إنشاء الأقساط وتسجيل الدفعات والمتبقي.",
+      "بعد إضافة الطلاب، يمكنك إنشاء الأقساط وتسجيل الدفعات والمتبقي.",
     actionLabel: "إضافة قسط",
   },
 
   reports: {
     title: "لا توجد تقارير جاهزة بعد",
     description:
-      "عند توفر بيانات الطالبات والحضور والدرجات والأقساط، ستتمكن من استخراج تقارير منظمة.",
+      "عند توفر بيانات الطلاب والحضور والدرجات والأقساط، ستتمكن من استخراج تقارير منظمة.",
     actionLabel: "عرض التقارير",
   },
 };
@@ -258,11 +258,11 @@ export function getSetupMessage(counts: {
 
   if (students === 0) {
     return {
-      title: "الآن أضف الطالبات",
+      title: "الآن أضف الطلاب",
       description:
-        "بعد تجهيز المواد والصفوف والمدرسين، يمكنك إضافة الطالبات وتنظيمهن داخل الشعب.",
+        "بعد تجهيز المواد والصفوف والمدرسين، يمكنك إضافة الطلاب وتنظيمهم داخل الشعب.",
       tone: "info",
-      actionLabel: "إضافة طالبة",
+      actionLabel: "إضافة طالب",
       actionHref: "/students",
     };
   }
@@ -320,15 +320,15 @@ export const APP_MESSAGES = {
   paymentWarning: "راجع مبلغ الخصم والمبلغ النهائي قبل حفظ الدفعة.",
   discountCalculated: "تم احتساب الخصم تلقائيًا، راجع المبلغ النهائي قبل الحفظ.",
   discountTooLarge: "تحذير: قيمة الخصم أكبر من القسط.",
-  discountSuggestion: "اقتراح ذكي: هذه الطالبة قد تكون مؤهلة لخصم.",
+  discountSuggestion: "اقتراح ذكي: هذا الطالب قد يكون مؤهل لخصم.",
   finalAmountAfterDiscount: "المبلغ النهائي بعد الخصم",
   classSeedInfo: "تم تجهيز الصفوف الأساسية من الأول إلى السادس، ويمكنك إضافة شعب إضافية عند الحاجة.",
-  selectSectionFirst: "اختر الشعبة أولًا حتى تظهر قائمة الطالبات.",
+  selectSectionFirst: "اختر الشعبة أولًا حتى تظهر قائمة الطلاب.",
   selectSubjectFirst: "اختر المادة حتى تظهر المدرسين المرتبطين بها.",
   gradeExceedsMax: "لا يمكن حفظ درجة أكبر من الدرجة الكلية.",
   gradesSaved: "تم حفظ الدرجات بنجاح.",
   reviewLowGrades: "راجع الدرجات المنخفضة قبل اعتمادها.",
-  studentsWithoutGrades: "يوجد طالبات لم يتم إدخال درجاتهن.",
+  studentsWithoutGrades: "يوجد طلاب لم يتم إدخال درجاتهم.",
 };
 
 export const deleteMessages = {
@@ -337,11 +337,11 @@ export const deleteMessages = {
     confirm: "سيتم حذف المادة فقط إذا لم تكن مرتبطة بأي بيانات أخرى.",
   },
   class: {
-    blocked: "لا يمكن حذف الصف لأنه يحتوي على طالبات أو شُعب أو محاضرات.",
+    blocked: "لا يمكن حذف الصف لأنه يحتوي على طلاب أو شُعب أو محاضرات.",
     confirm: "سيتم حذف الصف فقط إذا لم يكن مرتبطًا بأي بيانات.",
   },
   section: {
-    blocked: "لا يمكن حذف الشعبة لأنها تحتوي على طالبات.",
+    blocked: "لا يمكن حذف الشعبة لأنها تحتوي على طلاب.",
     confirm: "سيتم حذف الشعبة فقط إذا كانت فارغة.",
   },
   teacher: {
@@ -349,8 +349,8 @@ export const deleteMessages = {
     confirm: "الأفضل تعطيل المدرس بدل حذفه إذا كان لديه بيانات قديمة.",
   },
   student: {
-    blocked: "لا يمكن حذف الطالبة لأنها مرتبطة بدرجات أو أقساط أو حضور.",
-    confirm: "حذف الطالبة قد يؤثر على حضورها ودرجاتها وأقساطها. الأفضل تغيير حالتها إلى متوقفة أو منقولة.",
+    blocked: "لا يمكن حذف الطالب لأنه مرتبط بدرجات أو أقساط أو حضور.",
+    confirm: "حذف الطالب قد يؤثر على حضوره ودرجاته وأقساطه. الأفضل تغيير حالته إلى متوقف أو منقول.",
   },
   payment: {
     blocked: "لا يمكن حذف الدفعة بعد إصدار فاتورة لها. يمكن إضافة دفعة تصحيحية بدل الحذف.",
@@ -369,25 +369,25 @@ export function getNextStepMessage(entity: string): SmartMessage {
     case "class":
       return { title: "تم حفظ الصف", description: "الآن أضف شعبة لهذا الصف.", tone: "success" };
     case "section":
-      return { title: "تم حفظ الشعبة", description: "يمكنك الآن إضافة الطالبات إليها.", tone: "success" };
+      return { title: "تم حفظ الشعبة", description: "يمكنك الآن إضافة الطلاب إليها.", tone: "success" };
     case "teacher":
       return { title: "تم حفظ المدرس", description: "يمكنك الآن ربطه بالمحاضرات أو الدرجات.", tone: "success" };
     case "student":
-      return { title: "تم حفظ الطالبة", description: "يمكنك الآن تسجيل حضورها أو إضافة قسط لها.", tone: "success" };
+      return { title: "تم حفظ الطالب", description: "يمكنك الآن تسجيل حضوره أو إضافة قسط له.", tone: "success" };
     case "payment":
       return { title: "تم حفظ الدفعة", description: "يمكنك الآن طباعة الفاتورة.", tone: "success" };
     case "exam":
-      return { title: "تم حفظ الامتحان", description: "أدخل الآن درجات الطالبات.", tone: "success" };
+      return { title: "تم حفظ الامتحان", description: "أدخل الآن درجات الطلاب.", tone: "success" };
     default:
       return { title: "تم الحفظ بنجاح", description: "تم حفظ البيانات بنجاح.", tone: "success" };
   }
 }
 
 export const STUDENT_STATUS_HELP: Record<string, string> = {
-  active: "مستمرة: الطالبة تدرس حاليًا.",
-  inactive: "متوقفة: الطالبة لم تعد تداوم مؤقتًا أو نهائيًا.",
-  graduated: "متخرجة: أكملت الدراسة.",
-  transferred: "منقولة: انتقلت إلى مدرسة أخرى.",
+  active: "مستمر: الطالب يدرس حاليًا.",
+  inactive: "متوقف: الطالب لم يعد يداوم مؤقتًا أو نهائيًا.",
+  graduated: "متخرج: أكمل الدراسة.",
+  transferred: "منقول: انتقل إلى مدرسة أخرى.",
 };
 
 export const TEACHER_STATUS_HELP: Record<string, string> = {

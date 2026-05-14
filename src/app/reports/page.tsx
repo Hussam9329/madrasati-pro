@@ -156,7 +156,7 @@ export default function ReportsPage() {
                 <h2 className="app-title">التقارير والإحصائيات</h2>
 
                 <p className="app-subtitle mt-2 max-w-3xl">
-                  استخرج تقارير مفصلة عن الطالبات، الحضور، الدرجات، والأقساط مع
+                  استخرج تقارير مفصلة عن الطلاب، الحضور، الدرجات، والأقساط مع
                   إمكانية الطباعة.
                 </p>
               </div>
@@ -466,7 +466,7 @@ function ReportCover({ filter, summary }: ReportCoverProps) {
           <div className="mt-4 flex flex-wrap justify-center gap-4">
             <CoverStat
               icon={Users}
-              label="الطالبات"
+              label="الطلاب"
               value={summary.students.total}
               color="bg-gradient-to-br from-blue-100 to-rose-100 text-blue-700"
             />
@@ -534,7 +534,7 @@ function SummaryReport({ summary, charts }: SummaryReportProps) {
       <div className="stat-grid">
         <SummaryStatCard
           icon={Users}
-          label="إجمالي الطالبات"
+          label="إجمالي الطلاب"
           value={summary.students.total}
           detail={`${summary.students.active} مستمر`}
           color="bg-gradient-to-br from-blue-100 to-rose-100 text-blue-700"
@@ -568,7 +568,7 @@ function SummaryReport({ summary, charts }: SummaryReportProps) {
         <div className="app-card overflow-hidden">
           <div className="border-b border-[var(--app-border-soft)] p-5">
             <h3 className="text-lg font-extrabold text-[var(--app-text)]">
-              تفاصيل الطالبات
+              تفاصيل الطلاب
             </h3>
           </div>
           <div className="p-5">
@@ -750,7 +750,7 @@ function SummaryReport({ summary, charts }: SummaryReportProps) {
           <div className="app-card overflow-hidden">
             <div className="border-b border-[var(--app-border-soft)] p-5">
               <h3 className="text-lg font-extrabold text-[var(--app-text)]">
-                الطالبات حسب الصف
+                الطلاب حسب الصف
               </h3>
             </div>
             <div className="p-5">
@@ -901,11 +901,11 @@ function AttendanceTable({ rows }: AttendanceTableProps) {
             تقرير الحضور
           </h3>
           <p className="mt-1 text-sm text-[var(--app-text-muted)]">
-            نسبة حضور كل طالبة في الفترة المحددة
+            نسبة حضور كل طالب في الفترة المحددة
           </p>
         </div>
         <span className="badge badge-info">
-          {formatReportNumber(rows.length)} طالبة
+          {formatReportNumber(rows.length)} طالب
         </span>
       </div>
 
@@ -914,7 +914,7 @@ function AttendanceTable({ rows }: AttendanceTableProps) {
           <thead>
             <tr className="border-b border-[var(--app-border-soft)] bg-gradient-to-l to-rose-50/60 to-amber-50/40">
               <th className="px-5 py-3 text-right font-extrabold text-[var(--app-text-muted)]">
-                الطالبة
+                الطالب
               </th>
               <th className="px-5 py-3 text-right font-extrabold text-[var(--app-text-muted)]">
                 الصف
@@ -1039,7 +1039,7 @@ function GradesTable({ rows }: GradesTableProps) {
             تقرير الدرجات
           </h3>
           <p className="mt-1 text-sm text-[var(--app-text-muted)]">
-            درجات الطالبات حسب المادة والامتحان
+            درجات الطلاب حسب المادة والامتحان
           </p>
         </div>
         <span className="badge badge-info">
@@ -1052,7 +1052,7 @@ function GradesTable({ rows }: GradesTableProps) {
           <thead>
             <tr className="border-b border-[var(--app-border-soft)] bg-gradient-to-l to-rose-50/60 to-amber-50/40">
               <th className="px-5 py-3 text-right font-extrabold text-[var(--app-text-muted)]">
-                الطالبة
+                الطالب
               </th>
               <th className="px-5 py-3 text-right font-extrabold text-[var(--app-text-muted)]">
                 المادة
@@ -1163,7 +1163,7 @@ function PaymentsTable({ rows }: PaymentsTableProps) {
           <thead>
             <tr className="border-b border-[var(--app-border-soft)] bg-gradient-to-l to-rose-50/60 to-amber-50/40">
               <th className="px-5 py-3 text-right font-extrabold text-[var(--app-text-muted)]">
-                الطالبة
+                الطالب
               </th>
               <th className="px-5 py-3 text-right font-extrabold text-[var(--app-text-muted)]">
                 القسط
@@ -1249,7 +1249,7 @@ function ClassesTable({ rows }: ClassesTableProps) {
             تقرير الصفوف
           </h3>
           <p className="mt-1 text-sm text-[var(--app-text-muted)]">
-            ملخص الصفوف والشُعب والطالبات
+            ملخص الصفوف والشُعب والطلاب
           </p>
         </div>
         <span className="badge badge-info">
@@ -1271,7 +1271,7 @@ function ClassesTable({ rows }: ClassesTableProps) {
                 الشُعب
               </th>
               <th className="px-5 py-3 text-center font-extrabold text-[var(--app-text-muted)]">
-                الطالبات
+                الطلاب
               </th>
               <th className="px-5 py-3 text-center font-extrabold text-[var(--app-text-muted)]">
                 المواد

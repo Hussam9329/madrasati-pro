@@ -38,7 +38,7 @@ export default function LoginPage() {
             مارينا
           </h1>
           <p className="mt-2 text-sm font-medium text-slate-500 dark:text-slate-400">
-            ثانوية مارينا الأهلية للبنات
+            ثانوية مارينا الأهلية
           </p>
         </div>
 
@@ -52,7 +52,7 @@ export default function LoginPage() {
           {/* Footer */}
           <div className="mt-6 border-t border-slate-100 pt-5 text-center dark:border-slate-700/60">
             <p className="text-xs text-slate-400 dark:text-slate-500">
-              نظام إدارة ثانوية مارينا الأهلية للبنات © {new Date().getFullYear()}
+              نظام إدارة ثانوية مارينا الأهلية © {new Date().getFullYear()}
             </p>
           </div>
         </div>

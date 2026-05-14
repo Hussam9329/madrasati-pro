@@ -59,7 +59,7 @@ export default async function SubjectsPage({
       <div className="mx-auto flex w-full max-w-[1350px] flex-col gap-6">
         <PageHeader
           title="المواد الدراسية"
-          description="أضيفي المواد التي يتم تدريسها في المدرسة. هذه الخطوة تأتي قبل ربط المدرسات والصفوف والدرجات."
+          description="أضف المواد التي يتم تدريسها في المدرسة. هذه الخطوة تأتي قبل ربط المدرسين والصفوف والدرجات."
           icon="book"
           badge="الخطوة الثانية"
         />
@@ -74,7 +74,7 @@ export default async function SubjectsPage({
         <SmartAlert
           tone="info"
           title="المواد أولًا، ثم الصفوف"
-          description="إضافة المواد الدراسية في البداية تجعل ربط المدرسات، بناء الجدول، وإدخال الدرجات أسهل وأكثر تنظيمًا."
+          description="إضافة المواد الدراسية في البداية تجعل ربط المدرسين، بناء الجدول، وإدخال الدرجات أسهل وأكثر تنظيمًا."
           actionLabel="الخطوة التالية: الصفوف"
           actionHref="/classes"
         />
@@ -97,7 +97,7 @@ export default async function SubjectsPage({
           <EmptyState
             icon="book"
             title="لا توجد مواد دراسية بعد"
-            description="ابدئي بإضافة أول مادة مثل الرياضيات أو اللغة العربية أو العلوم. بعد ذلك يمكنك إنشاء الصفوف وربط المدرسات."
+            description="ابدأ بإضافة أول مادة مثل الرياضيات أو اللغة العربية أو العلوم. بعد ذلك يمكنك إنشاء الصفوف وربط المدرسين."
             actionLabel="إضافة أول مادة"
             actionHref="#subject-form"
             secondaryLabel="إنشاء الصفوف"
@@ -210,7 +210,7 @@ function SubjectsFeedback({
       <SmartAlert
         tone="success"
         title="تم حذف المادة الدراسية"
-        description="تم حذف المادة لأنها غير مرتبطة بدرجات أو صفوف أو مدرسات."
+        description="تم حذف المادة لأنها غير مرتبطة بدرجات أو صفوف أو مدرسين."
       />
     );
   }
@@ -220,7 +220,7 @@ function SubjectsFeedback({
       <SmartAlert
         tone="success"
         title="تم تحديث حالة المادة"
-        description="تم تغيير حالة المادة بين فعّالة ومتوقفة بنجاح."
+        description="تم تغيير حالة المادة بين فعّال ومتوقف بنجاح."
       />
     );
   }
@@ -228,7 +228,7 @@ function SubjectsFeedback({
   if (error) {
     const description =
       error === "delete"
-        ? "لا يمكن حذف المادة إذا كانت مرتبطة بمدرسات أو صفوف أو درجات. عطّلها بدل حذفها."
+        ? "لا يمكن حذف المادة إذا كانت مرتبطة بمدرسين أو صفوف أو درجات. عطّلها بدل حذفها."
         : "تأكد من إدخال اسم المادة بشكل صحيح، وأن الاسم غير مكرر.";
 
     return (
@@ -316,11 +316,11 @@ function SubjectCreateForm() {
 
           <span>
             <span className="block font-extrabold text-[var(--app-text)]">
-              المادة فعّالة
+              المادة فعّال
             </span>
 
             <span className="mt-1 block text-sm leading-6 text-[var(--app-text-muted)]">
-              المواد الفعّالة تظهر في الربط مع المدرسات والصفوف.
+              المواد الفعّال تظهر في الربط مع المدرسين والصفوف.
             </span>
           </span>
         </label>
@@ -355,13 +355,13 @@ function SubjectStats({ total, active, inactive }: SubjectStatsProps) {
       className: "bg-gradient-to-br from-blue-100 to-rose-100 text-blue-700",
     },
     {
-      label: "مواد فعّالة",
+      label: "مواد فعّال",
       value: active,
       icon: CheckCircle2,
       className: "bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-700",
     },
     {
-      label: "مواد متوقفة",
+      label: "مواد متوقف",
       value: inactive,
       icon: AlertTriangle,
       className: "bg-gradient-to-br from-amber-100 to-orange-100 text-amber-700",
@@ -518,7 +518,7 @@ function SubjectRow({ subject }: SubjectRowProps) {
 
           <div className="mt-3 flex flex-wrap gap-2">
             <span className="badge bg-slate-100 text-slate-600">
-              المدرسات: {subject.teachersCount}
+              المدرسين: {subject.teachersCount}
             </span>
 
             <span className="badge bg-slate-100 text-slate-600">

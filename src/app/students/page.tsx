@@ -75,8 +75,8 @@ export default async function StudentsPage({
     <AppShell>
       <div className="mx-auto flex w-full max-w-[1350px] flex-col gap-6">
         <PageHeader
-          title="الطالبات"
-          description="أضف الطالبات واربط كل طالبة بالشعبة المناسبة، مع متابعة الحالة والمعلومات الأساسية."
+          title="الطلاب"
+          description="أضف الطلاب واربط كل طالب بالشعبة المناسبة، مع متابعة الحالة والمعلومات الأساسية."
           icon="students"
           badge="الخطوة الرابعة"
         />
@@ -90,8 +90,8 @@ export default async function StudentsPage({
 
         <SmartAlert
           tone="info"
-          title="الطالبات يعتمدن على الشُعب"
-          description="يمكنك إضافة الطالبة بدون شعبة مؤقتًا، لكن الأفضل ربطها بشعبة حتى تعمل الحضور والدرجات والتقارير بشكل أدق."
+          title="الطلاب يعتمدون على الشُعب"
+          description="يمكنك إضافة الطالب بدون شعبة مؤقتًا، لكن الأفضل ربطه بشعبة حتى تعمل الحضور والدرجات والتقارير بشكل أدق."
           actionLabel="إدارة الصفوف والشُعب"
           actionHref="/classes"
         />
@@ -116,9 +116,9 @@ export default async function StudentsPage({
         {!hasStudents ? (
           <EmptyState
             icon="students"
-            title="لا يوجد طالبات بعد"
-            description="ابدأ بإضافة أول طالبة، ثم اربطها بالشعبة المناسبة. بعدها يصبح تسجيل الحضور والدرجات والأقساط أسهل."
-            actionLabel="إضافة أول طالبة"
+            title="لا يوجد طلاب بعد"
+            description="ابدأ بإضافة أول طالب، ثم اربطه بالشعبة المناسبة. بعدها يصبح تسجيل الحضور والدرجات والأقساط أسهل."
+            actionLabel="إضافة أول طالب"
             actionHref="#student-form"
             secondaryLabel="إدارة الشُعب"
             secondaryHref="/classes"
@@ -127,8 +127,8 @@ export default async function StudentsPage({
           <EmptyState
             icon="search"
             title="لا توجد نتائج مطابقة"
-            description="جرّب البحث باسم الطالبة أو رقم الطالبة أو ولي الأمر، أو غيّر فلتر الحالة."
-            actionLabel="عرض كل الطالبات"
+            description="جرّب البحث باسم الطالب أو رقم الطالب أو ولي الأمر، أو غيّر فلتر الحالة."
+            actionLabel="عرض كل الطلاب"
             actionHref="/students"
           />
         ) : (
@@ -222,8 +222,8 @@ function StudentsFeedback({
     return (
       <SmartAlert
         tone="success"
-        title="تمت إضافة الطالبة بنجاح"
-        description="تم حفظ بيانات الطالبة وربطها بالشعبة المحددة إن وُجدت."
+        title="تمت إضافة الطالب بنجاح"
+        description="تم حفظ بيانات الطالب وربطه بالشعبة المحددة إن وُجدت."
       />
     );
   }
@@ -232,8 +232,8 @@ function StudentsFeedback({
     return (
       <SmartAlert
         tone="success"
-        title="تم حذف الطالبة"
-        description="تم حذف الطالبة لأنها لا تملك سجلات حضور أو درجات أو أقساط مرتبطة."
+        title="تم حذف الطالب"
+        description="تم حذف الطالب لأنه لا يملك سجلات حضور أو درجات أو أقساط مرتبطة."
       />
     );
   }
@@ -242,8 +242,8 @@ function StudentsFeedback({
     return (
       <SmartAlert
         tone="success"
-        title="تم تحديث حالة الطالبة"
-        description="تم تغيير حالة الطالبة بنجاح."
+        title="تم تحديث حالة الطالب"
+        description="تم تغيير حالة الطالب بنجاح."
       />
     );
   }
@@ -251,10 +251,10 @@ function StudentsFeedback({
   if (error) {
     const description =
       error === "delete"
-        ? "لا يمكن حذف الطالبة إذا كانت لديها درجات أو حضور أو أقساط. غيّر حالتها بدل الحذف."
+        ? "لا يمكن حذف الطالب إذا كان لديه درجات أو حضور أو أقساط. غيّر حالته بدل الحذف."
         : error === "status"
-          ? "تعذر تغيير حالة الطالبة. تأكد من اختيار حالة صحيحة."
-          : "تأكد من إدخال اسم الطالبة بشكل صحيح، وأن رقم الطالبة غير مكرر.";
+          ? "تعذر تغيير حالة الطالب. تأكد من اختيار حالة صحيحة."
+          : "تأكد من إدخال اسم الطالب بشكل صحيح، وأن رقم الطالب غير مكرر.";
 
     return (
       <SmartAlert
@@ -287,11 +287,11 @@ function StudentCreateForm({ sections }: StudentCreateFormProps) {
 
           <div>
             <h3 className="text-xl font-extrabold text-[var(--app-text)]">
-              إضافة طالبة
+              إضافة طالب
             </h3>
 
             <p className="mt-1 text-sm leading-7 text-[var(--app-text-muted)]">
-              أدخل بيانات الطالبة الأساسية المطلوبة فقط.
+              أدخل بيانات الطالب الأساسية المطلوبة فقط.
             </p>
           </div>
         </div>
@@ -305,7 +305,7 @@ function StudentCreateForm({ sections }: StudentCreateFormProps) {
               <AlertTriangle size={16} />
             </div>
             <p className="text-sm leading-7 text-rose-800">
-              تأكد من اختيار الصف والشعبة قبل حفظ الطالبة حتى تظهر بياناتها في الحضور والدرجات والأقساط.
+              تأكد من اختيار الصف والشعبة قبل حفظ الطالب حتى تظهر بياناته في الحضور والدرجات والأقساط.
             </p>
           </div>
         </div>
@@ -324,7 +324,7 @@ function StudentCreateForm({ sections }: StudentCreateFormProps) {
             required
             minLength={3}
             maxLength={120}
-            placeholder="مثال: زهراء علي حسين كاظم"
+            placeholder="مثال: أحمد علي حسين كاظم"
             className="input"
           />
           <p className="mt-1 text-xs text-[var(--app-text-muted)]">يجب إدخال الاسم الرباعي كاملًا (4 أجزاء على الأقل)</p>
@@ -336,7 +336,7 @@ function StudentCreateForm({ sections }: StudentCreateFormProps) {
               htmlFor="phone"
               className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
             >
-              رقم هاتف الطالبة <span className="text-red-600">*</span>
+              رقم هاتف الطالب <span className="text-red-600">*</span>
             </label>
             <input
               id="phone"
@@ -417,12 +417,12 @@ function StudentCreateForm({ sections }: StudentCreateFormProps) {
 
       <div className="flex flex-col gap-3 border-t border-[var(--app-border-soft)] bg-gradient-to-l to-rose-50/30 to-amber-50/20 p-6 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm leading-7 text-[var(--app-text-muted)]">
-          بعد إضافة الطالبات، يمكن استخدامهن في الحضور والدرجات والأقساط.
+          بعد إضافة الطلاب، يمكن استخدامهم في الحضور والدرجات والأقساط.
         </p>
 
         <button type="submit" className="btn btn-primary">
           <CheckCircle2 size={18} />
-          حفظ الطالبة
+          حفظ الطالب
         </button>
       </div>
     </form>
@@ -484,7 +484,7 @@ function StudentsStats({
 }: StudentsStatsProps) {
   const stats = [
     {
-      label: "إجمالي الطالبات",
+      label: "إجمالي الطلاب",
       value: total,
       icon: Users,
       className: "bg-gradient-to-br from-blue-100 to-rose-100 text-blue-700",
@@ -581,7 +581,7 @@ function StudentSearchForm({ query, status }: StudentSearchFormProps) {
             id="q"
             name="q"
             defaultValue={query}
-            placeholder="اسم الطالبة، الرقم، الهاتف، ولي الأمر..."
+            placeholder="اسم الطالب، الرقم، الهاتف، ولي الأمر..."
             className="input pr-11"
           />
         </div>
@@ -612,15 +612,15 @@ function StudentsList({ students }: StudentsListProps) {
       <div className="flex flex-col gap-2 border-b border-[var(--app-border-soft)] p-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-xl font-extrabold text-[var(--app-text)]">
-            قائمة الطالبات
+            قائمة الطلاب
           </h3>
 
           <p className="mt-1 text-sm leading-6 text-[var(--app-text-muted)]">
-            تابع الطالبات وحالاتهن وربطهن بالشُعب والسجلات المرتبطة.
+            تابع الطلاب وحالاتهم وربطهم بالشُعب والسجلات المرتبطة.
           </p>
         </div>
 
-        <span className="badge badge-info">{students.length} طالبة</span>
+        <span className="badge badge-info">{students.length} طالب</span>
       </div>
 
       <div className="divide-y divide-[var(--app-border-soft)]">
@@ -689,7 +689,7 @@ function StudentRow({ student }: StudentRowProps) {
 
           <div className="mt-3 grid gap-2 text-sm leading-6 text-[var(--app-text-muted)] md:grid-cols-2">
             <p>
-              هاتف الطالبة:{" "}
+              هاتف الطالب:{" "}
               <span className="font-bold text-[var(--app-text)]" dir="ltr">
                 {student.phone || "غير مضاف"}
               </span>

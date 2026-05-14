@@ -522,9 +522,9 @@ async function validateScheduleRelations(
   if (!section.isActive) {
     return {
       ok: false,
-      message: "لا يمكن إضافة محاضرة لشعبة متوقفة.",
+      message: "لا يمكن إضافة محاضرة لشعبة متوقف.",
       errors: {
-        sectionId: "الشعبة متوقفة.",
+        sectionId: "الشعبة متوقف.",
       },
     };
   }
@@ -552,9 +552,9 @@ async function validateScheduleRelations(
   if (!subject.isActive) {
     return {
       ok: false,
-      message: "لا يمكن إضافة مادة متوقفة إلى الجدول.",
+      message: "لا يمكن إضافة مادة متوقف إلى الجدول.",
       errors: {
-        subjectId: "المادة متوقفة.",
+        subjectId: "المادة متوقف.",
       },
     };
   }
@@ -591,7 +591,7 @@ async function validateScheduleRelations(
       ok: false,
       message: "هذا المدرس غير مرتبط بهذه المادة.",
       errors: {
-        teacherId: "اربطي المدرس بالمادة أولًا من صفحة المدرسين.",
+        teacherId: "اربط المدرس بالمادة أولًا من صفحة المدرسين.",
         subjectId: "المادة غير مرتبطة بالمدرس.",
       },
     };

@@ -174,7 +174,7 @@ async function validateGradeRelations(input: {
   if (!subject) {
     errors.subjectId = "المادة الدراسية غير موجودة.";
   } else if (!subject.isActive) {
-    errors.subjectId = "المادة الدراسية متوقفة. لا يمكن إضافة درجات لمادة متوقفة.";
+    errors.subjectId = "المادة الدراسية متوقف. لا يمكن إضافة درجات لمادة متوقف.";
   }
 
   if (input.teacherId) {

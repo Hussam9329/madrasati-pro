@@ -76,7 +76,7 @@ export default async function ClassesPage({ searchParams }: ClassesPageProps) {
       <div className="mx-auto flex w-full max-w-[1350px] flex-col gap-6">
         <PageHeader
           title="الصفوف والشُعب"
-          description="أنشئ الصفوف الدراسية ثم أضف الشُعب داخل كل صف، حتى يصبح تسجيل الطالبات وبناء الجدول أكثر ترتيبًا."
+          description="أنشئ الصفوف الدراسية ثم أضف الشُعب داخل كل صف، حتى يصبح تسجيل الطلاب وبناء الجدول أكثر ترتيبًا."
           icon="classes"
           badge="الخطوة الثالثة"
         />
@@ -91,9 +91,9 @@ export default async function ClassesPage({ searchParams }: ClassesPageProps) {
 
         <SmartAlert
           tone="info"
-          title="الترتيب الذكي: صف ثم شعبة ثم طالبة"
-          description="يفضل إنشاء الصفوف أولًا، ثم الشُعب، وبعدها إضافة الطالبات داخل الشُعب المناسبة. تم تجهيز الصفوف الأساسية من الأول إلى السادس، ويمكنك إضافة شعب إضافية عند الحاجة."
-          actionLabel="الخطوة التالية: الطالبات"
+          title="الترتيب الذكي: صف ثم شعبة ثم طالب"
+          description="يفضل إنشاء الصفوف أولًا، ثم الشُعب، وبعدها إضافة الطلاب داخل الشُعب المناسبة. تم تجهيز الصفوف الأساسية من الأول إلى السادس، ويمكنك إضافة شعب إضافية عند الحاجة."
+          actionLabel="الخطوة التالية: الطلاب"
           actionHref="/students"
         />
 
@@ -329,7 +329,7 @@ function ClassesFeedback({
       <SmartAlert
         tone="success"
         title="تم الحذف بنجاح"
-        description="تم حذف العنصر لأنه غير مرتبط بطالبات أو جدول دراسي."
+        description="تم حذف العنصر لأنه غير مرتبط بالطلاب أو جدول دراسي."
       />
     );
   }
@@ -347,9 +347,9 @@ function ClassesFeedback({
   if (error) {
     const description =
       error === "delete-class"
-        ? "لا يمكن حذف الصف إذا كان يحتوي على شُعب أو طالبات أو جدول أو مواد مرتبطة."
+        ? "لا يمكن حذف الصف إذا كان يحتوي على شُعب أو طلاب أو جدول أو مواد مرتبطة."
         : error === "delete-section"
-          ? "لا يمكن حذف الشعبة إذا كانت تحتوي على طالبات أو محاضرات في الجدول."
+          ? "لا يمكن حذف الشعبة إذا كانت تحتوي على طلاب أو محاضرات في الجدول."
           : "تأكد من إدخال البيانات بشكل صحيح، وعدم تكرار الصف أو الشعبة.";
 
     return (
@@ -458,7 +458,7 @@ function ClassCreateForm() {
             </span>
 
             <span className="mt-1 block text-sm leading-6 text-[var(--app-text-muted)]">
-              الصفوف الفعّالة تظهر عند إضافة الشُعب والطالبات.
+              الصفوف الفعّال تظهر عند إضافة الشُعب والطلاب.
             </span>
           </span>
         </label>
@@ -604,11 +604,11 @@ function SectionCreateForm({ classes }: SectionCreateFormProps) {
 
           <span>
             <span className="block font-extrabold text-[var(--app-text)]">
-              الشعبة فعّالة
+              الشعبة فعّال
             </span>
 
             <span className="mt-1 block text-sm leading-6 text-[var(--app-text-muted)]">
-              الشُعب الفعّالة تظهر عند تسجيل الطالبات.
+              الشُعب الفعّال تظهر عند تسجيل الطلاب.
             </span>
           </span>
         </label>
@@ -648,13 +648,13 @@ function ClassesStats({ total, active, inactive, sections }: ClassesStatsProps) 
       className: "bg-gradient-to-br from-blue-100 to-rose-100 text-blue-700",
     },
     {
-      label: "صفوف فعّالة",
+      label: "صفوف فعّال",
       value: active,
       icon: CheckCircle2,
       className: "bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-700",
     },
     {
-      label: "صفوف متوقفة",
+      label: "صفوف متوقف",
       value: inactive,
       icon: AlertTriangle,
       className: "bg-gradient-to-br from-amber-100 to-orange-100 text-amber-700",
@@ -765,7 +765,7 @@ function SectionsPanel({ sections }: SectionsPanelProps) {
           <SmartAlert
             tone="info"
             title="لا توجد شُعب بعد"
-            description="بعد إضافة الصف، أنشئ شعبة واحدة على الأقل حتى يمكن تسجيل الطالبات داخلها."
+            description="بعد إضافة الصف، أنشئ شعبة واحدة على الأقل حتى يمكن تسجيل الطلاب داخلها."
           />
         </div>
       ) : (
@@ -785,7 +785,7 @@ type SectionRowProps = {
 
 function SectionRow({ section }: SectionRowProps) {
   const statusClass = section.isActive ? "badge-success" : "badge-warning";
-  const statusLabel = section.isActive ? "فعّالة" : "متوقفة";
+  const statusLabel = section.isActive ? "فعّال" : "متوقف";
 
   return (
     <article className="grid gap-4 p-5 transition hover:bg-rose-50/40 lg:grid-cols-[1fr_auto] lg:items-center">
@@ -807,7 +807,7 @@ function SectionRow({ section }: SectionRowProps) {
 
           <div className="mt-2 flex flex-wrap gap-2">
             <span className="badge bg-slate-100 text-slate-600">
-              الطالبات: {section.studentsCount}
+              الطلاب: {section.studentsCount}
             </span>
 
             <span className="badge bg-slate-100 text-slate-600">
@@ -868,7 +868,7 @@ function ClassesList({ classes, subjects }: ClassesListProps) {
           </h3>
 
           <p className="mt-1 text-sm leading-6 text-[var(--app-text-muted)]">
-            تابع الصفوف وعدد الشُعب والطالبات والمواد المرتبطة بها.
+            تابع الصفوف وعدد الشُعب والطلاب والمواد المرتبطة بها.
           </p>
         </div>
 
@@ -930,7 +930,7 @@ function ClassRow({ schoolClass, subjects }: ClassRowProps) {
 
             <span className="badge bg-slate-100 text-slate-600">
               <Users size={14} />
-              الطالبات: {schoolClass.studentsCount}
+              الطلاب: {schoolClass.studentsCount}
             </span>
 
             <span className="badge bg-slate-100 text-slate-600">

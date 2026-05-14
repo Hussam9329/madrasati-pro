@@ -439,7 +439,7 @@ export function validatePaymentInput(
   }
 
   if (!normalized.studentId) {
-    errors.studentId = "الطالبة مطلوبة.";
+    errors.studentId = "الطالب مطلوب.";
   }
 
   if (normalized.notes && normalized.notes.length > 500) {

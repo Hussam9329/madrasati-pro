@@ -182,7 +182,7 @@ export function validateSectionInput(
     normalized.capacity !== undefined &&
     (Number.isNaN(Number(normalized.capacity)) || Number(normalized.capacity) < 1)
   ) {
-    errors.capacity = "عدد الطالبات المسموح يجب أن يكون رقمًا أكبر من صفر.";
+    errors.capacity = "عدد الطلاب المسموح يجب أن يكون رقمًا أكبر من صفر.";
   }
 
   if (normalized.description && normalized.description.length > 300) {
@@ -244,7 +244,7 @@ export function canDeleteClass(input: {
     return {
       allowed: false,
       reason:
-        "لا يمكن حذف الصف لأنه يحتوي على طلاب داخل الشُعب. انقل الطالبات أو احذفهم أولًا.",
+        "لا يمكن حذف الصف لأنه يحتوي على طلاب داخل الشُعب. انقل الطلاب أو احذفهم أولًا.",
     };
   }
 
@@ -291,7 +291,7 @@ export function canDeleteSection(input: {
     return {
       allowed: false,
       reason:
-        "لا يمكن حذف الشعبة لأنها تحتوي على طلاب. انقل الطالبات إلى شعبة أخرى أولًا.",
+        "لا يمكن حذف الشعبة لأنها تحتوي على طلاب. انقل الطلاب إلى شعبة أخرى أولًا.",
     };
   }
 

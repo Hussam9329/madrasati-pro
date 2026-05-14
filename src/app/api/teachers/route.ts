@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
 
       return NextResponse.json({
         ok: true,
-        message: "تم جلب إحصائيات المدرسات بنجاح.",
+        message: "تم جلب إحصائيات المدرسين بنجاح.",
         data: counts,
       });
     }
@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
 
       return NextResponse.json({
         ok: true,
-        message: "تم جلب المدرسةات الفعّالين بنجاح.",
+        message: "تم جلب المدرسين الفعّالين بنجاح.",
         data: teachers,
       });
     }
@@ -88,12 +88,12 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       ok: true,
-      message: "تم جلب المدرسةات بنجاح.",
+      message: "تم جلب المدرسين بنجاح.",
       data: teachers,
     });
   } catch {
     return NextResponse.json(
-      { ok: false, message: "حدث خطأ أثناء جلب المدرسةات." },
+      { ok: false, message: "حدث خطأ أثناء جلب المدرسين." },
       { status: 500 },
     );
   }
@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(result, { status: 201 });
   } catch {
     return NextResponse.json(
-      { ok: false, message: "حدث خطأ أثناء إضافة المدرسة." },
+      { ok: false, message: "حدث خطأ أثناء إضافة المدرس." },
       { status: 500 },
     );
   }
@@ -132,7 +132,7 @@ export async function PUT(request: NextRequest) {
 
     if (!id) {
       return NextResponse.json(
-        { ok: false, message: "معرّف المدرسةة مطلوبة." },
+        { ok: false, message: "معرّف المدرس مطلوب." },
         { status: 400 },
       );
     }
@@ -154,7 +154,7 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json(result);
   } catch {
     return NextResponse.json(
-      { ok: false, message: "حدث خطأ أثناء تحديث بيانات المدرسة." },
+      { ok: false, message: "حدث خطأ أثناء تحديث بيانات المدرس." },
       { status: 500 },
     );
   }
@@ -168,7 +168,7 @@ export async function PATCH(request: NextRequest) {
 
     if (!id) {
       return NextResponse.json(
-        { ok: false, message: "معرّف المدرسةة مطلوبة." },
+        { ok: false, message: "معرّف المدرس مطلوب." },
         { status: 400 },
       );
     }
@@ -202,7 +202,7 @@ export async function DELETE(request: NextRequest) {
 
     if (!id) {
       return NextResponse.json(
-        { ok: false, message: "معرّف المدرسةة مطلوبة." },
+        { ok: false, message: "معرّف المدرس مطلوب." },
         { status: 400 },
       );
     }
@@ -216,7 +216,7 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json(result);
   } catch {
     return NextResponse.json(
-      { ok: false, message: "حدث خطأ أثناء حذف المدرسة." },
+      { ok: false, message: "حدث خطأ أثناء حذف المدرس." },
       { status: 500 },
     );
   }

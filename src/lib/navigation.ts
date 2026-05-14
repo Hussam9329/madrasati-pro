@@ -47,7 +47,7 @@ export const navigationGroups: Record<
   },
   people: {
     title: "الأشخاص",
-    description: "إدارة المدرسين والطالبات بعد تجهيز الأساسيات.",
+    description: "إدارة المدرسين والطلاب بعد تجهيز الأساسيات.",
   },
   operations: {
     title: "التشغيل اليومي",
@@ -85,7 +85,7 @@ export const navigationItems: NavigationItem[] = [
     title: "الصفوف والشُعب",
     href: "/classes",
     icon: "classes",
-    description: "أنشئ الصفوف والشعب قبل إضافة الطالبات إليها.",
+    description: "أنشئ الصفوف والشعب قبل إضافة الطلاب إليها.",
     priority: 3,
     group: "foundation",
   },
@@ -98,10 +98,10 @@ export const navigationItems: NavigationItem[] = [
     group: "people",
   },
   {
-    title: "الطالبات",
+    title: "الطلاب",
     href: "/students",
     icon: "students",
-    description: "أضف الطالبات بعد تجهيز الصفوف والشعب.",
+    description: "أضف الطلاب بعد تجهيز الصفوف والشعب.",
     priority: 5,
     group: "people",
   },
@@ -117,7 +117,7 @@ export const navigationItems: NavigationItem[] = [
     title: "الحضور",
     href: "/attendance",
     icon: "attendance",
-    description: "سجّل حضور الطالبات حسب الصف والتاريخ.",
+    description: "سجّل حضور الطلاب حسب الصف والتاريخ.",
     priority: 7,
     group: "operations",
   },
@@ -125,7 +125,7 @@ export const navigationItems: NavigationItem[] = [
     title: "الدرجات",
     href: "/grades",
     icon: "grades",
-    description: "أدخل درجات الطالبات حسب المادة والامتحان.",
+    description: "أدخل درجات الطلاب حسب المادة والامتحان.",
     priority: 8,
     group: "results",
   },
@@ -133,7 +133,7 @@ export const navigationItems: NavigationItem[] = [
     title: "الأقساط",
     href: "/payments",
     icon: "fees",
-    description: "تابع المدفوعات والمتبقي لكل طالبة.",
+    description: "تابع المدفوعات والمتبقي لكل طالب.",
     priority: 9,
     group: "results",
   },
@@ -141,7 +141,7 @@ export const navigationItems: NavigationItem[] = [
     title: "التقارير",
     href: "/reports",
     icon: "reports",
-    description: "استخرج تقارير الطالبات، الحضور، الدرجات، والأقساط.",
+    description: "استخرج تقارير الطلاب، الحضور، الدرجات، والأقساط.",
     priority: 10,
     group: "results",
   },
@@ -179,10 +179,10 @@ export const primaryQuickActions = [
     hint: "اربط المدرسين بالمواد.",
   },
   {
-    title: "إضافة طالبة",
+    title: "إضافة طالب",
     href: "/students",
     icon: "students",
-    hint: "أضف الطالبات إلى صفوفهن.",
+    hint: "أضف الطلاب إلى صفوفهم.",
   },
   {
     title: "تسجيل حضور",
@@ -243,7 +243,7 @@ export function getNextSetupStep(existingCounts: {
     return {
       title: "الخطوة التالية: إنشاء الصفوف والشُعب",
       description:
-        "بعد إضافة المواد، أنشئ الصفوف حتى تتمكن من تنظيم الطالبات والحضور.",
+        "بعد إضافة المواد، أنشئ الصفوف حتى تتمكن من تنظيم الطلاب والحضور.",
       href: "/classes",
       actionLabel: "إنشاء أول صف",
     };
@@ -261,11 +261,11 @@ export function getNextSetupStep(existingCounts: {
 
   if (students === 0) {
     return {
-      title: "أضف الطالبات إلى صفوفهن",
+      title: "أضف الطلاب إلى صفوفهم",
       description:
-        "بعد تجهيز المواد والصفوف والمدرسين، يمكنك إضافة الطالبات بثقة.",
+        "بعد تجهيز المواد والصفوف والمدرسين، يمكنك إضافة الطلاب بثقة.",
       href: "/students",
-      actionLabel: "إضافة أول طالبة",
+      actionLabel: "إضافة أول طالب",
     };
   }
 

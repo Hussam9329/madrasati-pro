@@ -86,7 +86,7 @@ export default async function PaymentsPage({
       <div className="mx-auto flex w-full max-w-[1350px] flex-col gap-6">
         <PageHeader
           title="المدفوعات"
-          description="سجّل المدفوعات والأقساط لكل طالبة، وتابع حالة الدفع والمبالغ المعلّقة والمستحقة."
+          description="سجّل المدفوعات والأقساط لكل طالب، وتابع حالة الدفع والمبالغ المعلّقة والمستحقة."
           icon="fees"
           badge="الخطوة الأخيرة"
         />
@@ -99,9 +99,9 @@ export default async function PaymentsPage({
 
         <SmartAlert
           tone="info"
-          title="المدفوعات تعتمد على الطالبات"
-          description="يجب إضافة الطالبات أولًا حتى تتمكن من تسجيل المدفوعات والأقساط المرتبطة بهن."
-          actionLabel="إدارة الطالبات"
+          title="المدفوعات تعتمد على الطلاب"
+          description="يجب إضافة الطلاب أولًا حتى تتمكن من تسجيل المدفوعات والأقساط المرتبطة بهم."
+          actionLabel="إدارة الطلاب"
           actionHref="/students"
         />
 
@@ -132,17 +132,17 @@ export default async function PaymentsPage({
           <EmptyState
             icon="fees"
             title="لا توجد مدفوعات بعد"
-            description="ابدأ بتسجيل أول دفعة بعد إضافة الطالبات. يمكنك متابعة المدفوعات والمتبقي لكل طالبة."
+            description="ابدأ بتسجيل أول دفعة بعد إضافة الطلاب. يمكنك متابعة المدفوعات والمتبقي لكل طالب."
             actionLabel="تسجيل أول دفعة"
             actionHref="#payment-form"
-            secondaryLabel="إدارة الطالبات"
+            secondaryLabel="إدارة الطلاب"
             secondaryHref="/students"
           />
         ) : payments.length === 0 ? (
           <EmptyState
             icon="search"
             title="لا توجد نتائج مطابقة"
-            description="جرّب البحث بعنوان الرسم أو اسم الطالبة، أو غيّر فلتر النوع أو الحالة."
+            description="جرّب البحث بعنوان الرسم أو اسم الطالب، أو غيّر فلتر النوع أو الحالة."
             actionLabel="عرض كل المدفوعات"
             actionHref="/payments"
           />
@@ -248,7 +248,7 @@ function PaymentsFeedback({ saved, deleted, error }: PaymentsFeedbackProps) {
       <SmartAlert
         tone="success"
         title="تمت إضافة الدفعة بنجاح"
-        description="تم حفظ بيانات الدفعة وربطها بالطالبة المحددة."
+        description="تم حفظ بيانات الدفعة وربطها بالطالب المحدد."
       />
     );
   }
@@ -269,7 +269,7 @@ function PaymentsFeedback({ saved, deleted, error }: PaymentsFeedbackProps) {
         ? "لا يمكن حذف الدفعة حاليًا. تحقق من البيانات وحاول مرة أخرى."
         : error === "missing-id"
           ? "لم يتم تحديد الدفعة المراد حذفها."
-          : "تأكد من إدخال بيانات الدفعة بشكل صحيح، وأن الطالبة المحددة موجودة.";
+          : "تأكد من إدخال بيانات الدفعة بشكل صحيح، وأن الطالب المحدد موجود.";
 
     return (
       <SmartAlert
@@ -315,7 +315,7 @@ function PaymentCreateForm({ students }: PaymentCreateFormProps) {
             </h3>
 
             <p className="mt-1 text-sm leading-7 text-[var(--app-text-muted)]">
-              أدخل بيانات الدفعة واربطها بالطالبة. عنوان الرسم والمبلغ والطالبة
+              أدخل بيانات الدفعة واربطها بالطالب. عنوان الرسم والمبلغ والطالب
               مطلوبون.
             </p>
           </div>
@@ -328,7 +328,7 @@ function PaymentCreateForm({ students }: PaymentCreateFormProps) {
             htmlFor="studentId"
             className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
           >
-            الطالبة <span className="text-red-600">*</span>
+            الطالب <span className="text-red-600">*</span>
           </label>
 
           <select
@@ -338,7 +338,7 @@ function PaymentCreateForm({ students }: PaymentCreateFormProps) {
             className="input"
             defaultValue=""
           >
-            <option value="">اختر الطالبة...</option>
+            <option value="">اختر الطالب...</option>
 
             {students.map((student) => (
               <option key={student.id} value={student.id}>
@@ -572,7 +572,7 @@ function PaymentCreateForm({ students }: PaymentCreateFormProps) {
 
             <p className="mt-1.5 flex items-start gap-1 text-xs leading-5 text-[var(--app-text-muted)]">
               <Info size={13} className="mt-0.5 shrink-0 text-indigo-400" />
-              عند الحالة مدفوع يُحسب تلقائيًا = المبلغ النهائي. املئي هذا الحقل فقط عند الدفع الجزئي.
+              عند الحالة مدفوع يُحسب تلقائيًا = المبلغ النهائي. املأ هذا الحقل فقط عند الدفع الجزئي.
             </p>
           </div>
         </div>
@@ -832,7 +832,7 @@ function PaymentSearchForm({
             id="q"
             name="q"
             defaultValue={query}
-            placeholder="عنوان الرسم، اسم الطالبة..."
+            placeholder="عنوان الرسم، اسم الطالب..."
             className="input pr-11"
           />
         </div>
@@ -897,7 +897,7 @@ function PaymentsList({ payments }: PaymentsListProps) {
           </h3>
 
           <p className="mt-1 text-sm leading-6 text-[var(--app-text-muted)]">
-            تابع المدفوعات وحالاتها والمبالغ المرتبطة بكل طالبة.
+            تابع المدفوعات وحالاتها والمبالغ المرتبطة بكل طالب.
           </p>
         </div>
 
@@ -992,7 +992,7 @@ function PaymentRow({ payment }: PaymentRowProps) {
 
           <div className="mt-3 grid gap-2 text-sm leading-6 text-[var(--app-text-muted)] md:grid-cols-2">
             <p>
-              الطالبة:{" "}
+              الطالب:{" "}
               <span className="font-bold text-[var(--app-text)]">
                 {payment.studentName}
               </span>

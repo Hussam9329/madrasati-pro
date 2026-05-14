@@ -204,7 +204,7 @@ export function validateScheduleInput(
   }
 
   if (!normalized.teacherId) {
-    errors.teacherId = "المدرسة مطلوبة.";
+    errors.teacherId = "المدرس مطلوب.";
   }
 
   if (normalized.room && normalized.room.length > 80) {
@@ -230,7 +230,7 @@ export function getDayOrder(dayOfWeek: string): number {
 }
 
 export function getScheduleStatusLabel(isActive: boolean): string {
-  return isActive ? "فعّالة" : "متوقفة";
+  return isActive ? "فعّال" : "متوقف";
 }
 
 export function getScheduleStatusBadgeClass(isActive: boolean): string {

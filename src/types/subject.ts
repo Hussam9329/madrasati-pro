@@ -83,8 +83,8 @@ export function getSubjectStatus(subject: Pick<Subject, "isActive">): SubjectSta
 
 export function getSubjectStatusLabel(status: SubjectStatus): string {
   const labels: Record<SubjectStatus, string> = {
-    active: "فعّالة",
-    inactive: "متوقفة",
+    active: "فعّال",
+    inactive: "متوقف",
   };
 
   return labels[status];

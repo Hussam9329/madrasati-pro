@@ -251,7 +251,7 @@ function SchedulesFeedback({
       <SmartAlert
         tone="success"
         title="تم تحديث حالة المحاضرة"
-        description="تم تغيير حالة المحاضرة بين فعّالة ومتوقفة بنجاح."
+        description="تم تغيير حالة المحاضرة بين فعّال ومتوقف بنجاح."
       />
     );
   }
@@ -379,7 +379,7 @@ function ScheduleCreateForm({
 
           {!hasSections ? (
             <p className="mt-2 text-sm leading-6 text-amber-700">
-              أضف صفًا وشعبة فعّالة أولًا حتى تتمكن من اختيار الشعبة.
+              أضف صفًا وشعبة فعّال أولًا حتى تتمكن من اختيار الشعبة.
             </p>
           ) : null}
         </FormField>
@@ -406,7 +406,7 @@ function ScheduleCreateForm({
 
           {!hasSubjects ? (
             <p className="mt-2 text-sm leading-6 text-amber-700">
-              أضف مادة فعّالة أولًا حتى تتمكن من اختيار المادة.
+              أضف مادة فعّال أولًا حتى تتمكن من اختيار المادة.
             </p>
           ) : null}
         </FormField>
@@ -470,11 +470,11 @@ function ScheduleCreateForm({
 
           <span>
             <span className="block font-extrabold text-[var(--app-text)]">
-              المحاضرة فعّالة
+              المحاضرة فعّال
             </span>
 
             <span className="mt-1 block text-sm leading-6 text-[var(--app-text-muted)]">
-              المحاضرات الفعّالة تظهر في الجدول الدراسي ويمكن تسجيل الحضور فيها.
+              المحاضرات الفعّال تظهر في الجدول الدراسي ويمكن تسجيل الحضور فيها.
             </span>
           </span>
         </label>
@@ -542,13 +542,13 @@ function SchedulesStats({
       className: "bg-gradient-to-br from-blue-100 to-rose-100 text-blue-700",
     },
     {
-      label: "محاضرات فعّالة",
+      label: "محاضرات فعّال",
       value: active,
       icon: CheckCircle2,
       className: "bg-emerald-100 text-emerald-700",
     },
     {
-      label: "محاضرات متوقفة",
+      label: "محاضرات متوقف",
       value: inactive,
       icon: AlertTriangle,
       className: "bg-gradient-to-br from-amber-100 to-orange-100 text-amber-700",
