@@ -11,14 +11,19 @@ const SESSION_COOKIE_NAME = "madrasati_session";
 const SESSION_DURATION = 8 * 60 * 60 * 1000; // 8 hours in ms
 
 export async function verifyAdmin(username: string, password: string) {
-  // Ensure database is initialized (especially on Vercel)
-  await ensureDatabase();
+  try {
+    // Ensure database is initialized (especially on Vercel)
+    await ensureDatabase();
 
-  const admin = await db.admin.findUnique({ where: { username } });
-  if (!admin) return null;
-  const isValid = await bcrypt.compare(password, admin.passwordHash);
-  if (!isValid) return null;
-  return admin;
+    const admin = await db.admin.findUnique({ where: { username } });
+    if (!admin) return null;
+    const isValid = await bcrypt.compare(password, admin.passwordHash);
+    if (!isValid) return null;
+    return admin;
+  } catch (error) {
+    console.error("[verifyAdmin] Error:", error);
+    return null;
+  }
 }
 
 export async function createSession(adminId: string) {

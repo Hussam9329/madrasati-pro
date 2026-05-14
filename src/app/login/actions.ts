@@ -11,18 +11,24 @@ export async function loginAction(
   prevState: LoginState,
   formData: FormData
 ): Promise<LoginState> {
-  const username = formData.get("username") as string;
-  const password = formData.get("password") as string;
+  try {
+    const username = formData.get("username") as string;
+    const password = formData.get("password") as string;
 
-  if (!username || !password) {
-    return { error: "يرجى إدخال اسم المستخدم وكلمة المرور." };
+    if (!username || !password) {
+      return { error: "يرجى إدخال اسم المستخدم وكلمة المرور." };
+    }
+
+    const admin = await verifyAdmin(username, password);
+    if (!admin) {
+      return { error: "اسم المستخدم أو كلمة المرور غير صحيحة." };
+    }
+
+    await createSession(admin.id);
+  } catch (error) {
+    console.error("[loginAction] Error:", error);
+    return { error: "حدث خطأ أثناء تسجيل الدخول. يرجى المحاولة مرة أخرى." };
   }
 
-  const admin = await verifyAdmin(username, password);
-  if (!admin) {
-    return { error: "اسم المستخدم أو كلمة المرور غير صحيحة." };
-  }
-
-  await createSession(admin.id);
   redirect("/");
 }
