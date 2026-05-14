@@ -134,7 +134,7 @@ export function QrAttendanceScanner({
 
   return (
     <div className="app-card overflow-hidden">
-      <div className="border-b border-[var(--app-border-soft)] bg-gradient-to-l to-rose-50/40 to-amber-50/20 p-6">
+      <div className="border-b border-[var(--app-border-soft)] bg-gradient-to-l to-indigo-50/40 to-amber-50/20 p-6">
         <div className="flex items-start gap-3">
           <div
             className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${modeColor}`}

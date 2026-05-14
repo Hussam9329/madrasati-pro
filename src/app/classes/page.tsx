@@ -371,9 +371,9 @@ function ClassCreateForm() {
       action={createClassAction}
       className="app-card overflow-hidden"
     >
-      <div className="border-b border-[var(--app-border-soft)] bg-gradient-to-l to-rose-50/40 to-amber-50/20 p-6">
+      <div className="border-b border-[var(--app-border-soft)] bg-gradient-to-l to-indigo-50/40 to-amber-50/20 p-6">
         <div className="flex items-start gap-3">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-100 to-rose-100 text-blue-700">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700">
             <GraduationCap size={24} />
           </div>
 
@@ -444,12 +444,12 @@ function ClassCreateForm() {
           />
         </div>
 
-        <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-[var(--app-border-soft)] bg-gradient-to-l to-rose-50/30 to-amber-50/20 p-4">
+        <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-[var(--app-border-soft)] bg-gradient-to-l to-indigo-50/30 to-amber-50/20 p-4">
           <input
             type="checkbox"
             name="isActive"
             defaultChecked
-            className="h-5 w-5 accent-rose-600"
+            className="h-5 w-5 accent-indigo-600"
           />
 
           <span>
@@ -464,7 +464,7 @@ function ClassCreateForm() {
         </label>
       </div>
 
-      <div className="flex flex-col gap-3 border-t border-[var(--app-border-soft)] bg-gradient-to-l to-rose-50/30 to-amber-50/20 p-6 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 border-t border-[var(--app-border-soft)] bg-gradient-to-l to-indigo-50/30 to-amber-50/20 p-6 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm leading-7 text-[var(--app-text-muted)]">
           بعد حفظ الصف، أضف شعبة واحدة على الأقل.
         </p>
@@ -485,9 +485,9 @@ type SectionCreateFormProps = {
 function SectionCreateForm({ classes }: SectionCreateFormProps) {
   return (
     <form action={createSectionAction} className="app-card overflow-hidden">
-      <div className="border-b border-[var(--app-border-soft)] bg-gradient-to-l to-rose-50/40 to-amber-50/20 p-6">
+      <div className="border-b border-[var(--app-border-soft)] bg-gradient-to-l to-indigo-50/40 to-amber-50/20 p-6">
         <div className="flex items-start gap-3">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-rose-100 to-amber-100 text-rose-700">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-100 to-amber-100 text-indigo-700">
             <DoorOpen size={24} />
           </div>
 
@@ -594,12 +594,12 @@ function SectionCreateForm({ classes }: SectionCreateFormProps) {
           />
         </div>
 
-        <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-[var(--app-border-soft)] bg-gradient-to-l to-rose-50/30 to-amber-50/20 p-4">
+        <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-[var(--app-border-soft)] bg-gradient-to-l to-indigo-50/30 to-amber-50/20 p-4">
           <input
             type="checkbox"
             name="isActive"
             defaultChecked
-            className="h-5 w-5 accent-rose-600"
+            className="h-5 w-5 accent-indigo-600"
           />
 
           <span>
@@ -614,7 +614,7 @@ function SectionCreateForm({ classes }: SectionCreateFormProps) {
         </label>
       </div>
 
-      <div className="flex flex-col gap-3 border-t border-[var(--app-border-soft)] bg-gradient-to-l to-rose-50/30 to-amber-50/20 p-6 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 border-t border-[var(--app-border-soft)] bg-gradient-to-l to-indigo-50/30 to-amber-50/20 p-6 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm leading-7 text-[var(--app-text-muted)]">
           الشعبة ستُربط بالصف المختار مباشرة.
         </p>
@@ -645,7 +645,7 @@ function ClassesStats({ total, active, inactive, sections }: ClassesStatsProps) 
       label: "إجمالي الصفوف",
       value: total,
       icon: GraduationCap,
-      className: "bg-gradient-to-br from-blue-100 to-rose-100 text-blue-700",
+      className: "bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700",
     },
     {
       label: "صفوف فعّال",
@@ -663,7 +663,7 @@ function ClassesStats({ total, active, inactive, sections }: ClassesStatsProps) 
       label: "إجمالي الشُعب",
       value: sections,
       icon: DoorOpen,
-      className: "bg-gradient-to-br from-rose-100 to-amber-100 text-rose-700",
+      className: "bg-gradient-to-br from-indigo-100 to-amber-100 text-indigo-700",
     },
   ];
 
@@ -788,9 +788,9 @@ function SectionRow({ section }: SectionRowProps) {
   const statusLabel = section.isActive ? "فعّال" : "متوقف";
 
   return (
-    <article className="grid gap-4 p-5 transition hover:bg-rose-50/40 lg:grid-cols-[1fr_auto] lg:items-center">
+    <article className="grid gap-4 p-5 transition hover:bg-indigo-50/40 lg:grid-cols-[1fr_auto] lg:items-center">
       <div className="flex gap-4">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-3xl bg-gradient-to-br from-rose-100 to-amber-100 text-rose-700">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-3xl bg-gradient-to-br from-indigo-100 to-amber-100 text-indigo-700">
           <DoorOpen size={22} />
         </div>
 
@@ -842,7 +842,7 @@ function SectionRow({ section }: SectionRowProps) {
 
           <button
             type="submit"
-            className="btn w-full border-red-100 bg-gradient-to-r from-red-50 to-rose-50 text-red-700 hover:from-red-100 hover:to-rose-100"
+            className="btn w-full border-red-100 bg-gradient-to-r from-red-50 to-indigo-50 text-red-700 hover:from-red-100 hover:to-indigo-100"
           >
             <Trash2 size={17} />
             حذف
@@ -895,9 +895,9 @@ function ClassRow({ schoolClass, subjects }: ClassRowProps) {
   const statusClass = status === "active" ? "badge-success" : "badge-warning";
 
   return (
-    <article className="grid gap-4 p-5 transition hover:bg-rose-50/40 lg:grid-cols-[1fr_auto] lg:items-center">
+    <article className="grid gap-4 p-5 transition hover:bg-indigo-50/40 lg:grid-cols-[1fr_auto] lg:items-center">
       <div className="flex min-w-0 gap-4">
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-100 to-rose-100 text-blue-700">
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700">
           <GraduationCap size={25} />
         </div>
 
@@ -960,7 +960,7 @@ function ClassRow({ schoolClass, subjects }: ClassRowProps) {
 
           <button
             type="submit"
-            className="btn w-full border-red-100 bg-gradient-to-r from-red-50 to-rose-50 text-red-700 hover:from-red-100 hover:to-rose-100"
+            className="btn w-full border-red-100 bg-gradient-to-r from-red-50 to-indigo-50 text-red-700 hover:from-red-100 hover:to-indigo-100"
           >
             <Trash2 size={17} />
             حذف

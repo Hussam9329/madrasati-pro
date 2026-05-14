@@ -1,18 +1,18 @@
 @import "tailwindcss";
 
-/* ===== Custom Theme for Tailwind v4 — Marina Identity ===== */
+/* ===== Custom Theme for Tailwind v4 — Professional Education Identity ===== */
 @theme {
   --font-tajawal: "Tajawal", system-ui, sans-serif;
 
-  /* ── Primary: Crimson/Rose (#b01849) ── */
-  --color-primary: #b01849;
-  --color-primary-hover: #8f153b;
-  --color-primary-soft: #fff0f4;
+  /* ── Primary: Indigo (#1e40af) ── */
+  --color-primary: #1e40af;
+  --color-primary-hover: #1e3a8a;
+  --color-primary-soft: #eef2ff;
   --color-primary-text: #ffffff;
 
-  /* ── Accent: Gold (#d9a15f) ── */
-  --color-accent: #d9a15f;
-  --color-accent-soft: #fef7ed;
+  /* ── Accent: Amber (#b45309) ── */
+  --color-accent: #b45309;
+  --color-accent-soft: #fffbeb;
 
   /* ── Semantic ── */
   --color-success: #059669;
@@ -25,22 +25,22 @@
   --color-info-soft: #ecfeff;
 
   /* ── App Surface ── */
-  --color-app-bg: #fff7f9;
-  --color-app-bg-soft: #fceef2;
+  --color-app-bg: #f8fafc;
+  --color-app-bg-soft: #f1f5f9;
   --color-app-card: #ffffff;
-  --color-app-card-soft: #fff9fb;
-  --color-app-text: #2d0a18;
-  --color-app-text-muted: #7a4a5e;
-  --color-app-text-soft: #b08090;
-  --color-app-border: #f4cdd8;
-  --color-app-border-soft: #f8dae3;
+  --color-app-card-soft: #f8fafc;
+  --color-app-text: #0f172a;
+  --color-app-text-muted: #64748b;
+  --color-app-text-soft: #94a3b8;
+  --color-app-border: #e2e8f0;
+  --color-app-border-soft: #f1f5f9;
 
   /* ── Sidebar ── */
-  --color-sidebar-bg: #1a0a12;
-  --color-sidebar-bg-soft: #2a1220;
-  --color-sidebar-text: #f5d5e0;
-  --color-sidebar-muted: #b08090;
-  --color-sidebar-active: #b01849;
+  --color-sidebar-bg: #0f172a;
+  --color-sidebar-bg-soft: #1e293b;
+  --color-sidebar-text: #e2e8f0;
+  --color-sidebar-muted: #94a3b8;
+  --color-sidebar-active: #1e40af;
 }
 
 /* ===== CSS Custom Properties (non-theme) ===== */
@@ -51,13 +51,13 @@
   --radius-xl: 24px;
 
   --shadow-soft:
-    0 4px 16px rgba(176, 24, 73, 0.04),
-    0 8px 32px rgba(45, 10, 24, 0.05);
+    0 4px 16px rgba(30, 64, 175, 0.04),
+    0 8px 32px rgba(15, 23, 42, 0.05);
   --shadow-card:
-    0 8px 24px rgba(176, 24, 73, 0.06),
-    0 16px 48px rgba(45, 10, 24, 0.07);
-  --shadow-focus: 0 0 0 4px rgba(176, 24, 73, 0.16);
-  --shadow-glow: 0 0 20px rgba(176, 24, 73, 0.15), 0 0 40px rgba(176, 24, 73, 0.05);
+    0 8px 24px rgba(30, 64, 175, 0.06),
+    0 16px 48px rgba(15, 23, 42, 0.07);
+  --shadow-focus: 0 0 0 4px rgba(30, 64, 175, 0.16);
+  --shadow-glow: 0 0 20px rgba(30, 64, 175, 0.15), 0 0 40px rgba(30, 64, 175, 0.05);
   --shadow-sidebar:
     -8px 0 32px rgba(0, 0, 0, 0.25),
     -2px 0 8px rgba(0, 0, 0, 0.15);
@@ -73,16 +73,16 @@
 
 /* ===== Dark Mode Overrides ===== */
 html.dark {
-  --color-app-bg: #12060c;
-  --color-app-bg-soft: #1a0a12;
-  --color-app-card: #1e0c16;
-  --color-app-card-soft: #261020;
-  --color-app-text: #f5d5e0;
-  --color-app-text-muted: #b08090;
-  --color-app-text-soft: #7a4a5e;
-  --color-app-border: #2a1220;
-  --color-app-border-soft: #221018;
-  --color-primary-soft: #2a0c18;
+  --color-app-bg: #020617;
+  --color-app-bg-soft: #0f172a;
+  --color-app-card: #1e293b;
+  --color-app-card-soft: #334155;
+  --color-app-text: #f1f5f9;
+  --color-app-text-muted: #94a3b8;
+  --color-app-text-soft: #64748b;
+  --color-app-border: #334155;
+  --color-app-border-soft: #1e293b;
+  --color-primary-soft: #1e1b4b;
   --color-success-soft: #064e3b;
   --color-warning-soft: #431407;
   --color-danger-soft: #4c0519;
@@ -90,50 +90,49 @@ html.dark {
 }
 
 html.dark .bg-slate-100 {
-  background: #2a1220;
+  background: #1e293b;
 }
 
-html.dark [class*="from-rose-50"],
-html.dark [class*="to-pink-50"],
+html.dark [class*="from-indigo-50"],
 html.dark [class*="to-amber-50"] {
-  --tw-gradient-from: rgba(176, 24, 73, 0.08);
-  --tw-gradient-to: rgba(217, 161, 95, 0.05);
+  --tw-gradient-from: rgba(30, 64, 175, 0.08);
+  --tw-gradient-to: rgba(180, 83, 9, 0.05);
 }
 
-html.dark .from-rose-100 {
-  --tw-gradient-from: rgba(176, 24, 73, 0.15);
+html.dark .from-indigo-100 {
+  --tw-gradient-from: rgba(30, 64, 175, 0.15);
 }
 
-html.dark .to-pink-100 {
-  --tw-gradient-to: rgba(176, 24, 73, 0.12);
+html.dark .to-indigo-100 {
+  --tw-gradient-to: rgba(30, 64, 175, 0.12);
 }
 
 html.dark .text-slate-500 {
-  color: #b08090;
+  color: #94a3b8;
 }
 
 html.dark .text-slate-600 {
-  color: #b08090;
+  color: #94a3b8;
 }
 
 html.dark .text-slate-700 {
-  color: #f5d5e0;
+  color: #e2e8f0;
 }
 
-html.dark .text-rose-700 {
-  color: #f5a0b5;
+html.dark .text-indigo-700 {
+  color: #a5b4fc;
 }
 
-html.dark .border-rose-100 {
-  border-color: rgba(176, 24, 73, 0.2);
+html.dark .border-indigo-100 {
+  border-color: rgba(30, 64, 175, 0.2);
 }
 
-html.dark .hover\:bg-rose-50:hover {
-  background: rgba(176, 24, 73, 0.1);
+html.dark .hover\:bg-indigo-50:hover {
+  background: rgba(30, 64, 175, 0.1);
 }
 
-html.dark .hover\:text-rose-600:hover {
-  color: #f07090;
+html.dark .hover\:text-indigo-600:hover {
+  color: #818cf8;
 }
 
 /* ===== Base Reset & Global Styles ===== */
@@ -152,18 +151,18 @@ html.dark .hover\:text-rose-600:hover {
     min-height: 100vh;
     font-family: var(--font-tajawal);
     background:
-      radial-gradient(ellipse at 5% 0%, rgba(176, 24, 73, 0.06) 0%, transparent 50%),
-      radial-gradient(ellipse at 95% 100%, rgba(217, 161, 95, 0.04) 0%, transparent 50%),
-      linear-gradient(180deg, #fff9fb 0%, var(--color-app-bg) 40%, #fdf0f4 100%);
+      radial-gradient(ellipse at 5% 0%, rgba(30, 64, 175, 0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 95% 100%, rgba(180, 83, 9, 0.04) 0%, transparent 50%),
+      linear-gradient(180deg, #f8fafc 0%, var(--color-app-bg) 40%, #f1f5f9 100%);
     color: var(--color-app-text);
     direction: rtl;
   }
 
   html.dark body {
     background:
-      radial-gradient(ellipse at 5% 0%, rgba(176, 24, 73, 0.04) 0%, transparent 50%),
-      radial-gradient(ellipse at 95% 100%, rgba(217, 161, 95, 0.02) 0%, transparent 50%),
-      linear-gradient(180deg, #0e0408 0%, var(--color-app-bg) 40%, #08020a 100%);
+      radial-gradient(ellipse at 5% 0%, rgba(30, 64, 175, 0.04) 0%, transparent 50%),
+      radial-gradient(ellipse at 95% 100%, rgba(180, 83, 9, 0.02) 0%, transparent 50%),
+      linear-gradient(180deg, #020617 0%, var(--color-app-bg) 40%, #010309 100%);
   }
 
   button,
@@ -205,25 +204,25 @@ html.dark .hover\:text-rose-600:hover {
   }
 
   ::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, #e0b8c4 0%, #c4909f 100%);
+    background: linear-gradient(180deg, #cbd5e1 0%, #94a3b8 100%);
     border-radius: 999px;
     border: 2px solid transparent;
     background-clip: padding-box;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, #b08090 0%, #8a5a6a 100%);
+    background: linear-gradient(180deg, #94a3b8 0%, #64748b 100%);
     border: 2px solid transparent;
     background-clip: padding-box;
   }
 
   html.dark ::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, #3a1828 0%, #2a1220 100%);
+    background: linear-gradient(180deg, #334155 0%, #1e293b 100%);
     background-clip: padding-box;
   }
 
   html.dark ::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, #4a2030 0%, #3a1828 100%);
+    background: linear-gradient(180deg, #475569 0%, #334155 100%);
     background-clip: padding-box;
   }
 
@@ -278,10 +277,10 @@ html.dark .hover\:text-rose-600:hover {
 
   .app-card-hover:hover {
     transform: translateY(-3px);
-    border-color: rgba(176, 24, 73, 0.25);
+    border-color: rgba(30, 64, 175, 0.25);
     box-shadow:
-      0 8px 24px rgba(176, 24, 73, 0.08),
-      0 16px 48px rgba(45, 10, 24, 0.08);
+      0 8px 24px rgba(30, 64, 175, 0.08),
+      0 16px 48px rgba(15, 23, 42, 0.08);
   }
 
   .app-section {
@@ -332,18 +331,18 @@ html.dark .hover\:text-rose-600:hover {
   }
 
   .btn-primary {
-    background: linear-gradient(135deg, #b01849 0%, #d9a15f 100%);
+    background: linear-gradient(135deg, #1e40af 0%, #b45309 100%);
     color: var(--color-primary-text);
     box-shadow:
-      0 4px 12px rgba(176, 24, 73, 0.25),
-      0 8px 24px rgba(176, 24, 73, 0.15);
+      0 4px 12px rgba(30, 64, 175, 0.25),
+      0 8px 24px rgba(30, 64, 175, 0.15);
   }
 
   .btn-primary:hover {
-    background: linear-gradient(135deg, #8f153b 0%, #c49050 100%);
+    background: linear-gradient(135deg, #1e3a8a 0%, #92400e 100%);
     box-shadow:
-      0 4px 16px rgba(176, 24, 73, 0.35),
-      0 8px 32px rgba(176, 24, 73, 0.2);
+      0 4px 16px rgba(30, 64, 175, 0.35),
+      0 8px 32px rgba(30, 64, 175, 0.2);
   }
 
   .btn-secondary {
@@ -353,8 +352,8 @@ html.dark .hover\:text-rose-600:hover {
   }
 
   .btn-secondary:hover {
-    background: #fff9fb;
-    border-color: rgba(176, 24, 73, 0.3);
+    background: #f8fafc;
+    border-color: rgba(30, 64, 175, 0.3);
     color: var(--color-primary);
   }
 
@@ -366,7 +365,7 @@ html.dark .hover\:text-rose-600:hover {
 
   html.dark .btn-secondary:hover {
     background: var(--color-app-card-soft);
-    border-color: rgba(176, 24, 73, 0.4);
+    border-color: rgba(30, 64, 175, 0.4);
     color: var(--color-primary);
   }
 
@@ -376,7 +375,7 @@ html.dark .hover\:text-rose-600:hover {
   }
 
   .btn-soft:hover {
-    background: #f8d0dc;
+    background: #dbeafe;
   }
 
   .input {
@@ -398,10 +397,10 @@ html.dark .hover\:text-rose-600:hover {
   }
 
   .input:focus {
-    border-color: rgba(176, 24, 73, 0.5);
+    border-color: rgba(30, 64, 175, 0.5);
     box-shadow:
-      0 0 0 4px rgba(176, 24, 73, 0.1),
-      0 2px 8px rgba(176, 24, 73, 0.08);
+      0 0 0 4px rgba(30, 64, 175, 0.1),
+      0 2px 8px rgba(30, 64, 175, 0.08);
   }
 
   html.dark .input {
@@ -411,10 +410,10 @@ html.dark .hover\:text-rose-600:hover {
   }
 
   html.dark .input:focus {
-    border-color: rgba(176, 24, 73, 0.6);
+    border-color: rgba(30, 64, 175, 0.6);
     box-shadow:
-      0 0 0 4px rgba(176, 24, 73, 0.15),
-      0 2px 8px rgba(176, 24, 73, 0.12);
+      0 0 0 4px rgba(30, 64, 175, 0.15),
+      0 2px 8px rgba(30, 64, 175, 0.12);
   }
 
   .badge {
@@ -445,8 +444,8 @@ html.dark .hover\:text-rose-600:hover {
   }
 
   .badge-info {
-    background: linear-gradient(135deg, #fff0f4 0%, #fceef2 100%);
-    color: #8f153b;
+    background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+    color: #1e3a8a;
   }
 
   .smart-alert {
@@ -506,7 +505,7 @@ html.dark .hover\:text-rose-600:hover {
   }
 
   .gradient-text {
-    background: linear-gradient(135deg, #b01849 0%, #d9a15f 50%, #f0c080 100%);
+    background: linear-gradient(135deg, #1e40af 0%, #b45309 50%, #d97706 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -563,7 +562,7 @@ html.dark .hover\:text-rose-600:hover {
   }
 
   html.dark .glass {
-    background: rgba(18, 6, 12, 0.72);
+    background: rgba(2, 6, 23, 0.72);
   }
 }
 

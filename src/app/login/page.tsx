@@ -6,18 +6,18 @@ export const metadata = {
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-rose-50 via-white to-amber-50 p-4 dark:from-slate-950 dark:via-slate-900 dark:to-rose-950">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-amber-50 p-4 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950">
       {/* Decorative background elements */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-rose-200/30 blur-3xl dark:bg-rose-900/20" />
+        <div className="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-indigo-200/30 blur-3xl dark:bg-indigo-900/20" />
         <div className="absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-amber-200/30 blur-3xl dark:bg-amber-900/20" />
-        <div className="absolute left-1/2 top-1/2 h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full bg-rose-100/20 blur-3xl dark:bg-rose-800/10" />
+        <div className="absolute left-1/2 top-1/2 h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full bg-indigo-100/20 blur-3xl dark:bg-indigo-800/10" />
       </div>
 
       <div className="relative w-full max-w-md">
         {/* Logo & School Name */}
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-rose-500 to-amber-600 shadow-xl shadow-rose-500/25">
+          <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-indigo-500 to-amber-600 shadow-xl shadow-indigo-500/25">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="40"
@@ -43,9 +43,9 @@ export default function LoginPage() {
         </div>
 
         {/* Login Card */}
-        <div className="relative overflow-hidden rounded-2xl border border-slate-200/60 bg-white p-8 shadow-xl shadow-rose-100/30 dark:border-slate-700/60 dark:bg-slate-800/80 dark:shadow-rose-900/20">
+        <div className="relative overflow-hidden rounded-2xl border border-slate-200/60 bg-white p-8 shadow-xl shadow-indigo-100/30 dark:border-slate-700/60 dark:bg-slate-800/80 dark:shadow-indigo-900/20">
           {/* Gradient border effect at top */}
-          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-l to-rose-500 via-amber-500 to-rose-500" />
+          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-l to-indigo-500 via-amber-500 to-indigo-500" />
 
           <LoginForm />
 

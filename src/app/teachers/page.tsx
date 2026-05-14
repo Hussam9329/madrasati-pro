@@ -289,7 +289,7 @@ function TeacherCreateForm({ subjects, sections }: TeacherCreateFormProps) {
       action={createTeacherAction}
       className="app-card overflow-hidden"
     >
-      <div className="border-b border-[var(--app-border-soft)] bg-gradient-to-l to-rose-50/40 to-amber-50/20 p-6">
+      <div className="border-b border-[var(--app-border-soft)] bg-gradient-to-l to-indigo-50/40 to-amber-50/20 p-6">
         <div className="flex items-start gap-3">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-700">
             <GraduationCap size={24} />
@@ -356,18 +356,18 @@ function TeacherCreateForm({ subjects, sections }: TeacherCreateFormProps) {
               المادة التي يدرّسها <span className="text-red-600">*</span>
             </label>
 
-            <div className="max-h-52 overflow-y-auto rounded-2xl border border-[var(--app-border-soft)] bg-gradient-to-l to-rose-50/30 to-amber-50/20 p-4">
+            <div className="max-h-52 overflow-y-auto rounded-2xl border border-[var(--app-border-soft)] bg-gradient-to-l to-indigo-50/30 to-amber-50/20 p-4">
               <div className="grid gap-3 sm:grid-cols-2">
                 {subjects.map((subject) => (
                   <label
                     key={subject.id}
-                    className="flex cursor-pointer items-center gap-3 rounded-xl border border-[var(--app-border-soft)] bg-white p-3 transition hover:border-rose-200 hover:bg-rose-50/40"
+                    className="flex cursor-pointer items-center gap-3 rounded-xl border border-[var(--app-border-soft)] bg-white p-3 transition hover:border-indigo-200 hover:bg-indigo-50/40"
                   >
                     <input
                       type="checkbox"
                       name="subjectIds"
                       value={subject.id}
-                      className="h-4 w-4 accent-rose-600"
+                      className="h-4 w-4 accent-indigo-600"
                     />
 
                     <span className="flex items-center gap-2">
@@ -446,7 +446,7 @@ function TeacherCreateForm({ subjects, sections }: TeacherCreateFormProps) {
         ) : null}
       </div>
 
-      <div className="flex flex-col gap-3 border-t border-[var(--app-border-soft)] bg-gradient-to-l to-rose-50/30 to-amber-50/20 p-6 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 border-t border-[var(--app-border-soft)] bg-gradient-to-l to-indigo-50/30 to-amber-50/20 p-6 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm leading-7 text-[var(--app-text-muted)]">
           بعد إضافة المدرس، يمكنك بناء الجدول الدراسي وربطه بالمحاضرات.
         </p>
@@ -480,7 +480,7 @@ function TeacherStats({
       label: "إجمالي المدرسين",
       value: total,
       icon: GraduationCap,
-      className: "bg-gradient-to-br from-blue-100 to-rose-100 text-blue-700",
+      className: "bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700",
     },
     {
       label: "مدرسين فعّالين",
@@ -618,7 +618,7 @@ function TeacherRow({ teacher }: TeacherRowProps) {
   const statusClass = getTeacherStatusBadgeClass(status);
 
   return (
-    <article className="grid gap-4 p-5 transition hover:bg-rose-50/40 lg:grid-cols-[1fr_auto] lg:items-center">
+    <article className="grid gap-4 p-5 transition hover:bg-indigo-50/40 lg:grid-cols-[1fr_auto] lg:items-center">
       <div className="flex min-w-0 gap-4">
         <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-3xl bg-emerald-100 text-emerald-700">
           <UserRound size={25} />
@@ -698,7 +698,7 @@ function TeacherRow({ teacher }: TeacherRowProps) {
 
           <button
             type="submit"
-            className="btn w-full border-red-100 bg-gradient-to-r from-red-50 to-rose-50 text-red-700 hover:from-red-100 hover:to-rose-100"
+            className="btn w-full border-red-100 bg-gradient-to-r from-red-50 to-indigo-50 text-red-700 hover:from-red-100 hover:to-indigo-100"
           >
             <Trash2 size={17} />
             حذف

@@ -53,10 +53,10 @@ const alertConfig: Record<
   danger: {
     icon: XCircle,
     wrapperClass: "smart-alert-danger",
-    iconClass: "bg-gradient-to-br from-red-100 to-rose-100 text-red-700",
+    iconClass: "bg-gradient-to-br from-red-100 to-indigo-100 text-red-700",
     titleClass: "text-red-950",
     actionClass:
-      "bg-gradient-to-r from-rose-600 to-red-600 text-white hover:from-rose-700 hover:to-red-700 focus-visible:shadow-[0_0_0_4px_rgba(225,29,72,0.16)]",
+      "bg-gradient-to-r from-indigo-600 to-red-600 text-white hover:from-indigo-700 hover:to-red-700 focus-visible:shadow-[0_0_0_4px_rgba(225,29,72,0.16)]",
   },
 };
 

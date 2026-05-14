@@ -91,13 +91,13 @@ export function AppShell({ children }: AppShellProps) {
       <aside
         className={[
           "fixed right-0 top-0 z-50 h-screen w-[292px] border-l border-white/[0.06] text-[var(--color-sidebar-text)] shadow-[var(--shadow-sidebar)] transition-transform duration-300",
-          "bg-gradient-to-b from-[#1a0a12] via-[#150810] to-[#0e040a]",
+          "bg-gradient-to-b from-[#0f172a] via-[#0c1524] to-[#080e1a]",
           isMobileSidebarOpen ? "translate-x-0" : "translate-x-full",
           "lg:translate-x-0",
         ].join(" ")}
       >
         {/* Subtle top glow */}
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-rose-700/[0.08] to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-indigo-700/[0.08] to-transparent" />
 
         <SidebarContent
           pathname={pathname}
@@ -106,9 +106,9 @@ export function AppShell({ children }: AppShellProps) {
       </aside>
 
       <div className="min-h-screen lg:pr-[292px]">
-        <header className="sticky top-0 z-40 border-b border-rose-100/60 glass dark:border-rose-900/60">
+        <header className="sticky top-0 z-40 border-b border-indigo-100/60 glass dark:border-indigo-900/60">
           {/* Subtle gradient border at bottom */}
-          <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-l from-transparent via-rose-200/50 to-transparent dark:via-rose-700/20" />
+          <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-l from-transparent via-indigo-200/50 to-transparent dark:via-indigo-700/20" />
 
           <div className="flex min-h-[74px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
             <div className="flex min-w-0 items-center gap-3">
@@ -123,7 +123,7 @@ export function AppShell({ children }: AppShellProps) {
 
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-rose-700 to-amber-600 text-white shadow-md shadow-rose-700/20">
+                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-700 to-amber-600 text-white shadow-md shadow-indigo-700/20">
                     <Home size={17} />
                   </span>
                   <h1 className="truncate text-lg font-extrabold text-[var(--app-text)] sm:text-xl">
@@ -152,7 +152,7 @@ export function AppShell({ children }: AppShellProps) {
               </a>
 
               <div className="hidden items-center gap-3 rounded-2xl border border-[var(--app-border)] bg-[var(--color-app-card)] px-3 py-2 lg:flex">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-rose-700 to-amber-600 text-white shadow-md shadow-rose-700/20">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-700 to-amber-600 text-white shadow-md shadow-indigo-700/20">
                   <School size={18} />
                 </div>
 
@@ -191,7 +191,7 @@ function SidebarContent({ pathname, onNavigate }: SidebarContentProps) {
           onClick={onNavigate}
           className="flex items-center gap-3 rounded-2xl outline-none"
         >
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-rose-700 to-amber-600 text-white shadow-lg shadow-rose-700/30">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-700 to-amber-600 text-white shadow-lg shadow-indigo-700/30">
             <School size={24} />
           </div>
 
@@ -241,7 +241,7 @@ function SidebarContent({ pathname, onNavigate }: SidebarContentProps) {
                         className={[
                           "group flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-bold transition-all duration-200",
                           isActive
-                            ? "bg-gradient-to-l from-rose-700 to-amber-600 text-white shadow-lg shadow-rose-700/20"
+                            ? "bg-gradient-to-l from-indigo-700 to-amber-600 text-white shadow-lg shadow-indigo-700/20"
                             : "text-[var(--color-sidebar-text)] hover:bg-white/[0.06] hover:text-white",
                         ].join(" ")}
                       >
@@ -278,11 +278,11 @@ function SidebarContent({ pathname, onNavigate }: SidebarContentProps) {
       <div className="relative border-t border-white/[0.06] p-4">
         <div className="relative overflow-hidden rounded-3xl border border-white/[0.08] bg-white/[0.04] p-4">
           {/* Shimmer border effect */}
-          <div className="absolute inset-0 rounded-3xl bg-gradient-to-l from-rose-600/10 via-transparent to-amber-500/10 opacity-60" />
+          <div className="absolute inset-0 rounded-3xl bg-gradient-to-l from-indigo-600/10 via-transparent to-amber-500/10 opacity-60" />
 
           <div className="relative">
             <div className="mb-3 flex items-center gap-2 text-white">
-              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-rose-600/30 to-amber-500/30 text-rose-200">
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-600/30 to-amber-500/30 text-indigo-200">
                 <Sparkles size={16} />
               </span>
               <p className="text-sm font-extrabold">تلميحة ذكية</p>
@@ -351,7 +351,7 @@ function ThemeToggle() {
   return (
     <button
       type="button"
-      className="hidden h-11 w-11 items-center justify-center rounded-2xl border border-[var(--app-border)] bg-[var(--color-app-card)] text-[var(--app-text-muted)] transition hover:border-rose-300 hover:text-[var(--color-primary)] hover:shadow-md hover:shadow-rose-200/30 md:inline-flex dark:hover:border-rose-700/50 dark:hover:shadow-rose-700/20"
+      className="hidden h-11 w-11 items-center justify-center rounded-2xl border border-[var(--app-border)] bg-[var(--color-app-card)] text-[var(--app-text-muted)] transition hover:border-indigo-300 hover:text-[var(--color-primary)] hover:shadow-md hover:shadow-indigo-200/30 md:inline-flex dark:hover:border-indigo-700/50 dark:hover:shadow-indigo-700/20"
       aria-label={isDark ? "الوضع الفاتح" : "الوضع الداكن"}
       title={isDark ? "الوضع الفاتح" : "الوضع الداكن"}
       onClick={toggleTheme}

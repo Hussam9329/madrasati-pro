@@ -24,7 +24,7 @@ export async function GET(
     type: "svg",
     width: 200,
     margin: 2,
-    color: { dark: "#b01849", light: "#ffffff" },
+    color: { dark: "#1e40af", light: "#ffffff" },
   });
 
   return new NextResponse(svg, {

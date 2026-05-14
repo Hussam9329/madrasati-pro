@@ -353,9 +353,9 @@ function GradeCreateForm({
       action={createGradeAction}
       className="app-card overflow-hidden"
     >
-      <div className="border-b border-[var(--app-border-soft)] bg-gradient-to-l to-rose-50/40 to-amber-50/20 p-6">
+      <div className="border-b border-[var(--app-border-soft)] bg-gradient-to-l to-indigo-50/40 to-amber-50/20 p-6">
         <div className="flex items-start gap-3">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-100 to-rose-100 text-blue-700">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700">
             <ClipboardList size={24} />
           </div>
 
@@ -373,9 +373,9 @@ function GradeCreateForm({
 
       <div className="grid gap-5 p-6">
         {/* ── Step 1: Section & Student ── */}
-        <div className="rounded-2xl border border-rose-100 bg-gradient-to-l to-rose-50/30 to-amber-50/10 p-5">
+        <div className="rounded-2xl border border-indigo-100 bg-gradient-to-l to-indigo-50/30 to-amber-50/10 p-5">
           <div className="mb-4 flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-blue-100 to-rose-100 text-sm font-extrabold text-blue-700">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-blue-100 to-indigo-100 text-sm font-extrabold text-blue-700">
               1
             </div>
             <h4 className="text-base font-extrabold text-[var(--app-text)]">
@@ -458,9 +458,9 @@ function GradeCreateForm({
         </div>
 
         {/* ── Step 2: Subject & Teacher ── */}
-        <div className="rounded-2xl border border-amber-100 bg-gradient-to-l from-amber-50/30 to-rose-50/10 p-5">
+        <div className="rounded-2xl border border-amber-100 bg-gradient-to-l from-amber-50/30 to-indigo-50/10 p-5">
           <div className="mb-4 flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br to-amber-100 to-rose-100 text-sm font-extrabold text-rose-700">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br to-amber-100 to-indigo-100 text-sm font-extrabold text-indigo-700">
               2
             </div>
             <h4 className="text-base font-extrabold text-[var(--app-text)]">
@@ -703,7 +703,7 @@ function GradeCreateForm({
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 border-t border-[var(--app-border-soft)] bg-gradient-to-l to-rose-50/30 to-amber-50/20 p-6 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 border-t border-[var(--app-border-soft)] bg-gradient-to-l to-indigo-50/30 to-amber-50/20 p-6 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm leading-7 text-[var(--app-text-muted)]">
           بعد إدخال الدرجات، يمكنك متابعة مستوى الطلاب والتقارير.
         </p>
@@ -739,7 +739,7 @@ function GradesStats({
       label: "إجمالي الدرجات",
       value: total,
       icon: BarChart3,
-      className: "bg-gradient-to-br from-blue-100 to-rose-100 text-blue-700",
+      className: "bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700",
     },
     {
       label: "ممتاز",
@@ -758,7 +758,7 @@ function GradesStats({
       label: "راسب",
       value: failed,
       icon: TrendingDown,
-      className: "bg-rose-100 text-rose-700",
+      className: "bg-indigo-100 text-indigo-700",
     },
   ];
 
@@ -951,7 +951,7 @@ function GradeRow({ grade }: GradeRowProps) {
         ? "bg-gradient-to-br from-sky-100 to-cyan-100 text-sky-700"
         : grade.ratingClass === "badge-warning"
           ? "bg-gradient-to-br from-amber-100 to-orange-100 text-amber-700"
-          : "bg-rose-100 text-rose-700";
+          : "bg-indigo-100 text-indigo-700";
 
   const percentage = grade.percentage;
   const warningMessage = getGradeWarning(percentage);
@@ -959,7 +959,7 @@ function GradeRow({ grade }: GradeRowProps) {
     warningMessage && (percentage < 60);
 
   return (
-    <article className="grid gap-4 p-5 transition hover:bg-rose-50/40 xl:grid-cols-[1fr_auto] xl:items-center">
+    <article className="grid gap-4 p-5 transition hover:bg-indigo-50/40 xl:grid-cols-[1fr_auto] xl:items-center">
       <div className="flex min-w-0 gap-4">
         <div
           className={[
@@ -970,7 +970,7 @@ function GradeRow({ grade }: GradeRowProps) {
                 ? "bg-gradient-to-br from-sky-100 to-cyan-100 text-sky-700"
                 : percentage >= 50
                   ? "bg-gradient-to-br from-amber-100 to-orange-100 text-amber-700"
-                  : "bg-gradient-to-br from-rose-100 to-red-100 text-rose-700",
+                  : "bg-gradient-to-br from-indigo-100 to-red-100 text-indigo-700",
           ].join(" ")}
         >
           <ClipboardList size={25} />
@@ -1002,7 +1002,7 @@ function GradeRow({ grade }: GradeRowProps) {
             </span>
 
             {grade.sectionName && grade.className && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-3 py-1 font-bold text-rose-700">
+              <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-3 py-1 font-bold text-indigo-700">
                 <Layers size={14} />
                 {grade.className} / شعبة {grade.sectionName}
               </span>
@@ -1040,7 +1040,7 @@ function GradeRow({ grade }: GradeRowProps) {
                       ? "text-sky-700"
                       : percentage >= 50
                         ? "text-amber-700"
-                        : "text-rose-700",
+                        : "text-indigo-700",
                 ].join(" ")}
               >
                 {percentage}%
@@ -1101,7 +1101,7 @@ function GradeRow({ grade }: GradeRowProps) {
                     ? "bg-sky-500"
                     : percentage >= 50
                       ? "bg-amber-500"
-                      : "bg-rose-500",
+                      : "bg-indigo-500",
               ].join(" ")}
               style={{ width: `${percentage}%` }}
             />
@@ -1117,7 +1117,7 @@ function GradeRow({ grade }: GradeRowProps) {
 
           <button
             type="submit"
-            className="btn w-full border-red-100 bg-gradient-to-r from-red-50 to-rose-50 text-red-700 hover:from-red-100 hover:to-rose-100"
+            className="btn w-full border-red-100 bg-gradient-to-r from-red-50 to-indigo-50 text-red-700 hover:from-red-100 hover:to-indigo-100"
           >
             <Trash2 size={17} />
             حذف
