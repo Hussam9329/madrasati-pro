@@ -233,6 +233,7 @@ function buildAttendanceWhere(
   }
 
   if (filter.sectionId) {
+    // Use direct studentId filter combined with schedule sectionId
     where.OR = [
       {
         student: {
@@ -247,20 +248,23 @@ function buildAttendanceWhere(
     ];
   }
 
+  // classId filter: pre-fetch sectionIds and use them
+  // (Supabase REST doesn't support nested relation filters in where)
   if (filter.classId) {
+    const sections = await db.section.findMany({
+      where: { classId: filter.classId },
+      select: { id: true },
+    });
+    const sectionIds = sections.map((s: any) => s.id);
     where.OR = [
       {
         student: {
-          section: {
-            classId: filter.classId,
-          },
+          sectionId: { in: sectionIds },
         },
       },
       {
         schedule: {
-          section: {
-            classId: filter.classId,
-          },
+          sectionId: { in: sectionIds },
         },
       },
     ];
@@ -1080,8 +1084,9 @@ export async function hasAttendanceRecords(): Promise<boolean> {
 
 function isUniqueConstraintError(error: unknown): boolean {
   return (
-    error instanceof Prisma.PrismaClientKnownRequestError &&
-    error.code === "P2002"
+    (error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002") ||
+    ((error as any)?.code === "P2002")
   );
 }
 

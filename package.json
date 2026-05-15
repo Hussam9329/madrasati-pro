@@ -7,14 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "postinstall": "echo skip-prisma-generate",
-    "db:generate": "prisma generate",
-    "db:push": "prisma db push",
-    "db:studio": "prisma studio",
-    "db:backfill-student-codes": "tsx prisma/backfill-student-codes.ts"
+    "postinstall": "echo no-prisma-needed"
   },
   "dependencies": {
-    "@prisma/client": "^6.6.0",
     "@supabase/supabase-js": "^2.105.4",
     "@tailwindcss/postcss": "^4.3.0",
     "@zxing/browser": "^0.2.0",
@@ -22,7 +17,6 @@
     "jose": "^6.2.3",
     "lucide-react": "^0.469.0",
     "next": "^15.2.0",
-    "pg": "^8.20.0",
     "qrcode": "^1.5.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
@@ -34,11 +28,7 @@
     "@types/react-dom": "^19.0.0",
     "eslint": "9.39.4",
     "eslint-config-next": "16.2.6",
-    "prisma": "^6.6.0",
     "tsx": "^4.21.0",
     "typescript": "^5.7.0"
-  },
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
   }
 }

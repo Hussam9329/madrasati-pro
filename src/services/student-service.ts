@@ -50,6 +50,16 @@ export async function getStudents(
 ): Promise<StudentListItem[]> {
   const where = buildStudentWhere(filter);
 
+  // Handle classId filter by pre-fetching sectionIds for that class
+  if (filter.classId) {
+    const sections = await db.section.findMany({
+      where: { classId: filter.classId },
+      select: { id: true },
+    });
+    const sectionIds = sections.map((s: any) => s.id);
+    where.sectionId = { in: sectionIds };
+  }
+
   const students = await db.student.findMany({
     where,
     orderBy: [
@@ -603,11 +613,7 @@ function buildStudentWhere(filter: StudentsFilter): Prisma.StudentWhereInput {
     where.sectionId = filter.sectionId;
   }
 
-  if (filter.classId) {
-    where.section = {
-      classId: filter.classId,
-    };
-  }
+  // Note: classId filter handled in getStudents() via pre-fetching sectionIds
 
   if (filter.status) {
     where.status = filter.status;
@@ -708,7 +714,8 @@ function toStudentListItem(student: StudentWithRelations): StudentListItem {
 
 function isUniqueConstraintError(error: unknown): boolean {
   return (
-    error instanceof Prisma.PrismaClientKnownRequestError &&
-    error.code === "P2002"
+    (error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002") ||
+    ((error as any)?.code === "P2002")
   );
 }
