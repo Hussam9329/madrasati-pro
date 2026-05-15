@@ -194,7 +194,13 @@ async function deleteStudentAction(formData: FormData) {
     redirect("/students?error=missing-id");
   }
 
-  const result = await deleteStudent(id);
+  let result;
+  try {
+    result = await deleteStudent(id);
+  } catch (error) {
+    console.error("[deleteStudentAction] Error:", error);
+    redirect("/students?error=delete");
+  }
 
   if (!result.ok) {
     redirect("/students?error=delete");

@@ -486,11 +486,19 @@ export async function deletePayment(
     };
   }
 
-  await db.payment.delete({
-    where: {
-      id,
-    },
-  });
+  try {
+    await db.payment.delete({
+      where: {
+        id,
+      },
+    });
+  } catch (error) {
+    console.error("[deletePayment] Error:", error);
+    return {
+      ok: false,
+      message: "حدث خطأ أثناء حذف الدفعة.",
+    };
+  }
 
   return {
     ok: true,

@@ -165,17 +165,47 @@ export function formatTeacherSubjects(
 
 export function canDeleteTeacher(input: {
   schedulesCount?: number;
+  teacherSubjectsCount?: number;
+  teacherSectionsCount?: number;
+  gradesCount?: number;
 }): {
   allowed: boolean;
   reason?: string;
 } {
   const schedulesCount = input.schedulesCount ?? 0;
+  const teacherSubjectsCount = input.teacherSubjectsCount ?? 0;
+  const teacherSectionsCount = input.teacherSectionsCount ?? 0;
+  const gradesCount = input.gradesCount ?? 0;
+
+  if (gradesCount > 0) {
+    return {
+      allowed: false,
+      reason:
+        "لا يمكن حذف المدرس لأنه مرتبط بدرجات طلاب. يمكنك تعطيله بدل حذفه.",
+    };
+  }
 
   if (schedulesCount > 0) {
     return {
       allowed: false,
       reason:
         "لا يمكن حذف المدرس لأنه مرتبط بمحاضرات في الجدول الدراسي. يمكنك تعطيله بدل حذفه.",
+    };
+  }
+
+  if (teacherSubjectsCount > 0) {
+    return {
+      allowed: false,
+      reason:
+        "لا يمكن حذف المدرس لأنه مرتبط بمواد دراسية. يمكنك تعطيله بدل حذفه.",
+    };
+  }
+
+  if (teacherSectionsCount > 0) {
+    return {
+      allowed: false,
+      reason:
+        "لا يمكن حذف المدرس لأنه مرتبط بشعب دراسية. يمكنك تعطيله بدل حذفه.",
     };
   }
 

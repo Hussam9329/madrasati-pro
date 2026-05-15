@@ -178,7 +178,13 @@ async function deleteTeacherAction(formData: FormData) {
     redirect("/teachers?error=missing-id");
   }
 
-  const result = await deleteTeacher(id);
+  let result;
+  try {
+    result = await deleteTeacher(id);
+  } catch (error) {
+    console.error("[deleteTeacherAction] Error:", error);
+    redirect("/teachers?error=delete");
+  }
 
   if (!result.ok) {
     redirect("/teachers?error=delete");

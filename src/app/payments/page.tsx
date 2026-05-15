@@ -225,7 +225,13 @@ async function deletePaymentAction(formData: FormData) {
     redirect("/payments?error=missing-id");
   }
 
-  const result = await deletePayment(id);
+  let result;
+  try {
+    result = await deletePayment(id);
+  } catch (error) {
+    console.error("[deletePaymentAction] Error:", error);
+    redirect("/payments?error=delete");
+  }
 
   if (!result.ok) {
     redirect("/payments?error=delete");

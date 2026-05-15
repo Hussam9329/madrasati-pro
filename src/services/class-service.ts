@@ -344,11 +344,19 @@ export async function deleteClass(
     };
   }
 
-  await db.schoolClass.delete({
-    where: {
-      id,
-    },
-  });
+  try {
+    await db.schoolClass.delete({
+      where: {
+        id,
+      },
+    });
+  } catch (error) {
+    console.error("[deleteClass] Error:", error);
+    return {
+      ok: false,
+      message: "حدث خطأ أثناء حذف الصف. تأكد من عدم وجود بيانات مرتبطة.",
+    };
+  }
 
   return {
     ok: true,
@@ -754,11 +762,19 @@ export async function deleteSection(
     };
   }
 
-  await db.section.delete({
-    where: {
-      id,
-    },
-  });
+  try {
+    await db.section.delete({
+      where: {
+        id,
+      },
+    });
+  } catch (error) {
+    console.error("[deleteSection] Error:", error);
+    return {
+      ok: false,
+      message: "حدث خطأ أثناء حذف الشعبة. تأكد من عدم وجود بيانات مرتبطة.",
+    };
+  }
 
   return {
     ok: true,

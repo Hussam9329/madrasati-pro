@@ -220,7 +220,13 @@ async function deleteClassAction(formData: FormData) {
     redirect("/classes?error=missing-id");
   }
 
-  const result = await deleteClass(id);
+  let result;
+  try {
+    result = await deleteClass(id);
+  } catch (error) {
+    console.error("[deleteClassAction] Error:", error);
+    redirect("/classes?error=delete-class");
+  }
 
   if (!result.ok) {
     redirect("/classes?error=delete-class");
@@ -262,7 +268,13 @@ async function deleteSectionAction(formData: FormData) {
     redirect("/classes?error=missing-id");
   }
 
-  const result = await deleteSection(id);
+  let result;
+  try {
+    result = await deleteSection(id);
+  } catch (error) {
+    console.error("[deleteSectionAction] Error:", error);
+    redirect("/classes?error=delete-section");
+  }
 
   if (!result.ok) {
     redirect("/classes?error=delete-section");

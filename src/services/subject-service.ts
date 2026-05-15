@@ -245,11 +245,19 @@ export async function deleteSubject(
     };
   }
 
-  await db.subject.delete({
-    where: {
-      id,
-    },
-  });
+  try {
+    await db.subject.delete({
+      where: {
+        id,
+      },
+    });
+  } catch (error) {
+    console.error("[deleteSubject] Error:", error);
+    return {
+      ok: false,
+      message: "حدث خطأ أثناء حذف المادة الدراسية. تأكد من عدم وجود بيانات مرتبطة.",
+    };
+  }
 
   return {
     ok: true,

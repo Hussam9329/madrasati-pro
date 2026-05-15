@@ -399,11 +399,19 @@ export async function deleteStudent(
     };
   }
 
-  await db.student.delete({
-    where: {
-      id,
-    },
-  });
+  try {
+    await db.student.delete({
+      where: {
+        id,
+      },
+    });
+  } catch (error) {
+    console.error("[deleteStudent] Error:", error);
+    return {
+      ok: false,
+      message: "حدث خطأ أثناء حذف الطالب. تأكد من عدم وجود بيانات مرتبطة.",
+    };
+  }
 
   return {
     ok: true,

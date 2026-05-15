@@ -280,6 +280,9 @@ export async function deleteTeacher(
       _count: {
         select: {
           schedules: true,
+          teacherSubjects: true,
+          teacherSections: true,
+          grades: true,
         },
       },
     },
@@ -294,6 +297,9 @@ export async function deleteTeacher(
 
   const deleteCheck = canDeleteTeacher({
     schedulesCount: teacher._count.schedules,
+    teacherSubjectsCount: teacher._count.teacherSubjects,
+    teacherSectionsCount: teacher._count.teacherSections,
+    gradesCount: teacher._count.grades,
   });
 
   if (!deleteCheck.allowed) {
@@ -303,11 +309,19 @@ export async function deleteTeacher(
     };
   }
 
-  await db.teacher.delete({
-    where: {
-      id,
-    },
-  });
+  try {
+    await db.teacher.delete({
+      where: {
+        id,
+      },
+    });
+  } catch (error) {
+    console.error("[deleteTeacher] Error:", error);
+    return {
+      ok: false,
+      message: "حدث خطأ أثناء حذف المدرس. تأكد من عدم وجود بيانات مرتبطة.",
+    };
+  }
 
   return {
     ok: true,

@@ -139,7 +139,13 @@ async function deleteAttendanceAction(formData: FormData) {
     redirect("/attendance?error=missing-id");
   }
 
-  const result = await deleteAttendanceRecord(id);
+  let result;
+  try {
+    result = await deleteAttendanceRecord(id);
+  } catch (error) {
+    console.error("[deleteAttendanceAction] Error:", error);
+    redirect("/attendance?error=delete");
+  }
 
   if (!result.ok) {
     redirect("/attendance?error=delete");

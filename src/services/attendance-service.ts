@@ -664,9 +664,17 @@ export async function deleteAttendanceRecord(
     };
   }
 
-  await db.attendanceRecord.delete({
-    where: { id },
-  });
+  try {
+    await db.attendanceRecord.delete({
+      where: { id },
+    });
+  } catch (error) {
+    console.error("[deleteAttendanceRecord] Error:", error);
+    return {
+      ok: false,
+      message: "حدث خطأ أثناء حذف سجل الحضور.",
+    };
+  }
 
   return {
     ok: true,

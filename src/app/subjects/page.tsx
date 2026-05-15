@@ -171,7 +171,13 @@ async function deleteSubjectAction(formData: FormData) {
     redirect("/subjects?error=missing-id");
   }
 
-  const result = await deleteSubject(id);
+  let result;
+  try {
+    result = await deleteSubject(id);
+  } catch (error) {
+    console.error("[deleteSubjectAction] Error:", error);
+    redirect("/subjects?error=delete");
+  }
 
   if (!result.ok) {
     redirect("/subjects?error=delete");

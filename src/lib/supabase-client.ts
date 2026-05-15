@@ -558,14 +558,20 @@ class SupabaseModelHandler {
       }
     }
 
-    const { data: result, error } = await query.select().single();
+    const { data: result, error } = await query.select();
 
     if (error) {
       console.error(`[SupabaseModel.delete] Error on ${this.table}:`, error);
       throw new Error(error.message);
     }
 
-    return transformRow(result);
+    // If no rows were deleted, the record may not exist
+    if (!result || result.length === 0) {
+      console.warn(`[SupabaseModel.delete] No rows deleted on ${this.table} for where:`, where);
+      return null;
+    }
+
+    return transformRow(result[0]);
   }
 
   async deleteMany(args: { where?: Record<string, any> } = {}): Promise<{ count: number }> {
