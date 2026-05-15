@@ -2,7 +2,7 @@
  *  Report Service  (file 51)
  * ───────────────────────────────────────────── */
 
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/lib/prisma-types";
 import { db } from "@/lib/db";
 import {
   type AttendanceReportRow,

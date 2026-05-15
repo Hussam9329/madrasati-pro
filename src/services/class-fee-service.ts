@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/lib/prisma-types";
 
 export async function getClassFeeSettings(academicYear?: string) {
   const where: Prisma.ClassFeeSettingWhereInput = {};

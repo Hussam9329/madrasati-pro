@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/lib/prisma-types";
 
 export type ExamServiceResult<T> = {
   ok: boolean;

@@ -15,9 +15,6 @@ export async function verifyAdmin(username: string, password: string) {
     // Ensure database is initialized (especially on Vercel)
     await ensureDatabase();
 
-    // Explicitly connect to ensure the connection is alive
-    await db.$connect();
-
     const admin = await db.admin.findUnique({ where: { username } });
     if (!admin) return null;
     const isValid = await bcrypt.compare(password, admin.passwordHash);
@@ -62,13 +59,6 @@ export async function getSession() {
 export async function requireAdmin() {
   // Ensure database is initialized (especially on Vercel)
   await ensureDatabase();
-
-  // Explicitly connect to ensure the connection is alive
-  try {
-    await db.$connect();
-  } catch {
-    // Connection might already be active, that's fine
-  }
 
   const session = await getSession();
   if (!session?.adminId) {

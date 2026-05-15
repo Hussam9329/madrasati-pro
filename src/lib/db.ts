@@ -1,22 +1,18 @@
-import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { supabaseDB } from "@/lib/supabase-client";
 
-const globalForPrisma = globalThis as unknown as {
-  prisma?: PrismaClient;
-};
-
-export const db =
-  globalForPrisma.prisma ??
-  new PrismaClient({
-    log:
-      process.env.NODE_ENV === "development"
-        ? ["error", "warn"]
-        : ["error"],
-  });
-
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = db;
-}
+/**
+ * Database client using Supabase REST API.
+ * This replaces Prisma's PostgreSQL connection to work around IPv4/IPv6
+ * connectivity issues between Vercel and Supabase.
+ *
+ * The supabaseDB object provides the same API surface as Prisma:
+ *   db.model.findMany(), findUnique(), findFirst(), create(), update(), delete(), count(), aggregate()
+ *   db.$connect(), db.$disconnect()
+ *
+ * All existing service files work without modification.
+ */
+export const db = supabaseDB;
 
 // Track whether database has been initialized in this process
 let dbInitialized = false;
@@ -92,7 +88,7 @@ export async function safeQuery<T>(fn: () => Promise<T>, fallback: T): Promise<T
 
 export async function checkDatabaseConnection() {
   try {
-    await db.$queryRaw`SELECT 1`;
+    await db.$connect();
     return {
       ok: true,
       message: "قاعدة البيانات متصلة بنجاح",
