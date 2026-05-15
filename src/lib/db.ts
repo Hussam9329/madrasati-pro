@@ -220,6 +220,7 @@ async function initializeDatabase() {
     `CREATE TABLE IF NOT EXISTS attendance_records (
       id TEXT PRIMARY KEY NOT NULL,
       date DATETIME NOT NULL,
+      mode TEXT NOT NULL DEFAULT 'check-in',
       status TEXT NOT NULL DEFAULT 'present',
       notes TEXT,
       checkInAt DATETIME,
@@ -313,6 +314,7 @@ async function initializeDatabase() {
     "ALTER TABLE grades ADD COLUMN isReviewed BOOLEAN NOT NULL DEFAULT 0",
     "ALTER TABLE grades ADD COLUMN warningLevel TEXT",
     // attendance_records new columns
+    "ALTER TABLE attendance_records ADD COLUMN mode TEXT NOT NULL DEFAULT 'check-in'",
     "ALTER TABLE attendance_records ADD COLUMN checkInAt DATETIME",
     "ALTER TABLE attendance_records ADD COLUMN checkOutAt DATETIME",
     "ALTER TABLE attendance_records ADD COLUMN source TEXT DEFAULT 'manual'",

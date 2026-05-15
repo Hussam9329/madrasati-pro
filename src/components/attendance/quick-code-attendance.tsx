@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   CheckCircle2,
   XCircle,
@@ -36,6 +37,7 @@ type ScanHistoryEntry = {
 };
 
 export function QuickCodeAttendance({ qrAvailable }: QuickCodeAttendanceProps) {
+  const router = useRouter();
   const [mode, setMode] = useState<"check-in" | "check-out">("check-in");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<StudentSearchResult[]>([]);
@@ -150,6 +152,7 @@ export function QuickCodeAttendance({ qrAvailable }: QuickCodeAttendanceProps) {
           setSearchQuery("");
           setSelectedStudent(null);
           setSearchResults([]);
+          router.refresh();
         }
       } catch {
         setError("حدث خطأ في الاتصال بالخادم.");
@@ -158,7 +161,7 @@ export function QuickCodeAttendance({ qrAvailable }: QuickCodeAttendanceProps) {
         inputRef.current?.focus();
       }
     },
-    [mode],
+    [mode, router],
   );
 
   // Submit attendance for direct code entry
@@ -202,6 +205,7 @@ export function QuickCodeAttendance({ qrAvailable }: QuickCodeAttendanceProps) {
             setSearchQuery("");
             setSelectedStudent(null);
             setSearchResults([]);
+            router.refresh();
           }
         } catch {
           setError("حدث خطأ في الاتصال بالخادم.");
@@ -241,6 +245,7 @@ export function QuickCodeAttendance({ qrAvailable }: QuickCodeAttendanceProps) {
             setSearchQuery("");
             setSelectedStudent(null);
             setSearchResults([]);
+            router.refresh();
           }
         } catch {
           setError("حدث خطأ في الاتصال بالخادم.");
@@ -250,7 +255,7 @@ export function QuickCodeAttendance({ qrAvailable }: QuickCodeAttendanceProps) {
         }
       }
     },
-    [searchQuery, selectedStudent, mode],
+    [searchQuery, selectedStudent, mode, router],
   );
 
   const handleModeSwitch = useCallback((newMode: "check-in" | "check-out") => {

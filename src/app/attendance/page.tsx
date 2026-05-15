@@ -69,7 +69,7 @@ export default async function AttendancePage({
       <div className="mx-auto flex w-full max-w-[1350px] flex-col gap-6">
         <PageHeader
           title="الحضور والغياب"
-          description="سجّل حضور وغياب الطلاب يوميًا، وتابع الإحصائيات والنسب المئوية لكل صف وطالب."
+          description="سجّل دخول طلاب الثانوية صباحًا وانصرافهم عند الخروج من المعهد، عبر رمز الطالب أو اسمه أو QR."
           icon="attendance"
           badge="الخطوة السادسة"
         />
@@ -83,7 +83,7 @@ export default async function AttendancePage({
         <SmartAlert
           tone="info"
           title="الحضور يعتمد على الطلاب داخل الصفوف"
-          description="سجّل حضور الطلاب بسرعة عبر كتابة اسم الطالب أو رمزه، أو مسح QR بالهاتف. على الحاسوب، يمكنك البحث بالاسم أو إدخال الرمز مباشرة لتسجيل الحضور والانصراف فورًا."
+          description="كل طالب له سجل يومي واحد فقط: دخول صباحي وانصراف عند الخروج. يمنع النظام تكرار دخول الطالب أو تكرار انصرافه في نفس اليوم."
           actionLabel="إدارة الطلاب"
           actionHref="/students"
         />
@@ -109,11 +109,9 @@ export default async function AttendancePage({
           <EmptyState
             icon="attendance"
             title="لا توجد سجلات حضور بعد"
-            description="اختر الشعبة والتاريخ، ثم سجّل حالة كل طالب: حاضر، غائب، متأخر، أو مجاز."
-            actionLabel="تسجيل حضور اليوم"
-            actionHref="#attendance-form"
-            secondaryLabel="إدارة الطلاب"
-            secondaryHref="/students"
+            description="ابدأ بكتابة اسم الطالب أو رمزه في لوحة الإدخال أعلاه، وسيظهر السجل مباشرة في الجدول."
+            actionLabel="إدارة الطلاب"
+            actionHref="/students"
           />
         ) : records.length === 0 ? (
           <EmptyState
@@ -377,11 +375,11 @@ function AttendanceList({ records }: AttendanceListProps) {
       <div className="flex flex-col gap-2 border-b border-[var(--app-border-soft)] p-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-xl font-extrabold text-[var(--app-text)]">
-            سجلات الحضور
+            جدول الحضور والانصراف اليومي
           </h3>
 
           <p className="mt-1 text-sm leading-6 text-[var(--app-text-muted)]">
-            تابع سجلات الحضور والغياب لكل طالب مع التفاصيل الكاملة.
+            يعرض كل طالب مرة واحدة في اليوم، مع وقت الدخول الصباحي ووقت الانصراف عند الخروج.
           </p>
         </div>
 
@@ -404,7 +402,7 @@ type AttendanceRowProps = {
 function AttendanceRow({ record }: AttendanceRowProps) {
   const statusClass = getAttendanceStatusBadgeClass(record.status);
 
-  const sourceLabel = record.source === "qr" ? "QR" : record.source === "manual-code" ? "رمز يدوي" : "يدوي";
+  const sourceLabel = record.source === "qr" ? "QR" : record.source === "manual-code" ? "رمز يدوي" : record.source === "manual-name" ? "باسم الطالب" : "يدوي";
 
   return (
     <article className="grid gap-4 p-5 transition hover:bg-indigo-50/40 xl:grid-cols-[1fr_auto] xl:items-center">

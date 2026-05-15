@@ -99,7 +99,7 @@ export type AttendanceFilter = {
 
 export type AttendanceScanMode = "check-in" | "check-out";
 
-export type AttendanceScanSource = "qr" | "manual-code";
+export type AttendanceScanSource = "qr" | "manual-code" | "manual-name";
 
 export type AttendanceScanInput = {
   studentCode: string;

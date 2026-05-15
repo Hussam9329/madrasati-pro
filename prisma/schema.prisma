@@ -229,7 +229,7 @@ model AttendanceRecord {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([studentId, date, mode])
+  @@unique([studentId, date])
   @@index([studentId])
   @@index([scheduleId])
   @@index([date])

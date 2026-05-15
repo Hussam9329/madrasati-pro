@@ -305,9 +305,12 @@ function TopbarSearch() {
       <Search size={18} className="text-[var(--app-text-soft)]" />
 
       <input
+        id="global-search"
+        name="global-search"
         type="search"
         placeholder="ابحث عن طالب، صف، مدرس..."
         className="h-8 min-w-0 flex-1 border-0 bg-transparent text-sm font-medium text-[var(--app-text)] outline-none placeholder:text-[var(--app-text-soft)]"
+        autoComplete="off"
       />
 
       <span className="rounded-lg border border-[var(--app-border)] bg-[var(--app-card-soft)] px-2 py-1 text-[10px] font-bold text-[var(--app-text-muted)]">

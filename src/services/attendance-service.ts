@@ -364,15 +364,12 @@ async function findDuplicateAttendanceRecord(
   const end = new Date(start);
   end.setDate(end.getDate() + 1);
 
-  const mode = input.mode || "check-in";
-
   const where: Prisma.AttendanceRecordWhereInput = {
     date: {
       gte: start,
       lt: end,
     },
     studentId: input.studentId,
-    mode,
   };
 
   if (excludeId) {
@@ -763,7 +760,180 @@ export async function markAttendanceBatch(
   };
 }
 
-// ─── QR Scan Attendance ─────────────────────────────────────────
+// ─── Unified Daily Student Attendance ───────────────────────────
+
+async function registerDailyStudentAttendance(input: {
+  student: {
+    id: string;
+    fullName: string;
+    studentCode: string | null;
+    status: string;
+  };
+  mode: "check-in" | "check-out";
+  source: "qr" | "manual-code" | "manual-name";
+}): Promise<AttendanceScanResult> {
+  const { student, mode, source } = input;
+  const studentCode = student.studentCode ?? "";
+
+  if (student.status !== "active") {
+    return {
+      ok: false,
+      studentId: student.id,
+      studentName: student.fullName,
+      studentCode,
+      status: student.status,
+      checkInAt: null,
+      checkOutAt: null,
+      message: "لا يمكن تسجيل الحضور لطالب غير مستمر.",
+    };
+  }
+
+  const today = normalizeDateOnly(new Date());
+
+  if (!today) {
+    return {
+      ok: false,
+      studentId: student.id,
+      studentName: student.fullName,
+      studentCode,
+      status: "",
+      checkInAt: null,
+      checkOutAt: null,
+      message: "خطأ في تحديد تاريخ اليوم.",
+    };
+  }
+
+  const dayStart = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate(),
+    0,
+    0,
+    0,
+    0,
+  );
+
+  const dayEnd = new Date(dayStart);
+  dayEnd.setDate(dayEnd.getDate() + 1);
+
+  const existingRecord = await db.attendanceRecord.findFirst({
+    where: {
+      studentId: student.id,
+      date: {
+        gte: dayStart,
+        lt: dayEnd,
+      },
+    },
+  });
+
+  const now = new Date();
+
+  if (mode === "check-in") {
+    if (existingRecord?.checkInAt) {
+      return {
+        ok: false,
+        studentId: student.id,
+        studentName: student.fullName,
+        studentCode,
+        status: existingRecord.status,
+        checkInAt: existingRecord.checkInAt,
+        checkOutAt: existingRecord.checkOutAt,
+        message: "تم تسجيل دخول الطالب مسبقًا اليوم.",
+      };
+    }
+
+    if (existingRecord) {
+      const updated = await db.attendanceRecord.update({
+        where: { id: existingRecord.id },
+        data: {
+          checkInAt: now,
+          status: "present",
+          source,
+        },
+      });
+
+      return {
+        ok: true,
+        studentId: student.id,
+        studentName: student.fullName,
+        studentCode,
+        status: updated.status,
+        checkInAt: updated.checkInAt,
+        checkOutAt: updated.checkOutAt,
+        message: "تم تسجيل دخول الطالب بنجاح.",
+      };
+    }
+
+    const created = await db.attendanceRecord.create({
+      data: {
+        date: today,
+        studentId: student.id,
+        status: "present",
+        mode: "check-in",
+        checkInAt: now,
+        source,
+        scheduleId: null,
+      },
+    });
+
+    return {
+      ok: true,
+      studentId: student.id,
+      studentName: student.fullName,
+      studentCode,
+      status: created.status,
+      checkInAt: created.checkInAt,
+      checkOutAt: created.checkOutAt,
+      message: "تم تسجيل دخول الطالب بنجاح.",
+    };
+  }
+
+  if (!existingRecord?.checkInAt) {
+    return {
+      ok: false,
+      studentId: student.id,
+      studentName: student.fullName,
+      studentCode,
+      status: existingRecord?.status ?? "",
+      checkInAt: existingRecord?.checkInAt ?? null,
+      checkOutAt: existingRecord?.checkOutAt ?? null,
+      message: "لا يمكن تسجيل الانصراف قبل تسجيل الدخول الصباحي.",
+    };
+  }
+
+  if (existingRecord.checkOutAt) {
+    return {
+      ok: false,
+      studentId: student.id,
+      studentName: student.fullName,
+      studentCode,
+      status: existingRecord.status,
+      checkInAt: existingRecord.checkInAt,
+      checkOutAt: existingRecord.checkOutAt,
+      message: "تم تسجيل انصراف الطالب مسبقًا اليوم.",
+    };
+  }
+
+  const updated = await db.attendanceRecord.update({
+    where: { id: existingRecord.id },
+    data: {
+      checkOutAt: now,
+      mode: "check-out",
+      source,
+    },
+  });
+
+  return {
+    ok: true,
+    studentId: student.id,
+    studentName: student.fullName,
+    studentCode,
+    status: updated.status,
+    checkInAt: updated.checkInAt,
+    checkOutAt: updated.checkOutAt,
+    message: "تم تسجيل انصراف الطالب بنجاح.",
+  };
+}
 
 export async function scanAttendanceByStudentCode(
   input: AttendanceScanInput,
@@ -802,148 +972,18 @@ export async function scanAttendanceByStudentCode(
     };
   }
 
-  if (student.status !== "active") {
-    return {
-      ok: false,
-      studentId: student.id,
-      studentName: student.fullName,
-      studentCode,
-      status: student.status,
-      checkInAt: null,
-      checkOutAt: null,
-      message: "لا يمكن تسجيل الحضور لطالب غير مستمر.",
-    };
-  }
-
-  const today = normalizeDateOnly(new Date());
-  if (!today) {
-    return {
-      ok: false,
-      studentId: student.id,
-      studentName: student.fullName,
-      studentCode,
-      status: "",
-      checkInAt: null,
-      checkOutAt: null,
-      message: "خطأ في تحديد تاريخ اليوم.",
-    };
-  }
-
-  const dayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0);
-  const dayEnd = new Date(dayStart);
-  dayEnd.setDate(dayEnd.getDate() + 1);
-
-  const existingRecord = await db.attendanceRecord.findFirst({
-    where: {
-      studentId: student.id,
-      date: { gte: dayStart, lt: dayEnd },
-    },
+  return registerDailyStudentAttendance({
+    student,
+    mode,
+    source,
   });
-
-  const now = new Date();
-
-  if (mode === "check-in") {
-    if (existingRecord && existingRecord.checkInAt) {
-      return {
-        ok: false,
-        studentId: student.id,
-        studentName: student.fullName,
-        studentCode,
-        status: existingRecord.status,
-        checkInAt: existingRecord.checkInAt,
-        checkOutAt: existingRecord.checkOutAt,
-        message: "تم تسجيل دخول الطالب مسبقًا اليوم.",
-      };
-    }
-
-    if (existingRecord && !existingRecord.checkInAt) {
-      const updated = await db.attendanceRecord.update({
-        where: { id: existingRecord.id },
-        data: { checkInAt: now, status: "present", source, mode: "check-in" },
-      });
-      return {
-        ok: true,
-        studentId: student.id,
-        studentName: student.fullName,
-        studentCode,
-        status: updated.status,
-        checkInAt: updated.checkInAt,
-        checkOutAt: updated.checkOutAt,
-        message: "تم تسجيل دخول الطالب بنجاح.",
-      };
-    }
-
-    const created = await db.attendanceRecord.create({
-      data: {
-        date: today,
-        studentId: student.id,
-        status: "present",
-        mode: "check-in",
-        checkInAt: now,
-        source,
-      },
-    });
-    return {
-      ok: true,
-      studentId: student.id,
-      studentName: student.fullName,
-      studentCode,
-      status: created.status,
-      checkInAt: created.checkInAt,
-      checkOutAt: created.checkOutAt,
-      message: "تم تسجيل دخول الطالب بنجاح.",
-    };
-  }
-
-  // mode === "check-out"
-  if (!existingRecord || !existingRecord.checkInAt) {
-    return {
-      ok: false,
-      studentId: student.id,
-      studentName: student.fullName,
-      studentCode,
-      status: existingRecord?.status ?? "",
-      checkInAt: existingRecord?.checkInAt ?? null,
-      checkOutAt: null,
-      message: "لا يمكن تسجيل الانصراف قبل تسجيل الحضور.",
-    };
-  }
-
-  if (existingRecord.checkOutAt) {
-    return {
-      ok: false,
-      studentId: student.id,
-      studentName: student.fullName,
-      studentCode,
-      status: existingRecord.status,
-      checkInAt: existingRecord.checkInAt,
-      checkOutAt: existingRecord.checkOutAt,
-      message: "تم تسجيل انصراف الطالب مسبقًا اليوم.",
-    };
-  }
-
-  const updated = await db.attendanceRecord.update({
-    where: { id: existingRecord.id },
-    data: { checkOutAt: now, mode: "check-out" },
-  });
-
-  return {
-    ok: true,
-    studentId: student.id,
-    studentName: student.fullName,
-    studentCode,
-    status: updated.status,
-    checkInAt: updated.checkInAt,
-    checkOutAt: updated.checkOutAt,
-    message: "تم تسجيل انصراف الطالب بنجاح.",
-  };
 }
 
-// ─── Scan Attendance by Student ID (from name search) ──────────
-
-export async function scanAttendanceByStudentId(
-  input: { studentId: string; mode: "check-in" | "check-out"; source: string },
-): Promise<AttendanceScanResult> {
+export async function scanAttendanceByStudentId(input: {
+  studentId: string;
+  mode: "check-in" | "check-out";
+  source: "manual-name";
+}): Promise<AttendanceScanResult> {
   const { studentId, mode, source } = input;
 
   const student = await db.student.findUnique({
@@ -963,142 +1003,11 @@ export async function scanAttendanceByStudentId(
     };
   }
 
-  if (student.status !== "active") {
-    return {
-      ok: false,
-      studentId: student.id,
-      studentName: student.fullName,
-      studentCode: student.studentCode ?? "",
-      status: student.status,
-      checkInAt: null,
-      checkOutAt: null,
-      message: "لا يمكن تسجيل الحضور لطالب غير مستمر.",
-    };
-  }
-
-  const today = normalizeDateOnly(new Date());
-  if (!today) {
-    return {
-      ok: false,
-      studentId: student.id,
-      studentName: student.fullName,
-      studentCode: student.studentCode ?? "",
-      status: "",
-      checkInAt: null,
-      checkOutAt: null,
-      message: "خطأ في تحديد تاريخ اليوم.",
-    };
-  }
-
-  const dayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0);
-  const dayEnd = new Date(dayStart);
-  dayEnd.setDate(dayEnd.getDate() + 1);
-
-  const existingRecord = await db.attendanceRecord.findFirst({
-    where: {
-      studentId: student.id,
-      date: { gte: dayStart, lt: dayEnd },
-    },
+  return registerDailyStudentAttendance({
+    student,
+    mode,
+    source,
   });
-
-  const now = new Date();
-  const studentCode = student.studentCode ?? "";
-
-  if (mode === "check-in") {
-    if (existingRecord && existingRecord.checkInAt) {
-      return {
-        ok: false,
-        studentId: student.id,
-        studentName: student.fullName,
-        studentCode,
-        status: existingRecord.status,
-        checkInAt: existingRecord.checkInAt,
-        checkOutAt: existingRecord.checkOutAt,
-        message: "تم تسجيل دخول الطالب مسبقًا اليوم.",
-      };
-    }
-
-    if (existingRecord && !existingRecord.checkInAt) {
-      const updated = await db.attendanceRecord.update({
-        where: { id: existingRecord.id },
-        data: { checkInAt: now, status: "present", source, mode: "check-in" },
-      });
-      return {
-        ok: true,
-        studentId: student.id,
-        studentName: student.fullName,
-        studentCode,
-        status: updated.status,
-        checkInAt: updated.checkInAt,
-        checkOutAt: updated.checkOutAt,
-        message: "تم تسجيل دخول الطالب بنجاح.",
-      };
-    }
-
-    const created = await db.attendanceRecord.create({
-      data: {
-        date: today,
-        studentId: student.id,
-        status: "present",
-        mode: "check-in",
-        checkInAt: now,
-        source,
-      },
-    });
-    return {
-      ok: true,
-      studentId: student.id,
-      studentName: student.fullName,
-      studentCode,
-      status: created.status,
-      checkInAt: created.checkInAt,
-      checkOutAt: created.checkOutAt,
-      message: "تم تسجيل دخول الطالب بنجاح.",
-    };
-  }
-
-  // mode === "check-out"
-  if (!existingRecord || !existingRecord.checkInAt) {
-    return {
-      ok: false,
-      studentId: student.id,
-      studentName: student.fullName,
-      studentCode,
-      status: existingRecord?.status ?? "",
-      checkInAt: existingRecord?.checkInAt ?? null,
-      checkOutAt: null,
-      message: "لا يمكن تسجيل الانصراف قبل تسجيل الحضور.",
-    };
-  }
-
-  if (existingRecord.checkOutAt) {
-    return {
-      ok: false,
-      studentId: student.id,
-      studentName: student.fullName,
-      studentCode,
-      status: existingRecord.status,
-      checkInAt: existingRecord.checkInAt,
-      checkOutAt: existingRecord.checkOutAt,
-      message: "تم تسجيل انصراف الطالب مسبقًا اليوم.",
-    };
-  }
-
-  const updated = await db.attendanceRecord.update({
-    where: { id: existingRecord.id },
-    data: { checkOutAt: now, mode: "check-out" },
-  });
-
-  return {
-    ok: true,
-    studentId: student.id,
-    studentName: student.fullName,
-    studentCode,
-    status: updated.status,
-    checkInAt: updated.checkInAt,
-    checkOutAt: updated.checkOutAt,
-    message: "تم تسجيل انصراف الطالب بنجاح.",
-  };
 }
 
 // ─── Counts & Aggregations ───────────────────────────────────────
