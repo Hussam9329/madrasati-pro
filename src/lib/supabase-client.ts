@@ -400,7 +400,7 @@ class SupabaseModelHandler {
       return [];
     }
 
-    return (data || []).map((row: any) => this.processResult(row, args.include));
+    return Promise.all((data || []).map((row: any) => this.processResult(row, args.include)));
   }
 
   async create(args: { data: Record<string, any>; include?: Record<string, any> }): Promise<any> {
