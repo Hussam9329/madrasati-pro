@@ -328,9 +328,7 @@ class SupabaseModelHandler {
       return this.findFirst(args);
     }
 
-    let query = this.getClient().from(this.table).select(
-      buildSelectString(this.model, args.include, args.select) || "*"
-    );
+    let query = this.getClient().from(this.table).select("*");
 
     if (id) {
       query = query.eq("id", id);
@@ -354,9 +352,7 @@ class SupabaseModelHandler {
   }
 
   async findFirst(args: { where?: Record<string, any>; orderBy?: any; include?: Record<string, any>; select?: Record<string, any> }): Promise<any> {
-    let query = this.getClient().from(this.table).select(
-      buildSelectString(this.model, args.include, args.select) || "*"
-    );
+    let query = this.getClient().from(this.table).select("*");
 
     // Apply where filters
     if (args.where) {
@@ -365,7 +361,11 @@ class SupabaseModelHandler {
 
     // Apply orderBy
     if (args.orderBy) {
-      query = query.order(buildOrderBy(args.orderBy));
+      const orderByArr = Array.isArray(args.orderBy) ? args.orderBy : [args.orderBy];
+      for (const ob of orderByArr) {
+        const [key, dir] = Object.entries(ob)[0] as [string, string];
+        query = query.order(key, { ascending: dir === "asc", nullsFirst: false });
+      }
     }
 
     const { data, error } = await query.limit(1);
@@ -381,9 +381,7 @@ class SupabaseModelHandler {
   }
 
   async findMany(args: { where?: Record<string, any>; orderBy?: any; include?: Record<string, any>; select?: Record<string, any>; take?: number; skip?: number } = {}): Promise<any[]> {
-    let query = this.getClient().from(this.table).select(
-      buildSelectString(this.model, args.include, args.select) || "*"
-    );
+    let query = this.getClient().from(this.table).select("*");
 
     // Apply where filters
     if (args.where) {
@@ -738,125 +736,112 @@ class SupabaseModelHandler {
   }
 
   private async processResult(row: Record<string, any>, include?: Record<string, any>): Promise<any> {
-    // First, map PostgREST table-name keys to Prisma relation names
-    const mappedRow = this.mapTableKeysToRelations(row, include);
-    const result: Record<string, any> = transformRow(mappedRow);
+    const result: Record<string, any> = transformRow(row);
 
-    // Handle _count includes
-    if (include?._count) {
+    if (!include) return result;
+
+    const relations = RELATION_MAP[this.model] || {};
+
+    // Process all includes (relations + _count) in parallel
+    const tasks: Promise<void>[] = [];
+
+    // Handle _count
+    if (include._count) {
       const countSelect = include._count.select || {};
-      const relations = RELATION_MAP[this.model] || {};
+      tasks.push(
+        (async () => {
+          const countEntries = Object.entries(countSelect) as [string, boolean][];
+          const countResults = await Promise.all(
+            countEntries.map(async ([relationName, enabled]) => {
+              if (!enabled) return [relationName, 0] as const;
+              const relation = relations[relationName];
+              if (!relation) return [relationName, 0] as const;
 
-      const countEntries = Object.entries(countSelect) as [string, boolean][];
-      const countResults = await Promise.all(
-        countEntries.map(async ([relationName, enabled]) => {
-          if (!enabled) return [relationName, 0] as const;
-          const relation = relations[relationName];
-          if (!relation) return [relationName, 0] as const;
+              const { count, error } = await this.getClient()
+                .from(relation.table)
+                .select("*", { count: "exact", head: true })
+                .eq(relation.foreignKey, result["id"] as string);
 
-          const { count, error } = await this.getClient()
-            .from(relation.table)
-            .select("*", { count: "exact", head: true })
-            .eq(relation.foreignKey, result["id"] as string);
-
-          return [relationName, count || 0] as const;
-        })
+              return [relationName, count || 0] as const;
+            })
+          );
+          result._count = Object.fromEntries(countResults);
+        })()
       );
-
-      result._count = Object.fromEntries(countResults);
     }
 
-    // Handle nested includes that need to be fetched separately
-    // (if they weren't already fetched via PostgREST foreign key joins)
-    if (include) {
-      const relations = RELATION_MAP[this.model] || {};
-      for (const [key, value] of Object.entries(include)) {
-        if (key === "_count") continue;
-        if (value === true || (typeof value === "object" && value !== null)) {
-          const relation = relations[key];
-          if (relation && !result[key]) {
-            // Relation wasn't fetched by the join - fetch it manually
-            if (relation.isMany) {
-              const { data } = await this.getClient()
-                .from(relation.table)
-                .select(typeof value === "object" && value.include ? this.buildNestedSelect(value.include) : "*")
-                .eq(relation.foreignKey, (result[relation.thisKey] || result["id"]) as string);
-              result[key] = (data || []).map(transformRow);
-            } else {
-              // Belongs-to relation
-              const fkValue = result[relation.thisKey];
-              if (fkValue) {
-                const { data } = await this.getClient()
-                  .from(relation.table)
-                  .select(typeof value === "object" && value.include ? this.buildNestedSelect(value.include) : "*")
-                  .eq(relation.foreignKey, fkValue)
-                  .limit(1);
-                result[key] = data && data.length > 0 ? transformRow(data[0]) : null;
+    // Handle relation includes
+    for (const [key, value] of Object.entries(include)) {
+      if (key === "_count") continue;
+      const relation = relations[key];
+      if (!relation) continue;
 
-                // Handle nested _count in the related record
-                if (typeof value === "object" && value.include?._count && result[key]) {
-                  const nestedRelations = RELATION_MAP[this.getRelatedModel(key)] || {};
-                  const nestedCountSelect = value.include._count.select || {};
-                  const nestedCountEntries = Object.entries(nestedCountSelect) as [string, boolean][];
-                  const nestedCounts = await Promise.all(
-                    nestedCountEntries.map(async ([relName, enabled]) => {
-                      if (!enabled) return [relName, 0] as const;
-                      const rel = nestedRelations[relName];
-                      if (!rel) return [relName, 0] as const;
-                      const { count } = await this.getClient()
-                        .from(rel.table)
-                        .select("*", { count: "exact", head: true })
-                        .eq(rel.foreignKey, result[key].id);
-                      return [relName, count || 0] as const;
-                    })
-                  );
-                  result[key]._count = Object.fromEntries(nestedCounts);
-                }
-              } else {
-                result[key] = null;
-              }
+      tasks.push(
+        (async () => {
+          if (relation.isMany) {
+            // Has-many relation: fetch related rows where foreignKey = this.id
+            const nestedInclude = typeof value === "object" && value !== null ? value.include : undefined;
+            const nestedSelect = typeof value === "object" && value !== null && value.select ? Object.keys(value.select).join(",") : "*";
+
+            const { data, error } = await this.getClient()
+              .from(relation.table)
+              .select(nestedSelect)
+              .eq(relation.foreignKey, result["id"] as string);
+
+            if (error) {
+              console.error(`[processResult] Error fetching ${key}:`, error);
+              result[key] = [];
+              return;
+            }
+
+            // Recursively process nested includes
+            if (nestedInclude && data) {
+              const nestedModel = getTableModelName(relation.table);
+              result[key] = await Promise.all(
+                data.map(async (item: any) => {
+                  const handler = new SupabaseModelHandler(nestedModel, relation.table);
+                  return handler.processResult(item, nestedInclude);
+                })
+              );
+            } else {
+              result[key] = (data || []).map(transformRow);
+            }
+          } else {
+            // Belongs-to relation: fetch related row where id = this.thisKey
+            const fkValue = result[relation.thisKey];
+            if (!fkValue) {
+              result[key] = null;
+              return;
+            }
+
+            const nestedInclude = typeof value === "object" && value !== null ? value.include : undefined;
+            const nestedSelect = typeof value === "object" && value !== null && value.select ? Object.keys(value.select).join(",") : "*";
+
+            const { data, error } = await this.getClient()
+              .from(relation.table)
+              .select(nestedSelect)
+              .eq("id", fkValue)
+              .limit(1);
+
+            if (error || !data || data.length === 0) {
+              result[key] = null;
+              return;
+            }
+
+            // Recursively process nested includes
+            if (nestedInclude) {
+              const nestedModel = getTableModelName(relation.table);
+              const handler = new SupabaseModelHandler(nestedModel, relation.table);
+              result[key] = await handler.processResult(data[0], nestedInclude);
+            } else {
+              result[key] = transformRow(data[0]);
             }
           }
-        }
-      }
+        })()
+      );
     }
 
-    return result;
-  }
-
-  /**
-   * Map PostgREST table-name keys (snake_case) to Prisma relation keys (camelCase)
-   * e.g., { class_subjects: [...] } -> { classSubjects: [...] }
-   */
-  private mapTableKeysToRelations(row: Record<string, any>, include?: Record<string, any>): Record<string, any> {
-    if (!include) return row;
-    const relations = RELATION_MAP[this.model] || {};
-    const result = { ...row };
-
-    for (const [relationName, relation] of Object.entries(relations)) {
-      if (include[relationName] === undefined) continue;
-      const tableName = relation.table;
-      // If the row has a key matching the table name but not the relation name
-      if (result[tableName] !== undefined && result[relationName] === undefined) {
-        result[relationName] = result[tableName];
-        delete result[tableName];
-      }
-      // Recursively map nested relations
-      if (result[relationName] && typeof include[relationName] === "object" && include[relationName] !== null) {
-        const nestedInclude = include[relationName].include || include[relationName];
-        const nestedModel = this.getRelatedModel(relationName);
-        if (Array.isArray(result[relationName])) {
-          result[relationName] = result[relationName].map((item: any) => {
-            const handler = new SupabaseModelHandler(nestedModel, relation.table);
-            return handler.mapTableKeysToRelations(item, nestedInclude);
-          });
-        } else if (typeof result[relationName] === "object") {
-          const handler = new SupabaseModelHandler(nestedModel, relation.table);
-          result[relationName] = handler.mapTableKeysToRelations(result[relationName], nestedInclude);
-        }
-      }
-    }
-
+    await Promise.all(tasks);
     return result;
   }
 
