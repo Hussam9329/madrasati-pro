@@ -39,21 +39,22 @@ import type { Subject } from "@/types/subject";
 import type { SectionListItem } from "@/types/class";
 
 type TeachersPageProps = {
-  searchParams?: {
+  searchParams?: Promise<{
     q?: string;
     saved?: string;
     deleted?: string;
     toggled?: string;
     error?: string;
-  };
+  }>;
 };
 
 export default async function TeachersPage({
   searchParams,
 }: TeachersPageProps) {
   await requireAdmin();
+  const resolvedSearchParams = await searchParams;
 
-  const query = searchParams?.q?.trim() ?? "";
+  const query = resolvedSearchParams?.q?.trim() ?? "";
 
   const [teachers, counts, subjects, sections] = await Promise.all([
     safeQuery(() => getTeachers(), []),
@@ -86,10 +87,10 @@ export default async function TeachersPage({
         />
 
         <TeachersFeedback
-          saved={searchParams?.saved}
-          deleted={searchParams?.deleted}
-          toggled={searchParams?.toggled}
-          error={searchParams?.error}
+          saved={resolvedSearchParams?.saved}
+          deleted={resolvedSearchParams?.deleted}
+          toggled={resolvedSearchParams?.toggled}
+          error={resolvedSearchParams?.error}
         />
 
         <SmartAlert

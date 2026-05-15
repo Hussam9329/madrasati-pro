@@ -34,24 +34,25 @@ import {
 } from "@/types/attendance";
 
 type AttendancePageProps = {
-  searchParams?: {
+  searchParams?: Promise<{
     q?: string;
     status?: string;
     date?: string;
     saved?: string;
     deleted?: string;
     error?: string;
-  };
+  }>;
 };
 
 export default async function AttendancePage({
   searchParams,
 }: AttendancePageProps) {
   await requireAdmin();
+  const resolvedSearchParams = await searchParams;
 
-  const query = searchParams?.q?.trim() ?? "";
-  const status = searchParams?.status?.trim() ?? "";
-  const date = searchParams?.date?.trim() ?? "";
+  const query = resolvedSearchParams?.q?.trim() ?? "";
+  const status = resolvedSearchParams?.status?.trim() ?? "";
+  const date = resolvedSearchParams?.date?.trim() ?? "";
 
   const [records, counts] = await Promise.all([
     safeQuery(() => getAttendanceRecords({
@@ -75,9 +76,9 @@ export default async function AttendancePage({
         />
 
         <AttendanceFeedback
-          saved={searchParams?.saved}
-          deleted={searchParams?.deleted}
-          error={searchParams?.error}
+          saved={resolvedSearchParams?.saved}
+          deleted={resolvedSearchParams?.deleted}
+          error={resolvedSearchParams?.error}
         />
 
         <SmartAlert

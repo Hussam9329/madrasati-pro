@@ -41,23 +41,24 @@ import { StudentQrImage } from "@/components/students/student-qr-image";
 import type { SectionListItem } from "@/types/class";
 
 type StudentsPageProps = {
-  searchParams?: {
+  searchParams?: Promise<{
     q?: string;
     status?: string;
     saved?: string;
     deleted?: string;
     statusUpdated?: string;
     error?: string;
-  };
+  }>;
 };
 
 export default async function StudentsPage({
   searchParams,
 }: StudentsPageProps) {
   await requireAdmin();
+  const resolvedSearchParams = await searchParams;
 
-  const query = searchParams?.q?.trim() ?? "";
-  const status = searchParams?.status?.trim() ?? "";
+  const query = resolvedSearchParams?.q?.trim() ?? "";
+  const status = resolvedSearchParams?.status?.trim() ?? "";
 
   const [students, sections, counts] = await Promise.all([
     safeQuery(() => getStudents({
@@ -82,10 +83,10 @@ export default async function StudentsPage({
         />
 
         <StudentsFeedback
-          saved={searchParams?.saved}
-          deleted={searchParams?.deleted}
-          statusUpdated={searchParams?.statusUpdated}
-          error={searchParams?.error}
+          saved={resolvedSearchParams?.saved}
+          deleted={resolvedSearchParams?.deleted}
+          statusUpdated={resolvedSearchParams?.statusUpdated}
+          error={resolvedSearchParams?.error}
         />
 
         <SmartAlert

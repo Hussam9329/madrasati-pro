@@ -49,7 +49,7 @@ import {
 import { getSectionDisplayName } from "@/types/class";
 
 type GradesPageProps = {
-  searchParams?: {
+  searchParams?: Promise<{
     q?: string;
     examType?: string;
     term?: string;
@@ -59,17 +59,18 @@ type GradesPageProps = {
     sectionId?: string;
     subjectId?: string;
     warning?: string;
-  };
+  }>;
 };
 
 export default async function GradesPage({ searchParams }: GradesPageProps) {
   await requireAdmin();
+  const resolvedSearchParams = await searchParams;
 
-  const query = searchParams?.q?.trim() ?? "";
-  const examType = searchParams?.examType?.trim() ?? "";
-  const term = searchParams?.term?.trim() ?? "";
-  const sectionId = searchParams?.sectionId?.trim() ?? "";
-  const subjectId = searchParams?.subjectId?.trim() ?? "";
+  const query = resolvedSearchParams?.q?.trim() ?? "";
+  const examType = resolvedSearchParams?.examType?.trim() ?? "";
+  const term = resolvedSearchParams?.term?.trim() ?? "";
+  const sectionId = resolvedSearchParams?.sectionId?.trim() ?? "";
+  const subjectId = resolvedSearchParams?.subjectId?.trim() ?? "";
 
   const [grades, counts, sections, subjects, sectionStudents, subjectTeachers] =
     await Promise.all([
@@ -121,10 +122,10 @@ export default async function GradesPage({ searchParams }: GradesPageProps) {
         />
 
         <GradesFeedback
-          saved={searchParams?.saved}
-          deleted={searchParams?.deleted}
-          error={searchParams?.error}
-          warning={searchParams?.warning}
+          saved={resolvedSearchParams?.saved}
+          deleted={resolvedSearchParams?.deleted}
+          error={resolvedSearchParams?.error}
+          warning={resolvedSearchParams?.warning}
         />
 
         <SmartAlert

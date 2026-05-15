@@ -46,20 +46,21 @@ import {
 } from "@/types/class";
 
 type ClassesPageProps = {
-  searchParams?: {
+  searchParams?: Promise<{
     q?: string;
     classSaved?: string;
     sectionSaved?: string;
     deleted?: string;
     toggled?: string;
     error?: string;
-  };
+  }>;
 };
 
 export default async function ClassesPage({ searchParams }: ClassesPageProps) {
   await requireAdmin();
+  const resolvedSearchParams = await searchParams;
 
-  const query = searchParams?.q?.trim() ?? "";
+  const query = resolvedSearchParams?.q?.trim() ?? "";
 
   const [classes, activeClasses, sections, counts, subjects] = await Promise.all([
     safeQuery(() => searchClasses(query), []),
@@ -82,11 +83,11 @@ export default async function ClassesPage({ searchParams }: ClassesPageProps) {
         />
 
         <ClassesFeedback
-          classSaved={searchParams?.classSaved}
-          sectionSaved={searchParams?.sectionSaved}
-          deleted={searchParams?.deleted}
-          toggled={searchParams?.toggled}
-          error={searchParams?.error}
+          classSaved={resolvedSearchParams?.classSaved}
+          sectionSaved={resolvedSearchParams?.sectionSaved}
+          deleted={resolvedSearchParams?.deleted}
+          toggled={resolvedSearchParams?.toggled}
+          error={resolvedSearchParams?.error}
         />
 
         <SmartAlert

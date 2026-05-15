@@ -32,21 +32,22 @@ import {
 } from "@/types/subject";
 
 type SubjectsPageProps = {
-  searchParams?: {
+  searchParams?: Promise<{
     q?: string;
     saved?: string;
     deleted?: string;
     toggled?: string;
     error?: string;
-  };
+  }>;
 };
 
 export default async function SubjectsPage({
   searchParams,
 }: SubjectsPageProps) {
   await requireAdmin();
+  const resolvedSearchParams = await searchParams;
 
-  const query = searchParams?.q?.trim() ?? "";
+  const query = resolvedSearchParams?.q?.trim() ?? "";
   const [subjects, counts] = await Promise.all([
     safeQuery(() => searchSubjects(query), []),
     safeQuery(() => getSubjectsCount(), { total: 0, active: 0, inactive: 0 }),
@@ -65,10 +66,10 @@ export default async function SubjectsPage({
         />
 
         <SubjectsFeedback
-          saved={searchParams?.saved}
-          deleted={searchParams?.deleted}
-          toggled={searchParams?.toggled}
-          error={searchParams?.error}
+          saved={resolvedSearchParams?.saved}
+          deleted={resolvedSearchParams?.deleted}
+          toggled={resolvedSearchParams?.toggled}
+          error={resolvedSearchParams?.error}
         />
 
         <SmartAlert

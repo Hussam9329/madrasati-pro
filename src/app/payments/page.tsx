@@ -47,7 +47,7 @@ import {
 import { getStudentClassDisplay } from "@/types/student";
 
 type PaymentsPageProps = {
-  searchParams?: {
+  searchParams?: Promise<{
     q?: string;
     feeType?: string;
     status?: string;
@@ -55,18 +55,19 @@ type PaymentsPageProps = {
     saved?: string;
     deleted?: string;
     error?: string;
-  };
+  }>;
 };
 
 export default async function PaymentsPage({
   searchParams,
 }: PaymentsPageProps) {
   await requireAdmin();
+  const resolvedSearchParams = await searchParams;
 
-  const query = searchParams?.q?.trim() ?? "";
-  const feeType = searchParams?.feeType?.trim() ?? "";
-  const status = searchParams?.status?.trim() ?? "";
-  const overdueOnly = searchParams?.overdueOnly === "1";
+  const query = resolvedSearchParams?.q?.trim() ?? "";
+  const feeType = resolvedSearchParams?.feeType?.trim() ?? "";
+  const status = resolvedSearchParams?.status?.trim() ?? "";
+  const overdueOnly = resolvedSearchParams?.overdueOnly === "1";
 
   const [payments, students, counts] = await Promise.all([
     safeQuery(() => getPayments({
@@ -92,9 +93,9 @@ export default async function PaymentsPage({
         />
 
         <PaymentsFeedback
-          saved={searchParams?.saved}
-          deleted={searchParams?.deleted}
-          error={searchParams?.error}
+          saved={resolvedSearchParams?.saved}
+          deleted={resolvedSearchParams?.deleted}
+          error={resolvedSearchParams?.error}
         />
 
         <SmartAlert

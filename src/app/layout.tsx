@@ -1,14 +1,6 @@
 import type { Metadata, Viewport } from "next";
-import { Tajawal } from "next/font/google";
 import { ThemeProvider } from "@/components/layout/theme-provider";
 import "./globals.css";
-
-const tajawal = Tajawal({
-  subsets: ["arabic"],
-  weight: ["300", "400", "500", "700", "800"],
-  variable: "--font-tajawal",
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: {
@@ -60,7 +52,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className={`${tajawal.variable} min-h-screen bg-app text-app antialiased`}>
+      <body className="min-h-screen bg-app text-app antialiased">
         <ThemeProvider>
           <div id="app-root" className="min-h-screen">
             {children}

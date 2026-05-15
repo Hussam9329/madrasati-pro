@@ -43,23 +43,24 @@ import type { SectionListItem } from "@/types/class";
 import type { Teacher } from "@/types/teacher";
 
 type SchedulesPageProps = {
-  searchParams?: {
+  searchParams?: Promise<{
     q?: string;
     dayOfWeek?: string;
     saved?: string;
     deleted?: string;
     toggled?: string;
     error?: string;
-  };
+  }>;
 };
 
 export default async function SchedulesPage({
   searchParams,
 }: SchedulesPageProps) {
   await requireAdmin();
+  const resolvedSearchParams = await searchParams;
 
-  const query = searchParams?.q?.trim() ?? "";
-  const dayOfWeek = searchParams?.dayOfWeek?.trim() ?? "";
+  const query = resolvedSearchParams?.q?.trim() ?? "";
+  const dayOfWeek = resolvedSearchParams?.dayOfWeek?.trim() ?? "";
 
   const [schedules, counts, sections, subjects, teachers] = await Promise.all([
     safeQuery(() => getSchedules({
@@ -85,10 +86,10 @@ export default async function SchedulesPage({
         />
 
         <SchedulesFeedback
-          saved={searchParams?.saved}
-          deleted={searchParams?.deleted}
-          toggled={searchParams?.toggled}
-          error={searchParams?.error}
+          saved={resolvedSearchParams?.saved}
+          deleted={resolvedSearchParams?.deleted}
+          toggled={resolvedSearchParams?.toggled}
+          error={resolvedSearchParams?.error}
         />
 
         <SmartAlert
