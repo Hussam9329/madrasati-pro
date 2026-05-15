@@ -45,6 +45,7 @@ import {
   type PaymentListItem,
 } from "@/types/payment";
 import { getStudentClassDisplay } from "@/types/student";
+import { DeleteConfirmButton } from "@/components/shared/delete-confirm-button";
 
 type PaymentsPageProps = {
   searchParams?: Promise<{
@@ -55,6 +56,7 @@ type PaymentsPageProps = {
     saved?: string;
     deleted?: string;
     error?: string;
+    reason?: string;
   }>;
 };
 
@@ -96,6 +98,7 @@ export default async function PaymentsPage({
           saved={resolvedSearchParams?.saved}
           deleted={resolvedSearchParams?.deleted}
           error={resolvedSearchParams?.error}
+          reason={resolvedSearchParams?.reason}
         />
 
         <SmartAlert
@@ -230,11 +233,13 @@ async function deletePaymentAction(formData: FormData) {
     result = await deletePayment(id);
   } catch (error) {
     console.error("[deletePaymentAction] Error:", error);
-    redirect("/payments?error=delete");
+    const reason = encodeURIComponent("حدث خطأ أثناء الحذف. تأكد من عدم وجود بيانات مرتبطة.");
+    redirect(`/payments?error=delete&reason=${reason}`);
   }
 
   if (!result.ok) {
-    redirect("/payments?error=delete");
+    const reason = encodeURIComponent(result.message || "حدث خطأ أثناء الحذف.");
+    redirect(`/payments?error=delete&reason=${reason}`);
   }
 
   revalidatePath("/");
@@ -247,9 +252,10 @@ type PaymentsFeedbackProps = {
   saved?: string;
   deleted?: string;
   error?: string;
+  reason?: string;
 };
 
-function PaymentsFeedback({ saved, deleted, error }: PaymentsFeedbackProps) {
+function PaymentsFeedback({ saved, deleted, error, reason }: PaymentsFeedbackProps) {
   if (saved === "1") {
     return (
       <SmartAlert
@@ -271,12 +277,16 @@ function PaymentsFeedback({ saved, deleted, error }: PaymentsFeedbackProps) {
   }
 
   if (error) {
-    const description =
-      error === "delete"
-        ? "لا يمكن حذف الدفعة حاليًا. تحقق من البيانات وحاول مرة أخرى."
-        : error === "missing-id"
-          ? "لم يتم تحديد الدفعة المراد حذفها."
-          : "تأكد من إدخال بيانات الدفعة بشكل صحيح، وأن الطالب المحدد موجود.";
+    let description: string;
+    if (error === "delete" && reason) {
+      description = decodeURIComponent(reason);
+    } else if (error === "delete") {
+      description = "لا يمكن حذف الدفعة حاليًا. تحقق من البيانات وحاول مرة أخرى.";
+    } else if (error === "missing-id") {
+      description = "لم يتم تحديد الدفعة المراد حذفها.";
+    } else {
+      description = "تأكد من إدخال بيانات الدفعة بشكل صحيح، وأن الطالب المحدد موجود.";
+    }
 
     return (
       <SmartAlert
@@ -1069,17 +1079,14 @@ function PaymentRow({ payment }: PaymentRowProps) {
       </div>
 
       <div className="grid gap-2 sm:grid-cols-1 xl:w-[160px]">
-        <form action={deletePaymentAction}>
-          <input type="hidden" name="id" value={payment.id} />
-
-          <button
-            type="submit"
-            className="btn w-full border-red-100 bg-gradient-to-r from-red-50 to-indigo-50 text-red-700 hover:from-red-100 hover:to-indigo-100"
-          >
-            <Trash2 size={17} />
-            حذف
-          </button>
-        </form>
+        <DeleteConfirmButton
+          action={deletePaymentAction}
+          itemId={payment.id}
+          confirmTitle="هل أنت متأكد من حذف هذه الدفعة؟"
+          confirmDescription="سيتم حذف الدفعة من سجل الأقساط نهائيًا."
+          confirmLabel="نعم، احذف"
+          cancelLabel="تراجع"
+        />
       </div>
     </article>
   );

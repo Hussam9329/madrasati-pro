@@ -32,6 +32,7 @@ import {
   getAttendanceStatusBadgeClass,
   type AttendanceListItem,
 } from "@/types/attendance";
+import { DeleteConfirmButton } from "@/components/shared/delete-confirm-button";
 
 type AttendancePageProps = {
   searchParams?: Promise<{
@@ -41,6 +42,7 @@ type AttendancePageProps = {
     saved?: string;
     deleted?: string;
     error?: string;
+    reason?: string;
   }>;
 };
 
@@ -79,6 +81,7 @@ export default async function AttendancePage({
           saved={resolvedSearchParams?.saved}
           deleted={resolvedSearchParams?.deleted}
           error={resolvedSearchParams?.error}
+          reason={resolvedSearchParams?.reason}
         />
 
         <SmartAlert
@@ -144,11 +147,13 @@ async function deleteAttendanceAction(formData: FormData) {
     result = await deleteAttendanceRecord(id);
   } catch (error) {
     console.error("[deleteAttendanceAction] Error:", error);
-    redirect("/attendance?error=delete");
+    const reason = encodeURIComponent("حدث خطأ أثناء الحذف. تأكد من عدم وجود بيانات مرتبطة.");
+    redirect(`/attendance?error=delete&reason=${reason}`);
   }
 
   if (!result.ok) {
-    redirect("/attendance?error=delete");
+    const reason = encodeURIComponent(result.message || "حدث خطأ أثناء الحذف.");
+    redirect(`/attendance?error=delete&reason=${reason}`);
   }
 
   revalidatePath("/");
@@ -163,9 +168,10 @@ type AttendanceFeedbackProps = {
   saved?: string;
   deleted?: string;
   error?: string;
+  reason?: string;
 };
 
-function AttendanceFeedback({ saved, deleted, error }: AttendanceFeedbackProps) {
+function AttendanceFeedback({ saved, deleted, error, reason }: AttendanceFeedbackProps) {
   if (saved === "1") {
     return (
       <SmartAlert
@@ -187,12 +193,16 @@ function AttendanceFeedback({ saved, deleted, error }: AttendanceFeedbackProps) 
   }
 
   if (error) {
-    const description =
-      error === "delete"
-        ? "لا يمكن حذف سجل الحضور. حاول مرة أخرى."
-        : error === "missing-id"
-          ? "معرّف سجل الحضور مطلوب."
-          : "تأكد من إدخال البيانات بشكل صحيح، وأن الطالب مسجل في النظام.";
+    let description: string;
+    if (error === "delete" && reason) {
+      description = decodeURIComponent(reason);
+    } else if (error === "delete") {
+      description = "لا يمكن حذف سجل الحضور. حاول مرة أخرى.";
+    } else if (error === "missing-id") {
+      description = "معرّف سجل الحضور مطلوب.";
+    } else {
+      description = "تأكد من إدخال البيانات بشكل صحيح، وأن الطالب مسجل في النظام.";
+    }
 
     return (
       <SmartAlert
@@ -533,17 +543,14 @@ function AttendanceRow({ record }: AttendanceRowProps) {
       </div>
 
       <div className="grid gap-2 sm:grid-cols-1 xl:w-[160px]">
-        <form action={deleteAttendanceAction}>
-          <input id={`delete-id-${record.id}`} type="hidden" name="id" value={record.id} autoComplete="off" />
-
-          <button
-            type="submit"
-            className="btn w-full border-red-100 bg-gradient-to-r from-red-50 to-indigo-50 text-red-700 hover:from-red-100 hover:to-indigo-100"
-          >
-            <Trash2 size={17} />
-            حذف
-          </button>
-        </form>
+        <DeleteConfirmButton
+          action={deleteAttendanceAction}
+          itemId={record.id}
+          confirmTitle="هل أنت متأكد من حذف سجل الحضور؟"
+          confirmDescription="سيتم حذف سجل الحضور لهذا اليوم نهائيًا."
+          confirmLabel="نعم، احذف"
+          cancelLabel="تراجع"
+        />
       </div>
     </article>
   );

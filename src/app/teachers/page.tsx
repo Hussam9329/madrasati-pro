@@ -37,6 +37,7 @@ import {
 } from "@/types/teacher";
 import type { Subject } from "@/types/subject";
 import type { SectionListItem } from "@/types/class";
+import { DeleteConfirmButton } from "@/components/shared/delete-confirm-button";
 
 type TeachersPageProps = {
   searchParams?: Promise<{
@@ -45,6 +46,7 @@ type TeachersPageProps = {
     deleted?: string;
     toggled?: string;
     error?: string;
+    reason?: string;
   }>;
 };
 
@@ -91,6 +93,7 @@ export default async function TeachersPage({
           deleted={resolvedSearchParams?.deleted}
           toggled={resolvedSearchParams?.toggled}
           error={resolvedSearchParams?.error}
+          reason={resolvedSearchParams?.reason}
         />
 
         <SmartAlert
@@ -183,11 +186,13 @@ async function deleteTeacherAction(formData: FormData) {
     result = await deleteTeacher(id);
   } catch (error) {
     console.error("[deleteTeacherAction] Error:", error);
-    redirect("/teachers?error=delete");
+    const reason = encodeURIComponent("حدث خطأ أثناء الحذف. تأكد من عدم وجود بيانات مرتبطة.");
+    redirect(`/teachers?error=delete&reason=${reason}`);
   }
 
   if (!result.ok) {
-    redirect("/teachers?error=delete");
+    const reason = encodeURIComponent(result.message || "حدث خطأ أثناء الحذف.");
+    redirect(`/teachers?error=delete&reason=${reason}`);
   }
 
   revalidatePath("/");
@@ -224,6 +229,7 @@ type TeachersFeedbackProps = {
   deleted?: string;
   toggled?: string;
   error?: string;
+  reason?: string;
 };
 
 function TeachersFeedback({
@@ -231,6 +237,7 @@ function TeachersFeedback({
   deleted,
   toggled,
   error,
+  reason,
 }: TeachersFeedbackProps) {
   if (saved === "1") {
     return (
@@ -263,12 +270,16 @@ function TeachersFeedback({
   }
 
   if (error) {
-    const description =
-      error === "delete"
-        ? "لا يمكن حذف المدرس إذا كان مرتبطًا بمحاضرات في الجدول. عطّله بدل حذفه."
-        : error === "toggle"
-          ? "لا يمكن تحديث حالة المدرس. حاول مرة أخرى."
-          : "تأكد من إدخال اسم المدرس بشكل صحيح (3 أحرف على الأقل).";
+    let description: string;
+    if (error === "delete" && reason) {
+      description = decodeURIComponent(reason);
+    } else if (error === "delete") {
+      description = "لا يمكن حذف المدرس إذا كان مرتبطًا بمحاضرات في الجدول. عطّله بدل حذفه.";
+    } else if (error === "toggle") {
+      description = "لا يمكن تحديث حالة المدرس. حاول مرة أخرى.";
+    } else {
+      description = "تأكد من إدخال اسم المدرس بشكل صحيح (3 أحرف على الأقل).";
+    }
 
     return (
       <SmartAlert
@@ -707,17 +718,14 @@ function TeacherRow({ teacher }: TeacherRowProps) {
           </button>
         </form>
 
-        <form action={deleteTeacherAction}>
-          <input type="hidden" name="id" value={teacher.id} />
-
-          <button
-            type="submit"
-            className="btn w-full border-red-100 bg-gradient-to-r from-red-50 to-indigo-50 text-red-700 hover:from-red-100 hover:to-indigo-100"
-          >
-            <Trash2 size={17} />
-            حذف
-          </button>
-        </form>
+        <DeleteConfirmButton
+          action={deleteTeacherAction}
+          itemId={teacher.id}
+          confirmTitle="هل أنت متأكد من حذف هذا المدرس؟"
+          confirmDescription="سيتم حذف بيانات المدرس نهائيًا. إذا كان مرتبطًا بمحاضرات أو درجات أو مواد، لن يتم الحذف. الأفضل تعطيله بدل الحذف."
+          confirmLabel="نعم، احذف"
+          cancelLabel="تراجع"
+        />
       </div>
     </article>
   );

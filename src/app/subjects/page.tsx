@@ -30,6 +30,7 @@ import {
   type SubjectFormInput,
   type SubjectListItem,
 } from "@/types/subject";
+import { DeleteConfirmButton } from "@/components/shared/delete-confirm-button";
 
 type SubjectsPageProps = {
   searchParams?: Promise<{
@@ -38,6 +39,7 @@ type SubjectsPageProps = {
     deleted?: string;
     toggled?: string;
     error?: string;
+    reason?: string;
   }>;
 };
 
@@ -70,6 +72,7 @@ export default async function SubjectsPage({
           deleted={resolvedSearchParams?.deleted}
           toggled={resolvedSearchParams?.toggled}
           error={resolvedSearchParams?.error}
+          reason={resolvedSearchParams?.reason}
         />
 
         <SmartAlert
@@ -176,11 +179,13 @@ async function deleteSubjectAction(formData: FormData) {
     result = await deleteSubject(id);
   } catch (error) {
     console.error("[deleteSubjectAction] Error:", error);
-    redirect("/subjects?error=delete");
+    const reason = encodeURIComponent("حدث خطأ أثناء الحذف. تأكد من عدم وجود بيانات مرتبطة.");
+    redirect(`/subjects?error=delete&reason=${reason}`);
   }
 
   if (!result.ok) {
-    redirect("/subjects?error=delete");
+    const reason = encodeURIComponent(result.message || "حدث خطأ أثناء الحذف.");
+    redirect(`/subjects?error=delete&reason=${reason}`);
   }
 
   revalidatePath("/");
@@ -194,6 +199,7 @@ type SubjectsFeedbackProps = {
   deleted?: string;
   toggled?: string;
   error?: string;
+  reason?: string;
 };
 
 function SubjectsFeedback({
@@ -201,6 +207,7 @@ function SubjectsFeedback({
   deleted,
   toggled,
   error,
+  reason,
 }: SubjectsFeedbackProps) {
   if (saved === "1") {
     return (
@@ -233,10 +240,14 @@ function SubjectsFeedback({
   }
 
   if (error) {
-    const description =
-      error === "delete"
-        ? "لا يمكن حذف المادة إذا كانت مرتبطة بمدرسين أو صفوف أو درجات. عطّلها بدل حذفها."
-        : "تأكد من إدخال اسم المادة بشكل صحيح، وأن الاسم غير مكرر.";
+    let description: string;
+    if (error === "delete" && reason) {
+      description = decodeURIComponent(reason);
+    } else if (error === "delete") {
+      description = "لا يمكن حذف المادة إذا كانت مرتبطة بمدرسين أو صفوف أو درجات. عطّلها بدل حذفها.";
+    } else {
+      description = "تأكد من إدخال اسم المادة بشكل صحيح، وأن الاسم غير مكرر.";
+    }
 
     return (
       <SmartAlert
@@ -554,17 +565,14 @@ function SubjectRow({ subject }: SubjectRowProps) {
           </button>
         </form>
 
-        <form action={deleteSubjectAction}>
-          <input type="hidden" name="id" value={subject.id} />
-
-          <button
-            type="submit"
-            className="btn w-full border-red-100 bg-gradient-to-r from-red-50 to-indigo-50 text-red-700 hover:from-red-100 hover:to-indigo-100"
-          >
-            <Trash2 size={17} />
-            حذف
-          </button>
-        </form>
+        <DeleteConfirmButton
+          action={deleteSubjectAction}
+          itemId={subject.id}
+          confirmTitle="هل أنت متأكد من حذف هذه المادة؟"
+          confirmDescription="سيتم حذف المادة نهائيًا. إذا كانت مرتبطة بمدرسين أو صفوف أو درجات، لن يتم الحذف. الأفضل تعطيلها بدل الحذف."
+          confirmLabel="نعم، احذف"
+          cancelLabel="تراجع"
+        />
       </div>
     </article>
   );

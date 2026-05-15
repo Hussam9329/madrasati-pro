@@ -44,6 +44,7 @@ import {
   type SectionFormInput,
   type SectionListItem,
 } from "@/types/class";
+import { DeleteConfirmButton } from "@/components/shared/delete-confirm-button";
 
 type ClassesPageProps = {
   searchParams?: Promise<{
@@ -53,6 +54,7 @@ type ClassesPageProps = {
     deleted?: string;
     toggled?: string;
     error?: string;
+    reason?: string;
   }>;
 };
 
@@ -88,6 +90,7 @@ export default async function ClassesPage({ searchParams }: ClassesPageProps) {
           deleted={resolvedSearchParams?.deleted}
           toggled={resolvedSearchParams?.toggled}
           error={resolvedSearchParams?.error}
+          reason={resolvedSearchParams?.reason}
         />
 
         <SmartAlert
@@ -225,11 +228,13 @@ async function deleteClassAction(formData: FormData) {
     result = await deleteClass(id);
   } catch (error) {
     console.error("[deleteClassAction] Error:", error);
-    redirect("/classes?error=delete-class");
+    const reason = encodeURIComponent("حدث خطأ أثناء الحذف. تأكد من عدم وجود بيانات مرتبطة.");
+    redirect(`/classes?error=delete-class&reason=${reason}`);
   }
 
   if (!result.ok) {
-    redirect("/classes?error=delete-class");
+    const reason = encodeURIComponent(result.message || "حدث خطأ أثناء الحذف.");
+    redirect(`/classes?error=delete-class&reason=${reason}`);
   }
 
   revalidatePath("/");
@@ -273,11 +278,13 @@ async function deleteSectionAction(formData: FormData) {
     result = await deleteSection(id);
   } catch (error) {
     console.error("[deleteSectionAction] Error:", error);
-    redirect("/classes?error=delete-section");
+    const reason = encodeURIComponent("حدث خطأ أثناء الحذف. تأكد من عدم وجود بيانات مرتبطة.");
+    redirect(`/classes?error=delete-section&reason=${reason}`);
   }
 
   if (!result.ok) {
-    redirect("/classes?error=delete-section");
+    const reason = encodeURIComponent(result.message || "حدث خطأ أثناء الحذف.");
+    redirect(`/classes?error=delete-section&reason=${reason}`);
   }
 
   revalidatePath("/");
@@ -308,6 +315,7 @@ type ClassesFeedbackProps = {
   deleted?: string;
   toggled?: string;
   error?: string;
+  reason?: string;
 };
 
 function ClassesFeedback({
@@ -316,6 +324,7 @@ function ClassesFeedback({
   deleted,
   toggled,
   error,
+  reason,
 }: ClassesFeedbackProps) {
   if (classSaved === "1") {
     return (
@@ -358,12 +367,16 @@ function ClassesFeedback({
   }
 
   if (error) {
-    const description =
-      error === "delete-class"
-        ? "لا يمكن حذف الصف إذا كان يحتوي على شُعب أو طلاب أو جدول أو مواد مرتبطة."
-        : error === "delete-section"
-          ? "لا يمكن حذف الشعبة إذا كانت تحتوي على طلاب أو محاضرات في الجدول."
-          : "تأكد من إدخال البيانات بشكل صحيح، وعدم تكرار الصف أو الشعبة.";
+    let description: string;
+    if ((error === "delete-class" || error === "delete-section") && reason) {
+      description = decodeURIComponent(reason);
+    } else if (error === "delete-class") {
+      description = "لا يمكن حذف الصف إذا كان يحتوي على شُعب أو طلاب أو جدول أو مواد مرتبطة.";
+    } else if (error === "delete-section") {
+      description = "لا يمكن حذف الشعبة إذا كانت تحتوي على طلاب أو محاضرات في الجدول.";
+    } else {
+      description = "تأكد من إدخال البيانات بشكل صحيح، وعدم تكرار الصف أو الشعبة.";
+    }
 
     return (
       <SmartAlert
@@ -862,17 +875,14 @@ function SectionRow({ section }: SectionRowProps) {
           </button>
         </form>
 
-        <form action={deleteSectionAction}>
-          <input type="hidden" name="id" value={section.id} />
-
-          <button
-            type="submit"
-            className="btn w-full border-red-100 bg-gradient-to-r from-red-50 to-indigo-50 text-red-700 hover:from-red-100 hover:to-indigo-100"
-          >
-            <Trash2 size={17} />
-            حذف
-          </button>
-        </form>
+        <DeleteConfirmButton
+          action={deleteSectionAction}
+          itemId={section.id}
+          confirmTitle="هل أنت متأكد من حذف هذه الشعبة؟"
+          confirmDescription="سيتم حذف الشعبة نهائيًا. إذا كانت تحتوي على طلاب أو محاضرات في الجدول، لن يتم الحذف."
+          confirmLabel="نعم، احذف"
+          cancelLabel="تراجع"
+        />
       </div>
     </article>
   );
@@ -980,17 +990,14 @@ function ClassRow({ schoolClass, subjects }: ClassRowProps) {
           </button>
         </form>
 
-        <form action={deleteClassAction}>
-          <input type="hidden" name="id" value={schoolClass.id} />
-
-          <button
-            type="submit"
-            className="btn w-full border-red-100 bg-gradient-to-r from-red-50 to-indigo-50 text-red-700 hover:from-red-100 hover:to-indigo-100"
-          >
-            <Trash2 size={17} />
-            حذف
-          </button>
-        </form>
+        <DeleteConfirmButton
+          action={deleteClassAction}
+          itemId={schoolClass.id}
+          confirmTitle="هل أنت متأكد من حذف هذا الصف؟"
+          confirmDescription="سيتم حذف الصف نهائيًا. إذا كان يحتوي على شُعب أو طلاب أو جدول أو مواد مرتبطة، لن يتم الحذف."
+          confirmLabel="نعم، احذف"
+          cancelLabel="تراجع"
+        />
       </div>
 
       <details className="mt-3">

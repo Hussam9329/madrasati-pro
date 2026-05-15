@@ -37,6 +37,7 @@ import {
   type StudentListItem,
 } from "@/types/student";
 import { CopyCodeButton, GenerateBadgeButton } from "@/components/students/student-actions";
+import { DeleteConfirmButton } from "@/components/shared/delete-confirm-button";
 import { StudentQrImage } from "@/components/students/student-qr-image";
 import type { SectionListItem } from "@/types/class";
 
@@ -48,6 +49,7 @@ type StudentsPageProps = {
     deleted?: string;
     statusUpdated?: string;
     error?: string;
+    reason?: string;
   }>;
 };
 
@@ -87,6 +89,7 @@ export default async function StudentsPage({
           deleted={resolvedSearchParams?.deleted}
           statusUpdated={resolvedSearchParams?.statusUpdated}
           error={resolvedSearchParams?.error}
+          reason={resolvedSearchParams?.reason}
         />
 
         <SmartAlert
@@ -199,11 +202,13 @@ async function deleteStudentAction(formData: FormData) {
     result = await deleteStudent(id);
   } catch (error) {
     console.error("[deleteStudentAction] Error:", error);
-    redirect("/students?error=delete");
+    const reason = encodeURIComponent("حدث خطأ أثناء الحذف. تأكد من عدم وجود بيانات مرتبطة.");
+    redirect(`/students?error=delete&reason=${reason}`);
   }
 
   if (!result.ok) {
-    redirect("/students?error=delete");
+    const reason = encodeURIComponent(result.message || "حدث خطأ أثناء الحذف.");
+    redirect(`/students?error=delete&reason=${reason}`);
   }
 
   revalidatePath("/");
@@ -217,6 +222,7 @@ type StudentsFeedbackProps = {
   deleted?: string;
   statusUpdated?: string;
   error?: string;
+  reason?: string;
 };
 
 function StudentsFeedback({
@@ -224,6 +230,7 @@ function StudentsFeedback({
   deleted,
   statusUpdated,
   error,
+  reason,
 }: StudentsFeedbackProps) {
   if (saved === "1") {
     return (
@@ -256,12 +263,16 @@ function StudentsFeedback({
   }
 
   if (error) {
-    const description =
-      error === "delete"
-        ? "لا يمكن حذف الطالب إذا كان لديه درجات أو حضور أو أقساط. غيّر حالته بدل الحذف."
-        : error === "status"
-          ? "تعذر تغيير حالة الطالب. تأكد من اختيار حالة صحيحة."
-          : "تأكد من إدخال اسم الطالب بشكل صحيح، وأن رقم الطالب غير مكرر.";
+    let description: string;
+    if (error === "delete" && reason) {
+      description = decodeURIComponent(reason);
+    } else if (error === "delete") {
+      description = "لا يمكن حذف الطالب إذا كان لديه درجات أو حضور أو أقساط. غيّر حالته بدل الحذف.";
+    } else if (error === "status") {
+      description = "تعذر تغيير حالة الطالب. تأكد من اختيار حالة صحيحة.";
+    } else {
+      description = "تأكد من إدخال اسم الطالب بشكل صحيح، وأن رقم الطالب غير مكرر.";
+    }
 
     return (
       <SmartAlert
@@ -771,17 +782,14 @@ function StudentRow({ student }: StudentRowProps) {
           اتصال
         </a>
 
-        <form action={deleteStudentAction}>
-          <input type="hidden" name="id" value={student.id} />
-
-          <button
-            type="submit"
-            className="btn w-full border-red-100 bg-gradient-to-r from-red-50 to-indigo-50 text-red-700 hover:from-red-100 hover:to-indigo-100"
-          >
-            <Trash2 size={17} />
-            حذف
-          </button>
-        </form>
+        <DeleteConfirmButton
+          action={deleteStudentAction}
+          itemId={student.id}
+          confirmTitle="هل أنت متأكد من حذف هذا الطالب؟"
+          confirmDescription="سيتم حذف بيانات الطالب نهائيًا. إذا كان لديه درجات أو حضور أو أقساط، لن يتم الحذف. الأفضل تغيير حالته بدل الحذف."
+          confirmLabel="نعم، احذف"
+          cancelLabel="تراجع"
+        />
       </div>
     </article>
   );
