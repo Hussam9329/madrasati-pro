@@ -564,10 +564,10 @@ function SubjectRow({ subject }: SubjectRowProps) {
   );
 }
 
-function formatDate(date: Date): string {
+function formatDate(date: Date | string): string {
   return new Intl.DateTimeFormat("ar-IQ", {
     year: "numeric",
     month: "short",
     day: "numeric",
-  }).format(date);
+  }).format(new Date(date));
 }
