@@ -170,6 +170,19 @@ async function initializeDatabase() {
     `CREATE INDEX IF NOT EXISTS class_subjects_classId_index ON class_subjects(classId)`,
     `CREATE INDEX IF NOT EXISTS class_subjects_subjectId_index ON class_subjects(subjectId)`,
     
+    // teacher_sections
+    `CREATE TABLE IF NOT EXISTS teacher_sections (
+      id TEXT PRIMARY KEY NOT NULL,
+      teacherId TEXT NOT NULL,
+      sectionId TEXT NOT NULL,
+      createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (teacherId) REFERENCES teachers(id) ON DELETE CASCADE,
+      FOREIGN KEY (sectionId) REFERENCES sections(id) ON DELETE CASCADE
+    )`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS teacher_sections_teacherId_sectionId_unique ON teacher_sections(teacherId, sectionId)`,
+    `CREATE INDEX IF NOT EXISTS teacher_sections_teacherId_index ON teacher_sections(teacherId)`,
+    `CREATE INDEX IF NOT EXISTS teacher_sections_sectionId_index ON teacher_sections(sectionId)`,
+    
     // students
     `CREATE TABLE IF NOT EXISTS students (
       id TEXT PRIMARY KEY NOT NULL,
@@ -281,7 +294,10 @@ async function initializeDatabase() {
       discountAmount REAL NOT NULL DEFAULT 0,
       discountPercent REAL,
       discountReason TEXT,
+      discountNotes TEXT,
       finalAmount REAL,
+      remainingAmount REAL,
+      receiptNumber TEXT,
       studentId TEXT NOT NULL,
       createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -308,6 +324,9 @@ async function initializeDatabase() {
     "ALTER TABLE payments ADD COLUMN discountPercent REAL",
     "ALTER TABLE payments ADD COLUMN discountReason TEXT",
     "ALTER TABLE payments ADD COLUMN finalAmount REAL",
+    "ALTER TABLE payments ADD COLUMN discountNotes TEXT",
+    "ALTER TABLE payments ADD COLUMN remainingAmount REAL",
+    "ALTER TABLE payments ADD COLUMN receiptNumber TEXT",
     // grades new columns
     "ALTER TABLE grades ADD COLUMN weight REAL",
     "ALTER TABLE grades ADD COLUMN assessmentGroup TEXT",

@@ -413,39 +413,36 @@ function GradeCreateForm({
                 الطالب <span className="text-red-600">*</span>
               </label>
 
-              {!sectionId ? (
-                <div className="input flex items-center gap-2 text-[var(--app-text-muted)]">
-                  <Users size={16} />
-                  <span>اختر الشعبة أولًا حتى تظهر قائمة الطلاب.</span>
-                </div>
-              ) : sectionStudents.length === 0 ? (
-                <div className="input flex items-center gap-2 text-[var(--app-text-muted)]">
-                  <Users size={16} />
-                  <span>لا يوجد طلاب في هذه الشعبة.</span>
-                </div>
-              ) : (
-                <select
-                  id="studentId"
-                  name="studentId"
-                  autoComplete="off"
-                  required
-                  defaultValue=""
-                  className="input"
-                >
-                  <option value="" disabled>
-                    اختر الطالب
-                  </option>
-
-                  {sectionStudents.map((student) => (
-                    <option key={student.id} value={student.id}>
-                      {student.fullName}
-                      {student.studentCode
-                        ? ` - ${student.studentCode}`
-                        : ""}
+              <select
+                id="studentId"
+                name="studentId"
+                autoComplete="off"
+                required={!!sectionId && sectionStudents.length > 0}
+                defaultValue=""
+                disabled={!sectionId || sectionStudents.length === 0}
+                className="input disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {!sectionId ? (
+                  <option value="">اختر الشعبة أولًا حتى تظهر قائمة الطلاب</option>
+                ) : sectionStudents.length === 0 ? (
+                  <option value="">لا يوجد طلاب في هذه الشعبة</option>
+                ) : (
+                  <>
+                    <option value="" disabled>
+                      اختر الطالب
                     </option>
-                  ))}
-                </select>
-              )}
+
+                    {sectionStudents.map((student) => (
+                      <option key={student.id} value={student.id}>
+                        {student.fullName}
+                        {student.studentCode
+                          ? ` - ${student.studentCode}`
+                          : ""}
+                      </option>
+                    ))}
+                  </>
+                )}
+              </select>
             </div>
           </div>
 
@@ -499,34 +496,31 @@ function GradeCreateForm({
                 المدرس
               </label>
 
-              {!subjectId ? (
-                <div className="input flex items-center gap-2 text-[var(--app-text-muted)]">
-                  <GraduationCap size={16} />
-                  <span>اختر المادة حتى يظهر المدرسين المرتبطين بها.</span>
-                </div>
-              ) : subjectTeachers.length === 0 ? (
-                <div className="input flex items-center gap-2 text-[var(--app-text-muted)]">
-                  <GraduationCap size={16} />
-                  <span>لا يوجد مدرسين مرتبطين بهذه المادة.</span>
-                </div>
-              ) : (
-                <select
-                  id="teacherId"
-                  name="teacherId"
-                  autoComplete="off"
-                  defaultValue=""
-                  className="input"
-                >
-                  <option value="">بدون مدرس محدد</option>
+              <select
+                id="teacherId"
+                name="teacherId"
+                autoComplete="off"
+                defaultValue=""
+                disabled={!subjectId || subjectTeachers.length === 0}
+                className="input disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {!subjectId ? (
+                  <option value="">اختر المادة حتى يظهر المدرسين المرتبطين بها</option>
+                ) : subjectTeachers.length === 0 ? (
+                  <option value="">لا يوجد مدرسين مرتبطين بهذه المادة</option>
+                ) : (
+                  <>
+                    <option value="">بدون مدرس محدد</option>
 
-                  {subjectTeachers.map((teacher) => (
-                    <option key={teacher.id} value={teacher.id}>
-                      {teacher.fullName}
-                      {teacher.specialty ? ` - ${teacher.specialty}` : ""}
-                    </option>
-                  ))}
-                </select>
-              )}
+                    {subjectTeachers.map((teacher) => (
+                      <option key={teacher.id} value={teacher.id}>
+                        {teacher.fullName}
+                        {teacher.specialty ? ` - ${teacher.specialty}` : ""}
+                      </option>
+                    ))}
+                  </>
+                )}
+              </select>
             </div>
           </div>
 
@@ -885,7 +879,7 @@ function GradeSearchForm({
           />
         </div>
 
-        <select id="examType-filter" name="examType" autoComplete="off" defaultValue={examType} className="input">
+        <select id="examType-filter" name="examType" autoComplete="off" defaultValue={examType} className="input" aria-label="نوع الامتحان">
           <option value="">كل الامتحانات</option>
           {EXAM_TYPES.map((type) => (
             <option key={type.value} value={type.value}>
@@ -894,7 +888,7 @@ function GradeSearchForm({
           ))}
         </select>
 
-        <select id="term-filter" name="term" autoComplete="off" defaultValue={term} className="input">
+        <select id="term-filter" name="term" autoComplete="off" defaultValue={term} className="input" aria-label="الفصل الدراسي">
           <option value="">كل الفصول</option>
           {TERMS.map((t) => (
             <option key={t.value} value={t.value}>

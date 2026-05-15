@@ -354,9 +354,9 @@ function TeacherCreateForm({ subjects, sections }: TeacherCreateFormProps) {
 
         {subjects.length > 0 ? (
           <div>
-            <label className="mb-2 block text-sm font-extrabold text-[var(--app-text)]">
+            <span className="mb-2 block text-sm font-extrabold text-[var(--app-text)]">
               المادة التي يدرّسها <span className="text-red-600">*</span>
-            </label>
+            </span>
 
             <div className="max-h-52 overflow-y-auto rounded-2xl border border-[var(--app-border-soft)] bg-gradient-to-l to-indigo-50/30 to-amber-50/20 p-4">
               <div className="grid gap-3 sm:grid-cols-2">
@@ -410,9 +410,9 @@ function TeacherCreateForm({ subjects, sections }: TeacherCreateFormProps) {
 
         {sections.length > 0 ? (
           <div>
-            <label className="mb-2 block text-sm font-extrabold text-[var(--app-text)]">
+            <span className="mb-2 block text-sm font-extrabold text-[var(--app-text)]">
               الأقسام (الشُعب) التي يدرّسها
-            </label>
+            </span>
 
             <div className="max-h-52 overflow-y-auto rounded-2xl border border-[var(--app-border-soft)] bg-gradient-to-l from-blue-50/30 to-teal-50/20 p-4">
               <div className="grid gap-3 sm:grid-cols-2">
