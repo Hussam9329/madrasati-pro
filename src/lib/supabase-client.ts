@@ -411,6 +411,15 @@ class SupabaseModelHandler {
       data.id = generateId();
     }
 
+    // Auto-set timestamps (mimics Prisma @default(now()) and @updatedAt)
+    const now = new Date().toISOString();
+    if (!data.createdAt) {
+      data.createdAt = now;
+    }
+    if (!data.updatedAt) {
+      data.updatedAt = now;
+    }
+
     const { data: result, error } = await this.getClient()
       .from(this.table)
       .insert(data)
@@ -432,9 +441,12 @@ class SupabaseModelHandler {
   }
 
   async createMany(args: { data: Record<string, any>[] }): Promise<{ count: number }> {
+    const now = new Date().toISOString();
     const rows = args.data.map((d) => ({
       ...d,
       id: d.id || generateId(),
+      createdAt: d.createdAt || now,
+      updatedAt: d.updatedAt || now,
     }));
 
     const { data: result, error } = await this.getClient()
@@ -457,9 +469,14 @@ class SupabaseModelHandler {
 
   async update(args: { where: Record<string, any>; data: Record<string, any> }): Promise<any> {
     const where = args.where;
+    // Auto-update the updatedAt timestamp (mimics Prisma @updatedAt)
+    const updateData = {
+      ...args.data,
+      updatedAt: new Date().toISOString(),
+    };
     let query = this.getClient()
       .from(this.table)
-      .update(args.data);
+      .update(updateData);
 
     if (where.id) {
       query = query.eq("id", where.id);
