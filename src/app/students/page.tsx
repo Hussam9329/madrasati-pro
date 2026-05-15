@@ -36,7 +36,7 @@ import {
   type StudentFormInput,
   type StudentListItem,
 } from "@/types/student";
-import { CopyCodeButton } from "@/components/students/student-actions";
+import { CopyCodeButton, GenerateBadgeButton } from "@/components/students/student-actions";
 import { StudentQrImage } from "@/components/students/student-qr-image";
 import type { SectionListItem } from "@/types/class";
 
@@ -689,6 +689,10 @@ function StudentRow({ student }: StudentRowProps) {
           {student.studentCode ? (
             <div className="mt-2 flex items-center gap-2">
               <CopyCodeButton studentCode={student.studentCode} />
+              <GenerateBadgeButton
+                fullName={student.fullName}
+                studentCode={student.studentCode}
+              />
               <StudentQrImage studentId={student.id} studentCode={student.studentCode} />
             </div>
           ) : null}
