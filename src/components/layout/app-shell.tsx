@@ -18,7 +18,7 @@ import {
   Receipt,
   School,
   Search,
-  Settings,
+  ShieldCheck,
   Sparkles,
   Sun,
   Users,
@@ -49,7 +49,8 @@ const iconMap: Record<NavigationIcon, React.ElementType> = {
   fees: Receipt,
   payments: Receipt,
   reports: BarChart3,
-  settings: Settings,
+  settings: ShieldCheck,
+  permissions: ShieldCheck,
 };
 
 const groupOrder: NavigationGroup[] = [

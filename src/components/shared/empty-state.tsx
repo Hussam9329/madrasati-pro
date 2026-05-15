@@ -11,6 +11,7 @@ import {
   School,
   SearchX,
   Settings,
+  ShieldCheck,
   Users,
 } from "lucide-react";
 import type { NavigationIcon } from "@/lib/navigation";
@@ -45,6 +46,7 @@ const iconMap: Record<EmptyStateIcon, React.ElementType> = {
   payments: Receipt,
   reports: FileText,
   settings: Settings,
+  permissions: ShieldCheck,
   search: SearchX,
   file: FileText,
   plus: Plus,

@@ -28,7 +28,8 @@ export type NavigationIcon =
   | "fees"
   | "payments"
   | "reports"
-  | "settings";
+  | "settings"
+  | "permissions";
 
 export const navigationGroups: Record<
   NavigationGroup,
@@ -59,7 +60,7 @@ export const navigationGroups: Record<
   },
   system: {
     title: "النظام",
-    description: "الإعدادات العامة وخيارات التخصيص.",
+    description: "الصلاحيات، الأدوار، ومستخدمي النظام.",
   },
 };
 
@@ -146,10 +147,10 @@ export const navigationItems: NavigationItem[] = [
     group: "results",
   },
   {
-    title: "الإعدادات",
-    href: "/settings",
-    icon: "settings",
-    description: "خيارات النظام العامة والتخصيص.",
+    title: "الصلاحيات",
+    href: "/permissions",
+    icon: "permissions",
+    description: "تحكم بأدوار النظام ومستخدمي لوحة الإدارة.",
     priority: 11,
     group: "system",
   },

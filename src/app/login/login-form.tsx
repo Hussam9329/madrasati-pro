@@ -14,12 +14,13 @@ export function LoginForm() {
     const formData = new FormData(e.currentTarget);
     const username = formData.get("username") as string;
     const password = formData.get("password") as string;
+    const rememberMe = formData.get("rememberMe") === "on";
 
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username, password, rememberMe }),
       });
 
       const data = await res.json();
@@ -98,6 +99,23 @@ export function LoginForm() {
           disabled={isPending}
         />
       </div>
+
+      <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-[var(--app-border-soft)] bg-[var(--app-card-soft)] p-4 transition hover:border-indigo-200">
+        <input
+          name="rememberMe"
+          type="checkbox"
+          className="mt-1 h-4 w-4 rounded border-[var(--app-border)] accent-indigo-700"
+          disabled={isPending}
+        />
+        <span>
+          <span className="block text-sm font-extrabold text-[var(--app-text)]">
+            تذكرني
+          </span>
+          <span className="mt-1 block text-xs leading-6 text-[var(--app-text-muted)]">
+            إبقاء الجلسة مفتوحة لمدة أطول حتى لا تحتاج إلى تكرار إدخال كلمة المرور كثيرًا على نفس الجهاز.
+          </span>
+        </span>
+      </label>
 
       {/* Submit Button */}
       <button

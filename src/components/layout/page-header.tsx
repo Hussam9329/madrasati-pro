@@ -13,6 +13,7 @@ import {
   Receipt,
   School,
   Settings,
+  ShieldCheck,
   Users,
 } from "lucide-react";
 import type { NavigationIcon } from "@/lib/navigation";
@@ -42,6 +43,7 @@ const iconMap: Record<NavigationIcon, React.ElementType> = {
   payments: CreditCard,
   reports: FileText,
   settings: Settings,
+  permissions: ShieldCheck,
 };
 
 export function PageHeader({

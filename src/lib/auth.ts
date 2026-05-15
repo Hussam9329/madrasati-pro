@@ -8,7 +8,8 @@ const JWT_SECRET = new TextEncoder().encode(
 );
 
 const SESSION_COOKIE_NAME = "madrasati_session";
-const SESSION_DURATION = 8 * 60 * 60 * 1000; // 8 hours in ms
+const DEFAULT_SESSION_SECONDS = 8 * 60 * 60;
+const REMEMBER_ME_SESSION_SECONDS = 30 * 24 * 60 * 60;
 
 export async function verifyAdmin(username: string, password: string) {
   try {
@@ -26,11 +27,12 @@ export async function verifyAdmin(username: string, password: string) {
   }
 }
 
-export async function createSession(adminId: string) {
+export async function createSession(adminId: string, rememberMe = false) {
+  const sessionSeconds = rememberMe ? REMEMBER_ME_SESSION_SECONDS : DEFAULT_SESSION_SECONDS;
   const token = await new SignJWT({ adminId })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
-    .setExpirationTime("8h")
+    .setExpirationTime(`${sessionSeconds}s`)
     .sign(JWT_SECRET);
 
   const cookieStore = await cookies();
@@ -38,7 +40,7 @@ export async function createSession(adminId: string) {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
-    maxAge: 8 * 60 * 60, // 8 hours in seconds
+    maxAge: sessionSeconds,
     path: "/",
   });
 }
