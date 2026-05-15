@@ -285,6 +285,7 @@ function SubjectCreateForm() {
             maxLength={80}
             placeholder="مثال: الرياضيات"
             className="input"
+            autoComplete="off"
           />
         </div>
 
@@ -303,15 +304,18 @@ function SubjectCreateForm() {
             maxLength={300}
             placeholder="مثال: مادة الرياضيات للمرحلة الابتدائية..."
             className="input min-h-[110px] resize-y leading-7"
+            autoComplete="off"
           />
         </div>
 
         <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-[var(--app-border-soft)] bg-gradient-to-l to-indigo-50/30 to-amber-50/20 p-4">
           <input
             type="checkbox"
+            id="isActive"
             name="isActive"
             defaultChecked
             className="h-5 w-5 accent-indigo-600"
+            autoComplete="off"
           />
 
           <span>
@@ -429,6 +433,7 @@ function SubjectSearchForm({ query }: SubjectSearchFormProps) {
             defaultValue={query}
             placeholder="ابحث باسم المادة..."
             className="input pr-11"
+            autoComplete="off"
           />
         </div>
 
