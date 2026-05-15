@@ -529,7 +529,7 @@ function AttendanceRow({ record }: AttendanceRowProps) {
 
       <div className="grid gap-2 sm:grid-cols-1 xl:w-[160px]">
         <form action={deleteAttendanceAction}>
-          <input type="hidden" name="id" value={record.id} />
+          <input id={`delete-id-${record.id}`} type="hidden" name="id" value={record.id} autoComplete="off" />
 
           <button
             type="submit"
