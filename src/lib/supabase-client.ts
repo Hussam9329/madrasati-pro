@@ -219,35 +219,48 @@ function buildSelectString(
       continue;
     }
 
+    const relations = RELATION_MAP[model] || {};
+    const relation = relations[key];
+
     if (typeof value === "object" && value !== null) {
-      const relations = RELATION_MAP[model] || {};
-      const relation = relations[key];
       if (relation) {
+        // Use the actual table name for PostgREST, not the Prisma relation key
+        const tableName = relation.table;
         const nestedSelect = buildSelectString(
-          relation.table.replace(/_([a-z])/g, (_, c) => c.toUpperCase())
-            .replace(/s$/, ""), // rough model name back
+          getTableModelName(relation.table),
           value.include,
           value.select
         );
 
         if (nestedSelect) {
-          parts.push(`${key}!${relation.foreignKey}(${nestedSelect})`);
+          parts.push(`${tableName}!${relation.foreignKey}(${nestedSelect})`);
         } else {
           // Include all columns of related table
-          parts.push(`${key}!${relation.foreignKey}(*)`);
+          parts.push(`${tableName}!${relation.foreignKey}(*)`);
         }
       }
     } else if (value === true) {
-      const relations = RELATION_MAP[model] || {};
-      const relation = relations[key];
       if (relation) {
-        parts.push(`${key}!${relation.foreignKey}(*)`);
+        // Use the actual table name for PostgREST
+        const tableName = relation.table;
+        parts.push(`${tableName}!${relation.foreignKey}(*)`);
       }
     }
   }
 
   if (parts.length === 0) return undefined;
   return `*,${parts.join(",")}`;
+}
+
+/**
+ * Convert a snake_case table name back to camelCase model name
+ */
+function getTableModelName(tableName: string): string {
+  for (const [model, table] of Object.entries(MODEL_TO_TABLE)) {
+    if (table === tableName) return model;
+  }
+  // Fallback: convert snake_case to camelCase
+  return tableName.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
 }
 
 /**
@@ -725,7 +738,9 @@ class SupabaseModelHandler {
   }
 
   private async processResult(row: Record<string, any>, include?: Record<string, any>): Promise<any> {
-    const result: Record<string, any> = transformRow(row);
+    // First, map PostgREST table-name keys to Prisma relation names
+    const mappedRow = this.mapTableKeysToRelations(row, include);
+    const result: Record<string, any> = transformRow(mappedRow);
 
     // Handle _count includes
     if (include?._count) {
@@ -809,6 +824,42 @@ class SupabaseModelHandler {
     return result;
   }
 
+  /**
+   * Map PostgREST table-name keys (snake_case) to Prisma relation keys (camelCase)
+   * e.g., { class_subjects: [...] } -> { classSubjects: [...] }
+   */
+  private mapTableKeysToRelations(row: Record<string, any>, include?: Record<string, any>): Record<string, any> {
+    if (!include) return row;
+    const relations = RELATION_MAP[this.model] || {};
+    const result = { ...row };
+
+    for (const [relationName, relation] of Object.entries(relations)) {
+      if (include[relationName] === undefined) continue;
+      const tableName = relation.table;
+      // If the row has a key matching the table name but not the relation name
+      if (result[tableName] !== undefined && result[relationName] === undefined) {
+        result[relationName] = result[tableName];
+        delete result[tableName];
+      }
+      // Recursively map nested relations
+      if (result[relationName] && typeof include[relationName] === "object" && include[relationName] !== null) {
+        const nestedInclude = include[relationName].include || include[relationName];
+        const nestedModel = this.getRelatedModel(relationName);
+        if (Array.isArray(result[relationName])) {
+          result[relationName] = result[relationName].map((item: any) => {
+            const handler = new SupabaseModelHandler(nestedModel, relation.table);
+            return handler.mapTableKeysToRelations(item, nestedInclude);
+          });
+        } else if (typeof result[relationName] === "object") {
+          const handler = new SupabaseModelHandler(nestedModel, relation.table);
+          result[relationName] = handler.mapTableKeysToRelations(result[relationName], nestedInclude);
+        }
+      }
+    }
+
+    return result;
+  }
+
   private getRelatedModel(relationName: string): string {
     const relations = RELATION_MAP[this.model] || {};
     const relation = relations[relationName];
@@ -822,14 +873,17 @@ class SupabaseModelHandler {
 
   private buildNestedSelect(include: Record<string, any>): string {
     const parts: string[] = ["*"];
+    const relations = RELATION_MAP[this.model] || {};
     for (const [key, value] of Object.entries(include)) {
       if (key === "_count") continue;
+      const relation = relations[key];
+      const tableName = relation?.table || key;
       if (value === true) {
-        parts.push(`${key}(*)`);
+        parts.push(`${tableName}(*)`);
       } else if (typeof value === "object" && value?.include) {
-        parts.push(`${key}(${this.buildNestedSelect(value.include)})`);
+        parts.push(`${tableName}(${this.buildNestedSelect(value.include)})`);
       } else if (typeof value === "object" && value?.select) {
-        parts.push(`${key}(${Object.keys(value.select).join(",")})`);
+        parts.push(`${tableName}(${Object.keys(value.select).join(",")})`);
       }
     }
     return parts.join(",");
