@@ -6,22 +6,45 @@
 
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
-
 const globalForSupabase = globalThis as unknown as {
   supabase?: SupabaseClient;
 };
 
-export const supabase =
-  globalForSupabase.supabase ??
-  createClient(supabaseUrl, supabaseKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+/**
+ * Get or create the Supabase client lazily.
+ * This avoids "supabaseUrl is required" errors during build time
+ * when env vars are not available.
+ */
+function getSupabaseClient(): SupabaseClient {
+  if (!globalForSupabase.supabase) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 
-if (process.env.NODE_ENV !== "production") {
-  globalForSupabase.supabase = supabase;
+    if (!supabaseUrl || !supabaseKey) {
+      console.warn("[Supabase] Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY env vars");
+    }
+
+    globalForSupabase.supabase = createClient(
+      supabaseUrl || "https://placeholder.supabase.co",
+      supabaseKey || "placeholder-key",
+      { auth: { persistSession: false, autoRefreshToken: false } }
+    );
+  }
+  return globalForSupabase.supabase;
 }
+
+// Initialize eagerly if env vars are available, otherwise defer
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+if (supabaseUrl && supabaseKey) {
+  getSupabaseClient();
+}
+
+export const supabase = new Proxy({} as SupabaseClient, {
+  get(_target, prop) {
+    return (getSupabaseClient() as any)[prop];
+  },
+});
 
 // Model name to table name mapping (matches Prisma @@map annotations)
 const MODEL_TO_TABLE: Record<string, string> = {

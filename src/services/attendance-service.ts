@@ -109,9 +109,9 @@ function toAttendanceListItem(
 
 // ─── Where Builder ───────────────────────────────────────────────
 
-function buildAttendanceWhere(
+async function buildAttendanceWhere(
   filter: AttendanceFilter,
-): Prisma.AttendanceRecordWhereInput {
+): Promise<Prisma.AttendanceRecordWhereInput> {
   const query = filter.query?.trim();
   const where: Prisma.AttendanceRecordWhereInput = {};
 
@@ -389,7 +389,7 @@ async function findDuplicateAttendanceRecord(
 export async function getAttendanceRecords(
   filter: AttendanceFilter = {},
 ): Promise<AttendanceListItem[]> {
-  const where = buildAttendanceWhere(filter);
+  const where = await buildAttendanceWhere(filter);
 
   const records = await db.attendanceRecord.findMany({
     where,
