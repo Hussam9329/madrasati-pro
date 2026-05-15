@@ -347,6 +347,7 @@ export function QuickCodeAttendance({ qrAvailable }: QuickCodeAttendanceProps) {
               <input
                 ref={inputRef}
                 id="student-search-input"
+                name="student-search"
                 type="text"
                 value={searchQuery}
                 onChange={(e) => handleInputChange(e.target.value)}

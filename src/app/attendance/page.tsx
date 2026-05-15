@@ -327,11 +327,18 @@ function AttendanceSearchForm({
             name="q"
             defaultValue={query}
             placeholder="اسم الطالب، المادة، المدرس..."
+            autoComplete="off"
             className="input pr-11"
           />
         </div>
 
-        <select name="status" defaultValue={status} className="input">
+        <select
+          id="attendance-status-filter"
+          name="status"
+          defaultValue={status}
+          autoComplete="off"
+          className="input"
+        >
           <option value="">كل الحالات</option>
           {ATTENDANCE_STATUSES.map((s) => (
             <option key={s.value} value={s.value}>
@@ -341,9 +348,11 @@ function AttendanceSearchForm({
         </select>
 
         <input
+          id="attendance-date-filter"
           name="date"
           type="date"
           defaultValue={date}
+          autoComplete="off"
           className="input"
           placeholder="التاريخ"
         />
