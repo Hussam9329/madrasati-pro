@@ -322,6 +322,8 @@ function ReportFilterForm({
             <div className="relative">
               <select
                 id="period"
+                name="period"
+                autoComplete="off"
                 value={filter.period}
                 onChange={(e) =>
                   updateFilter({ period: e.target.value as ReportPeriod })
@@ -352,7 +354,9 @@ function ReportFilterForm({
               </label>
               <input
                 id="fromDate"
+                name="fromDate"
                 type="date"
+                autoComplete="off"
                 value={filter.fromDate ?? ""}
                 onChange={(e) => updateFilter({ fromDate: e.target.value })}
                 className="input"
@@ -371,7 +375,9 @@ function ReportFilterForm({
               </label>
               <input
                 id="toDate"
+                name="toDate"
                 type="date"
+                autoComplete="off"
                 value={filter.toDate ?? ""}
                 onChange={(e) => updateFilter({ toDate: e.target.value })}
                 className="input"
@@ -390,6 +396,8 @@ function ReportFilterForm({
             <div className="relative">
               <select
                 id="term"
+                name="term"
+                autoComplete="off"
                 value={filter.term ?? ""}
                 onChange={(e) => updateFilter({ term: e.target.value || undefined })}
                 className="input appearance-none"

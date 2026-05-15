@@ -251,6 +251,26 @@ async function initializeDatabase() {
     `CREATE INDEX IF NOT EXISTS attendance_records_date_index ON attendance_records(date)`,
     `CREATE UNIQUE INDEX IF NOT EXISTS attendance_records_studentId_date_unique ON attendance_records(studentId, date)`,
     
+    // exams
+    `CREATE TABLE IF NOT EXISTS exams (
+      id TEXT PRIMARY KEY NOT NULL,
+      name TEXT NOT NULL,
+      type TEXT NOT NULL,
+      date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      maxScore REAL NOT NULL DEFAULT 100,
+      passScore REAL NOT NULL DEFAULT 50,
+      failScore REAL,
+      notes TEXT,
+      subjectId TEXT NOT NULL,
+      sectionId TEXT NOT NULL,
+      createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (subjectId) REFERENCES subjects(id) ON DELETE CASCADE,
+      FOREIGN KEY (sectionId) REFERENCES sections(id) ON DELETE CASCADE
+    )`,
+    `CREATE INDEX IF NOT EXISTS exams_subjectId_index ON exams(subjectId)`,
+    `CREATE INDEX IF NOT EXISTS exams_sectionId_index ON exams(sectionId)`,
+
     // grades
     `CREATE TABLE IF NOT EXISTS grades (
       id TEXT PRIMARY KEY NOT NULL,
@@ -268,15 +288,18 @@ async function initializeDatabase() {
       studentId TEXT NOT NULL,
       subjectId TEXT NOT NULL,
       teacherId TEXT,
+      examId TEXT,
       createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (studentId) REFERENCES students(id) ON DELETE CASCADE,
       FOREIGN KEY (subjectId) REFERENCES subjects(id) ON DELETE CASCADE,
-      FOREIGN KEY (teacherId) REFERENCES teachers(id) ON DELETE SET NULL
+      FOREIGN KEY (teacherId) REFERENCES teachers(id) ON DELETE SET NULL,
+      FOREIGN KEY (examId) REFERENCES exams(id) ON DELETE CASCADE
     )`,
     `CREATE INDEX IF NOT EXISTS grades_studentId_index ON grades(studentId)`,
     `CREATE INDEX IF NOT EXISTS grades_subjectId_index ON grades(subjectId)`,
     `CREATE INDEX IF NOT EXISTS grades_teacherId_index ON grades(teacherId)`,
+    `CREATE INDEX IF NOT EXISTS grades_examId_index ON grades(examId)`,
     
     // payments
     `CREATE TABLE IF NOT EXISTS payments (
@@ -332,6 +355,7 @@ async function initializeDatabase() {
     "ALTER TABLE grades ADD COLUMN assessmentGroup TEXT",
     "ALTER TABLE grades ADD COLUMN isReviewed BOOLEAN NOT NULL DEFAULT 0",
     "ALTER TABLE grades ADD COLUMN warningLevel TEXT",
+    "ALTER TABLE grades ADD COLUMN examId TEXT",
     // attendance_records new columns
     "ALTER TABLE attendance_records ADD COLUMN mode TEXT NOT NULL DEFAULT 'check-in'",
     "ALTER TABLE attendance_records ADD COLUMN checkInAt DATETIME",
