@@ -53,11 +53,13 @@ export function CascadingSelect({
 
   return (
     <select
+      id={name}
       name={name}
       value={value}
       onChange={handleChange}
       disabled={disabled}
       className={className ?? "input"}
+      autoComplete="off"
     >
       <option value="">{placeholder}</option>
       {options.map((opt) => (
