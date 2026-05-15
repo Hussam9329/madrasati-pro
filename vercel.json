@@ -2,8 +2,5 @@
   "framework": "nextjs",
   "buildCommand": "npx prisma generate && next build",
   "outputDirectory": ".next",
-  "installCommand": "npm install",
-  "env": {
-    "DATABASE_URL": "file:/tmp/madrasati.db"
-  }
+  "installCommand": "npm install"
 }

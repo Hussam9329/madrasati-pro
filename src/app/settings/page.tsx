@@ -57,7 +57,7 @@ export default async function SettingsPage() {
               <div>
                 <h4 className="font-extrabold text-[var(--app-text)]">قاعدة البيانات</h4>
                 <p className="mt-1 text-sm leading-6 text-[var(--app-text-muted)]">
-                  SQLite — قاعدة بيانات محلية سريعة ومناسبة للاستخدام الفردي.
+                  PostgreSQL (Supabase) — قاعدة بيانات سحابية سريعة وموثوقة مع نسخ احتياطي تلقائي.
                 </p>
               </div>
             </div>
