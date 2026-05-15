@@ -385,7 +385,7 @@ function GradeCreateForm({
 
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <label className="mb-2 block text-sm font-extrabold text-[var(--app-text)]">
+              <label htmlFor="sectionIdFilter" className="mb-2 block text-sm font-extrabold text-[var(--app-text)]">
                 <Layers size={14} className="ml-1 inline-block" />
                 الصف / الشعبة <span className="text-red-600">*</span>
               </label>
@@ -427,6 +427,7 @@ function GradeCreateForm({
                 <select
                   id="studentId"
                   name="studentId"
+                  autoComplete="off"
                   required
                   defaultValue=""
                   className="input"
@@ -470,7 +471,7 @@ function GradeCreateForm({
 
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <label className="mb-2 block text-sm font-extrabold text-[var(--app-text)]">
+              <label htmlFor="subjectIdFilter" className="mb-2 block text-sm font-extrabold text-[var(--app-text)]">
                 <BookOpen size={14} className="ml-1 inline-block" />
                 المادة الدراسية <span className="text-red-600">*</span>
               </label>
@@ -512,6 +513,7 @@ function GradeCreateForm({
                 <select
                   id="teacherId"
                   name="teacherId"
+                  autoComplete="off"
                   defaultValue=""
                   className="input"
                 >
@@ -563,6 +565,7 @@ function GradeCreateForm({
               <input
                 id="title"
                 name="title"
+                autoComplete="off"
                 required
                 minLength={2}
                 maxLength={120}
@@ -584,6 +587,7 @@ function GradeCreateForm({
                   id="score"
                   name="score"
                   type="number"
+                  autoComplete="off"
                   required
                   min={0}
                   step="0.5"
@@ -604,6 +608,7 @@ function GradeCreateForm({
                   id="maxScore"
                   name="maxScore"
                   type="number"
+                  autoComplete="off"
                   required
                   min={1}
                   step="0.5"
@@ -633,6 +638,7 @@ function GradeCreateForm({
                   id="date"
                   name="date"
                   type="date"
+                  autoComplete="off"
                   className="input"
                 />
               </div>
@@ -648,6 +654,7 @@ function GradeCreateForm({
                 <select
                   id="examType"
                   name="examType"
+                  autoComplete="off"
                   defaultValue="monthly"
                   className="input"
                 >
@@ -670,6 +677,7 @@ function GradeCreateForm({
                 <select
                   id="term"
                   name="term"
+                  autoComplete="off"
                   defaultValue="first"
                   className="input"
                 >
@@ -693,6 +701,7 @@ function GradeCreateForm({
               <textarea
                 id="notes"
                 name="notes"
+                autoComplete="off"
                 rows={3}
                 maxLength={500}
                 placeholder="أي ملاحظات إضافية..."
@@ -869,13 +878,14 @@ function GradeSearchForm({
           <input
             id="q"
             name="q"
+            autoComplete="off"
             defaultValue={query}
             placeholder="عنوان الدرجة، اسم الطالب، المادة..."
             className="input pr-11"
           />
         </div>
 
-        <select name="examType" defaultValue={examType} className="input">
+        <select id="examType-filter" name="examType" autoComplete="off" defaultValue={examType} className="input">
           <option value="">كل الامتحانات</option>
           {EXAM_TYPES.map((type) => (
             <option key={type.value} value={type.value}>
@@ -884,7 +894,7 @@ function GradeSearchForm({
           ))}
         </select>
 
-        <select name="term" defaultValue={term} className="input">
+        <select id="term-filter" name="term" autoComplete="off" defaultValue={term} className="input">
           <option value="">كل الفصول</option>
           {TERMS.map((t) => (
             <option key={t.value} value={t.value}>

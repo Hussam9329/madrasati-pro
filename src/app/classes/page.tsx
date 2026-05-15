@@ -401,6 +401,7 @@ function ClassCreateForm() {
           <input
             id="class-name"
             name="name"
+            autoComplete="off"
             required
             minLength={2}
             maxLength={80}
@@ -420,6 +421,7 @@ function ClassCreateForm() {
           <input
             id="class-level"
             name="level"
+            autoComplete="off"
             maxLength={50}
             placeholder="مثال: الابتدائية"
             className="input"
@@ -437,6 +439,7 @@ function ClassCreateForm() {
           <textarea
             id="class-description"
             name="description"
+            autoComplete="off"
             rows={4}
             maxLength={300}
             placeholder="ملاحظات بسيطة عن الصف..."
@@ -447,7 +450,9 @@ function ClassCreateForm() {
         <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-[var(--app-border-soft)] bg-gradient-to-l to-indigo-50/30 to-amber-50/20 p-4">
           <input
             type="checkbox"
+            id="class-isActive"
             name="isActive"
+            autoComplete="off"
             defaultChecked
             className="h-5 w-5 accent-indigo-600"
           />
@@ -515,6 +520,7 @@ function SectionCreateForm({ classes }: SectionCreateFormProps) {
           <select
             id="section-class"
             name="classId"
+            autoComplete="off"
             required
             disabled={classes.length === 0}
             className="input"
@@ -550,6 +556,7 @@ function SectionCreateForm({ classes }: SectionCreateFormProps) {
             <input
               id="section-name"
               name="name"
+              autoComplete="off"
               required
               maxLength={30}
               placeholder="مثال: أ"
@@ -568,6 +575,7 @@ function SectionCreateForm({ classes }: SectionCreateFormProps) {
             <input
               id="section-capacity"
               name="capacity"
+              autoComplete="off"
               type="number"
               min={1}
               placeholder="مثال: 30"
@@ -587,6 +595,7 @@ function SectionCreateForm({ classes }: SectionCreateFormProps) {
           <textarea
             id="section-description"
             name="description"
+            autoComplete="off"
             rows={4}
             maxLength={300}
             placeholder="ملاحظات بسيطة عن الشعبة..."
@@ -597,7 +606,9 @@ function SectionCreateForm({ classes }: SectionCreateFormProps) {
         <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-[var(--app-border-soft)] bg-gradient-to-l to-indigo-50/30 to-amber-50/20 p-4">
           <input
             type="checkbox"
+            id="section-isActive"
             name="isActive"
+            autoComplete="off"
             defaultChecked
             className="h-5 w-5 accent-indigo-600"
           />
@@ -725,6 +736,7 @@ function ClassSearchForm({ query }: ClassSearchFormProps) {
           <input
             id="q"
             name="q"
+            autoComplete="off"
             defaultValue={query}
             placeholder="ابحث باسم الصف أو المرحلة..."
             className="input pr-11"
@@ -981,6 +993,8 @@ function ClassRow({ schoolClass, subjects }: ClassRowProps) {
                   type="checkbox"
                   name="subjectIds"
                   value={subject.id}
+                  id={`subject-${subject.id}`}
+                  autoComplete="off"
                   defaultChecked={schoolClass.subjectIds?.includes(subject.id) ?? false}
                 />
                 {subject.name}

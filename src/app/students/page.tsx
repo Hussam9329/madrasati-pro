@@ -321,6 +321,7 @@ function StudentCreateForm({ sections }: StudentCreateFormProps) {
           <input
             id="fullName"
             name="fullName"
+            autoComplete="off"
             required
             minLength={3}
             maxLength={120}
@@ -342,6 +343,7 @@ function StudentCreateForm({ sections }: StudentCreateFormProps) {
               id="phone"
               name="phone"
               type="tel"
+              autoComplete="off"
               required
               pattern="07\d{9}"
               maxLength={11}
@@ -363,6 +365,7 @@ function StudentCreateForm({ sections }: StudentCreateFormProps) {
               id="guardianPhone"
               name="guardianPhone"
               type="tel"
+              autoComplete="off"
               required
               pattern="07\d{9}"
               maxLength={11}
@@ -386,6 +389,7 @@ function StudentCreateForm({ sections }: StudentCreateFormProps) {
               id="birthDate"
               name="birthDate"
               type="date"
+              autoComplete="off"
               required
               className="input"
             />
@@ -399,7 +403,7 @@ function StudentCreateForm({ sections }: StudentCreateFormProps) {
               الصف / الشعبة <span className="text-red-600">*</span>
             </label>
 
-            <select id="sectionId" name="sectionId" required className="input" defaultValue="">
+            <select id="sectionId" name="sectionId" autoComplete="off" required className="input" defaultValue="">
               <option value="">اختر الصف والشعبة</option>
 
               {sections.map((section) => (
@@ -457,6 +461,7 @@ function FormField({
         id={name}
         name={name}
         type={type}
+        autoComplete="off"
         maxLength={maxLength}
         placeholder={placeholder}
         className="input"
@@ -580,13 +585,14 @@ function StudentSearchForm({ query, status }: StudentSearchFormProps) {
           <input
             id="q"
             name="q"
+            autoComplete="off"
             defaultValue={query}
             placeholder="اسم الطالب، الرقم، الهاتف، ولي الأمر..."
             className="input pr-11"
           />
         </div>
 
-        <select name="status" defaultValue={status} className="input">
+        <select id="student-status-filter" name="status" autoComplete="off" defaultValue={status} className="input">
           <option value="">كل الحالات</option>
           <option value="active">مستمر</option>
           <option value="inactive">متوقف</option>
@@ -724,7 +730,9 @@ function StudentRow({ student }: StudentRowProps) {
           <input type="hidden" name="id" value={student.id} />
 
           <select
+            id={`status-${student.id}`}
             name="status"
+            autoComplete="off"
             defaultValue={student.status}
             className="input h-11 flex-1 py-0 text-sm"
           >

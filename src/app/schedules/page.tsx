@@ -321,6 +321,7 @@ function ScheduleCreateForm({
           <select
             id="dayOfWeek"
             name="dayOfWeek"
+            autoComplete="off"
             required
             className="input"
             defaultValue="saturday"
@@ -339,6 +340,7 @@ function ScheduleCreateForm({
               id="startTime"
               name="startTime"
               type="time"
+              autoComplete="off"
               required
               className="input ltr text-right"
               placeholder="07:30"
@@ -350,6 +352,7 @@ function ScheduleCreateForm({
               id="endTime"
               name="endTime"
               type="time"
+              autoComplete="off"
               required
               className="input ltr text-right"
               placeholder="08:15"
@@ -361,6 +364,7 @@ function ScheduleCreateForm({
           <select
             id="sectionId"
             name="sectionId"
+            autoComplete="off"
             required
             disabled={!hasSections}
             className="input"
@@ -388,6 +392,7 @@ function ScheduleCreateForm({
           <select
             id="subjectId"
             name="subjectId"
+            autoComplete="off"
             required
             disabled={!hasSubjects}
             className="input"
@@ -415,6 +420,7 @@ function ScheduleCreateForm({
           <select
             id="teacherId"
             name="teacherId"
+            autoComplete="off"
             required
             disabled={!hasTeachers}
             className="input"
@@ -443,6 +449,7 @@ function ScheduleCreateForm({
           <input
             id="room"
             name="room"
+            autoComplete="off"
             maxLength={80}
             placeholder="مثال: قاعة 101"
             className="input"
@@ -453,6 +460,7 @@ function ScheduleCreateForm({
           <textarea
             id="notes"
             name="notes"
+            autoComplete="off"
             rows={3}
             maxLength={500}
             placeholder="ملاحظات إضافية عن المحاضرة..."
@@ -463,7 +471,9 @@ function ScheduleCreateForm({
         <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-[var(--app-border-soft)] bg-gradient-to-l to-indigo-50/30 to-amber-50/20 p-4">
           <input
             type="checkbox"
+            id="schedule-isActive"
             name="isActive"
+            autoComplete="off"
             defaultChecked
             className="h-5 w-5 accent-indigo-600"
           />
@@ -620,6 +630,7 @@ function ScheduleSearchForm({ query, dayOfWeek }: ScheduleSearchFormProps) {
           <input
             id="q"
             name="q"
+            autoComplete="off"
             defaultValue={query}
             placeholder="ابحث باسم المادة أو المدرس أو الشعبة..."
             className="input pr-11"
@@ -627,7 +638,9 @@ function ScheduleSearchForm({ query, dayOfWeek }: ScheduleSearchFormProps) {
         </div>
 
         <select
+          id="dayOfWeek-filter"
           name="dayOfWeek"
+          autoComplete="off"
           defaultValue={dayOfWeek}
           className="input w-full sm:w-40"
         >

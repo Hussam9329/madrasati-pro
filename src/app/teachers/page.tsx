@@ -319,6 +319,7 @@ function TeacherCreateForm({ subjects, sections }: TeacherCreateFormProps) {
           <input
             id="fullName"
             name="fullName"
+            autoComplete="off"
             required
             minLength={3}
             maxLength={120}
@@ -340,6 +341,7 @@ function TeacherCreateForm({ subjects, sections }: TeacherCreateFormProps) {
             id="phone"
             name="phone"
             type="tel"
+            autoComplete="off"
             required
             pattern="07\d{9}"
             maxLength={11}
@@ -367,6 +369,8 @@ function TeacherCreateForm({ subjects, sections }: TeacherCreateFormProps) {
                       type="checkbox"
                       name="subjectIds"
                       value={subject.id}
+                      id={`subject-${subject.id}`}
+                      autoComplete="off"
                       className="h-4 w-4 accent-indigo-600"
                     />
 
@@ -421,6 +425,8 @@ function TeacherCreateForm({ subjects, sections }: TeacherCreateFormProps) {
                       type="checkbox"
                       name="sectionIds"
                       value={section.id}
+                      id={`section-${section.id}`}
+                      autoComplete="off"
                       className="h-4 w-4 accent-blue-600"
                     />
 
@@ -562,6 +568,7 @@ function TeacherSearchForm({ query }: TeacherSearchFormProps) {
           <input
             id="q"
             name="q"
+            autoComplete="off"
             defaultValue={query}
             placeholder="ابحث بالاسم أو الهاتف أو التخصص أو المادة..."
             className="input pr-11"
