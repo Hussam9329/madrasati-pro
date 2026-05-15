@@ -62,9 +62,9 @@ export function AttendanceEntryPanel() {
             وضع الهاتف — كاميرا QR + إدخال يدوي
           </div>
         ) : (
-          <div className="inline-flex items-center gap-2 rounded-full bg-purple-50 px-4 py-2 text-sm font-bold text-purple-700">
+          <div className="inline-flex items-center gap-2 rounded-full bg-indigo-50 px-4 py-2 text-sm font-bold text-indigo-700">
             <Monitor size={16} />
-            وضع الحاسوب — إدخال يدوي فقط
+            وضع الحاسوب — بحث بالاسم أو الرمز
           </div>
         )}
       </div>
@@ -102,7 +102,7 @@ export function AttendanceEntryPanel() {
                 مسح QR متاح على الهاتف فقط
               </p>
               <p className="mt-1 text-xs leading-6 text-blue-600">
-                لاستخدام ماسح رمز QR بالكاميرا، افتح الموقع من هاتفك أو جهازك اللوحي. على الحاسوب يمكنك البحث عن الطالب بالاسم أو إدخال رمزه مباشرة لتسجيل الحضور والانصراف.
+                لاستخدام ماسح رمز QR بالكاميرا، افتح الموقع من هاتفك أو جهازك اللوحي. على الحاسوب يمكنك البحث عن الطالب بالاسم أو إدخال رمزه مباشرة لتسجيل الحضور والانصراف فورًا.
               </p>
             </div>
           </div>

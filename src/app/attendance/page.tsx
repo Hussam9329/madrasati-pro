@@ -20,24 +20,18 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { SmartAlert } from "@/components/shared/smart-alert";
 import { AttendanceEntryPanel } from "@/components/attendance/attendance-entry-panel";
 import {
-  createAttendanceRecord,
   deleteAttendanceRecord,
   getAttendanceCounts,
   getAttendanceRecords,
 } from "@/services/attendance-service";
-import { getSections } from "@/services/class-service";
-import { getStudents } from "@/services/student-service";
-import { getSchedules } from "@/services/schedule-service";
+
 import {
   ATTENDANCE_STATUSES,
   calculateAttendanceRate,
   formatAttendanceShortDate,
   getAttendanceStatusBadgeClass,
-  type AttendanceFormInput,
   type AttendanceListItem,
 } from "@/types/attendance";
-import type { SectionListItem } from "@/types/class";
-import type { ScheduleListItem } from "@/types/schedule";
 
 type AttendancePageProps = {
   searchParams?: {
@@ -59,19 +53,15 @@ export default async function AttendancePage({
   const status = searchParams?.status?.trim() ?? "";
   const date = searchParams?.date?.trim() ?? "";
 
-  const [records, sections, schedules, counts, students] = await Promise.all([
+  const [records, counts] = await Promise.all([
     safeQuery(() => getAttendanceRecords({
       query,
       status,
       date,
     }), []),
-    safeQuery(() => getSections(), []),
-    safeQuery(() => getSchedules(), []),
     safeQuery(() => getAttendanceCounts(), { total: 0, present: 0, absent: 0, late: 0, excused: 0 }),
-    safeQuery(() => getStudents(), []),
   ]);
 
-  const activeSections = sections.filter((s) => s.isActive);
   const hasRecords = counts.total > 0;
 
   return (
@@ -103,23 +93,16 @@ export default async function AttendancePage({
           <AttendanceEntryPanel />
         </section>
 
-        <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-          <AttendanceCreateForm
-            sections={activeSections}
-            students={students}
+        <section className="flex flex-col gap-6">
+          <AttendanceStats
+            total={counts.total}
+            present={counts.present}
+            absent={counts.absent}
+            late={counts.late}
+            excused={counts.excused}
           />
 
-          <div className="flex flex-col gap-6">
-            <AttendanceStats
-              total={counts.total}
-              present={counts.present}
-              absent={counts.absent}
-              late={counts.late}
-              excused={counts.excused}
-            />
-
-            <AttendanceSearchForm query={query} status={status} date={date} />
-          </div>
+          <AttendanceSearchForm query={query} status={status} date={date} />
         </section>
 
         {!hasRecords ? (
@@ -146,29 +129,6 @@ export default async function AttendancePage({
       </div>
     </AppShell>
   );
-}
-
-async function createAttendanceAction(formData: FormData) {
-  "use server";
-
-  const input: AttendanceFormInput = {
-    date: String(formData.get("date") ?? new Date().toISOString().split("T")[0]),
-    status: String(formData.get("status") ?? "present"),
-    notes: String(formData.get("notes") ?? ""),
-    studentId: String(formData.get("studentId") ?? ""),
-    mode: (String(formData.get("mode") ?? "check-in") as "check-in" | "check-out"),
-  };
-
-  const result = await createAttendanceRecord(input);
-
-  if (!result.ok) {
-    redirect("/attendance?error=create");
-  }
-
-  revalidatePath("/");
-  revalidatePath("/attendance");
-  revalidatePath("/reports");
-  redirect("/attendance?saved=1");
 }
 
 async function deleteAttendanceAction(formData: FormData) {
@@ -239,150 +199,6 @@ function AttendanceFeedback({ saved, deleted, error }: AttendanceFeedbackProps) 
   }
 
   return null;
-}
-
-// ─── Create Form ─────────────────────────────────────────────────
-
-type AttendanceCreateFormProps = {
-  sections: SectionListItem[];
-  students: { id: string; fullName: string; studentCode: string | null; sectionId: string | null }[];
-};
-
-function AttendanceCreateForm({
-  sections,
-  students,
-}: AttendanceCreateFormProps) {
-  const today = new Date().toISOString().split("T")[0];
-
-  return (
-    <form
-      id="attendance-form"
-      action={createAttendanceAction}
-      className="app-card overflow-hidden"
-    >
-      <div className="border-b border-[var(--app-border-soft)] bg-gradient-to-l to-indigo-50/40 to-amber-50/20 p-6">
-        <div className="flex items-start gap-3">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-700">
-            <CheckSquare size={24} />
-          </div>
-
-          <div>
-            <h3 className="text-xl font-extrabold text-[var(--app-text)]">
-              تسجيل حضور يدوي
-            </h3>
-
-            <p className="mt-1 text-sm leading-7 text-[var(--app-text-muted)]">
-              اختر الطالب وسجّل دخوله صباحًا أو انصرافه ظهرًا. الحضور هنا خاص بدوام الثانوية وليس بالمحاضرات.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid gap-5 p-6">
-        <div className="grid gap-5 md:grid-cols-2">
-          <div>
-            <label
-              htmlFor="date"
-              className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
-            >
-              تاريخ الحضور <span className="text-red-600">*</span>
-            </label>
-
-            <input
-              id="date"
-              name="date"
-              type="date"
-              required
-              defaultValue={today}
-              className="input"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="status"
-              className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
-            >
-              حالة الحضور <span className="text-red-600">*</span>
-            </label>
-
-            <select id="status" name="status" defaultValue="present" className="input">
-              {ATTENDANCE_STATUSES.map((s) => (
-                <option key={s.value} value={s.value}>
-                  {s.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div className="grid gap-5 md:grid-cols-2">
-          <div>
-            <label
-              htmlFor="studentId"
-              className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
-            >
-              الطالب <span className="text-red-600">*</span>
-            </label>
-
-            <select id="studentId" name="studentId" required defaultValue="" className="input">
-              <option value="">اختر الطالب</option>
-
-              {students.map((student) => (
-                <option key={student.id} value={student.id}>
-                  {student.fullName}
-                  {student.studentCode ? ` (${student.studentCode})` : ""}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label
-              htmlFor="mode"
-              className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
-            >
-              نوع الحركة <span className="text-red-600">*</span>
-            </label>
-
-            <select id="mode" name="mode" defaultValue="check-in" className="input">
-              <option value="check-in">دخول صباحي</option>
-              <option value="check-out">انصراف ظهري</option>
-            </select>
-          </div>
-        </div>
-
-        <div>
-          <label
-            htmlFor="notes"
-            className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
-          >
-            ملاحظات
-          </label>
-
-          <textarea
-            id="notes"
-            name="notes"
-            rows={3}
-            maxLength={500}
-            placeholder="أي ملاحظات إضافية..."
-            className="input min-h-[95px] resize-y leading-7"
-          />
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-3 border-t border-[var(--app-border-soft)] bg-gradient-to-l to-indigo-50/30 to-amber-50/20 p-6 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm leading-7 text-[var(--app-text-muted)]">
-          بعد تسجيل الحضور، يظهر السجل في القائمة أدناه مع الإحصائيات.
-        </p>
-
-        <button type="submit" className="btn btn-primary">
-          <CheckCircle2 size={18} />
-          تسجيل الحضور
-        </button>
-      </div>
-    </form>
-  );
 }
 
 // ─── Stats ───────────────────────────────────────────────────────

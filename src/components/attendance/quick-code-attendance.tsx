@@ -51,7 +51,7 @@ export function QuickCodeAttendance({ qrAvailable }: QuickCodeAttendanceProps) {
   const historyIdRef = useRef(0);
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Search students as user types
+  // Search students by name or code only (no class/section filters)
   const searchStudents = useCallback(async (query: string) => {
     const trimmed = query.trim();
     if (!trimmed) {
@@ -62,6 +62,7 @@ export function QuickCodeAttendance({ qrAvailable }: QuickCodeAttendanceProps) {
 
     setSearching(true);
     try {
+      // Search by name or code only — no classId/sectionId filters
       const res = await fetch(`/api/students?q=${encodeURIComponent(trimmed)}`);
       const data = await res.json();
 
@@ -107,19 +108,60 @@ export function QuickCodeAttendance({ qrAvailable }: QuickCodeAttendanceProps) {
     [searchStudents],
   );
 
-  // Handle student selection from dropdown
+  // Handle student selection from dropdown — immediately register attendance
   const handleStudentSelect = useCallback(
-    (student: StudentSearchResult) => {
+    async (student: StudentSearchResult) => {
       setSelectedStudent(student);
       setSearchQuery(student.fullName);
       setShowDropdown(false);
       setResult(null);
       setError(null);
+
+      // Immediately submit attendance for the selected student
+      setLoading(true);
+      try {
+        const res = await fetch("/api/attendance/scan", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            studentId: student.id,
+            mode,
+            source: "manual-name",
+          }),
+        });
+
+        const data: AttendanceScanResult = await res.json();
+        setResult(data);
+
+        if (!data.ok) {
+          setError(data.message);
+        } else {
+          historyIdRef.current += 1;
+          setHistory((prev) => [
+            {
+              id: historyIdRef.current,
+              result: data,
+              mode,
+              timestamp: new Date(),
+            },
+            ...prev.slice(0, 9),
+          ]);
+          // Reset for next entry
+          setSearchQuery("");
+          setSelectedStudent(null);
+          setSearchResults([]);
+        }
+      } catch {
+        setError("حدث خطأ في الاتصال بالخادم.");
+      } finally {
+        setLoading(false);
+        inputRef.current?.focus();
+      }
     },
-    [],
+    [mode],
   );
 
-  // Submit attendance for selected student
+  // Submit attendance for direct code entry
   const handleSubmit = useCallback(
     async (e?: React.FormEvent) => {
       if (e) e.preventDefault();
@@ -127,8 +169,8 @@ export function QuickCodeAttendance({ qrAvailable }: QuickCodeAttendanceProps) {
       setResult(null);
       setError(null);
 
+      // If a student is selected from dropdown, submit by ID
       if (selectedStudent) {
-        // Submit by studentId (from name search)
         setLoading(true);
         try {
           const res = await fetch("/api/attendance/scan", {
@@ -157,7 +199,6 @@ export function QuickCodeAttendance({ qrAvailable }: QuickCodeAttendanceProps) {
               },
               ...prev.slice(0, 9),
             ]);
-            // Reset for next entry
             setSearchQuery("");
             setSelectedStudent(null);
             setSearchResults([]);
@@ -249,17 +290,17 @@ export function QuickCodeAttendance({ qrAvailable }: QuickCodeAttendanceProps) {
 
   return (
     <div className="app-card overflow-hidden">
-      <div className="border-b border-[var(--app-border-soft)] bg-gradient-to-l from-emerald-50/40 to-amber-50/20 p-6">
+      <div className="border-b border-[var(--app-border-soft)] bg-gradient-to-l from-indigo-50/40 to-blue-50/20 p-6">
         <div className="flex items-start gap-3">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700">
             <Keyboard size={24} />
           </div>
           <div>
             <h3 className="text-xl font-extrabold text-[var(--app-text)]">
-              تسجيل حضور باسم الطالب أو رمزه
+              تسجيل حضور برمز الطالب أو اسم الطالب
             </h3>
             <p className="mt-1 text-sm leading-7 text-[var(--app-text-muted)]">
-              اكتب اسم الطالب أو رمزه (مثل: MarinaSchoolStd-0001) وسيتم تسجيل حضوره أو انصرافه فورًا.
+              اكتب اسم الطالب أو رمزه (مثل: MarinaSchoolStd-0001) وسيتم تسجيل حضوره أو انصرافه فورًا عند اختياره من القائمة أو الضغط على Enter.
               {qrAvailable && " يمكنك أيضًا استخدام الكاميرا لمسح رمز QR."}
             </p>
           </div>
@@ -343,7 +384,7 @@ export function QuickCodeAttendance({ qrAvailable }: QuickCodeAttendanceProps) {
                 </button>
               )}
 
-              {/* Autocomplete Dropdown */}
+              {/* Autocomplete Dropdown — name/code search only, no class filters */}
               {showDropdown && searchResults.length > 0 && !selectedStudent && (
                 <div
                   ref={dropdownRef}
@@ -367,12 +408,6 @@ export function QuickCodeAttendance({ qrAvailable }: QuickCodeAttendanceProps) {
                           {student.studentCode && (
                             <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500 ltr" dir="ltr">
                               {student.studentCode}
-                            </span>
-                          )}
-                          {student.className && (
-                            <span className="rounded-md bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-600">
-                              {student.className}
-                              {student.sectionName ? ` / ${student.sectionName}` : ""}
                             </span>
                           )}
                         </div>
@@ -405,7 +440,7 @@ export function QuickCodeAttendance({ qrAvailable }: QuickCodeAttendanceProps) {
 
           {/* Quick tip */}
           <p className="mt-2 text-xs text-[var(--app-text-soft)]">
-            اكتب اسم الطالب واختره من القائمة، أو أدخل رمزه مباشرة ثم اضغط Enter
+            اكتب اسم الطالب واختره من القائمة لتسجيل الحضور فورًا، أو أدخل رمزه مباشرة ثم اضغط Enter
           </p>
         </form>
 
