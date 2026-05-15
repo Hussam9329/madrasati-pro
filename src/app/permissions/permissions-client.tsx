@@ -1,10 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CheckCircle2, KeyRound, ShieldCheck, Trash2, UserCog, Users } from "lucide-react";
+import { CheckCircle2, KeyRound, ShieldCheck, UserCog, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { DeleteConfirmButton } from "@/components/shared/delete-confirm-button";
 
 type RoleKey = "system_admin" | "admin_user";
 
@@ -129,14 +130,10 @@ export function PermissionsClient({
     }
   }
 
-  async function deleteUser(id: string) {
+  async function deleteUser(id: string): Promise<{ ok: boolean; message?: string }> {
     const user = users.find((item) => item.id === id);
-    if (!user) return;
+    if (!user) return { ok: false, message: "المستخدم غير موجود." };
 
-    const confirmed = window.confirm(`هل تريد حذف المستخدم ${user.username}؟`);
-    if (!confirmed) return;
-
-    setIsPending(true);
     try {
       const res = await fetch(`/api/permissions/users?id=${encodeURIComponent(id)}`, {
         method: "DELETE",
@@ -144,16 +141,14 @@ export function PermissionsClient({
       const data = await res.json();
 
       if (!res.ok) {
-        showError(data.error || "تعذر حذف المستخدم.");
-        return;
+        return { ok: false, message: data.error || "تعذر حذف المستخدم." };
       }
 
       setUsers((current) => current.filter((item) => item.id !== id));
       showSuccess("تم حذف المستخدم بنجاح.");
+      return { ok: true };
     } catch {
-      showError("تعذر الاتصال بالخادم.");
-    } finally {
-      setIsPending(false);
+      return { ok: false, message: "تعذر الاتصال بالخادم." };
     }
   }
 
@@ -298,16 +293,15 @@ export function PermissionsClient({
                     </div>
                   </td>
                   <td className="px-5 py-4">
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      disabled={!canManage || isPending || user.id === currentAdminId}
-                      onClick={() => deleteUser(user.id)}
-                      title="حذف المستخدم"
-                    >
-                      <Trash2 size={16} />
-                      حذف
-                    </Button>
+                    <DeleteConfirmButton
+                      onConfirm={() => deleteUser(user.id)}
+                      confirmTitle={`هل أنت متأكد من حذف المستخدم "${user.username}"؟`}
+                      confirmDescription="سيتم حذف هذا المستخدم نهائيًا ولن يتمكن من الدخول للنظام بعد الحذف."
+                      confirmLabel="نعم، احذف"
+                      cancelLabel="تراجع"
+                      disabled={!canManage || user.id === currentAdminId}
+                      className="btn border-red-100 bg-gradient-to-r from-red-50 to-indigo-50 text-red-700 hover:from-red-100 hover:to-indigo-100"
+                    />
                   </td>
                 </tr>
               ))}

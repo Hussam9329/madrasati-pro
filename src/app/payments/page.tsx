@@ -219,13 +219,13 @@ async function createPaymentAction(formData: FormData) {
   redirect("/payments?saved=1");
 }
 
-async function deletePaymentAction(formData: FormData) {
+async function deletePaymentAction(formData: FormData): Promise<{ ok: boolean; message?: string }> {
   "use server";
 
   const id = String(formData.get("id") ?? "");
 
   if (!id) {
-    redirect("/payments?error=missing-id");
+    return { ok: false, message: "معرّف الدفعة مفقود." };
   }
 
   let result;
@@ -233,13 +233,11 @@ async function deletePaymentAction(formData: FormData) {
     result = await deletePayment(id);
   } catch (error) {
     console.error("[deletePaymentAction] Error:", error);
-    const reason = encodeURIComponent("حدث خطأ أثناء الحذف. تأكد من عدم وجود بيانات مرتبطة.");
-    redirect(`/payments?error=delete&reason=${reason}`);
+    return { ok: false, message: "حدث خطأ أثناء الحذف. تأكد من عدم وجود بيانات مرتبطة." };
   }
 
   if (!result.ok) {
-    const reason = encodeURIComponent(result.message || "حدث خطأ أثناء الحذف.");
-    redirect(`/payments?error=delete&reason=${reason}`);
+    return { ok: false, message: result.message || "حدث خطأ أثناء الحذف." };
   }
 
   revalidatePath("/");

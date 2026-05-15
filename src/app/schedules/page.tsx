@@ -12,7 +12,6 @@ import {
   Power,
   Search,
   StickyNote,
-  Trash2,
   Users,
 } from "lucide-react";
 import { safeQuery } from "@/lib/db";
@@ -21,6 +20,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { SmartAlert } from "@/components/shared/smart-alert";
+import { DeleteConfirmButton } from "@/components/shared/delete-confirm-button";
 import { getSections } from "@/services/class-service";
 import { getActiveSubjects } from "@/services/subject-service";
 import { getActiveTeachers } from "@/services/teacher-service";
@@ -193,19 +193,25 @@ async function toggleScheduleAction(formData: FormData) {
   redirect("/schedules?toggled=1");
 }
 
-async function deleteScheduleAction(formData: FormData) {
+async function deleteScheduleAction(formData: FormData): Promise<{ ok: boolean; message?: string }> {
   "use server";
 
   const id = String(formData.get("id") ?? "");
 
   if (!id) {
-    redirect("/schedules?error=missing-id");
+    return { ok: false, message: "معرّف المحاضرة مفقود." };
   }
 
-  const result = await deleteSchedule(id);
+  let result;
+  try {
+    result = await deleteSchedule(id);
+  } catch (error) {
+    console.error("[deleteScheduleAction] Error:", error);
+    return { ok: false, message: "حدث خطأ أثناء حذف المحاضرة." };
+  }
 
   if (!result.ok) {
-    redirect("/schedules?error=delete");
+    return { ok: false, message: result.message || "لا يمكن حذف المحاضرة حاليًا." };
   }
 
   revalidatePath("/");
@@ -775,17 +781,14 @@ function ScheduleRow({ schedule }: ScheduleRowProps) {
           </button>
         </form>
 
-        <form action={deleteScheduleAction}>
-          <input type="hidden" name="id" value={schedule.id} />
-
-          <button
-            type="submit"
-            className="btn w-full border-red-100 bg-gradient-to-r from-red-50 to-indigo-50 text-red-700 hover:from-red-100 hover:to-indigo-100"
-          >
-            <Trash2 size={17} />
-            حذف
-          </button>
-        </form>
+        <DeleteConfirmButton
+          action={deleteScheduleAction}
+          itemId={schedule.id}
+          confirmTitle="هل أنت متأكد من حذف هذه المحاضرة؟"
+          confirmDescription="سيتم حذف المحاضرة من الجدول الدراسي نهائيًا."
+          confirmLabel="نعم، احذف"
+          cancelLabel="تراجع"
+        />
       </div>
     </article>
   );

@@ -188,13 +188,13 @@ async function updateStudentStatusAction(formData: FormData) {
   redirect("/students?statusUpdated=1");
 }
 
-async function deleteStudentAction(formData: FormData) {
+async function deleteStudentAction(formData: FormData): Promise<{ ok: boolean; message?: string }> {
   "use server";
 
   const id = String(formData.get("id") ?? "");
 
   if (!id) {
-    redirect("/students?error=missing-id");
+    return { ok: false, message: "معرّف الطالب مفقود." };
   }
 
   let result;
@@ -202,13 +202,11 @@ async function deleteStudentAction(formData: FormData) {
     result = await deleteStudent(id);
   } catch (error) {
     console.error("[deleteStudentAction] Error:", error);
-    const reason = encodeURIComponent("حدث خطأ أثناء الحذف. تأكد من عدم وجود بيانات مرتبطة.");
-    redirect(`/students?error=delete&reason=${reason}`);
+    return { ok: false, message: "حدث خطأ أثناء الحذف. تأكد من عدم وجود بيانات مرتبطة." };
   }
 
   if (!result.ok) {
-    const reason = encodeURIComponent(result.message || "حدث خطأ أثناء الحذف.");
-    redirect(`/students?error=delete&reason=${reason}`);
+    return { ok: false, message: result.message || "حدث خطأ أثناء الحذف." };
   }
 
   revalidatePath("/");

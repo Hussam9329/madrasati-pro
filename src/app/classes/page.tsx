@@ -214,13 +214,13 @@ async function toggleClassAction(formData: FormData) {
   redirect("/classes?toggled=1");
 }
 
-async function deleteClassAction(formData: FormData) {
+async function deleteClassAction(formData: FormData): Promise<{ ok: boolean; message?: string }> {
   "use server";
 
   const id = String(formData.get("id") ?? "");
 
   if (!id) {
-    redirect("/classes?error=missing-id");
+    return { ok: false, message: "معرّف الصف مفقود." };
   }
 
   let result;
@@ -228,13 +228,11 @@ async function deleteClassAction(formData: FormData) {
     result = await deleteClass(id);
   } catch (error) {
     console.error("[deleteClassAction] Error:", error);
-    const reason = encodeURIComponent("حدث خطأ أثناء الحذف. تأكد من عدم وجود بيانات مرتبطة.");
-    redirect(`/classes?error=delete-class&reason=${reason}`);
+    return { ok: false, message: "حدث خطأ أثناء الحذف. تأكد من عدم وجود بيانات مرتبطة." };
   }
 
   if (!result.ok) {
-    const reason = encodeURIComponent(result.message || "حدث خطأ أثناء الحذف.");
-    redirect(`/classes?error=delete-class&reason=${reason}`);
+    return { ok: false, message: result.message || "حدث خطأ أثناء الحذف." };
   }
 
   revalidatePath("/");
@@ -264,13 +262,13 @@ async function toggleSectionAction(formData: FormData) {
   redirect("/classes?toggled=1");
 }
 
-async function deleteSectionAction(formData: FormData) {
+async function deleteSectionAction(formData: FormData): Promise<{ ok: boolean; message?: string }> {
   "use server";
 
   const id = String(formData.get("id") ?? "");
 
   if (!id) {
-    redirect("/classes?error=missing-id");
+    return { ok: false, message: "معرّف الشعبة مفقود." };
   }
 
   let result;
@@ -278,13 +276,11 @@ async function deleteSectionAction(formData: FormData) {
     result = await deleteSection(id);
   } catch (error) {
     console.error("[deleteSectionAction] Error:", error);
-    const reason = encodeURIComponent("حدث خطأ أثناء الحذف. تأكد من عدم وجود بيانات مرتبطة.");
-    redirect(`/classes?error=delete-section&reason=${reason}`);
+    return { ok: false, message: "حدث خطأ أثناء الحذف. تأكد من عدم وجود بيانات مرتبطة." };
   }
 
   if (!result.ok) {
-    const reason = encodeURIComponent(result.message || "حدث خطأ أثناء الحذف.");
-    redirect(`/classes?error=delete-section&reason=${reason}`);
+    return { ok: false, message: result.message || "حدث خطأ أثناء الحذف." };
   }
 
   revalidatePath("/");

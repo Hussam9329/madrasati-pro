@@ -14,7 +14,6 @@ import {
   Star,
   TrendingDown,
   TrendingUp,
-  Trash2,
   UserRound,
   Users,
 } from "lucide-react";
@@ -24,6 +23,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { SmartAlert } from "@/components/shared/smart-alert";
+import { DeleteConfirmButton } from "@/components/shared/delete-confirm-button";
 import { CascadingSelect } from "@/components/shared/cascading-select";
 import {
   createGrade,
@@ -235,19 +235,25 @@ async function createGradeAction(formData: FormData) {
   redirect("/grades?saved=1");
 }
 
-async function deleteGradeAction(formData: FormData) {
+async function deleteGradeAction(formData: FormData): Promise<{ ok: boolean; message?: string }> {
   "use server";
 
   const id = String(formData.get("id") ?? "");
 
   if (!id) {
-    redirect("/grades?error=missing-id");
+    return { ok: false, message: "معرّف الدرجة مفقود." };
   }
 
-  const result = await deleteGrade(id);
+  let result;
+  try {
+    result = await deleteGrade(id);
+  } catch (error) {
+    console.error("[deleteGradeAction] Error:", error);
+    return { ok: false, message: "حدث خطأ أثناء حذف الدرجة." };
+  }
 
   if (!result.ok) {
-    redirect("/grades?error=delete");
+    return { ok: false, message: result.message || "لا يمكن حذف الدرجة حاليًا." };
   }
 
   revalidatePath("/");
@@ -1117,17 +1123,14 @@ function GradeRow({ grade }: GradeRowProps) {
           </span>
         </div>
 
-        <form action={deleteGradeAction}>
-          <input type="hidden" name="id" value={grade.id} />
-
-          <button
-            type="submit"
-            className="btn w-full border-red-100 bg-gradient-to-r from-red-50 to-indigo-50 text-red-700 hover:from-red-100 hover:to-indigo-100"
-          >
-            <Trash2 size={17} />
-            حذف
-          </button>
-        </form>
+        <DeleteConfirmButton
+          action={deleteGradeAction}
+          itemId={grade.id}
+          confirmTitle="هل أنت متأكد من حذف هذه الدرجة؟"
+          confirmDescription="سيتم حذف الدرجة نهائيًا من سجل الطالب."
+          confirmLabel="نعم، احذف"
+          cancelLabel="تراجع"
+        />
       </div>
     </article>
   );

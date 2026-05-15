@@ -165,13 +165,13 @@ async function toggleSubjectAction(formData: FormData) {
   redirect("/subjects?toggled=1");
 }
 
-async function deleteSubjectAction(formData: FormData) {
+async function deleteSubjectAction(formData: FormData): Promise<{ ok: boolean; message?: string }> {
   "use server";
 
   const id = String(formData.get("id") ?? "");
 
   if (!id) {
-    redirect("/subjects?error=missing-id");
+    return { ok: false, message: "معرّف المادة مفقود." };
   }
 
   let result;
@@ -179,13 +179,11 @@ async function deleteSubjectAction(formData: FormData) {
     result = await deleteSubject(id);
   } catch (error) {
     console.error("[deleteSubjectAction] Error:", error);
-    const reason = encodeURIComponent("حدث خطأ أثناء الحذف. تأكد من عدم وجود بيانات مرتبطة.");
-    redirect(`/subjects?error=delete&reason=${reason}`);
+    return { ok: false, message: "حدث خطأ أثناء الحذف. تأكد من عدم وجود بيانات مرتبطة." };
   }
 
   if (!result.ok) {
-    const reason = encodeURIComponent(result.message || "حدث خطأ أثناء الحذف.");
-    redirect(`/subjects?error=delete&reason=${reason}`);
+    return { ok: false, message: result.message || "حدث خطأ أثناء الحذف." };
   }
 
   revalidatePath("/");

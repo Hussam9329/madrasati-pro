@@ -172,13 +172,13 @@ async function createTeacherAction(formData: FormData) {
   redirect("/teachers?saved=1");
 }
 
-async function deleteTeacherAction(formData: FormData) {
+async function deleteTeacherAction(formData: FormData): Promise<{ ok: boolean; message?: string }> {
   "use server";
 
   const id = String(formData.get("id") ?? "");
 
   if (!id) {
-    redirect("/teachers?error=missing-id");
+    return { ok: false, message: "معرّف المدرس مفقود." };
   }
 
   let result;
@@ -186,13 +186,11 @@ async function deleteTeacherAction(formData: FormData) {
     result = await deleteTeacher(id);
   } catch (error) {
     console.error("[deleteTeacherAction] Error:", error);
-    const reason = encodeURIComponent("حدث خطأ أثناء الحذف. تأكد من عدم وجود بيانات مرتبطة.");
-    redirect(`/teachers?error=delete&reason=${reason}`);
+    return { ok: false, message: "حدث خطأ أثناء الحذف. تأكد من عدم وجود بيانات مرتبطة." };
   }
 
   if (!result.ok) {
-    const reason = encodeURIComponent(result.message || "حدث خطأ أثناء الحذف.");
-    redirect(`/teachers?error=delete&reason=${reason}`);
+    return { ok: false, message: result.message || "حدث خطأ أثناء الحذف." };
   }
 
   revalidatePath("/");

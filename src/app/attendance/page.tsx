@@ -133,13 +133,13 @@ export default async function AttendancePage({
   );
 }
 
-async function deleteAttendanceAction(formData: FormData) {
+async function deleteAttendanceAction(formData: FormData): Promise<{ ok: boolean; message?: string }> {
   "use server";
 
   const id = String(formData.get("id") ?? "");
 
   if (!id) {
-    redirect("/attendance?error=missing-id");
+    return { ok: false, message: "معرّف سجل الحضور مفقود." };
   }
 
   let result;
@@ -147,13 +147,11 @@ async function deleteAttendanceAction(formData: FormData) {
     result = await deleteAttendanceRecord(id);
   } catch (error) {
     console.error("[deleteAttendanceAction] Error:", error);
-    const reason = encodeURIComponent("حدث خطأ أثناء الحذف. تأكد من عدم وجود بيانات مرتبطة.");
-    redirect(`/attendance?error=delete&reason=${reason}`);
+    return { ok: false, message: "حدث خطأ أثناء الحذف. تأكد من عدم وجود بيانات مرتبطة." };
   }
 
   if (!result.ok) {
-    const reason = encodeURIComponent(result.message || "حدث خطأ أثناء الحذف.");
-    redirect(`/attendance?error=delete&reason=${reason}`);
+    return { ok: false, message: result.message || "حدث خطأ أثناء الحذف." };
   }
 
   revalidatePath("/");
