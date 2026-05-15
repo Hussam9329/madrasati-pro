@@ -727,13 +727,13 @@ class SupabaseModelHandler {
         } else if (value.in !== undefined) {
           query = query.in(key, Array.isArray(value.in) ? value.in : [value.in]);
         } else if (value.gt !== undefined) {
-          query = query.gt(key, value.gt);
+          query = query.gt(key, value.gt instanceof Date ? value.gt.toISOString() : value.gt);
         } else if (value.gte !== undefined) {
-          query = query.gte(key, value.gte);
+          query = query.gte(key, value.gte instanceof Date ? value.gte.toISOString() : value.gte);
         } else if (value.lt !== undefined) {
-          query = query.lt(key, value.lt);
+          query = query.lt(key, value.lt instanceof Date ? value.lt.toISOString() : value.lt);
         } else if (value.lte !== undefined) {
-          query = query.lte(key, value.lte);
+          query = query.lte(key, value.lte instanceof Date ? value.lte.toISOString() : value.lte);
         } else if (key === "section" || key === "class" || key === "student" || key === "teacher" || key === "subject") {
           // Relation filter - need special handling
           // For now, we'll handle the most common cases

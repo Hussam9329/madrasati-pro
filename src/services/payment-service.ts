@@ -634,7 +634,8 @@ export async function hasPayments(): Promise<boolean> {
 
 function isUniqueConstraintError(error: unknown): boolean {
   return (
-    error instanceof Prisma.PrismaClientKnownRequestError &&
-    error.code === "P2002"
+    (error instanceof Prisma.PrismaClientKnownRequestError &&
+    error.code === "P2002") ||
+    ((error as any)?.code === "P2002")
   );
 }

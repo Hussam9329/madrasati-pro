@@ -156,8 +156,9 @@ export async function createTeacher(
     };
   } catch (error) {
     if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2002"
+      (error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002") ||
+      ((error as any)?.code === "P2002")
     ) {
       return {
         ok: false,
@@ -250,8 +251,9 @@ export async function updateTeacher(
     };
   } catch (error) {
     if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2002"
+      (error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002") ||
+      ((error as any)?.code === "P2002")
     ) {
       return {
         ok: false,
