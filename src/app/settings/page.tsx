@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { Settings, Database, Globe, ShieldCheck, DollarSign } from "lucide-react";
 import { requireAdmin } from "@/lib/auth";
 import { AppShell } from "@/components/layout/app-shell";
