@@ -772,7 +772,7 @@ export async function scanAttendanceByStudentCode(
   const mode = input.mode;
   const source = input.source ?? "qr";
 
-  if (!studentCode || !studentCode.startsWith("MarinaSchoolStd-")) {
+  if (!studentCode || !studentCode.startsWith("MarSch-")) {
     return {
       ok: false,
       studentId: "",
@@ -781,7 +781,7 @@ export async function scanAttendanceByStudentCode(
       status: "",
       checkInAt: null,
       checkOutAt: null,
-      message: "الرمز غير صالح. يجب أن يبدأ بـ MarinaSchoolStd-",
+      message: "الرمز غير صالح. يجب أن يبدأ بـ MarSch-",
     };
   }
 

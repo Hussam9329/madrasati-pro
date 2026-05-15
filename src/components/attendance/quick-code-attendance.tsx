@@ -96,8 +96,8 @@ export function QuickCodeAttendance({ qrAvailable }: QuickCodeAttendanceProps) {
         clearTimeout(searchTimeoutRef.current);
       }
 
-      // If it looks like a student code (starts with MarinaSchoolStd-), don't debounce
-      if (value.trim().startsWith("MarinaSchoolStd-")) {
+      // If it looks like a student code (starts with MarSch-), don't debounce
+      if (value.trim().startsWith("MarSch-")) {
         searchStudents(value);
       } else {
         searchTimeoutRef.current = setTimeout(() => {
@@ -300,7 +300,7 @@ export function QuickCodeAttendance({ qrAvailable }: QuickCodeAttendanceProps) {
               تسجيل حضور برمز الطالب أو اسم الطالب
             </h3>
             <p className="mt-1 text-sm leading-7 text-[var(--app-text-muted)]">
-              اكتب اسم الطالب أو رمزه (مثل: MarinaSchoolStd-0001) وسيتم تسجيل حضوره أو انصرافه فورًا عند اختياره من القائمة أو الضغط على Enter.
+              اكتب اسم الطالب أو رمزه (مثل: MarSch-0001) وسيتم تسجيل حضوره أو انصرافه فورًا عند اختياره من القائمة أو الضغط على Enter.
               {qrAvailable && " يمكنك أيضًا استخدام الكاميرا لمسح رمز QR."}
             </p>
           </div>

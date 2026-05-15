@@ -12,7 +12,7 @@ import {
   type StudentsFilter,
 } from "@/types/student";
 
-const STUDENT_CODE_PREFIX = "MarinaSchoolStd-";
+const STUDENT_CODE_PREFIX = "MarSch-";
 
 async function generateNextStudentCode(): Promise<string> {
   const lastStudent = await db.student.findFirst({
