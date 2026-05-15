@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
-import { scanAttendanceByStudentCode } from "@/services/attendance-service";
+import { scanAttendanceByStudentCode, scanAttendanceByStudentId } from "@/services/attendance-service";
 import type { AttendanceScanInput } from "@/types/attendance";
 
 export async function POST(request: NextRequest) {
@@ -11,11 +11,29 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { studentCode, mode, source } = body;
+  const { studentCode, studentId, mode, source } = body;
+
+  // Support both studentCode (from QR/manual code) and studentId (from name search)
+  if (studentId) {
+    if (!mode) {
+      return NextResponse.json(
+        { ok: false, message: "نوع العملية مطلوب." },
+        { status: 400 },
+      );
+    }
+
+    const result = await scanAttendanceByStudentId({
+      studentId,
+      mode,
+      source: source || "manual-name",
+    });
+
+    return NextResponse.json(result);
+  }
 
   if (!studentCode || !mode) {
     return NextResponse.json(
-      { ok: false, message: "الرمز ونوع العملية مطلوبان." },
+      { ok: false, message: "الرمز أو معرّف الطالب ونوع العملية مطلوبان." },
       { status: 400 },
     );
   }

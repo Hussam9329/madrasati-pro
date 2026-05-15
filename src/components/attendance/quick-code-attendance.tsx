@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   CheckCircle2,
   XCircle,
@@ -9,12 +9,23 @@ import {
   UserCheck,
   UserX,
   History,
+  Search,
+  User,
 } from "lucide-react";
 import type { AttendanceScanResult } from "@/types/attendance";
 
 type QuickCodeAttendanceProps = {
   /** Whether QR camera scanner is also available on this device */
   qrAvailable: boolean;
+};
+
+type StudentSearchResult = {
+  id: string;
+  fullName: string;
+  studentCode: string | null;
+  sectionName: string | null;
+  className: string | null;
+  status: string;
 };
 
 type ScanHistoryEntry = {
@@ -26,61 +37,179 @@ type ScanHistoryEntry = {
 
 export function QuickCodeAttendance({ qrAvailable }: QuickCodeAttendanceProps) {
   const [mode, setMode] = useState<"check-in" | "check-out">("check-in");
-  const [studentCode, setStudentCode] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<StudentSearchResult[]>([]);
+  const [selectedStudent, setSelectedStudent] = useState<StudentSearchResult | null>(null);
+  const [showDropdown, setShowDropdown] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [searching, setSearching] = useState(false);
   const [result, setResult] = useState<AttendanceScanResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<ScanHistoryEntry[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const historyIdRef = useRef(0);
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Search students as user types
+  const searchStudents = useCallback(async (query: string) => {
+    const trimmed = query.trim();
+    if (!trimmed) {
+      setSearchResults([]);
+      setShowDropdown(false);
+      return;
+    }
+
+    setSearching(true);
+    try {
+      const res = await fetch(`/api/students?q=${encodeURIComponent(trimmed)}`);
+      const data = await res.json();
+
+      if (data.ok && data.data) {
+        const activeStudents = data.data.filter(
+          (s: StudentSearchResult) => s.status === "active"
+        );
+        setSearchResults(activeStudents.slice(0, 15));
+        setShowDropdown(activeStudents.length > 0);
+      } else {
+        setSearchResults([]);
+        setShowDropdown(false);
+      }
+    } catch {
+      setSearchResults([]);
+      setShowDropdown(false);
+    } finally {
+      setSearching(false);
+    }
+  }, []);
+
+  // Debounced search
+  const handleInputChange = useCallback(
+    (value: string) => {
+      setSearchQuery(value);
+      setSelectedStudent(null);
+      setResult(null);
+      setError(null);
+
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+
+      // If it looks like a student code (starts with MarinaSchoolStd-), don't debounce
+      if (value.trim().startsWith("MarinaSchoolStd-")) {
+        searchStudents(value);
+      } else {
+        searchTimeoutRef.current = setTimeout(() => {
+          searchStudents(value);
+        }, 300);
+      }
+    },
+    [searchStudents],
+  );
+
+  // Handle student selection from dropdown
+  const handleStudentSelect = useCallback(
+    (student: StudentSearchResult) => {
+      setSelectedStudent(student);
+      setSearchQuery(student.fullName);
+      setShowDropdown(false);
+      setResult(null);
+      setError(null);
+    },
+    [],
+  );
+
+  // Submit attendance for selected student
   const handleSubmit = useCallback(
     async (e?: React.FormEvent) => {
       if (e) e.preventDefault();
 
-      const code = studentCode.trim();
-      if (!code) return;
-
-      setLoading(true);
-      setError(null);
       setResult(null);
+      setError(null);
 
-      try {
-        const res = await fetch("/api/attendance/scan", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ studentCode: code, mode, source: "manual-code" }),
-        });
-
-        const data: AttendanceScanResult = await res.json();
-        setResult(data);
-
-        if (!data.ok) {
-          setError(data.message);
-        } else {
-          // Add to history
-          historyIdRef.current += 1;
-          setHistory((prev) => [
-            {
-              id: historyIdRef.current,
-              result: data,
+      if (selectedStudent) {
+        // Submit by studentId (from name search)
+        setLoading(true);
+        try {
+          const res = await fetch("/api/attendance/scan", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              studentId: selectedStudent.id,
               mode,
-              timestamp: new Date(),
-            },
-            ...prev.slice(0, 9), // Keep last 10 entries
-          ]);
-          // Clear input on success
-          setStudentCode("");
+              source: "manual-name",
+            }),
+          });
+
+          const data: AttendanceScanResult = await res.json();
+          setResult(data);
+
+          if (!data.ok) {
+            setError(data.message);
+          } else {
+            historyIdRef.current += 1;
+            setHistory((prev) => [
+              {
+                id: historyIdRef.current,
+                result: data,
+                mode,
+                timestamp: new Date(),
+              },
+              ...prev.slice(0, 9),
+            ]);
+            // Reset for next entry
+            setSearchQuery("");
+            setSelectedStudent(null);
+            setSearchResults([]);
+          }
+        } catch {
+          setError("حدث خطأ في الاتصال بالخادم.");
+        } finally {
+          setLoading(false);
+          inputRef.current?.focus();
         }
-      } catch {
-        setError("حدث خطأ في الاتصال بالخادم.");
-      } finally {
-        setLoading(false);
-        // Refocus input for rapid entry
-        inputRef.current?.focus();
+      } else {
+        // Submit by student code (direct code entry)
+        const code = searchQuery.trim();
+        if (!code) return;
+
+        setLoading(true);
+        try {
+          const res = await fetch("/api/attendance/scan", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ studentCode: code, mode, source: "manual-code" }),
+          });
+
+          const data: AttendanceScanResult = await res.json();
+          setResult(data);
+
+          if (!data.ok) {
+            setError(data.message);
+          } else {
+            historyIdRef.current += 1;
+            setHistory((prev) => [
+              {
+                id: historyIdRef.current,
+                result: data,
+                mode,
+                timestamp: new Date(),
+              },
+              ...prev.slice(0, 9),
+            ]);
+            setSearchQuery("");
+            setSelectedStudent(null);
+            setSearchResults([]);
+          }
+        } catch {
+          setError("حدث خطأ في الاتصال بالخادم.");
+        } finally {
+          setLoading(false);
+          inputRef.current?.focus();
+        }
       }
     },
-    [studentCode, mode],
+    [searchQuery, selectedStudent, mode],
   );
 
   const handleModeSwitch = useCallback((newMode: "check-in" | "check-out") => {
@@ -89,6 +218,34 @@ export function QuickCodeAttendance({ qrAvailable }: QuickCodeAttendanceProps) {
     setError(null);
     inputRef.current?.focus();
   }, []);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node) &&
+        inputRef.current &&
+        !inputRef.current.contains(event.target as Node)
+      ) {
+        setShowDropdown(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Cleanup timeout
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const canSubmit = searchQuery.trim().length > 0 && !loading;
 
   return (
     <div className="app-card overflow-hidden">
@@ -99,10 +256,10 @@ export function QuickCodeAttendance({ qrAvailable }: QuickCodeAttendanceProps) {
           </div>
           <div>
             <h3 className="text-xl font-extrabold text-[var(--app-text)]">
-              تسجيل حضور برمز الطالب
+              تسجيل حضور باسم الطالب أو رمزه
             </h3>
             <p className="mt-1 text-sm leading-7 text-[var(--app-text-muted)]">
-              أدخل رمز الطالب (مثل: MarinaSchoolStd-0001) وسيتم تسجيل حضوره أو انصرافه فورًا.
+              اكتب اسم الطالب أو رمزه (مثل: MarinaSchoolStd-0001) وسيتم تسجيل حضوره أو انصرافه فورًا.
               {qrAvailable && " يمكنك أيضًا استخدام الكاميرا لمسح رمز QR."}
             </p>
           </div>
@@ -138,26 +295,96 @@ export function QuickCodeAttendance({ qrAvailable }: QuickCodeAttendanceProps) {
           </button>
         </div>
 
-        {/* Code Input Form */}
+        {/* Search Input Form */}
         <form onSubmit={handleSubmit} className="mb-5">
           <div className="flex gap-3">
             <div className="relative flex-1">
+              <Search
+                size={18}
+                className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[var(--app-text-soft)]"
+              />
               <input
                 ref={inputRef}
-                id="student-code-input"
+                id="student-search-input"
                 type="text"
-                value={studentCode}
-                onChange={(e) => setStudentCode(e.target.value)}
-                placeholder="أدخل رمز الطالب... (مثل: MarinaSchoolStd-0001)"
-                className="input ltr text-left placeholder:text-right"
-                dir="ltr"
+                value={searchQuery}
+                onChange={(e) => handleInputChange(e.target.value)}
+                onFocus={() => {
+                  if (searchResults.length > 0 && !selectedStudent) {
+                    setShowDropdown(true);
+                  }
+                }}
+                placeholder="اكتب اسم الطالب أو رمزه..."
+                className="input pr-11"
                 disabled={loading}
                 autoComplete="off"
               />
+
+              {/* Searching indicator */}
+              {searching && (
+                <div className="absolute left-4 top-1/2 -translate-y-1/2">
+                  <RefreshCw size={16} className="animate-spin text-[var(--app-text-soft)]" />
+                </div>
+              )}
+
+              {/* Selected student badge */}
+              {selectedStudent && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedStudent(null);
+                    setSearchQuery("");
+                    setSearchResults([]);
+                    inputRef.current?.focus();
+                  }}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 rounded-lg bg-emerald-100 px-2 py-1 text-xs font-bold text-emerald-700 hover:bg-emerald-200 transition"
+                >
+                  ✓ {selectedStudent.className ?? ""}
+                </button>
+              )}
+
+              {/* Autocomplete Dropdown */}
+              {showDropdown && searchResults.length > 0 && !selectedStudent && (
+                <div
+                  ref={dropdownRef}
+                  className="absolute right-0 left-0 top-full z-50 mt-1 max-h-[280px] overflow-y-auto rounded-xl border border-[var(--app-border)] bg-white shadow-xl animate-rise"
+                >
+                  {searchResults.map((student) => (
+                    <button
+                      key={student.id}
+                      type="button"
+                      onClick={() => handleStudentSelect(student)}
+                      className="flex w-full items-center gap-3 border-b border-[var(--app-border-soft)] px-4 py-3 text-right transition hover:bg-indigo-50/60 last:border-0"
+                    >
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700">
+                        <User size={16} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-extrabold text-[var(--app-text)]">
+                          {student.fullName}
+                        </p>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {student.studentCode && (
+                            <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500 ltr" dir="ltr">
+                              {student.studentCode}
+                            </span>
+                          )}
+                          {student.className && (
+                            <span className="rounded-md bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-600">
+                              {student.className}
+                              {student.sectionName ? ` / ${student.sectionName}` : ""}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             <button
               type="submit"
-              disabled={loading || !studentCode.trim()}
+              disabled={!canSubmit}
               className="btn btn-primary min-w-[100px]"
             >
               {loading ? (
@@ -178,7 +405,7 @@ export function QuickCodeAttendance({ qrAvailable }: QuickCodeAttendanceProps) {
 
           {/* Quick tip */}
           <p className="mt-2 text-xs text-[var(--app-text-soft)]">
-            اضغط Enter بعد كتابة الرمز للتسجيل السريع
+            اكتب اسم الطالب واختره من القائمة، أو أدخل رمزه مباشرة ثم اضغط Enter
           </p>
         </form>
 
