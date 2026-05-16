@@ -7,12 +7,14 @@ import type { AttendanceScanResult } from "@/types/attendance";
 
 type QrAttendanceScannerProps = {
   mode: "check-in" | "check-out";
+  checkoutWarningTime: string;
   title: string;
   description: string;
 };
 
 export function QrAttendanceScanner({
   mode,
+  checkoutWarningTime,
   title,
   description,
 }: QrAttendanceScannerProps) {
@@ -39,8 +41,28 @@ export function QrAttendanceScanner({
     setScanning(false);
   }, []);
 
+  const confirmEarlyCheckout = useCallback(() => {
+    if (mode !== "check-out") return true;
+
+    const [hourText, minuteText] = checkoutWarningTime.split(":");
+    const warningHour = Number(hourText);
+    const warningMinute = Number(minuteText);
+    const warningTotalMinutes = Number.isFinite(warningHour) && Number.isFinite(warningMinute)
+      ? warningHour * 60 + warningMinute
+      : 12 * 60;
+
+    const now = new Date();
+    const currentTotalMinutes = now.getHours() * 60 + now.getMinutes();
+
+    if (currentTotalMinutes >= warningTotalMinutes) return true;
+
+    return window.confirm(`هل أنت متأكد أن الطالب سينصرف قبل الوقت المحدد للانصراف (${checkoutWarningTime})؟`);
+  }, [checkoutWarningTime, mode]);
+
   const handleScan = useCallback(
     async (studentCode: string) => {
+      if (!confirmEarlyCheckout()) return;
+
       setLoading(true);
       setError(null);
 
@@ -65,7 +87,7 @@ export function QrAttendanceScanner({
         setLoading(false);
       }
     },
-    [mode, router],
+    [mode, router, confirmEarlyCheckout],
   );
 
   const startCamera = useCallback(async () => {
@@ -150,7 +172,7 @@ export function QrAttendanceScanner({
               {title}
             </h3>
             <p className="mt-1 text-sm leading-7 text-[var(--app-text-muted)]">
-              {description}
+              {description} {mode === "check-out" ? `قبل ${checkoutWarningTime} سيظهر تأكيد انصراف مبكر.` : ""}
             </p>
           </div>
         </div>

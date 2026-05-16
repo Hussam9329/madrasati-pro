@@ -1,5 +1,6 @@
 import { Prisma } from "@/lib/prisma-types";
 import { db } from "@/lib/db";
+import { getPreviousConfiguredSchoolDay } from "@/services/school-settings-service";
 import {
   ATTENDANCE_STATUSES,
   canDeleteAttendanceRecord,
@@ -773,22 +774,8 @@ export async function markAttendanceBatch(
 }
 
 
-function getPreviousSchoolDay(date: Date): Date {
-  const previous = new Date(date);
-  previous.setDate(previous.getDate() - 1);
-  previous.setHours(0, 0, 0, 0);
-
-  // العراق غالبًا تكون عطلة نهاية الأسبوع الجمعة/السبت.
-  // سيتم استبدالها بإعدادات العطل عند توفر جدول school_settings.
-  while (previous.getDay() === 5 || previous.getDay() === 6) {
-    previous.setDate(previous.getDate() - 1);
-  }
-
-  return previous;
-}
-
 async function getPreviousAttendanceMessage(studentId: string, today: Date): Promise<string> {
-  const previousDay = getPreviousSchoolDay(today);
+  const previousDay = await getPreviousConfiguredSchoolDay(today);
   const previousEnd = new Date(previousDay);
   previousEnd.setDate(previousEnd.getDate() + 1);
 

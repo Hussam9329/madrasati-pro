@@ -12,7 +12,7 @@ import { QuickCodeAttendance } from "./quick-code-attendance";
  * - Phone/Tablet: QR camera scanner + Quick manual code entry
  * - Desktop: Quick manual code entry only
  */
-export function AttendanceEntryPanel() {
+export function AttendanceEntryPanel({ checkoutWarningTime }: { checkoutWarningTime: string }) {
   const [isMobile, setIsMobile] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -76,23 +76,25 @@ export function AttendanceEntryPanel() {
           <div className="flex flex-col gap-6">
             <QrAttendanceScanner
               mode="check-in"
+              checkoutWarningTime={checkoutWarningTime}
               title="تسجيل حضور (QR)"
               description="وجّه الكاميرا نحو رمز QR الخاص بالطالب لتسجيل حضوره."
             />
             <QrAttendanceScanner
               mode="check-out"
+              checkoutWarningTime={checkoutWarningTime}
               title="تسجيل انصراف (QR)"
               description="وجّه الكاميرا نحو رمز QR الخاص بالطالب لتسجيل انصرافه."
             />
           </div>
 
           {/* Right column: Quick Code Entry */}
-          <QuickCodeAttendance qrAvailable />
+          <QuickCodeAttendance qrAvailable checkoutWarningTime={checkoutWarningTime} />
         </div>
       ) : (
         /* ── Desktop Layout: Quick Code Entry Only ── */
         <div className="mx-auto max-w-[700px]">
-          <QuickCodeAttendance qrAvailable={false} />
+          <QuickCodeAttendance qrAvailable={false} checkoutWarningTime={checkoutWarningTime} />
 
           {/* Hint about mobile QR */}
           <div className="mt-4 flex items-start gap-3 rounded-xl border border-blue-100 bg-blue-50/50 p-4">

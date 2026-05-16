@@ -33,6 +33,8 @@ import {
   type AttendanceListItem,
 } from "@/types/attendance";
 import { DeleteConfirmButton } from "@/components/shared/delete-confirm-button";
+import { getSchoolSettings } from "@/services/school-settings-service";
+import { getSchoolDayLabel } from "@/types/settings";
 
 type AttendancePageProps = {
   searchParams?: Promise<{
@@ -56,13 +58,22 @@ export default async function AttendancePage({
   const status = resolvedSearchParams?.status?.trim() ?? "";
   const date = resolvedSearchParams?.date?.trim() ?? "";
 
-  const [records, counts] = await Promise.all([
+  const [records, counts, schoolSettings] = await Promise.all([
     safeQuery(() => getAttendanceRecords({
       query,
       status,
       date,
     }), []),
     safeQuery(() => getAttendanceCounts(), { total: 0, present: 0, absent: 0, late: 0, excused: 0 }),
+    safeQuery(() => getSchoolSettings(), {
+      id: "main",
+      weekendDays: ["friday", "saturday"],
+      customHolidayDates: [],
+      checkoutWarningTime: "12:00",
+      notes: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }),
   ]);
 
   const hasRecords = counts.total > 0;
@@ -86,15 +97,15 @@ export default async function AttendancePage({
 
         <SmartAlert
           tone="info"
-          title="الحضور يعتمد على الطلاب داخل الصفوف"
-          description="كل طالب له سجل يومي واحد فقط: دخول صباحي وانصراف عند الخروج. يمنع النظام تكرار دخول الطالب أو تكرار انصرافه في نفس اليوم."
-          actionLabel="إدارة الطلاب"
-          actionHref="/students"
+          title="الحضور يعتمد على إعدادات الدوام"
+          description={`كل طالب له سجل يومي واحد فقط. العطل الأسبوعية الحالية: ${schoolSettings.weekendDays.map(getSchoolDayLabel).join("، ") || "غير محددة"}. تنبيه الانصراف المبكر يظهر قبل الساعة ${schoolSettings.checkoutWarningTime}.`}
+          actionLabel="تعديل الإعدادات"
+          actionHref="/settings"
         />
 
         {/* Attendance Entry — QR (mobile) + Quick Code (all devices) */}
         <section>
-          <AttendanceEntryPanel />
+          <AttendanceEntryPanel checkoutWarningTime={schoolSettings.checkoutWarningTime} />
         </section>
 
         <section className="flex flex-col gap-6">

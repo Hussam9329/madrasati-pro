@@ -60,7 +60,7 @@ export const navigationGroups: Record<
   },
   system: {
     title: "النظام",
-    description: "الصلاحيات، الأدوار، ومستخدمي النظام.",
+    description: "الإعدادات، الصلاحيات، الأدوار، ومستخدمي النظام."
   },
 };
 
@@ -161,6 +161,14 @@ export const navigationItems: NavigationItem[] = [
     description: "استخرج تقارير الطلاب، الحضور، الدرجات، والأقساط.",
     priority: 11,
     group: "results",
+  },
+  {
+    title: "الإعدادات",
+    href: "/settings",
+    icon: "settings",
+    description: "حدد أيام العطل ووقت الانصراف وتنبيهات الحضور.",
+    priority: 11.5,
+    group: "system",
   },
   {
     title: "الصلاحيات",

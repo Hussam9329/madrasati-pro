@@ -18,6 +18,8 @@ import type { AttendanceScanResult } from "@/types/attendance";
 type QuickCodeAttendanceProps = {
   /** Whether QR camera scanner is also available on this device */
   qrAvailable: boolean;
+  /** Time after which checkout is considered normal, HH:mm. */
+  checkoutWarningTime: string;
 };
 
 type StudentSearchResult = {
@@ -36,7 +38,7 @@ type ScanHistoryEntry = {
   timestamp: Date;
 };
 
-export function QuickCodeAttendance({ qrAvailable }: QuickCodeAttendanceProps) {
+export function QuickCodeAttendance({ qrAvailable, checkoutWarningTime }: QuickCodeAttendanceProps) {
   const router = useRouter();
   const [mode, setMode] = useState<"check-in" | "check-out">("check-in");
   const [searchQuery, setSearchQuery] = useState("");
@@ -113,10 +115,21 @@ export function QuickCodeAttendance({ qrAvailable }: QuickCodeAttendanceProps) {
 
   const confirmEarlyCheckout = useCallback(() => {
     if (mode !== "check-out") return true;
+
+    const [hourText, minuteText] = checkoutWarningTime.split(":");
+    const warningHour = Number(hourText);
+    const warningMinute = Number(minuteText);
+    const warningTotalMinutes = Number.isFinite(warningHour) && Number.isFinite(warningMinute)
+      ? warningHour * 60 + warningMinute
+      : 12 * 60;
+
     const now = new Date();
-    if (now.getHours() >= 12) return true;
-    return window.confirm("هل أنت متأكد أن الطالب سينصرف قبل الوقت المحدد للانصراف (12:00 ظهراً)؟");
-  }, [mode]);
+    const currentTotalMinutes = now.getHours() * 60 + now.getMinutes();
+
+    if (currentTotalMinutes >= warningTotalMinutes) return true;
+
+    return window.confirm(`هل أنت متأكد أن الطالب سينصرف قبل الوقت المحدد للانصراف (${checkoutWarningTime})؟`);
+  }, [checkoutWarningTime, mode]);
 
   // Handle student selection from dropdown — immediately register attendance
   const handleStudentSelect = useCallback(
@@ -316,7 +329,7 @@ export function QuickCodeAttendance({ qrAvailable }: QuickCodeAttendanceProps) {
               تسجيل حضور برمز الطالب أو اسم الطالب
             </h3>
             <p className="mt-1 text-sm leading-7 text-[var(--app-text-muted)]">
-              اكتب اسم الطالب أو رمزه (مثل: MarSch-0001) وسيتم تسجيل حضوره أو انصرافه فورًا عند اختياره من القائمة أو الضغط على Enter.
+              اكتب اسم الطالب أو رمزه (مثل: MarSch-0001) وسيتم تسجيل حضوره أو انصرافه فورًا عند اختياره من القائمة أو الضغط على Enter. عند الانصراف قبل {checkoutWarningTime} سيطلب النظام تأكيدًا إضافيًا.
               {qrAvailable && " يمكنك أيضًا استخدام الكاميرا لمسح رمز QR."}
             </p>
           </div>

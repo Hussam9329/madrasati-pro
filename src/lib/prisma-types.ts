@@ -23,6 +23,7 @@ export namespace Prisma {
   export type ExamWhereInput = Record<string, any>;
   export type PaymentWhereInput = Record<string, any>;
   export type ClassFeeSettingWhereInput = Record<string, any>;
+  export type SchoolSettingWhereInput = Record<string, any>;
 
   // Include types
   export type StudentInclude = Record<string, any>;

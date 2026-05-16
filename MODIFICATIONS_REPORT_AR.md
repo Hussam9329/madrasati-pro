@@ -147,43 +147,115 @@
 - تم تنفيذ `npx tsc --noEmit` ونجح فحص TypeScript بدون أخطاء.
 - تم تشغيل `npm run build` ووصل إلى مرحلة Compile بنجاح، لكن Next.js أظهر مشكلة ESLint موجودة أصلًا في `.eslintrc.json` وهي: `Converting circular structure to JSON`، ثم علقت مرحلة `Collecting page data` في بيئة الاختبار بسبب عدم وجود إعدادات Supabase الحقيقية. لم أعدّل `.eslintrc.json` حتى لا أغيّر إعدادات lint الأساسية بدون طلب صريح.
 
-## خطوة مطلوبة: تشغيل هجرة قاعدة البيانات يدويًا
+---
 
-بعد رفع الكود ونشره على Vercel، يجب تشغيل ملف SQL التالي يدويًا في **Supabase SQL Editor**:
+# تقرير الدفعة الثانية — الإعدادات والعطل وربطها بالحضور
 
-**الملف:** `database/2026-05-16-fees-exams-settings.sql`
+## الهدف المنجز في هذه الدفعة
+
+تم تحويل منطق العطل من قيمة ثابتة داخل كود الحضور إلى إعدادات قابلة للتعديل من داخل النظام. صار المستخدم يستطيع تحديد أيام العطل الأسبوعية، وإضافة تواريخ عطل خاصة، وتحديد وقت الانصراف القياسي الذي تظهر قبله رسالة التأكيد.
+
+## الأوامر البرمجية التفصيلية للتعديل
+
+1. افتح الملف `src/types/settings.ts` وأنشئ أنواع وإعدادات المدرسة:
+   - أضف `SchoolDay` لقيم أيام الأسبوع.
+   - أضف `SchoolSettings` و `SchoolSettingsInput`.
+   - أضف القيم الافتراضية: الجمعة والسبت عطلة، ووقت الانصراف القياسي `12:00`.
+   - أضف دوال تنظيف التواريخ: `normalizeHolidayDate()` و `parseHolidayDatesText()`.
+   - أضف دالة عرض أسماء الأيام بالعربية `getSchoolDayLabel()`.
+
+2. افتح الملف `src/services/school-settings-service.ts` وأنشئ خدمة إعدادات المدرسة:
+   - أضف `getSchoolSettings()` لجلب إعدادات المدرسة أو الرجوع للقيم الافتراضية إذا لم يكن جدول الإعدادات مضافًا بعد.
+   - أضف `saveSchoolSettings()` لحفظ أيام العطل ووقت الانصراف وتواريخ العطل الخاصة.
+   - أضف `isConfiguredHoliday()` لفحص ما إذا كان التاريخ عطلة حسب إعدادات المدرسة.
+   - أضف `getPreviousConfiguredSchoolDay()` لاستخراج آخر يوم دوام حقيقي قبل اليوم الحالي، مع تجاوز أيام العطل الأسبوعية والتواريخ الخاصة.
+
+3. افتح الملف `src/lib/supabase-client.ts` وعدّل عميل قاعدة البيانات:
+   - أضف الموديل `schoolSetting` إلى `MODEL_TO_TABLE` وربطه بجدول `school_settings`.
+   - أضف علاقة فارغة `schoolSetting: {}` داخل `RELATION_MAP` لأن الإعدادات لا تحتاج علاقات.
+   - أضف `schoolSetting: ModelHandler` إلى واجهة `SupabaseDB`.
+   - أضف `schoolSetting: new SupabaseModelHandler("schoolSetting", "school_settings")` داخل `createSupabaseDB()`.
+
+4. افتح الملف `src/lib/prisma-types.ts` وأضف نوع توافق:
+   - `SchoolSettingWhereInput = Record<string, any>`.
+
+5. افتح الملف `src/app/settings/page.tsx` واستبدل التحويل القديم إلى `/permissions` بصفحة إعدادات فعلية:
+   - تعرض بطاقة أيام العطل الأسبوعية.
+   - تعرض بطاقة وقت تنبيه الانصراف المبكر.
+   - تعرض حالة اليوم: دوام أو عطلة حسب الإعدادات الحالية.
+   - تضيف نموذج اختيار أيام العطل الأسبوعية.
+   - تضيف حقل وقت الانصراف القياسي `type="time"`.
+   - تضيف حقل تواريخ العطل الخاصة، كل تاريخ بسطر مستقل بصيغة `YYYY-MM-DD`.
+   - تضيف ملاحظات داخلية.
+   - تضيف Server Action باسم `saveSchoolSettingsAction()` لحفظ الإعدادات وإعادة تحديث `/settings` و `/attendance` و `/`.
+
+6. افتح الملف `src/lib/navigation.ts` وعدّل التنقل:
+   - أضف تبويبة `الإعدادات` برابط `/settings` داخل مجموعة النظام.
+   - عدّل وصف مجموعة النظام ليشمل الإعدادات والصلاحيات.
+
+7. افتح الملف `src/services/attendance-service.ts` وعدّل حساب الغياب السابق:
+   - احذف الاعتماد القديم على الجمعة/السبت داخل `getPreviousSchoolDay()`.
+   - استبدله باستدعاء `getPreviousConfiguredSchoolDay()` من خدمة إعدادات المدرسة.
+   - الآن عند تسجيل دخول الطالب يظهر هل كان غائبًا في آخر يوم دوام سابق حسب الإعدادات، وليس حسب أيام ثابتة داخل الكود.
+
+8. افتح الملف `src/app/attendance/page.tsx` وعدّل تبويبة الحضور:
+   - اجلب إعدادات المدرسة مع سجلات الحضور والإحصائيات.
+   - اعرض تنبيهًا يوضح أيام العطل الأسبوعية الحالية ووقت تنبيه الانصراف المبكر.
+   - مرر `checkoutWarningTime` إلى لوحة إدخال الحضور.
+   - أضف زر انتقال مباشر إلى `/settings` لتعديل أيام العطل.
+
+9. افتح الملف `src/components/attendance/attendance-entry-panel.tsx` وعدّل المكوّن:
+   - أضف الخاصية `checkoutWarningTime`.
+   - مرر الخاصية إلى `QuickCodeAttendance`.
+   - مرر الخاصية إلى ماسح QR في الحضور والانصراف.
+
+10. افتح الملف `src/components/attendance/quick-code-attendance.tsx` وعدّل تنبيه الانصراف:
+    - اجعل `confirmEarlyCheckout()` يعتمد على وقت الانصراف المحفوظ في الإعدادات بدل الساعة `12:00` الثابتة.
+    - أبقِ الانصراف متاحًا بكل الأوقات.
+    - إذا كان الوقت الحالي قبل وقت الانصراف القياسي، يظهر سؤال تأكيد للمستخدم.
+    - طبّق التنبيه سواء كان الإدخال باسم الطالب أو برمز الطالب.
+
+11. افتح الملف `src/components/attendance/qr-attendance-scanner.tsx` وعدّل ماسح QR:
+    - أضف الخاصية `checkoutWarningTime`.
+    - أضف دالة `confirmEarlyCheckout()` داخل ماسح QR.
+    - عند مسح QR في وضع الانصراف قبل الوقت المحدد، يظهر نفس تنبيه التأكيد.
+    - إذا ألغى المستخدم التأكيد لا يتم تسجيل الانصراف.
+
+12. أنشئ الملف `database/2026-05-16-school-settings.sql` وشغّله في Supabase SQL Editor:
+    - ينشئ جدول `school_settings`.
+    - يحفظ أيام العطل الأسبوعية بصيغة `jsonb`.
+    - يحفظ تواريخ العطل الخاصة بصيغة `jsonb`.
+    - يحفظ وقت الانصراف القياسي في العمود `checkoutWarningTime`.
+    - يضيف سجلًا افتراضيًا بالقيمة `main` إذا لم يكن موجودًا.
+
+## ملف SQL المطلوب لهذه الدفعة
+
+بعد تطبيق ملف الدفعة الأولى، شغّل هذا الملف أيضًا:
 
 ```sql
-alter table if exists class_fee_settings
-  add column if not exists "uniformAmount" numeric not null default 0;
-
-alter table if exists exams
-  add column if not exists "teacherId" text null;
-
-alter table if exists grades
-  add column if not exists "examId" text null;
-
-create index if not exists payments_student_year_type_idx
-  on payments ("studentId", "academicYear", "feeType");
-
-create index if not exists attendance_student_date_idx
-  on attendance_records ("studentId", "date");
-
-create index if not exists attendance_inside_school_idx
-  on attendance_records ("date", "checkInAt", "checkOutAt");
-
-create index if not exists grades_exam_student_idx
-  on grades ("examId", "studentId");
+-- database/2026-05-16-school-settings.sql
+create table if not exists school_settings (
+  id text primary key default 'main',
+  "weekendDays" jsonb not null default '["friday", "saturday"]'::jsonb,
+  "customHolidayDates" jsonb not null default '[]'::jsonb,
+  "checkoutWarningTime" text not null default '12:00',
+  notes text null,
+  "createdAt" timestamptz not null default now(),
+  "updatedAt" timestamptz not null default now()
+);
 ```
 
-**طريقة التشغيل:**
-1. افتح Supabase Dashboard على https://supabase.com/dashboard
-2. اختر المشروع
-3. اذهب إلى SQL Editor من القائمة الجانبية
-4. انسخ والصق الـ SQL أعلاه
-5. اضغط Run
+## نتيجة الفحص بعد الدفعة الثانية
 
-**ملاحظة:** بدون هذه الهجرة، صفحة إدارة الأقساط وصفحة الامتحانات لن تعمل بشكل صحيح لأن الأعمدة `uniformAmount` و `teacherId` لن تكون موجودة في قاعدة البيانات.
+- تم تنفيذ `npm install --ignore-scripts` مؤقتًا داخل بيئة العمل حتى تتوفر الاعتماديات للفحص، ولم يتم تضمين `node_modules` في ملف التسليم.
+- تم تنفيذ `npx tsc --noEmit` بنجاح بدون أخطاء TypeScript.
+- تم تشغيل `npm run build`، ونجحت مرحلة Compile، لكن بقيت نفس مشكلة ESLint الموجودة سابقًا في `.eslintrc.json`: `Converting circular structure to JSON`. لم أعدل إعدادات ESLint لأنها مشكلة إعداد مشروع وليست منطق الدفعة الثانية.
 
-**التحقق:** بعد تشغيل الهجرة، يمكن التحقق عبر استدعاء:
-`POST /api/migrate-fees-exams` — يجب أن يرجع `status: "already_migrated"`
+## ما أصبح مكتملًا من طلب الحضور والإعدادات
+
+- الانصراف متاح في كل الأوقات.
+- تظهر رسالة تأكيد إذا تم الانصراف قبل وقت الانصراف القياسي المحدد في الإعدادات.
+- وقت الانصراف لم يعد ثابتًا في الكود، ويمكن تغييره من `/settings`.
+- الغياب في اليوم السابق يعتمد على آخر يوم دوام حقيقي.
+- أيام العطل الأسبوعية والتواريخ الخاصة لا تُحسب كغياب.
+- صفحة الإعدادات أصبحت موجودة في القائمة الجانبية.

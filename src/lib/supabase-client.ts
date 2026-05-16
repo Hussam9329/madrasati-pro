@@ -63,6 +63,7 @@ const MODEL_TO_TABLE: Record<string, string> = {
   grade: "grades",
   classFeeSetting: "class_fee_settings",
   payment: "payments",
+  schoolSetting: "school_settings",
 };
 
 // Relation mappings for include/select operations
@@ -143,6 +144,7 @@ const RELATION_MAP: Record<string, Record<string, {
   payment: {
     student: { table: "students", foreignKey: "id", thisKey: "studentId", isMany: false },
   },
+  schoolSetting: {},
 };
 
 /**
@@ -928,6 +930,7 @@ interface SupabaseDB {
   grade: ModelHandler;
   classFeeSetting: ModelHandler;
   payment: ModelHandler;
+  schoolSetting: ModelHandler;
   $connect: () => Promise<void>;
   $disconnect: () => Promise<void>;
   $queryRaw: (strings: TemplateStringsArray, ...values: any[]) => Promise<any[]>;
@@ -955,6 +958,7 @@ function createSupabaseDB(): SupabaseDB {
     grade: new SupabaseModelHandler("grade", "grades"),
     classFeeSetting: new SupabaseModelHandler("classFeeSetting", "class_fee_settings"),
     payment: new SupabaseModelHandler("payment", "payments"),
+    schoolSetting: new SupabaseModelHandler("schoolSetting", "school_settings"),
     $connect: async () => {
       // Test connection by fetching one row from admins
       const { error } = await supabase.from("admins").select("id").limit(1);
