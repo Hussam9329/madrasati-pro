@@ -19,6 +19,8 @@ import { formatMoney } from "@/types/payment";
 
 export const dynamic = "force-dynamic";
 
+
+
 const setupSteps = [
   {
     title: "أضف المواد الدراسية",

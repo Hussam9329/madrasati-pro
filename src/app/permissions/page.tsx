@@ -1,10 +1,11 @@
-export const dynamic = "force-dynamic";
 
 import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/layout/page-header";
 import { requireAdmin } from "@/lib/auth";
 import { db, safeQuery } from "@/lib/db";
 import { PermissionsClient } from "./permissions-client";
+
+export const dynamic = "force-dynamic";
 
 type RoleKey = "system_admin" | "admin_user";
 

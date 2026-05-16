@@ -1,4 +1,3 @@
-export const dynamic = "force-dynamic";
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -16,6 +15,9 @@ import {
   serializeHolidayDatesForTextarea,
 } from "@/types/settings";
 import { saveSchoolSettings } from "@/services/school-settings-service";
+
+export const dynamic = "force-dynamic";
+
 
 type SettingsPageProps = {
   searchParams?: Promise<{

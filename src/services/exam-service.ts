@@ -115,10 +115,12 @@ export async function saveExamGrades(
   };
 }
 
-export async function getExams(filter?: { subjectId?: string; sectionId?: string }) {
+export async function getExams(filter?: { subjectId?: string; sectionId?: string; teacherId?: string; type?: string }) {
   const where: Prisma.ExamWhereInput = {};
   if (filter?.subjectId) where.subjectId = filter.subjectId;
   if (filter?.sectionId) where.sectionId = filter.sectionId;
+  if (filter?.teacherId) (where as any).teacherId = filter.teacherId;
+  if (filter?.type) where.type = filter.type;
 
   return db.exam.findMany({
     where,

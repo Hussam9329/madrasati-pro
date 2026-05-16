@@ -1,4 +1,3 @@
-export const dynamic = "force-dynamic";
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -12,6 +11,9 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { getActiveClasses } from "@/services/class-service";
 import { getClassFeeSettings, upsertClassFeeSetting } from "@/services/class-fee-service";
 import { formatMoney, getCurrentAcademicYear } from "@/types/payment";
+
+export const dynamic = "force-dynamic";
+
 
 type FeesPageProps = {
   searchParams?: Promise<{

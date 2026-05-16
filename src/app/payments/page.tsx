@@ -1,4 +1,3 @@
-export const dynamic = 'force-dynamic';
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
@@ -43,6 +42,10 @@ import { getStudentClassDisplay } from "@/types/student";
 import { DeleteConfirmButton } from "@/components/shared/delete-confirm-button";
 import { PaymentCreateForm } from "@/components/payments/payment-create-form";
 import { getStudentFeePlans } from "@/services/class-fee-service";
+
+export const dynamic = "force-dynamic";
+
+
 
 type PaymentsPageProps = {
   searchParams?: Promise<{

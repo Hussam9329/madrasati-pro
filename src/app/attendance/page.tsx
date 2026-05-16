@@ -1,4 +1,3 @@
-export const dynamic = 'force-dynamic';
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
@@ -35,6 +34,10 @@ import {
 import { DeleteConfirmButton } from "@/components/shared/delete-confirm-button";
 import { getSchoolSettings } from "@/services/school-settings-service";
 import { getSchoolDayLabel } from "@/types/settings";
+
+export const dynamic = "force-dynamic";
+
+
 
 type AttendancePageProps = {
   searchParams?: Promise<{

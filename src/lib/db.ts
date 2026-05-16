@@ -18,7 +18,16 @@ export const db = supabaseDB;
 let dbInitialized = false;
 let dbInitPromise: Promise<void> | null = null;
 
+function hasDatabaseEnv() {
+  return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
+}
+
 export async function ensureDatabase() {
+  // Do not open a placeholder Supabase connection during production builds or local checks.
+  if (!hasDatabaseEnv()) {
+    return;
+  }
+
   // If already initialized in this process, skip
   if (dbInitialized) return;
 
@@ -41,6 +50,10 @@ export async function ensureDatabase() {
 }
 
 async function initializeDatabase() {
+  if (!hasDatabaseEnv()) {
+    return;
+  }
+
   try {
     await db.$connect();
   } catch (e) {
@@ -79,6 +92,10 @@ async function seedAdmin() {
  * Used to prevent Server Component crashes when the database is unavailable.
  */
 export async function safeQuery<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
+  if (!hasDatabaseEnv()) {
+    return fallback;
+  }
+
   try {
     return await fn();
   } catch {

@@ -1,4 +1,3 @@
-export const dynamic = "force-dynamic";
 
 import { notFound } from "next/navigation";
 import { ArrowRight, Banknote, CalendarCheck, GraduationCap, UserRound } from "lucide-react";
@@ -13,6 +12,9 @@ import { getAttendanceByStudentId } from "@/services/attendance-service";
 import { getPaymentsByStudentId, getStudentPaymentSummary } from "@/services/payment-service";
 import { formatMoney } from "@/types/payment";
 import { getStudentClassDisplay, getStudentStatusLabel } from "@/types/student";
+
+export const dynamic = "force-dynamic";
+
 
 export default async function StudentProfilePage({ params }: { params: Promise<{ id: string }> }) {
   await requireAdmin();

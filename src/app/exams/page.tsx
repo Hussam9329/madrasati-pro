@@ -1,4 +1,3 @@
-export const dynamic = "force-dynamic";
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -15,6 +14,9 @@ import { getActiveSubjects } from "@/services/subject-service";
 import { getActiveTeachers } from "@/services/teacher-service";
 import { EXAM_TYPES } from "@/types/grade";
 import { getSectionDisplayName } from "@/types/class";
+
+export const dynamic = "force-dynamic";
+
 
 type ExamsPageProps = {
   searchParams?: Promise<{ saved?: string; error?: string; sectionId?: string; subjectId?: string }>;

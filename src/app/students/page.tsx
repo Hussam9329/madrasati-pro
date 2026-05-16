@@ -1,4 +1,3 @@
-export const dynamic = 'force-dynamic';
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
@@ -41,6 +40,10 @@ import { CopyCodeButton, GenerateBadgeButton } from "@/components/students/stude
 import { DeleteConfirmButton } from "@/components/shared/delete-confirm-button";
 import { StudentQrImage } from "@/components/students/student-qr-image";
 import type { SectionListItem } from "@/types/class";
+
+export const dynamic = "force-dynamic";
+
+
 
 type StudentsPageProps = {
   searchParams?: Promise<{

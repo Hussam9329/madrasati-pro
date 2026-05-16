@@ -1,4 +1,3 @@
-export const dynamic = 'force-dynamic';
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
@@ -41,6 +40,10 @@ import {
 } from "@/types/schedule";
 import type { SectionListItem } from "@/types/class";
 import type { Teacher } from "@/types/teacher";
+
+export const dynamic = "force-dynamic";
+
+
 
 type SchedulesPageProps = {
   searchParams?: Promise<{
