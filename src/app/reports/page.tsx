@@ -16,7 +16,6 @@ import {
   GraduationCap,
   Landmark,
   Loader2,
-  Printer,
   RefreshCw,
   School,
   Users,

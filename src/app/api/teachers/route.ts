@@ -4,7 +4,6 @@ import {
   createTeacher,
   deleteTeacher,
   getActiveTeachers,
-  getTeacherById,
   getTeacherDetails,
   getTeachers,
   getTeachersBySubjectId,

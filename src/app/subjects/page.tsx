@@ -8,7 +8,6 @@ import {
   Layers3,
   Power,
   Search,
-  Trash2,
 } from "lucide-react";
 import { safeQuery } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";

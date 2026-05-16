@@ -7,7 +7,6 @@ import {
   ClipboardList,
   Search,
   ShieldCheck,
-  Trash2,
   UserRound,
   XCircle,
 } from "lucide-react";

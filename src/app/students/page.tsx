@@ -8,7 +8,6 @@ import {
   GraduationCap,
   MessageCircle,
   Search,
-  Trash2,
   UserRound,
   Users,
 } from "lucide-react";

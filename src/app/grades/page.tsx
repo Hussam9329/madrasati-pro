@@ -31,7 +31,6 @@ import { getActiveTeachers } from "@/services/teacher-service";
 import {
   EXAM_TYPES,
   formatGradeShortDate,
-  getExamTypeLabel,
   getGradeLevelLabel,
   getGradeWarning,
   type GradeListItem,

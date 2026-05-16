@@ -9,7 +9,6 @@ import {
   ListTree,
   Power,
   Search,
-  Trash2,
   Users,
 } from "lucide-react";
 import { safeQuery } from "@/lib/db";

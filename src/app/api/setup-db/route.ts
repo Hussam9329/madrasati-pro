@@ -1,4 +1,3 @@
-import { supabase } from "@/lib/supabase-client";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";

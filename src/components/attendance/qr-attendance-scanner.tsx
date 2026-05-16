@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Camera, CheckCircle2, XCircle, RefreshCw, QrCode } from "lucide-react";
+import { Camera, CheckCircle2, XCircle, RefreshCw } from "lucide-react";
 import type { AttendanceScanResult } from "@/types/attendance";
 
 type QrAttendanceScannerProps = {
@@ -115,7 +115,7 @@ export function QrAttendanceScanner({
 
       reader.decodeFromVideoElement(
         videoRef.current!,
-        (result, _err, controls) => {
+        (result) => {
           if (!result) return;
 
           const text = result.getText();
@@ -144,7 +144,7 @@ export function QrAttendanceScanner({
       );
       setScanning(false);
     }
-  }, [mode, handleScan]);
+  }, [handleScan]);
 
   useEffect(() => {
     return () => {

@@ -8,7 +8,6 @@ import {
   Phone,
   Power,
   Search,
-  Trash2,
   UserRound,
 } from "lucide-react";
 import { safeQuery } from "@/lib/db";
@@ -27,7 +26,6 @@ import {
 import { getActiveSubjects } from "@/services/subject-service";
 import { getSections } from "@/services/class-service";
 import {
-  formatTeacherSubjects,
   getTeacherStatusBadgeClass,
   getTeacherStatusLabel,
   type TeacherFormInput,

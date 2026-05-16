@@ -2,7 +2,6 @@ import {
   AlertTriangle,
   BarChart3,
   CalendarCheck,
-  CheckCircle2,
   Clock3,
   GraduationCap,
   Receipt,

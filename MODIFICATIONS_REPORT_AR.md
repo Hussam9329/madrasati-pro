@@ -537,3 +537,167 @@ NEXT_TELEMETRY_DISABLED=1 npm run build
 - `npm run build` اكتمل بنجاح.
 - بقيت تحذيرات غير قاتلة من ESLint بخصوص imports غير مستخدمة في ملفات قديمة، وتحذير jose/Edge Runtime من middleware.
 - التحذيرات لا تمنع البناء ولا تمنع التشغيل، لكنها مرشحة للتنظيف العميق في دفعة تحسين لاحقة إذا أردت إغلاقها بالكامل.
+
+---
+
+## الدفعة الخامسة والأخيرة - تحسين التقارير والتنظيف النهائي
+
+### 1) تحسين ملف الطالب والتقرير القابل للطباعة
+
+```bash
+افتح الملف:
+src/app/students/[id]/page.tsx
+
+قم بالتعديلات التالية:
+- إضافة Link من next/link لاستبدال رابط العودة العادي برابط Next.js داخلي.
+- إضافة إحصائيات محسوبة داخل ملف الطالب:
+  - معدل الطالب العام.
+  - عدد الحضور.
+  - عدد الغياب.
+  - عدد التأخير.
+  - إجمالي المدفوع.
+  - إجمالي المتبقي.
+  - حالة دفع الزي المدرسي.
+- إضافة ملخص مالي ودراسي وحضور يمرر إلى أزرار التقرير.
+- إضافة قسم جديد باسم "ملاحظات وتوصيات التقرير" يعطي توصية تلقائية حسب:
+  - مستوى المعدل.
+  - وجود غيابات.
+  - وجود مبالغ مالية متبقية.
+- إضافة data-report-section لكل جزء من التقرير حتى يمكن إظهاره أو إخفاؤه عند الطباعة.
+- إضافة نسبة الدرجة داخل جدول الدرجات.
+```
+
+### 2) تخصيص ما سيتم طباعته من تقرير الطالب
+
+```bash
+افتح الملف:
+src/components/students/student-report-actions.tsx
+
+استبدل المكون القديم بمكون تفاعلي يحتوي:
+- اختيار أجزاء التقرير المطلوب طباعتها:
+  - الملخص العام.
+  - البيانات الأساسية.
+  - الدرجات.
+  - الحضور.
+  - التقرير المالي.
+  - الملاحظات والتوصيات.
+- زر تحديد الكل.
+- زر طباعة / حفظ PDF.
+- زر إرسال ملخص التقرير إلى ولي الأمر عبر واتساب.
+- توليد رسالة واتساب أكثر فائدة تحتوي:
+  - اسم الطالب.
+  - الصف.
+  - المعدل.
+  - ملخص الحضور.
+  - الملخص المالي.
+```
+
+### 3) التحكم بأقسام الطباعة عن طريق CSS
+
+```bash
+افتح الملف:
+src/app/globals.css
+
+أضف قواعد @media print التالية:
+- إذا ألغى المستخدم اختيار قسم من التقرير يتم إخفاؤه أثناء الطباعة فقط.
+- منع تقطيع أقسام التقرير بين الصفحات قدر الإمكان باستخدام break-inside و page-break-inside.
+```
+
+### 4) إزالة تحذير Edge Runtime الخاص بـ jose من middleware
+
+```bash
+افتح الملف:
+src/middleware.ts
+
+استبدل استخدام jwtVerify من jose داخل middleware بتحقق HS256 مبني على Web Crypto API:
+- قراءة أجزاء JWT.
+- التحقق من انتهاء الصلاحية exp.
+- التحقق من التوقيع باستخدام crypto.subtle.verify.
+
+السبب:
+المكتبة jose كانت تولّد تحذيرات Edge Runtime بسبب CompressionStream / DecompressionStream عند البناء.
+```
+
+### 5) تحديث إعداد ESLint ليتوافق مع ESLint 9
+
+```bash
+أنشئ الملف:
+eslint.config.mjs
+
+وأضف إعداد Flat Config باستخدام FlatCompat مع:
+- next/core-web-vitals
+- next/typescript
+
+مع الإبقاء على قواعد المشروع الأساسية، واستثناءات محدودة لملفات wrapper/generated:
+- src/lib/prisma-types.ts
+- src/lib/supabase-client.ts
+
+السبب:
+ESLint 9 لا يعتمد .eslintrc.json كإعداد افتراضي عند تشغيل eslint مباشرة.
+```
+
+### 6) تنظيف تحذيرات imports والمتغيرات غير المستخدمة
+
+```bash
+افتح وعدّل الملفات التالية:
+
+src/app/api/migrate/route.ts
+- حذف المتغير admins غير المستخدم.
+- تحويل catch (e) غير المستخدم إلى catch.
+
+src/app/api/setup-db/route.ts
+- حذف import supabase غير المستخدم.
+
+src/app/api/teachers/route.ts
+- حذف getTeacherById من الاستيراد لأنه غير مستخدم.
+
+src/app/attendance/page.tsx
+src/app/classes/page.tsx
+src/app/payments/page.tsx
+src/app/students/page.tsx
+src/app/subjects/page.tsx
+src/app/teachers/page.tsx
+- حذف Trash2 من الاستيرادات غير المستخدمة.
+
+src/app/grades/page.tsx
+- حذف getExamTypeLabel غير المستخدم.
+
+src/app/page.tsx
+- حذف CheckCircle2 غير المستخدم.
+
+src/app/reports/page.tsx
+- حذف Printer غير المستخدم.
+
+src/components/attendance/qr-attendance-scanner.tsx
+- حذف QrCode غير المستخدم.
+- حذف _err و controls غير المستخدمين من callback الماسح.
+- تنظيف dependency غير لازم من useCallback.
+
+src/services/report-service.ts
+- حذف formatMoney غير المستخدم من import.
+```
+
+### 7) أوامر الفحص التي تم تشغيلها
+
+```bash
+npm install --ignore-scripts --no-audit --no-fund --omit=optional --cache /tmp/npm-cache
+npm install --ignore-scripts --no-audit --no-fund @next/swc-linux-x64-gnu@15.5.18 --cache /tmp/npm-cache
+npx tsc --noEmit
+npx eslint src --max-warnings=0
+NEXT_TELEMETRY_DISABLED=1 npm run build
+```
+
+### 8) نتائج الفحص
+
+```text
+TypeScript:
+نجح npx tsc --noEmit بدون أخطاء.
+
+ESLint:
+نجح npx eslint src --max-warnings=0 بدون أخطاء أو تحذيرات بعد إضافة eslint.config.mjs والتنظيف.
+
+Build:
+تم تشغيل NEXT_TELEMETRY_DISABLED=1 npm run build.
+في بيئة الفحص الحالية استمر Next.js عند مرحلة Creating an optimized production build حتى انتهت مهلة الأداة، ولم يُرجع خطأ TypeScript أو ESLint.
+لذلك لم أضع نتيجة build على أنها مكتملة داخل هذه البيئة، رغم أن فحوصات TypeScript و ESLint اكتملت بنجاح.
+```

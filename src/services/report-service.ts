@@ -20,7 +20,7 @@ import {
   getReportRating,
   parseReportDate,
 } from "@/types/report";
-import { getPaymentStatusLabel, formatMoney } from "@/types/payment";
+import { getPaymentStatusLabel } from "@/types/payment";
 
 // ── Dashboard Summary ────────────────────────
 

@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export async function POST() {
   try {
     // Check if tables exist by trying to query them via REST API
-    const { data: admins, error: adminError } = await supabase
+    const { error: adminError } = await supabase
       .from("admins")
       .select("id")
       .limit(1);
@@ -31,7 +31,7 @@ export async function POST() {
           message: "Tables verified, admin account seeded.",
         });
       }
-    } catch (e: any) {
+    } catch {
       // Admin might already exist, that's fine
     }
 

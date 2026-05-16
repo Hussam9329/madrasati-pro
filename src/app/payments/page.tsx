@@ -9,7 +9,6 @@ import {
   RefreshCcw,
   Search,
   Tag,
-  Trash2,
   Wallet,
 } from "lucide-react";
 import { safeQuery } from "@/lib/db";
@@ -350,7 +349,6 @@ function PaymentsStats({
   totalRefunded,
   total,
   paid,
-  pending,
   overdue,
 }: PaymentsStatsProps) {
   return (

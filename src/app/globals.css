@@ -689,3 +689,19 @@ html.dark .hover\:text-indigo-600:hover {
     padding: 0 !important;
   }
 }
+
+@media print {
+  html[data-printsummary="0"] [data-report-section="summary"],
+  html[data-printbasic="0"] [data-report-section="basic"],
+  html[data-printacademic="0"] [data-report-section="academic"],
+  html[data-printattendance="0"] [data-report-section="attendance"],
+  html[data-printfinancial="0"] [data-report-section="financial"],
+  html[data-printnotes="0"] [data-report-section="notes"] {
+    display: none !important;
+  }
+
+  [data-report-section] {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}
