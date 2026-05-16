@@ -14,7 +14,7 @@ export async function POST() {
     const hasUniformAmount = !feeError;
 
     // Check if exams table has teacherId column
-    const { data: examTest, error: examError } = await supabase
+    const { error: examError } = await supabase
       .from("exams")
       .select("id, teacherId")
       .limit(1);
@@ -22,7 +22,7 @@ export async function POST() {
     const hasTeacherId = !examError;
 
     // Check if grades table has examId column
-    const { data: gradeTest, error: gradeError } = await supabase
+    const { error: gradeError } = await supabase
       .from("grades")
       .select("id, examId")
       .limit(1);
@@ -37,14 +37,14 @@ export async function POST() {
     if (missing.length === 0) {
       return NextResponse.json({
         status: "already_migrated",
-        message: "All required columns exist.",
+        message: "جميع الأعمدة المطلوبة موجودة. قاعدة البيانات جاهزة.",
         checks: { hasUniformAmount, hasTeacherId, hasExamId },
       });
     }
 
     return NextResponse.json({
       status: "needs_migration",
-      message: `Missing columns: ${missing.join(", ")}. Please run the SQL migration in Supabase SQL Editor.`,
+      message: `أعمدة مفقودة: ${missing.join("، ")}. يرجى تشغيل ملف SQL في Supabase SQL Editor.`,
       missing,
       sql_file: "database/2026-05-16-fees-exams-settings.sql",
       checks: { hasUniformAmount, hasTeacherId, hasExamId },
@@ -54,11 +54,12 @@ export async function POST() {
         gradeError: gradeError?.message,
       },
     });
-  } catch (e: any) {
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : "Unknown error";
     return NextResponse.json(
       {
         status: "error",
-        message: e.message,
+        message,
       },
       { status: 500 },
     );

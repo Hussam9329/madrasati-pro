@@ -146,3 +146,44 @@
 - تم تنفيذ `npm ci --ignore-scripts` لتثبيت الاعتماديات محليًا أثناء الفحص.
 - تم تنفيذ `npx tsc --noEmit` ونجح فحص TypeScript بدون أخطاء.
 - تم تشغيل `npm run build` ووصل إلى مرحلة Compile بنجاح، لكن Next.js أظهر مشكلة ESLint موجودة أصلًا في `.eslintrc.json` وهي: `Converting circular structure to JSON`، ثم علقت مرحلة `Collecting page data` في بيئة الاختبار بسبب عدم وجود إعدادات Supabase الحقيقية. لم أعدّل `.eslintrc.json` حتى لا أغيّر إعدادات lint الأساسية بدون طلب صريح.
+
+## خطوة مطلوبة: تشغيل هجرة قاعدة البيانات يدويًا
+
+بعد رفع الكود ونشره على Vercel، يجب تشغيل ملف SQL التالي يدويًا في **Supabase SQL Editor**:
+
+**الملف:** `database/2026-05-16-fees-exams-settings.sql`
+
+```sql
+alter table if exists class_fee_settings
+  add column if not exists "uniformAmount" numeric not null default 0;
+
+alter table if exists exams
+  add column if not exists "teacherId" text null;
+
+alter table if exists grades
+  add column if not exists "examId" text null;
+
+create index if not exists payments_student_year_type_idx
+  on payments ("studentId", "academicYear", "feeType");
+
+create index if not exists attendance_student_date_idx
+  on attendance_records ("studentId", "date");
+
+create index if not exists attendance_inside_school_idx
+  on attendance_records ("date", "checkInAt", "checkOutAt");
+
+create index if not exists grades_exam_student_idx
+  on grades ("examId", "studentId");
+```
+
+**طريقة التشغيل:**
+1. افتح Supabase Dashboard على https://supabase.com/dashboard
+2. اختر المشروع
+3. اذهب إلى SQL Editor من القائمة الجانبية
+4. انسخ والصق الـ SQL أعلاه
+5. اضغط Run
+
+**ملاحظة:** بدون هذه الهجرة، صفحة إدارة الأقساط وصفحة الامتحانات لن تعمل بشكل صحيح لأن الأعمدة `uniformAmount` و `teacherId` لن تكون موجودة في قاعدة البيانات.
+
+**التحقق:** بعد تشغيل الهجرة، يمكن التحقق عبر استدعاء:
+`POST /api/migrate-fees-exams` — يجب أن يرجع `status: "already_migrated"`
