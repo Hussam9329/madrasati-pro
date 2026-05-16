@@ -5,8 +5,9 @@ import {
   AlertTriangle,
   CalendarDays,
   CheckCircle2,
+  FileText,
   GraduationCap,
-  Phone,
+  MessageCircle,
   Search,
   Trash2,
   UserRound,
@@ -71,7 +72,7 @@ export default async function StudentsPage({
     safeQuery(() => getStudentsCount(), { total: 0, active: 0, inactive: 0, graduated: 0, transferred: 0, withoutSection: 0 }),
   ]);
 
-  const activeSections = sections.filter((section) => section.isActive);
+  const activeSections = sections.filter((section) => section.isActive !== false);
   const hasStudents = counts.total > 0;
 
   return (
@@ -449,43 +450,6 @@ function StudentCreateForm({ sections }: StudentCreateFormProps) {
   );
 }
 
-type FormFieldProps = {
-  label: string;
-  name: string;
-  placeholder?: string;
-  type?: string;
-  maxLength?: number;
-};
-
-function FormField({
-  label,
-  name,
-  placeholder,
-  type = "text",
-  maxLength,
-}: FormFieldProps) {
-  return (
-    <div>
-      <label
-        htmlFor={name}
-        className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
-      >
-        {label}
-      </label>
-
-      <input
-        id={name}
-        name={name}
-        type={type}
-        autoComplete="off"
-        maxLength={maxLength}
-        placeholder={placeholder}
-        className="input"
-      />
-    </div>
-  );
-}
-
 type StudentsStatsProps = {
   total: number;
   active: number;
@@ -658,6 +622,18 @@ type StudentRowProps = {
   student: StudentListItem;
 };
 
+function getWhatsappUrl(phone?: string | null) {
+  if (!phone) return null;
+  const digits = phone.replace(/\D/g, "");
+  if (!digits) return null;
+  const normalized = digits.startsWith("964")
+    ? digits
+    : digits.startsWith("0")
+      ? `964${digits.slice(1)}`
+      : digits;
+  return `https://wa.me/${normalized}`;
+}
+
 function StudentRow({ student }: StudentRowProps) {
   const age = calculateAge(student.birthDate);
   const statusClass = getStudentStatusBadgeClass(student.status);
@@ -745,7 +721,7 @@ function StudentRow({ student }: StudentRowProps) {
         </div>
       </div>
 
-      <div className="grid gap-2 sm:grid-cols-2 xl:w-[260px] xl:grid-cols-1">
+      <div className="grid gap-2 sm:grid-cols-2 xl:w-[280px] xl:grid-cols-1">
         <form action={updateStudentStatusAction} className="flex gap-2">
           <input type="hidden" name="id" value={student.id} />
 
@@ -768,16 +744,26 @@ function StudentRow({ student }: StudentRowProps) {
         </form>
 
         <a
-          href={`tel:${student.guardianPhone || student.phone || ""}`}
+          href={`/students/${student.id}`}
+          className="btn btn-secondary w-full"
+        >
+          <FileText size={17} />
+          ملف الطالب
+        </a>
+
+        <a
+          href={getWhatsappUrl(student.guardianPhone || student.phone)}
+          target="_blank"
+          rel="noreferrer"
           className={[
             "btn btn-secondary w-full",
-            !student.guardianPhone && !student.phone
+            !getWhatsappUrl(student.guardianPhone || student.phone)
               ? "pointer-events-none opacity-60"
               : "",
           ].join(" ")}
         >
-          <Phone size={17} />
-          اتصال
+          <MessageCircle size={17} />
+          تواصل مع ولي الأمر على واتساب
         </a>
 
         <DeleteConfirmButton

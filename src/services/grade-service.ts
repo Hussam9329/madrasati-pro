@@ -109,6 +109,10 @@ function buildGradeWhere(filter: GradeFilter): Prisma.GradeWhereInput {
     where.term = filter.term;
   }
 
+  if (filter.examId) {
+    where.examId = filter.examId;
+  }
+
   if (filter.fromDate || filter.toDate) {
     where.date = {};
 
@@ -254,6 +258,7 @@ function toGradeListItem(grade: GradeWithRelations): GradeListItem {
 
     teacherId: grade.teacherId,
     teacherName: grade.teacher?.fullName ?? null,
+    examId: (grade as any).examId ?? null,
 
     createdAt: grade.createdAt,
   };
@@ -357,6 +362,7 @@ export async function createGrade(
         studentId: data.studentId,
         subjectId: data.subjectId,
         teacherId: data.teacherId ?? null,
+        examId: data.examId ?? null,
       },
     });
 

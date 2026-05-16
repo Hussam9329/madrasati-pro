@@ -7,6 +7,7 @@ import {
   GraduationCap,
   Receipt,
   School,
+  ShieldCheck,
   TrendingUp,
   Users,
 } from "lucide-react";
@@ -84,6 +85,13 @@ export default async function DashboardPage() {
       description: "نسبة الحضور المسجلة اليوم",
       icon: CalendarCheck,
       tone: "emerald",
+    },
+    {
+      title: "داخل بناية المدرسة",
+      value: String(stats.insideSchoolNow),
+      description: "طلاب سجلوا دخولًا ولم ينصرفوا بعد",
+      icon: ShieldCheck,
+      tone: "green",
     },
     {
       title: "الدرجات المدخلة",

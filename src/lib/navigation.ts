@@ -123,11 +123,27 @@ export const navigationItems: NavigationItem[] = [
     group: "operations",
   },
   {
+    title: "الامتحانات",
+    href: "/exams",
+    icon: "grades",
+    description: "عرّف الامتحانات حسب الصف والمادة والمدرس ثم أدخل درجات الطلاب.",
+    priority: 8,
+    group: "results",
+  },
+  {
     title: "الدرجات",
     href: "/grades",
     icon: "grades",
-    description: "أدخل درجات الطلاب حسب المادة والامتحان.",
-    priority: 8,
+    description: "راجع درجات الطلاب المسجلة حسب المادة والامتحان.",
+    priority: 8.5,
+    group: "results",
+  },
+  {
+    title: "إدارة الأقساط",
+    href: "/fees",
+    icon: "settings",
+    description: "حدد رسوم الصفوف وسعر الزي المدرسي لكل سنة.",
+    priority: 9,
     group: "results",
   },
   {
@@ -135,7 +151,7 @@ export const navigationItems: NavigationItem[] = [
     href: "/payments",
     icon: "fees",
     description: "تابع المدفوعات والمتبقي لكل طالب.",
-    priority: 9,
+    priority: 10,
     group: "results",
   },
   {
@@ -143,7 +159,7 @@ export const navigationItems: NavigationItem[] = [
     href: "/reports",
     icon: "reports",
     description: "استخرج تقارير الطلاب، الحضور، الدرجات، والأقساط.",
-    priority: 10,
+    priority: 11,
     group: "results",
   },
   {
@@ -151,7 +167,7 @@ export const navigationItems: NavigationItem[] = [
     href: "/permissions",
     icon: "permissions",
     description: "تحكم بأدوار النظام ومستخدمي لوحة الإدارة.",
-    priority: 11,
+    priority: 12,
     group: "system",
   },
 ];

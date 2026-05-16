@@ -18,6 +18,7 @@ export async function createExam(input: {
   notes?: string;
   subjectId: string;
   sectionId: string;
+  teacherId?: string;
 }): Promise<ExamServiceResult<Prisma.ExamGetPayload<{ include: { subject: true; section: { include: { class: true } } } }>>> {
   // Validate subject exists
   const subject = await db.subject.findUnique({ where: { id: input.subjectId } });
@@ -26,6 +27,11 @@ export async function createExam(input: {
   // Validate section exists
   const section = await db.section.findUnique({ where: { id: input.sectionId } });
   if (!section) return { ok: false, message: "الشعبة غير موجودة." };
+
+  if (input.teacherId) {
+    const teacher = await db.teacher.findUnique({ where: { id: input.teacherId } });
+    if (!teacher) return { ok: false, message: "المدرس غير موجود." };
+  }
 
   try {
     const exam = await db.exam.create({
@@ -39,6 +45,7 @@ export async function createExam(input: {
         notes: input.notes?.trim() || null,
         subjectId: input.subjectId,
         sectionId: input.sectionId,
+        teacherId: input.teacherId || null,
       },
       include: {
         subject: true,
@@ -63,8 +70,12 @@ export async function saveExamGrades(
   let updated = 0;
 
   for (const grade of grades) {
-    const existing = await db.grade.findUnique({
-      where: { examId_studentId: { examId, studentId: grade.studentId } },
+    if (!Number.isFinite(grade.score) || grade.score < 0 || grade.score > exam.maxScore) {
+      return { ok: false, message: "توجد درجة غير صحيحة أو أكبر من الدرجة الكلية." };
+    }
+
+    const existing = await db.grade.findFirst({
+      where: { examId, studentId: grade.studentId },
     });
 
     if (existing) {
@@ -85,6 +96,9 @@ export async function saveExamGrades(
           maxScore: exam.maxScore,
           examType: exam.type,
           subjectId: exam.subjectId,
+          teacherId: (exam as any).teacherId ?? null,
+          term: exam.type === "midyear" ? "first" : exam.type === "final" ? "annual" : "first",
+          date: exam.date ?? new Date(),
           studentId: grade.studentId,
           examId: examId,
           notes: grade.notes?.trim() || null,
@@ -110,6 +124,7 @@ export async function getExams(filter?: { subjectId?: string; sectionId?: string
     where,
     include: {
       subject: true,
+      teacher: true,
       section: { include: { class: true } },
       _count: { select: { grades: true } },
     },
@@ -122,6 +137,7 @@ export async function getExamById(id: string) {
     where: { id },
     include: {
       subject: true,
+      teacher: true,
       section: {
         include: {
           class: true,

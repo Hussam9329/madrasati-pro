@@ -772,6 +772,42 @@ export async function markAttendanceBatch(
   };
 }
 
+
+function getPreviousSchoolDay(date: Date): Date {
+  const previous = new Date(date);
+  previous.setDate(previous.getDate() - 1);
+  previous.setHours(0, 0, 0, 0);
+
+  // العراق غالبًا تكون عطلة نهاية الأسبوع الجمعة/السبت.
+  // سيتم استبدالها بإعدادات العطل عند توفر جدول school_settings.
+  while (previous.getDay() === 5 || previous.getDay() === 6) {
+    previous.setDate(previous.getDate() - 1);
+  }
+
+  return previous;
+}
+
+async function getPreviousAttendanceMessage(studentId: string, today: Date): Promise<string> {
+  const previousDay = getPreviousSchoolDay(today);
+  const previousEnd = new Date(previousDay);
+  previousEnd.setDate(previousEnd.getDate() + 1);
+
+  const previousRecord = await db.attendanceRecord.findFirst({
+    where: {
+      studentId,
+      date: { gte: previousDay, lt: previousEnd },
+    },
+  });
+
+  const formattedDay = previousDay.toLocaleDateString("ar-IQ");
+
+  if (!previousRecord || previousRecord.status === "absent") {
+    return ` تنبيه: الطالب محسوب غائبًا في آخر يوم دوام سابق (${formattedDay}).`;
+  }
+
+  return ` آخر يوم دوام سابق (${formattedDay}): ${getAttendanceStatusLabel(previousRecord.status)}.`;
+}
+
 // ─── Unified Daily Student Attendance ───────────────────────────
 
 async function registerDailyStudentAttendance(input: {
@@ -839,6 +875,9 @@ async function registerDailyStudentAttendance(input: {
   });
 
   const now = new Date();
+  const previousAttendanceMessage = mode === "check-in"
+    ? await getPreviousAttendanceMessage(student.id, today)
+    : "";
 
   if (mode === "check-in") {
     if (existingRecord?.checkInAt) {
@@ -872,7 +911,7 @@ async function registerDailyStudentAttendance(input: {
         status: updated.status,
         checkInAt: updated.checkInAt,
         checkOutAt: updated.checkOutAt,
-        message: "تم تسجيل دخول الطالب بنجاح.",
+        message: `تم تسجيل دخول الطالب بنجاح.${previousAttendanceMessage}`,
       };
     }
 
@@ -896,24 +935,11 @@ async function registerDailyStudentAttendance(input: {
       status: created.status,
       checkInAt: created.checkInAt,
       checkOutAt: created.checkOutAt,
-      message: "تم تسجيل دخول الطالب بنجاح.",
+      message: `تم تسجيل دخول الطالب بنجاح.${previousAttendanceMessage}`,
     };
   }
 
-  if (!existingRecord?.checkInAt) {
-    return {
-      ok: false,
-      studentId: student.id,
-      studentName: student.fullName,
-      studentCode,
-      status: existingRecord?.status ?? "",
-      checkInAt: existingRecord?.checkInAt ?? null,
-      checkOutAt: existingRecord?.checkOutAt ?? null,
-      message: "لا يمكن تسجيل الانصراف قبل تسجيل الدخول الصباحي.",
-    };
-  }
-
-  if (existingRecord.checkOutAt) {
+  if (existingRecord?.checkOutAt) {
     return {
       ok: false,
       studentId: student.id,
@@ -926,14 +952,26 @@ async function registerDailyStudentAttendance(input: {
     };
   }
 
-  const updated = await db.attendanceRecord.update({
-    where: { id: existingRecord.id },
-    data: {
-      checkOutAt: now,
-      mode: "check-out",
-      source,
-    },
-  });
+  const checkoutData = {
+    checkOutAt: now,
+    mode: "check-out",
+    source,
+    status: existingRecord?.status || "present",
+  };
+
+  const updated = existingRecord
+    ? await db.attendanceRecord.update({
+        where: { id: existingRecord.id },
+        data: checkoutData,
+      })
+    : await db.attendanceRecord.create({
+        data: {
+          date: today,
+          studentId: student.id,
+          scheduleId: null,
+          ...checkoutData,
+        },
+      });
 
   return {
     ok: true,
@@ -943,7 +981,9 @@ async function registerDailyStudentAttendance(input: {
     status: updated.status,
     checkInAt: updated.checkInAt,
     checkOutAt: updated.checkOutAt,
-    message: "تم تسجيل انصراف الطالب بنجاح.",
+    message: existingRecord?.checkInAt
+      ? "تم تسجيل انصراف الطالب بنجاح."
+      : "تم تسجيل انصراف الطالب بدون تسجيل دخول صباحي لهذا اليوم.",
   };
 }
 

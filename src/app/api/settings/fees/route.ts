@@ -40,25 +40,28 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { classId, amount, academicYear, notes } = body;
+    const { classId, amount, tuitionAmount, uniformAmount, academicYear, notes } = body;
+    const normalizedTuitionAmount = Number(tuitionAmount ?? amount ?? 0);
+    const normalizedUniformAmount = Number(uniformAmount ?? 0);
 
-    if (!classId || !amount || amount <= 0) {
+    if (!classId || normalizedTuitionAmount < 0 || normalizedUniformAmount < 0) {
       return NextResponse.json(
-        { ok: false, message: "الصف والمبلغ مطلوبان." },
+        { ok: false, message: "الصف والمبالغ مطلوبة." },
         { status: 400 },
       );
     }
 
     const setting = await upsertClassFeeSetting({
       classId,
-      amount,
+      tuitionAmount: normalizedTuitionAmount,
+      uniformAmount: normalizedUniformAmount,
       academicYear,
       notes,
     });
     return NextResponse.json({
       ok: true,
       data: setting,
-      message: "تم حفظ إعدادات القسط بنجاح.",
+      message: "تم حفظ إعدادات الرسوم بنجاح.",
     });
   } catch {
     return NextResponse.json(

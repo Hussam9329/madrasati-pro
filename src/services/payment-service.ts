@@ -46,6 +46,9 @@ function toPaymentListItem(payment: PaymentWithRelations): PaymentListItem {
     status: payment.status,
     dueDate: payment.dueDate,
   });
+  const dueAmount = Number(payment.finalAmount ?? payment.originalAmount ?? payment.amount ?? 0);
+  const remainingAmount = Math.max(0, dueAmount - Number(payment.amount || 0));
+  const isUniformPaid = payment.feeType === "uniform" && ["paid", "partial"].includes(payment.status) && Number(payment.amount || 0) > 0;
 
   return {
     id: payment.id,
@@ -72,6 +75,9 @@ function toPaymentListItem(payment: PaymentWithRelations): PaymentListItem {
     paidAt: payment.paidAt,
     notes: payment.notes,
     isOverdue: overdue,
+    remainingAmount,
+    formattedRemainingAmount: formatMoney(remainingAmount),
+    isUniformPaid,
 
     studentId: payment.studentId,
     studentName: payment.student.fullName,

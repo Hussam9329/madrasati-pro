@@ -6,9 +6,6 @@ import {
   Banknote,
   CheckCircle2,
   Clock,
-  CreditCard,
-  Info,
-  Percent,
   Receipt,
   RefreshCcw,
   Search,
@@ -22,7 +19,6 @@ import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { SmartAlert } from "@/components/shared/smart-alert";
-import { getStudents } from "@/services/student-service";
 import {
   createPayment,
   deletePayment,
@@ -31,7 +27,6 @@ import {
 } from "@/services/payment-service";
 import {
   FEE_TYPES,
-  PAYMENT_METHODS,
   PAYMENT_STATUSES,
   resolvePaymentAmounts,
   formatMoney,
@@ -46,6 +41,8 @@ import {
 } from "@/types/payment";
 import { getStudentClassDisplay } from "@/types/student";
 import { DeleteConfirmButton } from "@/components/shared/delete-confirm-button";
+import { PaymentCreateForm } from "@/components/payments/payment-create-form";
+import { getStudentFeePlans } from "@/services/class-fee-service";
 
 type PaymentsPageProps = {
   searchParams?: Promise<{
@@ -71,14 +68,14 @@ export default async function PaymentsPage({
   const status = resolvedSearchParams?.status?.trim() ?? "";
   const overdueOnly = resolvedSearchParams?.overdueOnly === "1";
 
-  const [payments, students, counts] = await Promise.all([
+  const [payments, studentFeePlans, counts] = await Promise.all([
     safeQuery(() => getPayments({
       query,
       feeType,
       status,
       overdueOnly,
     }), []),
-    safeQuery(() => getStudents(), []),
+    safeQuery(() => getStudentFeePlans(getCurrentAcademicYear()), []),
     safeQuery(() => getPaymentsCount(), { total: 0, paid: 0, partial: 0, pending: 0, refunded: 0, overdue: 0, totalPaid: 0, totalPending: 0, totalRefunded: 0 }),
   ]);
 
@@ -110,7 +107,7 @@ export default async function PaymentsPage({
         />
 
         <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-          <PaymentCreateForm students={students} />
+          <PaymentCreateForm students={studentFeePlans} action={createPaymentAction} />
 
           <div className="flex flex-col gap-6">
             <PaymentsStats
@@ -179,32 +176,32 @@ async function createPaymentAction(formData: FormData) {
     studentId: String(formData.get("studentId") ?? ""),
   };
 
-  // Use resolvePaymentAmounts to calculate everything server-side
+  const paymentMode = String(formData.get("paymentMode") ?? "full");
   const resolved = resolvePaymentAmounts(rawInput);
-
-  // Determine paidAmount based on status
-  const status = rawInput.status ?? "paid";
+  const feeType = rawInput.feeType ?? "tuition";
+  const isUniform = feeType === "uniform";
+  const isFullTuition = paymentMode === "full" || resolved.paidAmount >= resolved.finalAmount;
+  let status = rawInput.status ?? "paid";
   let paidAmount = resolved.paidAmount;
 
-  if (status === "paid") {
+  if (isUniform || isFullTuition) {
+    status = "paid";
     paidAmount = resolved.finalAmount;
-  } else if (status === "pending") {
-    paidAmount = 0;
-  } else if (status === "partial") {
-    // paidAmount stays as entered, but must be > 0 and < finalAmount
-    if (paidAmount <= 0 || paidAmount >= resolved.finalAmount) {
-      paidAmount = Math.min(resolved.paidAmount, resolved.finalAmount - 1);
-      if (paidAmount <= 0) paidAmount = 0;
-    }
+  } else {
+    status = "partial";
+    paidAmount = Math.max(0, Math.min(resolved.paidAmount, Math.max(0, resolved.finalAmount - 1)));
   }
 
   const input: PaymentFormInput = {
     ...rawInput,
+    feeTitle: rawInput.feeTitle || (isUniform ? "زي مدرسي" : "رسوم دراسية"),
+    feeType,
     amount: String(paidAmount),
     originalAmount: String(resolved.originalAmount),
     discountAmount: String(resolved.discountAmount),
     discountPercent: String(resolved.discountPercent),
     finalAmount: String(resolved.finalAmount),
+    status,
   };
 
   const result = await createPayment(input);
@@ -215,6 +212,7 @@ async function createPaymentAction(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/payments");
+  revalidatePath("/fees");
   revalidatePath("/reports");
   redirect("/payments?saved=1");
 }
@@ -242,6 +240,7 @@ async function deletePaymentAction(formData: FormData): Promise<{ ok: boolean; m
 
   revalidatePath("/");
   revalidatePath("/payments");
+  revalidatePath("/fees");
   revalidatePath("/reports");
   redirect("/payments?deleted=1");
 }
@@ -296,385 +295,6 @@ function PaymentsFeedback({ saved, deleted, error, reason }: PaymentsFeedbackPro
   }
 
   return null;
-}
-
-type PaymentCreateFormProps = {
-  students: {
-    id: string;
-    fullName: string;
-    studentCode: string | null;
-    sectionName: string | null;
-    className: string | null;
-    classLevel: string | null;
-  }[];
-};
-
-function PaymentCreateForm({ students }: PaymentCreateFormProps) {
-  const academicYear = getCurrentAcademicYear();
-
-  return (
-    <form
-      id="payment-form"
-      action={createPaymentAction}
-      className="app-card overflow-hidden"
-    >
-      <div className="border-b border-[var(--app-border-soft)] bg-gradient-to-l to-indigo-50/40 to-amber-50/20 p-6">
-        <div className="flex items-start gap-3">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-700">
-            <CreditCard size={24} />
-          </div>
-
-          <div>
-            <h3 className="text-xl font-extrabold text-[var(--app-text)]">
-              تسجيل دفعة جديدة
-            </h3>
-
-            <p className="mt-1 text-sm leading-7 text-[var(--app-text-muted)]">
-              أدخل بيانات الدفعة واربطها بالطالب. عنوان الرسم والمبلغ والطالب
-              مطلوبون.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid gap-5 p-6">
-        <div>
-          <label
-            htmlFor="studentId"
-            className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
-          >
-            الطالب <span className="text-red-600">*</span>
-          </label>
-
-          <select
-            id="studentId"
-            name="studentId"
-            required
-            className="input"
-            defaultValue=""
-          >
-            <option value="">اختر الطالب...</option>
-
-            {students.map((student) => (
-              <option key={student.id} value={student.id}>
-                {student.fullName}{" "}
-                {student.studentCode ? `(${student.studentCode})` : ""}{" "}
-                {student.className
-                  ? `- ${getStudentClassDisplay({
-                      className: student.className,
-                      classLevel: student.classLevel,
-                      sectionName: student.sectionName,
-                    })}`
-                  : ""}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="grid gap-5 md:grid-cols-2">
-          <div>
-            <label
-              htmlFor="feeTitle"
-              className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
-            >
-              عنوان الرسم <span className="text-red-600">*</span>
-            </label>
-
-            <input
-              id="feeTitle"
-              name="feeTitle"
-              required
-              minLength={2}
-              maxLength={120}
-              placeholder="مثال: قسط الشهر الأول"
-              className="input"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="feeType"
-              className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
-            >
-              نوع الرسم
-            </label>
-
-            <select id="feeType" name="feeType" className="input" defaultValue="tuition">
-              {FEE_TYPES.map((type) => (
-                <option key={type.value} value={type.value}>
-                  {type.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* ── أصل المبلغ والخصم ── */}
-        <div className="rounded-2xl border border-indigo-100 bg-gradient-to-l to-indigo-50/30 to-amber-50/20 p-5">
-          <div className="mb-4 flex items-center gap-2 text-sm font-extrabold text-indigo-700">
-            <Tag size={18} />
-            تفاصيل المبلغ والخصم
-          </div>
-
-          <div className="grid gap-5 md:grid-cols-2">
-            <div>
-              <label
-                htmlFor="originalAmount"
-                className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
-              >
-                أصل المبلغ <span className="text-red-600">*</span>
-              </label>
-
-              <input
-                id="originalAmount"
-                name="originalAmount"
-                type="number"
-                required
-                min={1}
-                placeholder="مثال: 500000"
-                className="input"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="method"
-                className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
-              >
-                طريقة الدفع
-              </label>
-
-              <select id="method" name="method" className="input" defaultValue="cash">
-                {PAYMENT_METHODS.map((m) => (
-                  <option key={m.value} value={m.value}>
-                    {m.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="mt-5 grid gap-5 md:grid-cols-2">
-            <div>
-              <label
-                htmlFor="discountPercent"
-                className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
-              >
-                <Percent size={14} className="ml-1 inline" />
-                الخصم بالنسبة (٪)
-              </label>
-
-              <input
-                id="discountPercent"
-                name="discountPercent"
-                type="number"
-                min={0}
-                max={100}
-                step={0.1}
-                placeholder="مثال: 10"
-                className="input"
-              />
-
-              <p className="mt-1.5 flex items-start gap-1 text-xs leading-5 text-[var(--app-text-muted)]">
-                <Info size={13} className="mt-0.5 shrink-0 text-indigo-400" />
-                إذا أدخلت نسبة الخصم، سيتم احتساب مبلغ الخصم تلقائيًا.
-              </p>
-            </div>
-
-            <div>
-              <label
-                htmlFor="discountAmount"
-                className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
-              >
-                <Banknote size={14} className="ml-1 inline" />
-                الخصم بالمبلغ
-              </label>
-
-              <input
-                id="discountAmount"
-                name="discountAmount"
-                type="number"
-                min={0}
-                placeholder="مثال: 50000"
-                className="input"
-              />
-
-              <p className="mt-1.5 flex items-start gap-1 text-xs leading-5 text-[var(--app-text-muted)]">
-                <Info size={13} className="mt-0.5 shrink-0 text-indigo-400" />
-                إذا أدخلت مبلغ الخصم، سيتم احتساب النسبة تلقائيًا.
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-5 grid gap-5 md:grid-cols-2">
-            <div>
-              <label
-                htmlFor="discountReason"
-                className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
-              >
-                سبب الخصم
-              </label>
-
-              <input
-                id="discountReason"
-                name="discountReason"
-                type="text"
-                maxLength={200}
-                placeholder="مثال: خصم أخوين"
-                className="input"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="finalAmount"
-                className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
-              >
-                المبلغ النهائي
-              </label>
-
-              <input
-                id="finalAmount"
-                name="finalAmount"
-                type="text"
-                readOnly
-                placeholder="يُحتسب تلقائيًا بعد الحفظ"
-                className="input cursor-not-allowed bg-slate-50 text-[var(--app-text-muted)]"
-              />
-
-              <p className="mt-1.5 flex items-start gap-1 text-xs leading-5 text-amber-600">
-                <Info size={13} className="mt-0.5 shrink-0" />
-                راجع مبلغ الخصم والمبلغ النهائي قبل حفظ الدفعة.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid gap-5 md:grid-cols-2">
-          <div>
-            <label
-              htmlFor="status"
-              className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
-            >
-              حالة الدفع
-            </label>
-
-            <select id="status" name="status" className="input" defaultValue="paid">
-              {PAYMENT_STATUSES.map((s) => (
-                <option key={s.value} value={s.value}>
-                  {s.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label
-              htmlFor="paidAmount"
-              className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
-            >
-              المبلغ المدفوع فعليًا
-            </label>
-
-            <input
-              id="paidAmount"
-              name="paidAmount"
-              type="number"
-              min={0}
-              placeholder="يُحتسب تلقائيًا عند الحالة مدفوع"
-              className="input"
-            />
-
-            <p className="mt-1.5 flex items-start gap-1 text-xs leading-5 text-[var(--app-text-muted)]">
-              <Info size={13} className="mt-0.5 shrink-0 text-indigo-400" />
-              عند الحالة مدفوع يُحسب تلقائيًا = المبلغ النهائي. املأ هذا الحقل فقط عند الدفع الجزئي.
-            </p>
-          </div>
-        </div>
-
-        <div className="grid gap-5 md:grid-cols-3">
-          <div>
-            <label
-              htmlFor="academicYear"
-              className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
-            >
-              السنة الدراسية
-            </label>
-
-            <input
-              id="academicYear"
-              name="academicYear"
-              maxLength={20}
-              placeholder={academicYear}
-              className="input"
-              defaultValue={academicYear}
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="dueDate"
-              className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
-            >
-              تاريخ الاستحقاق
-            </label>
-
-            <input
-              id="dueDate"
-              name="dueDate"
-              type="date"
-              className="input"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="paidAt"
-              className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
-            >
-              تاريخ الدفع
-            </label>
-
-            <input
-              id="paidAt"
-              name="paidAt"
-              type="date"
-              className="input"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label
-            htmlFor="notes"
-            className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
-          >
-            ملاحظات
-          </label>
-
-          <textarea
-            id="notes"
-            name="notes"
-            rows={3}
-            maxLength={500}
-            placeholder="أي ملاحظات إضافية حول الدفعة..."
-            className="input min-h-[95px] resize-y leading-7"
-          />
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-3 border-t border-[var(--app-border-soft)] bg-gradient-to-l to-indigo-50/30 to-amber-50/20 p-6 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm leading-7 text-[var(--app-text-muted)]">
-          سيتم حساب المبلغ النهائي تلقائيًا بناءً على أصل المبلغ والخصم عند الحفظ.
-        </p>
-
-        <button type="submit" className="btn btn-primary">
-          <CheckCircle2 size={18} />
-          حفظ الدفعة
-        </button>
-      </div>
-    </form>
-  );
 }
 
 type MoneyCardProps = {
@@ -1003,6 +623,14 @@ function PaymentRow({ payment }: PaymentRowProps) {
             <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 font-bold">
               {getPaymentMethodLabel(payment.method)}
             </span>
+
+            <span className={payment.isUniformPaid ? "inline-flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-1 font-bold text-emerald-800" : "inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 font-bold text-slate-700"}>
+              الزي المدرسي: {payment.isUniformPaid ? "صح" : "غلط"}
+            </span>
+
+            <span className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-3 py-1 font-bold text-purple-800">
+              المتبقي: {payment.formattedRemainingAmount}
+            </span>
           </div>
 
           <div className="mt-3 grid gap-2 text-sm leading-6 text-[var(--app-text-muted)] md:grid-cols-2">
@@ -1076,7 +704,17 @@ function PaymentRow({ payment }: PaymentRowProps) {
         </div>
       </div>
 
-      <div className="grid gap-2 sm:grid-cols-1 xl:w-[160px]">
+      <div className="grid gap-2 sm:grid-cols-1 xl:w-[170px]">
+        <a
+          href={`/api/payments/${payment.id}/receipt`}
+          target="_blank"
+          rel="noreferrer"
+          className="btn btn-secondary justify-center"
+        >
+          <Receipt size={16} />
+          طباعة الوصل
+        </a>
+
         <DeleteConfirmButton
           action={deletePaymentAction}
           itemId={payment.id}

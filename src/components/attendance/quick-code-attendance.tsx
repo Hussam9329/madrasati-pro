@@ -110,9 +110,19 @@ export function QuickCodeAttendance({ qrAvailable }: QuickCodeAttendanceProps) {
     [searchStudents],
   );
 
+
+  const confirmEarlyCheckout = useCallback(() => {
+    if (mode !== "check-out") return true;
+    const now = new Date();
+    if (now.getHours() >= 12) return true;
+    return window.confirm("هل أنت متأكد أن الطالب سينصرف قبل الوقت المحدد للانصراف (12:00 ظهراً)؟");
+  }, [mode]);
+
   // Handle student selection from dropdown — immediately register attendance
   const handleStudentSelect = useCallback(
     async (student: StudentSearchResult) => {
+      if (!confirmEarlyCheckout()) return;
+
       setSelectedStudent(student);
       setSearchQuery(student.fullName);
       setShowDropdown(false);
@@ -161,13 +171,14 @@ export function QuickCodeAttendance({ qrAvailable }: QuickCodeAttendanceProps) {
         inputRef.current?.focus();
       }
     },
-    [mode, router],
+    [confirmEarlyCheckout, mode, router],
   );
 
   // Submit attendance for direct code entry
   const handleSubmit = useCallback(
     async (e?: React.FormEvent) => {
       if (e) e.preventDefault();
+      if (!confirmEarlyCheckout()) return;
 
       setResult(null);
       setError(null);
@@ -255,7 +266,7 @@ export function QuickCodeAttendance({ qrAvailable }: QuickCodeAttendanceProps) {
         }
       }
     },
-    [searchQuery, selectedStudent, mode, router],
+    [searchQuery, selectedStudent, mode, router, confirmEarlyCheckout],
   );
 
   const handleModeSwitch = useCallback((newMode: "check-in" | "check-out") => {

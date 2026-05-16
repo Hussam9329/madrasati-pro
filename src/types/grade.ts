@@ -10,6 +10,7 @@ export type Grade = {
   studentId: string;
   subjectId: string;
   teacherId: string | null;
+  examId?: string | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -25,6 +26,7 @@ export type GradeFormInput = {
   studentId: string;
   subjectId: string;
   teacherId?: string;
+  examId?: string;
 };
 
 export type GradeListItem = {
@@ -58,6 +60,7 @@ export type GradeListItem = {
 
   teacherId: string | null;
   teacherName: string | null;
+  examId?: string | null;
 
   createdAt: Date;
 };
@@ -80,26 +83,22 @@ export type GradeFilter = {
   classId?: string;
   examType?: string;
   term?: string;
+  examId?: string;
   fromDate?: string;
   toDate?: string;
 };
 
 export const EXAM_TYPES = [
-  { value: "homework", label: "واجب" },
   { value: "daily", label: "يومي" },
+  { value: "monthly", label: "شهري" },
+  { value: "midyear", label: "نصف سنة" },
+  { value: "final", label: "فاينل" },
+  { value: "cumulative", label: "تراكمي" },
+  { value: "homework", label: "واجب" },
   { value: "oral", label: "شفهي" },
   { value: "written", label: "تحريري" },
-  { value: "monthly1", label: "شهري أول" },
-  { value: "monthly2", label: "شهري ثاني" },
   { value: "midterm", label: "نصف السنة" },
-  { value: "final", label: "نهاية السنة" },
-  { value: "practical", label: "عملي" },
-  { value: "activity", label: "نشاط" },
-  { value: "participation", label: "مشاركة" },
   { value: "project", label: "مشروع" },
-  { value: "final_exam", label: "امتحان نهائي" },
-  { value: "quiz", label: "امتحان قصير" },
-  { value: "monthly", label: "امتحان شهري" },
 ] as const;
 
 export const TERMS = [
@@ -151,6 +150,7 @@ export function normalizeGradeInput(input: GradeFormInput): GradeFormInput {
     studentId: input.studentId.trim(),
     subjectId: input.subjectId.trim(),
     teacherId: input.teacherId?.trim() || undefined,
+    examId: input.examId?.trim() || undefined,
   };
 }
 

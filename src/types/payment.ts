@@ -52,6 +52,7 @@ export type PaymentFormInput = {
   discountPercent?: number | string;
   discountReason?: string;
   finalAmount?: number | string;
+  paymentMode?: "full" | "installment";
   status?: string;
   method?: string;
   academicYear?: string;
@@ -86,6 +87,9 @@ export type PaymentListItem = {
   paidAt: Date | null;
   notes: string | null;
   isOverdue: boolean;
+  remainingAmount: number;
+  formattedRemainingAmount: string;
+  isUniformPaid: boolean;
 
   studentId: string;
   studentName: string;
@@ -277,6 +281,7 @@ export function getEmptyPaymentForm(): PaymentFormInput {
     discountPercent: "0",
     discountReason: "",
     finalAmount: "",
+    paymentMode: "full",
     status: "paid",
     method: "cash",
     academicYear: getCurrentAcademicYear(),
@@ -314,6 +319,7 @@ export function normalizePaymentInput(
       typeof input.finalAmount === "string"
         ? Number(input.finalAmount.trim())
         : input.finalAmount,
+    paymentMode: input.paymentMode || "full",
     status: input.status?.trim() || "paid",
     method: input.method?.trim() || "cash",
     academicYear: input.academicYear?.trim() || undefined,

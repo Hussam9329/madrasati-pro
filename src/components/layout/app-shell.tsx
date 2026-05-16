@@ -24,7 +24,7 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   navigationGroups,
   orderedNavigationItems,
@@ -300,15 +300,56 @@ function SidebarContent({ pathname, onNavigate }: SidebarContentProps) {
   );
 }
 
+type GlobalSearchResult = {
+  type: string;
+  title: string;
+  subtitle?: string;
+  href: string;
+};
+
 function TopbarSearch() {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<GlobalSearchResult[]>([]);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    const trimmed = query.trim();
+    if (trimmed.length < 2) {
+      setResults([]);
+      setOpen(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeout = window.setTimeout(async () => {
+      try {
+        const response = await fetch(`/api/search?q=${encodeURIComponent(trimmed)}`, { signal: controller.signal });
+        const payload = await response.json();
+        setResults(payload.ok ? payload.data ?? [] : []);
+        setOpen(true);
+      } catch {
+        if (!controller.signal.aborted) setResults([]);
+      }
+    }, 250);
+
+    return () => {
+      controller.abort();
+      window.clearTimeout(timeout);
+    };
+  }, [query]);
+
   return (
-    <div className="hidden min-w-[280px] items-center gap-2 rounded-2xl border border-[var(--app-border)] bg-white/80 px-3 py-2 backdrop-blur-sm xl:flex">
+    <div className="relative hidden min-w-[320px] items-center gap-2 rounded-2xl border border-[var(--app-border)] bg-white/80 px-3 py-2 backdrop-blur-sm xl:flex">
       <Search size={18} className="text-[var(--app-text-soft)]" />
 
       <input
         id="global-search"
         name="global-search"
         type="search"
+        value={query}
+        onChange={(event) => setQuery(event.target.value)}
+        onFocus={() => results.length > 0 && setOpen(true)}
+        onBlur={() => window.setTimeout(() => setOpen(false), 150)}
         placeholder="ابحث عن طالب، صف، مدرس..."
         className="h-8 min-w-0 flex-1 border-0 bg-transparent text-sm font-medium text-[var(--app-text)] outline-none placeholder:text-[var(--app-text-soft)]"
         autoComplete="off"
@@ -317,6 +358,28 @@ function TopbarSearch() {
       <span className="rounded-lg border border-[var(--app-border)] bg-[var(--app-card-soft)] px-2 py-1 text-[10px] font-bold text-[var(--app-text-muted)]">
         بحث
       </span>
+
+      {open && (
+        <div className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-2xl border border-[var(--app-border-soft)] bg-white shadow-xl">
+          {results.length === 0 ? (
+            <div className="p-4 text-sm font-bold text-[var(--app-text-muted)]">لا توجد نتائج سريعة.</div>
+          ) : (
+            results.map((result, index) => (
+              <Link
+                key={`${result.href}-${index}`}
+                href={result.href}
+                className="block border-b border-[var(--app-border-soft)] px-4 py-3 text-sm transition last:border-0 hover:bg-indigo-50"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <span className="font-extrabold text-[var(--app-text)]">{result.title}</span>
+                  <span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-bold text-[var(--app-text-muted)]">{result.type}</span>
+                </div>
+                {result.subtitle ? <p className="mt-1 text-xs text-[var(--app-text-muted)]">{result.subtitle}</p> : null}
+              </Link>
+            ))
+          )}
+        </div>
+      )}
     </div>
   );
 }
