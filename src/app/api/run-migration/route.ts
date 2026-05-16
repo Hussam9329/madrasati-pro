@@ -4,8 +4,6 @@ export const dynamic = "force-dynamic";
 
 export async function POST() {
   try {
-    // Try DATABASE_URL_UNPOOLED first (direct connection, better for DDL),
-    // fall back to DATABASE_URL (pooled connection)
     const databaseUrl =
       process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL;
     if (!databaseUrl) {
@@ -15,7 +13,6 @@ export async function POST() {
       );
     }
 
-    // Dynamic import to avoid bundling issues
     const postgres = (await import("postgres")).default;
     const sql = postgres(databaseUrl, {
       ssl: "require",
@@ -23,70 +20,71 @@ export async function POST() {
     });
 
     try {
+      const results: string[] = [];
+
       // Run migration statements
-      await sql`
-        ALTER TABLE IF EXISTS class_fee_settings
-          ADD COLUMN IF NOT EXISTS "uniformAmount" numeric NOT NULL DEFAULT 0
+      try {
+        await sql`
+          ALTER TABLE IF EXISTS class_fee_settings
+            ADD COLUMN IF NOT EXISTS "uniformAmount" numeric NOT NULL DEFAULT 0
+        `;
+        results.push("Added uniformAmount to class_fee_settings");
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        results.push(`uniformAmount: ${msg}`);
+      }
+
+      try {
+        await sql`
+          ALTER TABLE IF EXISTS exams
+            ADD COLUMN IF NOT EXISTS "teacherId" text NULL
+        `;
+        results.push("Added teacherId to exams");
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        results.push(`teacherId: ${msg}`);
+      }
+
+      try {
+        await sql`
+          ALTER TABLE IF EXISTS grades
+            ADD COLUMN IF NOT EXISTS "examId" text NULL
+        `;
+        results.push("Added examId to grades");
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        results.push(`examId: ${msg}`);
+      }
+
+      // Notify PostgREST to reload schema cache
+      try {
+        await sql`NOTIFY pgrst, 'reload schema'`;
+        results.push("Notified PostgREST to reload schema");
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        results.push(`Schema reload notify: ${msg}`);
+      }
+
+      // Verify columns exist
+      const columns = await sql`
+        SELECT table_name, column_name
+        FROM information_schema.columns
+        WHERE (table_name = 'class_fee_settings' AND column_name = 'uniformAmount')
+           OR (table_name = 'exams' AND column_name = 'teacherId')
+           OR (table_name = 'grades' AND column_name = 'examId')
       `;
-      console.log("[migration] Added uniformAmount to class_fee_settings");
-
-      await sql`
-        ALTER TABLE IF EXISTS exams
-          ADD COLUMN IF NOT EXISTS "teacherId" text NULL
-      `;
-      console.log("[migration] Added teacherId to exams");
-
-      await sql`
-        ALTER TABLE IF EXISTS grades
-          ADD COLUMN IF NOT EXISTS "examId" text NULL
-      `;
-      console.log("[migration] Added examId to grades");
-
-      // Create indexes (these may fail if they already exist, which is fine)
-      try {
-        await sql`
-          CREATE INDEX IF NOT EXISTS payments_student_year_type_idx
-            ON payments ("studentId", "academicYear", "feeType")
-        `;
-        console.log("[migration] Created payments index");
-      } catch (e) {
-        console.log("[migration] Payments index skipped:", e);
-      }
-
-      try {
-        await sql`
-          CREATE INDEX IF NOT EXISTS attendance_student_date_idx
-            ON attendance_records ("studentId", "date")
-        `;
-        console.log("[migration] Created attendance index");
-      } catch (e) {
-        console.log("[migration] Attendance index skipped:", e);
-      }
-
-      try {
-        await sql`
-          CREATE INDEX IF NOT EXISTS attendance_inside_school_idx
-            ON attendance_records ("date", "checkInAt", "checkOutAt")
-        `;
-        console.log("[migration] Created attendance inside school index");
-      } catch (e) {
-        console.log("[migration] Attendance inside school index skipped:", e);
-      }
-
-      try {
-        await sql`
-          CREATE INDEX IF NOT EXISTS grades_exam_student_idx
-            ON grades ("examId", "studentId")
-        `;
-        console.log("[migration] Created grades exam index");
-      } catch (e) {
-        console.log("[migration] Grades exam index skipped:", e);
-      }
+      results.push(
+        `Verification: found ${columns.length} of 3 expected columns`,
+      );
 
       return NextResponse.json({
-        status: "success",
-        message:
-          "Migration completed successfully. All columns and indexes created.",
+        status: columns.length >= 3 ? "success" : "partial",
+        message: "Migration executed.",
+        details: results,
+        columns_found: columns.map(
+          (c: { table_name: string; column_name: string }) =>
+            `${c.table_name}.${c.column_name}`,
+        ),
       });
     } finally {
       await sql.end();
