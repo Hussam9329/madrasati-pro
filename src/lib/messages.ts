@@ -311,7 +311,7 @@ export function getRequiredFieldMessage(fieldName: string): SmartMessage {
 
 export const APP_MESSAGES = {
   phoneRule: "رقم الهاتف يجب أن يتكون من 11 رقم ويبدأ بـ 07.",
-  fullNameRule: "يرجى إدخال الاسم الرباعي كاملًا.",
+  fullNameRule: "يرجى إدخال الاسم الكامل (الاسم واللقب على الأقل).",
   saveSuccess: "تم الحفظ بنجاح.",
   saveError: "تعذر الحفظ، تحقق من البيانات وحاول مرة أخرى.",
   deleteWarning: "لا يمكن التراجع عن عملية الحذف.",

@@ -273,7 +273,7 @@ function StudentsFeedback({
     } else if (error === "status") {
       description = "تعذر تغيير حالة الطالب. تأكد من اختيار حالة صحيحة.";
     } else {
-      description = "تأكد من إدخال اسم الطالب بشكل صحيح، وأن رقم الطالب غير مكرر.";
+      description = "تأكد من إدخال جميع البيانات المطلوبة بشكل صحيح.";
     }
 
     return (
@@ -335,7 +335,7 @@ function StudentCreateForm({ sections }: StudentCreateFormProps) {
             htmlFor="fullName"
             className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
           >
-            الاسم الرباعي <span className="text-red-600">*</span>
+            الاسم الكامل <span className="text-red-600">*</span>
           </label>
 
           <input
@@ -343,12 +343,12 @@ function StudentCreateForm({ sections }: StudentCreateFormProps) {
             name="fullName"
             autoComplete="off"
             required
-            minLength={3}
+            minLength={2}
             maxLength={120}
-            placeholder="مثال: أحمد علي حسين كاظم"
+            placeholder="مثال: أحمد علي أو زهراء علي حسين كاظم"
             className="input"
           />
-          <p className="mt-1 text-xs text-[var(--app-text-muted)]">يجب إدخال الاسم الرباعي كاملًا (4 أجزاء على الأقل)</p>
+          <p className="mt-1 text-xs text-[var(--app-text-muted)]">أدخل اسم الطالب كاملًا (الاسم واللقب على الأقل)</p>
         </div>
 
         <div className="grid gap-5 md:grid-cols-2">

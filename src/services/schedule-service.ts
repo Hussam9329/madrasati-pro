@@ -90,7 +90,7 @@ export async function createSchedule(
   if (!validation.valid) {
     return {
       ok: false,
-      message: "توجد بيانات ناقصة أو غير صحيحة.",
+      message: (Object.values(validation.errors).find(Boolean) as string) || "توجد بيانات ناقصة أو غير صحيحة.",
       errors: validation.errors as Record<string, string>,
     };
   }
@@ -163,7 +163,7 @@ export async function updateSchedule(
   if (!validation.valid) {
     return {
       ok: false,
-      message: "توجد بيانات ناقصة أو غير صحيحة.",
+      message: (Object.values(validation.errors).find(Boolean) as string) || "توجد بيانات ناقصة أو غير صحيحة.",
       errors: validation.errors as Record<string, string>,
     };
   }

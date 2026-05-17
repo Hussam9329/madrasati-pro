@@ -278,7 +278,7 @@ function TeachersFeedback({
     } else if (error === "toggle") {
       description = "لا يمكن تحديث حالة المدرس. حاول مرة أخرى.";
     } else {
-      description = "تأكد من إدخال اسم المدرس بشكل صحيح (3 أحرف على الأقل).";
+      description = "تأكد من إدخال جميع البيانات المطلوبة بشكل صحيح.";
     }
 
     return (
@@ -331,7 +331,7 @@ function TeacherCreateForm({ subjects, sections }: TeacherCreateFormProps) {
             htmlFor="fullName"
             className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
           >
-            الاسم الرباعي <span className="text-red-600">*</span>
+            الاسم الكامل <span className="text-red-600">*</span>
           </label>
 
           <input
@@ -339,12 +339,12 @@ function TeacherCreateForm({ subjects, sections }: TeacherCreateFormProps) {
             name="fullName"
             autoComplete="off"
             required
-            minLength={3}
+            minLength={2}
             maxLength={120}
-            placeholder="مثال: زهراء علي حسين كاظم"
+            placeholder="مثال: أحمد علي أو زهراء علي حسين كاظم"
             className="input"
           />
-          <p className="mt-1 text-xs text-[var(--app-text-muted)]">يجب إدخال الاسم الرباعي كاملًا (4 أجزاء على الأقل)</p>
+          <p className="mt-1 text-xs text-[var(--app-text-muted)]">أدخل اسم المدرس كاملًا (الاسم واللقب على الأقل)</p>
         </div>
 
         <div>

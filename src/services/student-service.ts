@@ -184,9 +184,10 @@ export async function createStudent(
   const validation = validateStudentInput(input);
 
   if (!validation.valid) {
+    const firstError = Object.values(validation.errors).find(Boolean) || "توجد بيانات ناقصة أو غير صحيحة.";
     return {
       ok: false,
-      message: "توجد بيانات ناقصة أو غير صحيحة.",
+      message: firstError as string,
       errors: validation.errors as Record<string, string>,
     };
   }
@@ -293,9 +294,10 @@ export async function updateStudent(
   const validation = validateStudentInput(input);
 
   if (!validation.valid) {
+    const firstError = Object.values(validation.errors).find(Boolean) || "توجد بيانات ناقصة أو غير صحيحة.";
     return {
       ok: false,
-      message: "توجد بيانات ناقصة أو غير صحيحة.",
+      message: firstError as string,
       errors: validation.errors as Record<string, string>,
     };
   }

@@ -187,7 +187,7 @@ export async function createClass(
   if (!validation.valid) {
     return {
       ok: false,
-      message: "توجد بيانات ناقصة أو غير صحيحة.",
+      message: (Object.values(validation.errors).find(Boolean) as string) || "توجد بيانات ناقصة أو غير صحيحة.",
       errors: validation.errors as Record<string, string>,
     };
   }
@@ -243,7 +243,7 @@ export async function updateClass(
   if (!validation.valid) {
     return {
       ok: false,
-      message: "توجد بيانات ناقصة أو غير صحيحة.",
+      message: (Object.values(validation.errors).find(Boolean) as string) || "توجد بيانات ناقصة أو غير صحيحة.",
       errors: validation.errors as Record<string, string>,
     };
   }
@@ -627,7 +627,7 @@ export async function createSection(
   if (!validation.valid) {
     return {
       ok: false,
-      message: "توجد بيانات ناقصة أو غير صحيحة.",
+      message: (Object.values(validation.errors).find(Boolean) as string) || "توجد بيانات ناقصة أو غير صحيحة.",
       errors: validation.errors as Record<string, string>,
     };
   }
@@ -694,7 +694,7 @@ export async function updateSection(
   if (!validation.valid) {
     return {
       ok: false,
-      message: "توجد بيانات ناقصة أو غير صحيحة.",
+      message: (Object.values(validation.errors).find(Boolean) as string) || "توجد بيانات ناقصة أو غير صحيحة.",
       errors: validation.errors as Record<string, string>,
     };
   }

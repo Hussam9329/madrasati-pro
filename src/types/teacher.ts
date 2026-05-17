@@ -91,9 +91,9 @@ export function validateTeacherInput(
   const errors: Partial<Record<keyof TeacherFormInput, string>> = {};
 
   if (!normalized.fullName) {
-    errors.fullName = "الاسم الرباعي للمدرس مطلوب.";
+    errors.fullName = "اسم المدرس مطلوب.";
   } else if (!validateQuadrupleName(normalized.fullName)) {
-    errors.fullName = "يجب إدخال الاسم الرباعي كاملًا.";
+    errors.fullName = "يرجى إدخال الاسم الكامل (الاسم واللقب على الأقل).";
   }
 
   if (!normalized.phone) {
