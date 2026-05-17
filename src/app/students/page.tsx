@@ -292,6 +292,24 @@ type StudentCreateFormProps = {
 };
 
 function StudentCreateForm({ sections }: StudentCreateFormProps) {
+  const groupedSections = sections.reduce<
+    Record<string, { classId: string; className: string; sections: SectionListItem[] }>
+  >((groups, section) => {
+    if (!groups[section.classId]) {
+      groups[section.classId] = {
+        classId: section.classId,
+        className: section.className,
+        sections: [],
+      };
+    }
+
+    groups[section.classId].sections.push(section);
+    return groups;
+  }, {});
+
+  const classGroups = Object.values(groupedSections);
+  const firstSectionId = sections[0]?.id ?? "";
+
   return (
     <form
       id="student-form"
@@ -414,25 +432,67 @@ function StudentCreateForm({ sections }: StudentCreateFormProps) {
           </div>
 
           <div>
-            <label
-              htmlFor="sectionId"
-              className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
-            >
+            <span className="mb-2 block text-sm font-extrabold text-[var(--app-text)]">
               الصف / الشعبة <span className="text-red-600">*</span>
-            </label>
+            </span>
 
-            <select id="sectionId" name="sectionId" autoComplete="off" required className="input" defaultValue="">
-              <option value="">اختر الصف والشعبة</option>
+            {classGroups.length === 0 ? (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-7 text-amber-800">
+                لا توجد صفوف أو شعب مضافة حاليًا. أضف الصفوف والشُعب من صفحة إدارة الصفوف أولًا.
+              </div>
+            ) : (
+              <div className="max-h-80 overflow-y-auto rounded-2xl border border-[var(--app-border-soft)] bg-white/70 p-3">
+                <div className="space-y-4">
+                  {classGroups.map((group) => (
+                    <fieldset key={group.classId} className="rounded-2xl border border-[var(--app-border-soft)] bg-slate-50/60 p-3">
+                      <legend className="px-2 text-sm font-extrabold text-[var(--app-text)]">
+                        {group.className}
+                      </legend>
 
-              {sections.map((section) => (
-                <option key={section.id} value={section.id}>
-                  {getStudentClassDisplay({
-                    className: section.className,
-                    sectionName: section.name,
-                  })}
-                </option>
-              ))}
-            </select>
+                      <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                        {group.sections.map((section) => {
+                          const studentLabel = section.studentsCount === 1 ? "طالب واحد" : `${section.studentsCount} طالب`;
+                          const capacityLabel = section.capacity ? ` / السعة ${section.capacity}` : "";
+
+                          return (
+                            <label
+                              key={section.id}
+                              htmlFor={`section-${section.id}`}
+                              className="group cursor-pointer rounded-2xl border border-[var(--app-border-soft)] bg-white p-3 transition hover:border-blue-300 hover:bg-blue-50/60 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 has-[:checked]:shadow-sm"
+                            >
+                              <span className="flex items-start gap-3">
+                                <input
+                                  id={`section-${section.id}`}
+                                  name="sectionId"
+                                  type="radio"
+                                  value={section.id}
+                                  required={firstSectionId === section.id}
+                                  className="mt-1 h-4 w-4 shrink-0 accent-blue-600"
+                                />
+
+                                <span className="min-w-0">
+                                  <span className="block font-extrabold text-[var(--app-text)]">
+                                    شعبة {section.name}
+                                  </span>
+
+                                  <span className="mt-1 block text-xs leading-6 text-[var(--app-text-muted)]">
+                                    {studentLabel}{capacityLabel}
+                                  </span>
+                                </span>
+                              </span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </fieldset>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <p className="mt-2 text-xs leading-6 text-[var(--app-text-muted)]">
+              اختر الشعبة مباشرة من البطاقات بدل القائمة المنسدلة.
+            </p>
           </div>
         </div>
       </div>
