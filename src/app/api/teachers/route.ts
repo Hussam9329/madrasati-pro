@@ -107,6 +107,7 @@ export async function POST(request: NextRequest) {
       fullName: String(body.fullName ?? ""),
       phone: body.phone ?? "",
       subjectIds: Array.isArray(body.subjectIds) ? body.subjectIds : [],
+      sectionIds: Array.isArray(body.sectionIds) ? body.sectionIds : [],
     };
 
     const result = await createTeacher(input);
@@ -142,6 +143,7 @@ export async function PUT(request: NextRequest) {
       fullName: String(body.fullName ?? ""),
       phone: body.phone ?? "",
       subjectIds: Array.isArray(body.subjectIds) ? body.subjectIds : [],
+      sectionIds: Array.isArray(body.sectionIds) ? body.sectionIds : [],
     };
 
     const result = await updateTeacher(id, input);

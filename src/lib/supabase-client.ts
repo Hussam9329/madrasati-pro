@@ -534,6 +534,64 @@ class SupabaseModelHandler {
     return Promise.all((data || []).map((row: any) => this.processResult(row, args.include)));
   }
 
+  private toPrismaLikeError(error: any): Error & { code?: string; meta?: Record<string, any> } {
+    const prismaError: Error & { code?: string; meta?: Record<string, any> } = new Error(
+      error?.message || "Database operation failed"
+    );
+
+    if (error?.code === "23505") {
+      prismaError.code = "P2002";
+      prismaError.meta = { target: [] };
+    }
+
+    return prismaError;
+  }
+
+  private isMissingAutoColumnError(error: any): boolean {
+    const message = String(error?.message || error?.details || "");
+    return (
+      error?.code === "PGRST204" ||
+      error?.code === "42703" ||
+      /Could not find the '(id|createdAt)' column/.test(message) ||
+      /column "(id|createdAt)" .* does not exist/.test(message)
+    );
+  }
+
+  private async rollbackNestedCreate(
+    parent: Record<string, any>,
+    nestedCreates: Array<{
+      relationName: string;
+      relation: { table: string; foreignKey: string; thisKey: string; isMany: boolean };
+      rows: Record<string, any>[];
+    }>
+  ) {
+    const parentKeyValue = parent.id;
+
+    if (!parentKeyValue) return;
+
+    for (const nested of nestedCreates) {
+      if (!nested.relation.isMany) continue;
+
+      const { error } = await this.getClient()
+        .from(nested.relation.table)
+        .delete()
+        .eq(nested.relation.foreignKey, parentKeyValue);
+
+      if (error) {
+        console.error(`[SupabaseModel.rollbackNestedCreate] Error on ${nested.relation.table}:`, error);
+      }
+    }
+
+    const { error } = await this.getClient()
+      .from(this.table)
+      .delete()
+      .eq("id", parentKeyValue);
+
+    if (error) {
+      console.error(`[SupabaseModel.rollbackNestedCreate] Error on ${this.table}:`, error);
+    }
+  }
+
   async create(args: { data: Record<string, any>; include?: Record<string, any> }): Promise<any> {
     const { scalarData, nestedCreates } = this.splitNestedWrites({ ...args.data });
     const data = this.prepareWriteData(scalarData);
@@ -560,45 +618,54 @@ class SupabaseModelHandler {
 
     if (error) {
       console.error(`[SupabaseModel.create] Error on ${this.table}:`, error);
-      // Convert to Prisma-like error for unique constraint violations
-      const prismaError: any = new Error(error.message);
-      if (error.code === "23505") {
-        prismaError.code = "P2002";
-        prismaError.meta = { target: [] };
-      }
-      throw prismaError;
+      throw this.toPrismaLikeError(error);
     }
 
     const transformed = transformRow(result);
-    await this.createNestedRows(transformed, nestedCreates);
+
+    try {
+      await this.createNestedRows(transformed, nestedCreates);
+    } catch (error) {
+      await this.rollbackNestedCreate(transformed, nestedCreates);
+      throw error;
+    }
 
     return this.processResult(transformed, args.include);
   }
 
   async createMany(args: { data: Record<string, any>[] }): Promise<{ count: number }> {
+    if (args.data.length === 0) {
+      return { count: 0 };
+    }
+
     const now = new Date().toISOString();
     const rows = args.data.map((d) =>
       this.prepareWriteData({
         ...d,
         id: d.id || generateId(),
         createdAt: d.createdAt || now,
-        updatedAt: d.updatedAt || now,
       })
     );
 
-    const { data: result, error } = await this.getClient()
-      .from(this.table)
-      .insert(rows)
-      .select();
+    const insertRows = async (data: Record<string, any>[]) => {
+      return this.getClient()
+        .from(this.table)
+        .insert(data)
+        .select();
+    };
+
+    let { data: result, error } = await insertRows(rows);
+
+    if (error && this.isMissingAutoColumnError(error)) {
+      const fallbackRows = args.data.map((d) => this.prepareWriteData({ ...d }));
+      const retry = await insertRows(fallbackRows);
+      result = retry.data;
+      error = retry.error;
+    }
 
     if (error) {
       console.error(`[SupabaseModel.createMany] Error on ${this.table}:`, error);
-      const prismaError: any = new Error(error.message);
-      if (error.code === "23505") {
-        prismaError.code = "P2002";
-        prismaError.meta = { target: [] };
-      }
-      throw prismaError;
+      throw this.toPrismaLikeError(error);
     }
 
     return { count: result?.length || 0 };

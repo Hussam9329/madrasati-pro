@@ -125,6 +125,14 @@ export async function createTeacher(
   const subjectIds = await getValidSubjectIds(data.subjectIds ?? []);
   const sectionIds = await getValidSectionIds(data.sectionIds ?? []);
 
+  if (subjectIds.length === 0) {
+    return {
+      ok: false,
+      message: "المادة المحددة غير موجودة أو متوقفة. اختر مادة فعّالة ثم حاول مرة أخرى.",
+      errors: { subjectIds: "المادة المحددة غير موجودة أو متوقفة." },
+    };
+  }
+
   const duplicateName = await findDuplicateTeacherName(data.fullName);
   if (duplicateName) {
     return {
@@ -164,6 +172,8 @@ export async function createTeacher(
       message: "تمت إضافة المدرس بنجاح.",
     };
   } catch (error) {
+    console.error("[createTeacher] Error:", error);
+
     if (
       (error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === "P2002") ||
@@ -178,7 +188,7 @@ export async function createTeacher(
 
     return {
       ok: false,
-      message: "حدث خطأ أثناء إضافة المدرس.",
+      message: "حدث خطأ أثناء إضافة المدرس أو ربطه بالمواد. لم يتم ترك سجل جزئي داخل جدول المدرسين.",
     };
   }
 }
@@ -217,6 +227,14 @@ export async function updateTeacher(
   const data = normalizeTeacherInput(input);
   const subjectIds = await getValidSubjectIds(data.subjectIds ?? []);
   const sectionIds = await getValidSectionIds(data.sectionIds ?? []);
+
+  if (subjectIds.length === 0) {
+    return {
+      ok: false,
+      message: "المادة المحددة غير موجودة أو متوقفة. اختر مادة فعّالة ثم حاول مرة أخرى.",
+      errors: { subjectIds: "المادة المحددة غير موجودة أو متوقفة." },
+    };
+  }
 
   const duplicateName = await findDuplicateTeacherName(data.fullName, id);
   if (duplicateName) {
@@ -267,6 +285,8 @@ export async function updateTeacher(
       message: "تم تحديث بيانات المدرس بنجاح.",
     };
   } catch (error) {
+    console.error("[updateTeacher] Error:", error);
+
     if (
       (error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === "P2002") ||
@@ -281,7 +301,7 @@ export async function updateTeacher(
 
     return {
       ok: false,
-      message: "حدث خطأ أثناء تحديث بيانات المدرس.",
+      message: "حدث خطأ أثناء تحديث بيانات المدرس أو ربطه بالمواد.",
     };
   }
 }
