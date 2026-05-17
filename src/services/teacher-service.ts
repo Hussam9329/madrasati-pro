@@ -85,6 +85,8 @@ export async function getTeacherDetails(
     })),
     subjectsCount: teacher._count.teacherSubjects,
     schedulesCount: teacher._count.schedules,
+    gradesCount: teacher._count.grades ?? 0,
+    examsCount: teacher._count.exams ?? 0,
   };
 }
 
@@ -318,16 +320,35 @@ export async function deleteTeacher(
   }
 
   try {
-    // Cascade delete: grades → attendance → schedules → teacherSubjects → teacherSections → teacher
-    // Note: grades linked via teacher's subjects
-    const teacherGradeIds = await db.grade.findMany({
-      where: { teacherId: id },
-      select: { id: true },
-    });
-    if (teacherGradeIds.length > 0) {
-      await db.grade.deleteMany({ where: { teacherId: id } });
+    // اجمع المعرفات المرتبطة أولًا، لأن عميل Supabase المستخدم هنا لا يدعم
+    // الحذف بفلتر علاقة مثل: { schedule: { teacherId: id } } بشكل موثوق.
+    const [schedules, exams] = await Promise.all([
+      db.schedule.findMany({
+        where: { teacherId: id },
+        select: { id: true },
+      }),
+      db.exam.findMany({
+        where: { teacherId: id },
+        select: { id: true },
+      }),
+    ]);
+
+    const scheduleIds = schedules.map((schedule) => schedule.id).filter(Boolean);
+    const examIds = exams.map((exam) => exam.id).filter(Boolean);
+
+    // Cascade delete in FK-safe order:
+    // grades → attendance records → exams → schedules → teacher links → teacher
+    if (examIds.length > 0) {
+      await db.grade.deleteMany({ where: { examId: { in: examIds } } });
     }
-    await db.attendanceRecord.deleteMany({ where: { schedule: { teacherId: id } } });
+
+    await db.grade.deleteMany({ where: { teacherId: id } });
+
+    if (scheduleIds.length > 0) {
+      await db.attendanceRecord.deleteMany({ where: { scheduleId: { in: scheduleIds } } });
+    }
+
+    await db.exam.deleteMany({ where: { teacherId: id } });
     await db.schedule.deleteMany({ where: { teacherId: id } });
     await db.teacherSubject.deleteMany({ where: { teacherId: id } });
     await db.teacherSection.deleteMany({ where: { teacherId: id } });
@@ -352,6 +373,7 @@ export async function getTeacherDeleteInfo(
           teacherSubjects: true,
           teacherSections: true,
           grades: true,
+          exams: true,
         },
       },
     },
@@ -366,6 +388,7 @@ export async function getTeacherDeleteInfo(
     teacherSubjectsCount: teacher._count.teacherSubjects,
     teacherSectionsCount: teacher._count.teacherSections,
     gradesCount: teacher._count.grades,
+    examsCount: teacher._count.exams,
   });
 
   return { ok: true, data: { associations: check.associations }, message: "" };
@@ -635,6 +658,8 @@ const teacherListInclude = {
     select: {
       teacherSubjects: true,
       schedules: true,
+      grades: true,
+      exams: true,
     },
   },
 } satisfies Prisma.TeacherInclude;
@@ -664,6 +689,8 @@ function toTeacherListItem(teacher: TeacherWithRelations): TeacherListItem {
     })),
     subjectsCount: teacher._count.teacherSubjects,
     schedulesCount: teacher._count.schedules,
+    gradesCount: teacher._count.grades ?? 0,
+    examsCount: teacher._count.exams ?? 0,
     createdAt: teacher.createdAt,
   };
 }

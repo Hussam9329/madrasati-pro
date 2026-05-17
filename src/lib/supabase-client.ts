@@ -109,6 +109,7 @@ const RELATION_MAP: Record<string, Record<string, {
     teacherSubjects: { table: "teacher_subjects", foreignKey: "teacherId", thisKey: "id", isMany: true },
     teacherSections: { table: "teacher_sections", foreignKey: "teacherId", thisKey: "id", isMany: true },
     schedules: { table: "schedules", foreignKey: "teacherId", thisKey: "id", isMany: true },
+    exams: { table: "exams", foreignKey: "teacherId", thisKey: "id", isMany: true },
     grades: { table: "grades", foreignKey: "teacherId", thisKey: "id", isMany: true },
   },
   teacherSubject: {

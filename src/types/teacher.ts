@@ -44,6 +44,8 @@ export type TeacherListItem = {
   }[];
   subjectsCount: number;
   schedulesCount: number;
+  gradesCount: number;
+  examsCount: number;
   createdAt: Date;
 };
 
@@ -54,6 +56,8 @@ export type TeacherDetails = Teacher & {
   }[];
   subjectsCount: number;
   schedulesCount: number;
+  gradesCount: number;
+  examsCount: number;
 };
 
 export type TeacherValidationResult = {
@@ -171,16 +175,22 @@ export function getTeacherDeleteAssociations(input: {
   teacherSubjectsCount?: number;
   teacherSectionsCount?: number;
   gradesCount?: number;
+  examsCount?: number;
 }): DeleteCheckResult {
   const schedulesCount = input.schedulesCount ?? 0;
   const teacherSubjectsCount = input.teacherSubjectsCount ?? 0;
   const teacherSectionsCount = input.teacherSectionsCount ?? 0;
   const gradesCount = input.gradesCount ?? 0;
+  const examsCount = input.examsCount ?? 0;
 
   const associations: DeleteAssociation[] = [];
 
   if (gradesCount > 0) {
     associations.push({ label: "درجات طلاب", count: gradesCount });
+  }
+
+  if (examsCount > 0) {
+    associations.push({ label: "امتحانات", count: examsCount });
   }
 
   if (schedulesCount > 0) {

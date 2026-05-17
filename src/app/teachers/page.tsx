@@ -724,6 +724,8 @@ function TeacherRow({ teacher }: TeacherRowProps) {
           itemId={teacher.id}
           entityName="المدرس"
           associations={[
+            ...(teacher.gradesCount > 0 ? [{ label: "درجات طلاب", count: teacher.gradesCount }] : []),
+            ...(teacher.examsCount > 0 ? [{ label: "امتحانات", count: teacher.examsCount }] : []),
             ...(teacher.schedulesCount > 0 ? [{ label: "محاضرات في الجدول", count: teacher.schedulesCount }] : []),
             ...(teacher.subjects.length > 0 ? [{ label: "ربط بمواد دراسية", count: teacher.subjects.length }] : []),
             ...(teacher.sections.length > 0 ? [{ label: "ربط بشُعب دراسية", count: teacher.sections.length }] : []),

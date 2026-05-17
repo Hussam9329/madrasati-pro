@@ -214,6 +214,8 @@ export function PermissionsClient({
         {canManage ? (
           <form onSubmit={createUser} className="grid gap-3 border-b border-[var(--app-border-soft)] bg-[var(--app-card-soft)] p-6 lg:grid-cols-[1fr_1fr_220px_auto]">
             <Input
+              id="new-username"
+              name="username"
               value={newUser.username}
               onChange={(e) => setNewUser((current) => ({ ...current, username: e.target.value }))}
               placeholder="اسم المستخدم الجديد"
@@ -221,6 +223,8 @@ export function PermissionsClient({
               disabled={isPending}
             />
             <Input
+              id="new-password"
+              name="password"
               value={newUser.password}
               onChange={(e) => setNewUser((current) => ({ ...current, password: e.target.value }))}
               placeholder="كلمة المرور"
@@ -229,6 +233,8 @@ export function PermissionsClient({
               disabled={isPending}
             />
             <Select
+              id="new-role"
+              name="role"
               value={newUser.role}
               onChange={(e) => setNewUser((current) => ({ ...current, role: e.target.value as RoleKey }))}
               disabled={isPending}
@@ -263,6 +269,8 @@ export function PermissionsClient({
                   </td>
                   <td className="px-5 py-4">
                     <Select
+                      id={`role-${user.id}`}
+                      name={`role-${user.id}`}
                       value={user.role}
                       onChange={(e) => updateUser(user.id, { role: e.target.value as RoleKey })}
                       disabled={!canManage || isPending}
@@ -274,6 +282,8 @@ export function PermissionsClient({
                   <td className="px-5 py-4">
                     <div className="flex gap-2">
                       <Input
+                        id={`password-${user.id}`}
+                        name={`password-${user.id}`}
                         value={passwords[user.id] || ""}
                         onChange={(e) => setPasswords((current) => ({ ...current, [user.id]: e.target.value }))}
                         type="password"
