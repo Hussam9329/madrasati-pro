@@ -1,6 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { buildErrorRedirect } from "@/lib/redirect-message";
+import { db } from "@/lib/db";
 import {
   CheckCircle2,
   DoorOpen,
@@ -38,6 +39,7 @@ import {
   type SectionListItem,
 } from "@/types/class";
 import { DeleteConfirmButton } from "@/components/shared/delete-confirm-button";
+import { BulkDeleteButton } from "@/components/shared/bulk-delete-button";
 
 export const dynamic = "force-dynamic";
 
@@ -49,6 +51,7 @@ type ClassesPageProps = {
     classSaved?: string;
     sectionSaved?: string;
     deleted?: string;
+    deletedAll?: string;
     error?: string;
     reason?: string;
   }>;
@@ -84,6 +87,7 @@ export default async function ClassesPage({ searchParams }: ClassesPageProps) {
           classSaved={resolvedSearchParams?.classSaved}
           sectionSaved={resolvedSearchParams?.sectionSaved}
           deleted={resolvedSearchParams?.deleted}
+          deletedAll={resolvedSearchParams?.deletedAll}
           error={resolvedSearchParams?.error}
           reason={resolvedSearchParams?.reason}
         />
@@ -184,6 +188,32 @@ async function createSectionAction(formData: FormData) {
   redirect("/classes?sectionSaved=1");
 }
 
+async function deleteAllClassesAction(_formData: FormData): Promise<{ ok: boolean; message?: string }> {
+  "use server";
+
+  try {
+    await db.grade.deleteMany({ where: {} });
+    await db.attendanceRecord.deleteMany({ where: {} });
+    await db.payment.deleteMany({ where: {} });
+    await db.schedule.deleteMany({ where: {} });
+    await db.exam.deleteMany({ where: {} });
+    await db.student.deleteMany({ where: {} });
+    await db.teacherSection.deleteMany({ where: {} });
+    await db.classSubject.deleteMany({ where: {} });
+    await db.classFeeSetting.deleteMany({ where: {} });
+    await db.section.deleteMany({ where: {} });
+    await db.schoolClass.deleteMany({ where: {} });
+  } catch (error) {
+    console.error("[deleteAllClassesAction] Error:", error);
+    return { ok: false, message: "حدث خطأ أثناء حذف جميع الصفوف. تأكد من عدم وجود بيانات مرتبطة." };
+  }
+
+  revalidatePath("/");
+  revalidatePath("/classes");
+  revalidatePath("/reports");
+  redirect("/classes?deletedAll=1");
+}
+
 async function deleteClassAction(formData: FormData): Promise<{ ok: boolean; message?: string }> {
   "use server";
 
@@ -258,6 +288,7 @@ type ClassesFeedbackProps = {
   classSaved?: string;
   sectionSaved?: string;
   deleted?: string;
+  deletedAll?: string;
   error?: string;
   reason?: string;
 };
@@ -266,6 +297,7 @@ function ClassesFeedback({
   classSaved,
   sectionSaved,
   deleted,
+  deletedAll,
   error,
   reason,
 }: ClassesFeedbackProps) {
@@ -295,6 +327,16 @@ function ClassesFeedback({
         tone="success"
         title="تم الحذف بنجاح"
         description="تم حذف العنصر لأنه غير مرتبط بالطلاب أو جدول دراسي."
+      />
+    );
+  }
+
+  if (deletedAll === "1") {
+    return (
+      <SmartAlert
+        tone="success"
+        title="تم حذف جميع البيانات"
+        description="تم حذف جميع الصفوف والشعب والبيانات المرتبطة بها بنجاح."
       />
     );
   }
@@ -768,7 +810,15 @@ function ClassesList({ classes, subjects }: ClassesListProps) {
           </p>
         </div>
 
-        <span className="badge badge-info">{classes.length} صف</span>
+        <div className="flex items-center gap-3">
+          <BulkDeleteButton
+            action={deleteAllClassesAction}
+            entityName="الصفوف"
+            count={classes.length}
+            description="سيتم حذف جميع الدرجات والحضور والأقساط والجدول والامتحانات والطلاب والشعب المرتبطة أيضًا."
+          />
+          <span className="badge badge-info">{classes.length} صف</span>
+        </div>
       </div>
 
       <div className="divide-y divide-[var(--app-border-soft)]">

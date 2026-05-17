@@ -1,6 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { buildErrorRedirect } from "@/lib/redirect-message";
+import { db } from "@/lib/db";
 import {
   AlertTriangle,
   Banknote,
@@ -40,6 +41,7 @@ import {
 } from "@/types/payment";
 import { getStudentClassDisplay } from "@/types/student";
 import { DeleteConfirmButton } from "@/components/shared/delete-confirm-button";
+import { BulkDeleteButton } from "@/components/shared/bulk-delete-button";
 import { PaymentCreateForm } from "@/components/payments/payment-create-form";
 import { getStudentFeePlans } from "@/services/class-fee-service";
 
@@ -55,6 +57,7 @@ type PaymentsPageProps = {
     overdueOnly?: string;
     saved?: string;
     deleted?: string;
+    deletedAll?: string;
     error?: string;
     reason?: string;
   }>;
@@ -97,6 +100,7 @@ export default async function PaymentsPage({
         <PaymentsFeedback
           saved={resolvedSearchParams?.saved}
           deleted={resolvedSearchParams?.deleted}
+          deletedAll={resolvedSearchParams?.deletedAll}
           error={resolvedSearchParams?.error}
           reason={resolvedSearchParams?.reason}
         />
@@ -220,6 +224,23 @@ async function createPaymentAction(formData: FormData) {
   redirect("/payments?saved=1");
 }
 
+async function deleteAllPaymentsAction(_formData: FormData): Promise<{ ok: boolean; message?: string }> {
+  "use server";
+
+  try {
+    await db.payment.deleteMany({ where: {} });
+  } catch (error) {
+    console.error("[deleteAllPaymentsAction] Error:", error);
+    return { ok: false, message: "حدث خطأ أثناء حذف جميع المدفوعات. حاول مرة أخرى." };
+  }
+
+  revalidatePath("/");
+  revalidatePath("/payments");
+  revalidatePath("/fees");
+  revalidatePath("/reports");
+  redirect("/payments?deletedAll=1");
+}
+
 async function deletePaymentAction(formData: FormData): Promise<{ ok: boolean; message?: string }> {
   "use server";
 
@@ -251,11 +272,12 @@ async function deletePaymentAction(formData: FormData): Promise<{ ok: boolean; m
 type PaymentsFeedbackProps = {
   saved?: string;
   deleted?: string;
+  deletedAll?: string;
   error?: string;
   reason?: string;
 };
 
-function PaymentsFeedback({ saved, deleted, error, reason }: PaymentsFeedbackProps) {
+function PaymentsFeedback({ saved, deleted, deletedAll, error, reason }: PaymentsFeedbackProps) {
   if (saved === "1") {
     return (
       <SmartAlert
@@ -272,6 +294,16 @@ function PaymentsFeedback({ saved, deleted, error, reason }: PaymentsFeedbackPro
         tone="success"
         title="تم حذف الدفعة"
         description="تم حذف الدفعة من السجلات بنجاح."
+      />
+    );
+  }
+
+  if (deletedAll === "1") {
+    return (
+      <SmartAlert
+        tone="success"
+        title="تم حذف جميع البيانات"
+        description="تم حذف جميع المدفوعات بنجاح."
       />
     );
   }
@@ -538,9 +570,17 @@ function PaymentsList({ payments }: PaymentsListProps) {
           </p>
         </div>
 
-        <span className="badge badge-info">
-          {payments.length} دفعة
-        </span>
+        <div className="flex items-center gap-3">
+          <BulkDeleteButton
+            action={deleteAllPaymentsAction}
+            entityName="المدفوعات"
+            count={payments.length}
+            description="سيتم حذف جميع المدفوعات والأقساط نهائيًا."
+          />
+          <span className="badge badge-info">
+            {payments.length} دفعة
+          </span>
+        </div>
       </div>
 
       <div className="divide-y divide-[var(--app-border-soft)]">

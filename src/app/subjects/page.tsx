@@ -1,6 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { buildErrorRedirect } from "@/lib/redirect-message";
+import { db } from "@/lib/db";
 import {
   BookOpen,
   CheckCircle2,
@@ -25,6 +26,7 @@ import {
   type SubjectListItem,
 } from "@/types/subject";
 import { DeleteConfirmButton } from "@/components/shared/delete-confirm-button";
+import { BulkDeleteButton } from "@/components/shared/bulk-delete-button";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +37,7 @@ type SubjectsPageProps = {
     q?: string;
     saved?: string;
     deleted?: string;
+    deletedAll?: string;
     error?: string;
     reason?: string;
   }>;
@@ -67,6 +70,7 @@ export default async function SubjectsPage({
         <SubjectsFeedback
           saved={resolvedSearchParams?.saved}
           deleted={resolvedSearchParams?.deleted}
+          deletedAll={resolvedSearchParams?.deletedAll}
           error={resolvedSearchParams?.error}
           reason={resolvedSearchParams?.reason}
         />
@@ -135,6 +139,27 @@ async function createSubjectAction(formData: FormData) {
   redirect("/subjects?saved=1");
 }
 
+async function deleteAllSubjectsAction(_formData: FormData): Promise<{ ok: boolean; message?: string }> {
+  "use server";
+
+  try {
+    await db.grade.deleteMany({ where: {} });
+    await db.schedule.deleteMany({ where: {} });
+    await db.exam.deleteMany({ where: {} });
+    await db.teacherSubject.deleteMany({ where: {} });
+    await db.classSubject.deleteMany({ where: {} });
+    await db.subject.deleteMany({ where: {} });
+  } catch (error) {
+    console.error("[deleteAllSubjectsAction] Error:", error);
+    return { ok: false, message: "حدث خطأ أثناء حذف جميع المواد. تأكد من عدم وجود بيانات مرتبطة." };
+  }
+
+  revalidatePath("/");
+  revalidatePath("/subjects");
+  revalidatePath("/reports");
+  redirect("/subjects?deletedAll=1");
+}
+
 async function deleteSubjectAction(formData: FormData): Promise<{ ok: boolean; message?: string }> {
   "use server";
 
@@ -165,6 +190,7 @@ async function deleteSubjectAction(formData: FormData): Promise<{ ok: boolean; m
 type SubjectsFeedbackProps = {
   saved?: string;
   deleted?: string;
+  deletedAll?: string;
   error?: string;
   reason?: string;
 };
@@ -172,6 +198,7 @@ type SubjectsFeedbackProps = {
 function SubjectsFeedback({
   saved,
   deleted,
+  deletedAll,
   error,
   reason,
 }: SubjectsFeedbackProps) {
@@ -191,6 +218,16 @@ function SubjectsFeedback({
         tone="success"
         title="تم حذف المادة الدراسية"
         description="تم حذف المادة لأنها غير مرتبطة بدرجات أو صفوف أو مدرسين."
+      />
+    );
+  }
+
+  if (deletedAll === "1") {
+    return (
+      <SmartAlert
+        tone="success"
+        title="تم حذف جميع البيانات"
+        description="تم حذف جميع المواد الدراسية والبيانات المرتبطة بها بنجاح."
       />
     );
   }
@@ -402,7 +439,15 @@ function SubjectList({ subjects }: SubjectListProps) {
           </p>
         </div>
 
-        <span className="badge badge-info">{subjects.length} مادة</span>
+        <div className="flex items-center gap-3">
+          <BulkDeleteButton
+            action={deleteAllSubjectsAction}
+            entityName="المواد"
+            count={subjects.length}
+            description="سيتم حذف جميع الدرجات والجدول والامتحانات والمدرسين والصفوف المرتبطة أيضًا."
+          />
+          <span className="badge badge-info">{subjects.length} مادة</span>
+        </div>
       </div>
 
       <div className="divide-y divide-[var(--app-border-soft)]">

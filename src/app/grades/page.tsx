@@ -1,6 +1,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { db } from "@/lib/db";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -23,6 +24,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { SmartAlert } from "@/components/shared/smart-alert";
 import { DeleteConfirmButton } from "@/components/shared/delete-confirm-button";
+import { BulkDeleteButton } from "@/components/shared/bulk-delete-button";
 import { getExams } from "@/services/exam-service";
 import { deleteGrade, getGrades, getGradesCount } from "@/services/grade-service";
 import { getSections } from "@/services/class-service";
@@ -49,6 +51,7 @@ type GradesPageProps = {
     teacherId?: string;
     saved?: string;
     deleted?: string;
+    deletedAll?: string;
     error?: string;
   }>;
 };
@@ -107,7 +110,7 @@ export default async function GradesPage({ searchParams }: GradesPageProps) {
           badge="مرتبطة بالامتحانات"
         />
 
-        <GradesFeedback deleted={resolvedSearchParams?.deleted} error={resolvedSearchParams?.error} saved={resolvedSearchParams?.saved} />
+        <GradesFeedback deleted={resolvedSearchParams?.deleted} deletedAll={resolvedSearchParams?.deletedAll} error={resolvedSearchParams?.error} saved={resolvedSearchParams?.saved} />
 
         <SmartAlert
           tone="info"
@@ -165,6 +168,22 @@ export default async function GradesPage({ searchParams }: GradesPageProps) {
   );
 }
 
+async function deleteAllGradesAction(_formData: FormData): Promise<{ ok: boolean; message?: string }> {
+  "use server";
+
+  try {
+    await db.grade.deleteMany({ where: {} });
+  } catch (error) {
+    console.error("[deleteAllGradesAction] Error:", error);
+    return { ok: false, message: "حدث خطأ أثناء حذف جميع الدرجات. حاول مرة أخرى." };
+  }
+
+  revalidatePath("/");
+  revalidatePath("/grades");
+  revalidatePath("/reports");
+  redirect("/grades?deletedAll=1");
+}
+
 async function deleteGradeAction(formData: FormData): Promise<{ ok: boolean; message?: string }> {
   "use server";
 
@@ -187,12 +206,15 @@ async function deleteGradeAction(formData: FormData): Promise<{ ok: boolean; mes
   redirect("/grades?deleted=1");
 }
 
-function GradesFeedback({ saved, deleted, error }: { saved?: string; deleted?: string; error?: string }) {
+function GradesFeedback({ saved, deleted, deletedAll, error }: { saved?: string; deleted?: string; deletedAll?: string; error?: string }) {
   if (saved === "1") {
     return <SmartAlert tone="success" title="تم حفظ الدرجات" description="تم تحديث سجل الدرجات المرتبط بالامتحان." />;
   }
   if (deleted === "1") {
     return <SmartAlert tone="success" title="تم حذف الدرجة" description="تم حذف الدرجة من سجل الطالب بنجاح." />;
+  }
+  if (deletedAll === "1") {
+    return <SmartAlert tone="success" title="تم حذف جميع البيانات" description="تم حذف جميع الدرجات بنجاح." />;
   }
   if (error) {
     return <SmartAlert tone="warning" title="لم تكتمل العملية" description="راجع بيانات الامتحان والدرجات ثم حاول مرة أخرى." />;
@@ -418,7 +440,15 @@ function GradesList({ grades }: { grades: GradeListItem[] }) {
           <h3 className="text-xl font-extrabold text-[var(--app-text)]">الدرجات المحفوظة</h3>
           <p className="mt-1 text-sm leading-6 text-[var(--app-text-muted)]">مراجعة الدرجات المسجلة من الامتحانات.</p>
         </div>
-        <span className="badge badge-info">{grades.length} درجة</span>
+        <div className="flex items-center gap-3">
+          <BulkDeleteButton
+            action={deleteAllGradesAction}
+            entityName="الدرجات"
+            count={grades.length}
+            description="سيتم حذف جميع الدرجات نهائيًا."
+          />
+          <span className="badge badge-info">{grades.length} درجة</span>
+        </div>
       </div>
       <div className="divide-y divide-[var(--app-border-soft)]">
         {grades.map((grade) => <GradeRow key={grade.id} grade={grade} />)}
