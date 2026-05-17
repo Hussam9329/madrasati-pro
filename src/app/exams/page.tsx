@@ -1,6 +1,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { buildErrorRedirect } from "@/lib/redirect-message";
 import { ClipboardList, GraduationCap, Layers, PlusCircle } from "lucide-react";
 import { requireAdmin } from "@/lib/auth";
 import { safeQuery } from "@/lib/db";
@@ -19,7 +20,7 @@ export const dynamic = "force-dynamic";
 
 
 type ExamsPageProps = {
-  searchParams?: Promise<{ saved?: string; error?: string; sectionId?: string; subjectId?: string }>;
+  searchParams?: Promise<{ saved?: string; error?: string; reason?: string; sectionId?: string; subjectId?: string }>;
 };
 
 export default async function ExamsPage({ searchParams }: ExamsPageProps) {
@@ -48,7 +49,13 @@ export default async function ExamsPage({ searchParams }: ExamsPageProps) {
         />
 
         {resolvedSearchParams?.saved === "1" && <SmartAlert tone="success" title="تم حفظ الامتحان" description="يمكنك الآن إدخال درجات الطلاب لهذا الامتحان." />}
-        {resolvedSearchParams?.error && <SmartAlert tone="warning" title="لم يتم الحفظ" description="تأكد من اختيار الصف والمادة وإدخال الدرجة الكلية ودرجة النجاح." />}
+        {resolvedSearchParams?.error && (
+          <SmartAlert
+            tone="warning"
+            title="لم يتم الحفظ"
+            description={resolvedSearchParams?.reason ?? "تأكد من اختيار الصف والمادة وإدخال الدرجة الكلية ودرجة النجاح."}
+          />
+        )}
 
         <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
           <form action={createExamAction} className="app-card overflow-hidden">
@@ -177,7 +184,7 @@ async function createExamAction(formData: FormData) {
     teacherId: String(formData.get("teacherId") ?? "") || undefined,
   });
 
-  if (!result.ok) redirect("/exams?error=1");
+  if (!result.ok) redirect(buildErrorRedirect("/exams", "1", result.message));
   revalidatePath("/exams");
   revalidatePath("/grades");
   redirect("/exams?saved=1");

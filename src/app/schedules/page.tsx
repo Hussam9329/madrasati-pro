@@ -1,5 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { buildErrorRedirect } from "@/lib/redirect-message";
 import {
   AlertTriangle,
   CalendarClock,
@@ -53,6 +54,7 @@ type SchedulesPageProps = {
     deleted?: string;
     toggled?: string;
     error?: string;
+    reason?: string;
   }>;
 };
 
@@ -93,6 +95,7 @@ export default async function SchedulesPage({
           deleted={resolvedSearchParams?.deleted}
           toggled={resolvedSearchParams?.toggled}
           error={resolvedSearchParams?.error}
+          reason={resolvedSearchParams?.reason}
         />
 
         <SmartAlert
@@ -166,7 +169,7 @@ async function createScheduleAction(formData: FormData) {
   const result = await createSchedule(input);
 
   if (!result.ok) {
-    redirect("/schedules?error=create");
+    redirect(buildErrorRedirect("/schedules", "create", result.message));
   }
 
   revalidatePath("/");
@@ -228,6 +231,7 @@ type SchedulesFeedbackProps = {
   deleted?: string;
   toggled?: string;
   error?: string;
+  reason?: string;
 };
 
 function SchedulesFeedback({
@@ -235,6 +239,7 @@ function SchedulesFeedback({
   deleted,
   toggled,
   error,
+  reason,
 }: SchedulesFeedbackProps) {
   if (saved === "1") {
     return (

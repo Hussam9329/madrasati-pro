@@ -1,5 +1,6 @@
 import { Prisma } from "@/lib/prisma-types";
 import { db } from "@/lib/db";
+import { getSupabaseConfigErrorMessage, hasSupabaseConfig } from "@/lib/supabase-client";
 import {
   getDayLabel,
   normalizeScheduleInput,
@@ -94,6 +95,13 @@ export async function createSchedule(
     };
   }
 
+  if (!hasSupabaseConfig()) {
+    return {
+      ok: false,
+      message: getSupabaseConfigErrorMessage(),
+    };
+  }
+
   const data = normalizeScheduleInput(input);
 
   const relationsCheck = await validateScheduleRelations(data);
@@ -157,6 +165,13 @@ export async function updateSchedule(
       ok: false,
       message: "توجد بيانات ناقصة أو غير صحيحة.",
       errors: validation.errors as Record<string, string>,
+    };
+  }
+
+  if (!hasSupabaseConfig()) {
+    return {
+      ok: false,
+      message: getSupabaseConfigErrorMessage(),
     };
   }
 

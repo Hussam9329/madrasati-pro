@@ -1,5 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { buildErrorRedirect } from "@/lib/redirect-message";
 import {
   AlertTriangle,
   BookOpen,
@@ -137,7 +138,7 @@ async function createSubjectAction(formData: FormData) {
   const result = await createSubject(input);
 
   if (!result.ok) {
-    redirect("/subjects?error=create");
+    redirect(buildErrorRedirect("/subjects", "create", result.message));
   }
 
   revalidatePath("/");
@@ -241,8 +242,8 @@ function SubjectsFeedback({
 
   if (error) {
     let description: string;
-    if (error === "delete" && reason) {
-      description = decodeURIComponent(reason);
+    if (reason) {
+      description = reason;
     } else if (error === "delete") {
       description = "لا يمكن حذف المادة إذا كانت مرتبطة بمدرسين أو صفوف أو درجات. عطّلها بدل حذفها.";
     } else {

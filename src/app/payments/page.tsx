@@ -1,5 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { buildErrorRedirect } from "@/lib/redirect-message";
 import {
   AlertTriangle,
   Banknote,
@@ -209,7 +210,7 @@ async function createPaymentAction(formData: FormData) {
   const result = await createPayment(input);
 
   if (!result.ok) {
-    redirect("/payments?error=create");
+    redirect(buildErrorRedirect("/payments", "create", result.message));
   }
 
   revalidatePath("/");
@@ -277,8 +278,8 @@ function PaymentsFeedback({ saved, deleted, error, reason }: PaymentsFeedbackPro
 
   if (error) {
     let description: string;
-    if (error === "delete" && reason) {
-      description = decodeURIComponent(reason);
+    if (reason) {
+      description = reason;
     } else if (error === "delete") {
       description = "لا يمكن حذف الدفعة حاليًا. تحقق من البيانات وحاول مرة أخرى.";
     } else if (error === "missing-id") {

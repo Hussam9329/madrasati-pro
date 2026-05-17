@@ -1,5 +1,6 @@
 import { Prisma } from "@/lib/prisma-types";
 import { db } from "@/lib/db";
+import { getSupabaseConfigErrorMessage, hasSupabaseConfig } from "@/lib/supabase-client";
 import {
   canDeleteTeacher,
   normalizeTeacherInput,
@@ -112,6 +113,13 @@ export async function createTeacher(
     };
   }
 
+  if (!hasSupabaseConfig()) {
+    return {
+      ok: false,
+      message: getSupabaseConfigErrorMessage(),
+    };
+  }
+
   const data = normalizeTeacherInput(input);
   const subjectIds = await getValidSubjectIds(data.subjectIds ?? []);
   const sectionIds = await getValidSectionIds(data.sectionIds ?? []);
@@ -185,6 +193,13 @@ export async function updateTeacher(
       ok: false,
       message: "توجد بيانات ناقصة أو غير صحيحة.",
       errors: validation.errors as Record<string, string>,
+    };
+  }
+
+  if (!hasSupabaseConfig()) {
+    return {
+      ok: false,
+      message: getSupabaseConfigErrorMessage(),
     };
   }
 

@@ -1,5 +1,6 @@
 import { Prisma } from "@/lib/prisma-types";
 import { db } from "@/lib/db";
+import { getSupabaseConfigErrorMessage, hasSupabaseConfig } from "@/lib/supabase-client";
 import {
   canDeletePayment,
   normalizePaymentDate,
@@ -331,6 +332,13 @@ export async function createPayment(
     };
   }
 
+  if (!hasSupabaseConfig()) {
+    return {
+      ok: false,
+      message: getSupabaseConfigErrorMessage(),
+    };
+  }
+
   const data = normalizePaymentInput(input);
 
   const relationsCheck = await validatePaymentRelations(data);
@@ -397,6 +405,13 @@ export async function updatePayment(
       ok: false,
       message: "توجد بيانات ناقصة أو غير صحيحة.",
       errors: validation.errors as Record<string, string>,
+    };
+  }
+
+  if (!hasSupabaseConfig()) {
+    return {
+      ok: false,
+      message: getSupabaseConfigErrorMessage(),
     };
   }
 

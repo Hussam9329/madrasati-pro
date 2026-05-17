@@ -1,5 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { buildErrorRedirect } from "@/lib/redirect-message";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -163,7 +164,7 @@ async function createClassAction(formData: FormData) {
   const result = await createClass(input);
 
   if (!result.ok) {
-    redirect("/classes?error=create-class");
+    redirect(buildErrorRedirect("/classes", "create-class", result.message));
   }
 
   revalidatePath("/");
@@ -186,7 +187,7 @@ async function createSectionAction(formData: FormData) {
   const result = await createSection(input);
 
   if (!result.ok) {
-    redirect("/classes?error=create-section");
+    redirect(buildErrorRedirect("/classes", "create-section", result.message));
   }
 
   revalidatePath("/");
@@ -366,8 +367,8 @@ function ClassesFeedback({
 
   if (error) {
     let description: string;
-    if ((error === "delete-class" || error === "delete-section") && reason) {
-      description = decodeURIComponent(reason);
+    if (reason) {
+      description = reason;
     } else if (error === "delete-class") {
       description = "لا يمكن حذف الصف إذا كان يحتوي على شُعب أو طلاب أو جدول أو مواد مرتبطة.";
     } else if (error === "delete-section") {

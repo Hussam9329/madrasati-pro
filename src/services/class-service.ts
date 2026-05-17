@@ -1,5 +1,6 @@
 import { Prisma } from "@/lib/prisma-types";
 import { db } from "@/lib/db";
+import { getSupabaseConfigErrorMessage, hasSupabaseConfig } from "@/lib/supabase-client";
 import {
   canDeleteClass,
   canDeleteSection,
@@ -191,6 +192,13 @@ export async function createClass(
     };
   }
 
+  if (!hasSupabaseConfig()) {
+    return {
+      ok: false,
+      message: getSupabaseConfigErrorMessage(),
+    };
+  }
+
   const data = normalizeClassInput(input);
 
   try {
@@ -237,6 +245,13 @@ export async function updateClass(
       ok: false,
       message: "توجد بيانات ناقصة أو غير صحيحة.",
       errors: validation.errors as Record<string, string>,
+    };
+  }
+
+  if (!hasSupabaseConfig()) {
+    return {
+      ok: false,
+      message: getSupabaseConfigErrorMessage(),
     };
   }
 
@@ -617,6 +632,13 @@ export async function createSection(
     };
   }
 
+  if (!hasSupabaseConfig()) {
+    return {
+      ok: false,
+      message: getSupabaseConfigErrorMessage(),
+    };
+  }
+
   const data = normalizeSectionInput(input);
 
   const schoolClass = await getClassById(data.classId);
@@ -674,6 +696,13 @@ export async function updateSection(
       ok: false,
       message: "توجد بيانات ناقصة أو غير صحيحة.",
       errors: validation.errors as Record<string, string>,
+    };
+  }
+
+  if (!hasSupabaseConfig()) {
+    return {
+      ok: false,
+      message: getSupabaseConfigErrorMessage(),
     };
   }
 

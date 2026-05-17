@@ -1,5 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { buildErrorRedirect } from "@/lib/redirect-message";
 import {
   AlertTriangle,
   CalendarDays,
@@ -160,7 +161,7 @@ async function createStudentAction(formData: FormData) {
   const result = await createStudent(input);
 
   if (!result.ok) {
-    redirect("/students?error=create");
+    redirect(buildErrorRedirect("/students", "create", result.message));
   }
 
   revalidatePath("/");
@@ -265,8 +266,8 @@ function StudentsFeedback({
 
   if (error) {
     let description: string;
-    if (error === "delete" && reason) {
-      description = decodeURIComponent(reason);
+    if (reason) {
+      description = reason;
     } else if (error === "delete") {
       description = "لا يمكن حذف الطالب إذا كان لديه درجات أو حضور أو أقساط. غيّر حالته بدل الحذف.";
     } else if (error === "status") {

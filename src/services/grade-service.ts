@@ -1,5 +1,6 @@
 import { Prisma } from "@/lib/prisma-types";
 import { db } from "@/lib/db";
+import { getSupabaseConfigErrorMessage, hasSupabaseConfig } from "@/lib/supabase-client";
 import {
   canDeleteGrade,
   getExamTypeLabel,
@@ -333,6 +334,13 @@ export async function createGrade(
     };
   }
 
+  if (!hasSupabaseConfig()) {
+    return {
+      ok: false,
+      message: getSupabaseConfigErrorMessage(),
+    };
+  }
+
   const data = normalizeGradeInput(input);
 
   const relationCheck = await validateGradeRelations({
@@ -390,6 +398,13 @@ export async function updateGrade(
       ok: false,
       message: "توجد بيانات ناقصة أو غير صحيحة.",
       errors: validation.errors as Record<string, string>,
+    };
+  }
+
+  if (!hasSupabaseConfig()) {
+    return {
+      ok: false,
+      message: getSupabaseConfigErrorMessage(),
     };
   }
 

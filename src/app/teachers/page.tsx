@@ -1,5 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { buildErrorRedirect } from "@/lib/redirect-message";
 import {
   AlertTriangle,
   BookOpen,
@@ -164,7 +165,7 @@ async function createTeacherAction(formData: FormData) {
   const result = await createTeacher(input);
 
   if (!result.ok) {
-    redirect("/teachers?error=create");
+    redirect(buildErrorRedirect("/teachers", "create", result.message));
   }
 
   revalidatePath("/");
@@ -270,8 +271,8 @@ function TeachersFeedback({
 
   if (error) {
     let description: string;
-    if (error === "delete" && reason) {
-      description = decodeURIComponent(reason);
+    if (reason) {
+      description = reason;
     } else if (error === "delete") {
       description = "لا يمكن حذف المدرس إذا كان مرتبطًا بمحاضرات في الجدول. عطّله بدل حذفه.";
     } else if (error === "toggle") {

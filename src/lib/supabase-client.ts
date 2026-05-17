@@ -15,21 +15,34 @@ const globalForSupabase = globalThis as unknown as {
  * This avoids "supabaseUrl is required" errors during build time
  * when env vars are not available.
  */
-function getSupabaseClient(): SupabaseClient {
-  if (!globalForSupabase.supabase) {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+export function hasSupabaseConfig(): boolean {
+  return Boolean(
+    process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
+}
 
-    if (!supabaseUrl || !supabaseKey) {
-      console.warn("[Supabase] Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY env vars");
-    }
+export function getSupabaseConfigErrorMessage(): string {
+  return "إعدادات قاعدة البيانات غير مكتملة. أضف NEXT_PUBLIC_SUPABASE_URL و SUPABASE_SERVICE_ROLE_KEY في ملف البيئة أو إعدادات Vercel ثم أعد التشغيل.";
+}
 
-    globalForSupabase.supabase = createClient(
-      supabaseUrl || "https://placeholder.supabase.co",
-      supabaseKey || "placeholder-key",
-      { auth: { persistSession: false, autoRefreshToken: false } }
-    );
+function assertSupabaseConfig() {
+  if (!hasSupabaseConfig()) {
+    throw new Error(getSupabaseConfigErrorMessage());
   }
+}
+
+function getSupabaseClient(): SupabaseClient {
+  assertSupabaseConfig();
+
+  if (!globalForSupabase.supabase) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY as string;
+
+    globalForSupabase.supabase = createClient(supabaseUrl, supabaseKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+  }
+
   return globalForSupabase.supabase;
 }
 
@@ -345,6 +358,87 @@ class SupabaseModelHandler {
     return supabase;
   }
 
+  private prepareWriteData(data: Record<string, any>): Record<string, any> {
+    const prepared: Record<string, any> = {};
+
+    for (const [key, value] of Object.entries(data)) {
+      if (value === undefined) continue;
+      prepared[key] = value instanceof Date ? value.toISOString() : value;
+    }
+
+    return prepared;
+  }
+
+  private splitNestedWrites(data: Record<string, any>): {
+    scalarData: Record<string, any>;
+    nestedCreates: Array<{
+      relationName: string;
+      relation: { table: string; foreignKey: string; thisKey: string; isMany: boolean };
+      rows: Record<string, any>[];
+    }>;
+  } {
+    const scalarData: Record<string, any> = {};
+    const nestedCreates: Array<{
+      relationName: string;
+      relation: { table: string; foreignKey: string; thisKey: string; isMany: boolean };
+      rows: Record<string, any>[];
+    }> = [];
+    const relations = RELATION_MAP[this.model] || {};
+
+    for (const [key, value] of Object.entries(data)) {
+      const relation = relations[key];
+      const maybeNested = value as { create?: Record<string, any> | Record<string, any>[] } | null;
+
+      if (relation && maybeNested && typeof maybeNested === "object" && maybeNested.create !== undefined) {
+        const rows = Array.isArray(maybeNested.create)
+          ? maybeNested.create
+          : [maybeNested.create];
+
+        nestedCreates.push({
+          relationName: key,
+          relation,
+          rows: rows.filter(Boolean),
+        });
+        continue;
+      }
+
+      scalarData[key] = value;
+    }
+
+    return { scalarData, nestedCreates };
+  }
+
+  private async createNestedRows(
+    parent: Record<string, any>,
+    nestedCreates: Array<{
+      relationName: string;
+      relation: { table: string; foreignKey: string; thisKey: string; isMany: boolean };
+      rows: Record<string, any>[];
+    }>
+  ) {
+    for (const nested of nestedCreates) {
+      if (!nested.relation.isMany || nested.rows.length === 0) continue;
+
+      const parentKeyValue = parent[nested.relation.thisKey] ?? parent.id;
+      if (!parentKeyValue) {
+        throw new Error(`Cannot create nested ${nested.relationName}: parent key is missing.`);
+      }
+
+      const relatedRows = nested.rows.map((row) =>
+        this.prepareWriteData({
+          ...row,
+          [nested.relation.foreignKey]: parentKeyValue,
+        })
+      );
+
+      const handler = new SupabaseModelHandler(
+        getTableModelName(nested.relation.table),
+        nested.relation.table
+      );
+      await handler.createMany({ data: relatedRows });
+    }
+  }
+
   async findUnique(args: { where: Record<string, any>; include?: Record<string, any>; select?: Record<string, any> }): Promise<any> {
     const where = args.where;
     const id = where.id;
@@ -441,7 +535,8 @@ class SupabaseModelHandler {
   }
 
   async create(args: { data: Record<string, any>; include?: Record<string, any> }): Promise<any> {
-    const data = { ...args.data };
+    const { scalarData, nestedCreates } = this.splitNestedWrites({ ...args.data });
+    const data = this.prepareWriteData(scalarData);
 
     // Auto-generate ID if not provided
     if (!data.id) {
@@ -474,17 +569,22 @@ class SupabaseModelHandler {
       throw prismaError;
     }
 
-    return transformRow(result);
+    const transformed = transformRow(result);
+    await this.createNestedRows(transformed, nestedCreates);
+
+    return this.processResult(transformed, args.include);
   }
 
   async createMany(args: { data: Record<string, any>[] }): Promise<{ count: number }> {
     const now = new Date().toISOString();
-    const rows = args.data.map((d) => ({
-      ...d,
-      id: d.id || generateId(),
-      createdAt: d.createdAt || now,
-      updatedAt: d.updatedAt || now,
-    }));
+    const rows = args.data.map((d) =>
+      this.prepareWriteData({
+        ...d,
+        id: d.id || generateId(),
+        createdAt: d.createdAt || now,
+        updatedAt: d.updatedAt || now,
+      })
+    );
 
     const { data: result, error } = await this.getClient()
       .from(this.table)
@@ -504,13 +604,14 @@ class SupabaseModelHandler {
     return { count: result?.length || 0 };
   }
 
-  async update(args: { where: Record<string, any>; data: Record<string, any> }): Promise<any> {
+  async update(args: { where: Record<string, any>; data: Record<string, any>; include?: Record<string, any> }): Promise<any> {
     const where = args.where;
+    const { scalarData, nestedCreates } = this.splitNestedWrites({ ...args.data });
     // Auto-update the updatedAt timestamp (mimics Prisma @updatedAt)
-    const updateData = {
-      ...args.data,
+    const updateData = this.prepareWriteData({
+      ...scalarData,
       updatedAt: new Date().toISOString(),
-    };
+    });
     let query = this.getClient()
       .from(this.table)
       .update(updateData);
@@ -542,7 +643,10 @@ class SupabaseModelHandler {
       throw prismaError;
     }
 
-    return transformRow(result);
+    const transformed = transformRow(result);
+    await this.createNestedRows(transformed, nestedCreates);
+
+    return this.processResult(transformed, args.include);
   }
 
   async delete(args: { where: Record<string, any> }): Promise<any> {

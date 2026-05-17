@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { getSupabaseConfigErrorMessage, hasSupabaseConfig } from "@/lib/supabase-client";
 import { Prisma } from "@/lib/prisma-types";
 
 export type ExamServiceResult<T> = {
@@ -20,6 +21,13 @@ export async function createExam(input: {
   sectionId: string;
   teacherId?: string;
 }): Promise<ExamServiceResult<Prisma.ExamGetPayload<{ include: { subject: true; section: { include: { class: true } } } }>>> {
+  if (!hasSupabaseConfig()) {
+    return {
+      ok: false,
+      message: getSupabaseConfigErrorMessage(),
+    };
+  }
+
   // Validate subject exists
   const subject = await db.subject.findUnique({ where: { id: input.subjectId } });
   if (!subject) return { ok: false, message: "المادة غير موجودة." };

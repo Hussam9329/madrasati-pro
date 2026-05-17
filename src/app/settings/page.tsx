@@ -1,6 +1,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { buildErrorRedirect } from "@/lib/redirect-message";
 import { CalendarDays, Clock3, Save, Settings, ShieldCheck } from "lucide-react";
 import { requireAdmin } from "@/lib/auth";
 import { safeQuery } from "@/lib/db";
@@ -23,6 +24,7 @@ type SettingsPageProps = {
   searchParams?: Promise<{
     saved?: string;
     error?: string;
+    reason?: string;
   }>;
 };
 
@@ -64,7 +66,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
           <SmartAlert
             tone="warning"
             title="لم يتم حفظ الإعدادات"
-            description="تأكد من اختيار يوم دوام واحد على الأقل وإدخال وقت الانصراف بصيغة صحيحة مثل 12:00."
+            description={resolvedSearchParams?.reason ?? "تأكد من اختيار يوم دوام واحد على الأقل وإدخال وقت الانصراف بصيغة صحيحة مثل 12:00."}
           />
         ) : null}
 
@@ -210,7 +212,7 @@ async function saveSchoolSettingsAction(formData: FormData) {
   const notes = String(formData.get("notes") ?? "");
 
   if (weekendDays.length >= SCHOOL_DAY_OPTIONS.length || !/^([01]\d|2[0-3]):[0-5]\d$/.test(checkoutWarningTime)) {
-    redirect("/settings?error=1");
+    redirect(buildErrorRedirect("/settings", "1", "تأكد من اختيار يوم دوام واحد على الأقل وأن وقت التنبيه بصيغة HH:mm."));
   }
 
   await saveSchoolSettings({
