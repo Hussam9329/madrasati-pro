@@ -1,7 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { buildErrorRedirect } from "@/lib/redirect-message";
-import { db } from "@/lib/db";
 import {
   AlertTriangle,
   CalendarClock,
@@ -22,7 +21,6 @@ import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { SmartAlert } from "@/components/shared/smart-alert";
 import { DeleteConfirmButton } from "@/components/shared/delete-confirm-button";
-import { BulkDeleteButton } from "@/components/shared/bulk-delete-button";
 import { getSections } from "@/services/class-service";
 import { getActiveSubjects } from "@/services/subject-service";
 import { getActiveTeachers } from "@/services/teacher-service";
@@ -54,7 +52,6 @@ type SchedulesPageProps = {
     dayOfWeek?: string;
     saved?: string;
     deleted?: string;
-    deletedAll?: string;
     toggled?: string;
     error?: string;
     reason?: string;
@@ -96,7 +93,6 @@ export default async function SchedulesPage({
         <SchedulesFeedback
           saved={resolvedSearchParams?.saved}
           deleted={resolvedSearchParams?.deleted}
-          deletedAll={resolvedSearchParams?.deletedAll}
           toggled={resolvedSearchParams?.toggled}
           error={resolvedSearchParams?.error}
           reason={resolvedSearchParams?.reason}
@@ -203,23 +199,6 @@ async function toggleScheduleAction(formData: FormData) {
   redirect("/schedules?toggled=1");
 }
 
-async function deleteAllSchedulesAction(_formData: FormData): Promise<{ ok: boolean; message?: string }> {
-  "use server";
-
-  try {
-    await db.attendanceRecord.deleteMany({ where: {} });
-    await db.schedule.deleteMany({ where: {} });
-  } catch (error) {
-    console.error("[deleteAllSchedulesAction] Error:", error);
-    return { ok: false, message: "حدث خطأ أثناء حذف جميع المحاضرات. تأكد من عدم وجود بيانات مرتبطة." };
-  }
-
-  revalidatePath("/");
-  revalidatePath("/schedules");
-  revalidatePath("/reports");
-  redirect("/schedules?deletedAll=1");
-}
-
 async function deleteScheduleAction(formData: FormData): Promise<{ ok: boolean; message?: string }> {
   "use server";
 
@@ -250,7 +229,6 @@ async function deleteScheduleAction(formData: FormData): Promise<{ ok: boolean; 
 type SchedulesFeedbackProps = {
   saved?: string;
   deleted?: string;
-  deletedAll?: string;
   toggled?: string;
   error?: string;
   reason?: string;
@@ -259,7 +237,6 @@ type SchedulesFeedbackProps = {
 function SchedulesFeedback({
   saved,
   deleted,
-  deletedAll,
   toggled,
   error,
   reason,
@@ -280,16 +257,6 @@ function SchedulesFeedback({
         tone="success"
         title="تم حذف المحاضرة"
         description="تم حذف المحاضرة من الجدول الدراسي بنجاح."
-      />
-    );
-  }
-
-  if (deletedAll === "1") {
-    return (
-      <SmartAlert
-        tone="success"
-        title="تم حذف جميع البيانات"
-        description="تم حذف جميع المحاضرات وسجلات الحضور المرتبطة بها بنجاح."
       />
     );
   }
@@ -728,12 +695,6 @@ function SchedulesList({ schedules }: SchedulesListProps) {
         </div>
 
         <div className="flex items-center gap-3">
-          <BulkDeleteButton
-            action={deleteAllSchedulesAction}
-            entityName="المحاضرات"
-            count={schedules.length}
-            description="سيتم حذف جميع سجلات الحضور المرتبطة أيضًا."
-          />
           <span className="badge badge-info">{schedules.length} محاضرة</span>
         </div>
       </div>
@@ -833,10 +794,8 @@ function ScheduleRow({ schedule }: ScheduleRowProps) {
         <DeleteConfirmButton
           action={deleteScheduleAction}
           itemId={schedule.id}
-          confirmTitle="هل أنت متأكد من حذف هذه المحاضرة؟"
-          confirmDescription="سيتم حذف المحاضرة من الجدول الدراسي نهائيًا."
-          confirmLabel="نعم، احذف"
-          cancelLabel="تراجع"
+          entityName="المحاضرة"
+          associations={[]}
         />
       </div>
     </article>

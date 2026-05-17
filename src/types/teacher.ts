@@ -1,4 +1,7 @@
 import { IRAQI_PHONE_REGEX, validateQuadrupleName } from "@/lib/validators";
+import { type DeleteAssociation, type DeleteCheckResult } from "@/types/student";
+
+export type { DeleteAssociation, DeleteCheckResult };
 
 export type Teacher = {
   id: string;
@@ -163,53 +166,38 @@ export function formatTeacherSubjects(
     .join("، ");
 }
 
-export function canDeleteTeacher(input: {
+export function getTeacherDeleteAssociations(input: {
   schedulesCount?: number;
   teacherSubjectsCount?: number;
   teacherSectionsCount?: number;
   gradesCount?: number;
-}): {
-  allowed: boolean;
-  reason?: string;
-} {
+}): DeleteCheckResult {
   const schedulesCount = input.schedulesCount ?? 0;
   const teacherSubjectsCount = input.teacherSubjectsCount ?? 0;
   const teacherSectionsCount = input.teacherSectionsCount ?? 0;
   const gradesCount = input.gradesCount ?? 0;
 
+  const associations: DeleteAssociation[] = [];
+
   if (gradesCount > 0) {
-    return {
-      allowed: false,
-      reason:
-        "لا يمكن حذف المدرس لأنه مرتبط بدرجات طلاب. يمكنك تعطيله بدل حذفه.",
-    };
+    associations.push({ label: "درجات طلاب", count: gradesCount });
   }
 
   if (schedulesCount > 0) {
-    return {
-      allowed: false,
-      reason:
-        "لا يمكن حذف المدرس لأنه مرتبط بمحاضرات في الجدول الدراسي. يمكنك تعطيله بدل حذفه.",
-    };
+    associations.push({ label: "محاضرات في الجدول", count: schedulesCount });
   }
 
   if (teacherSubjectsCount > 0) {
-    return {
-      allowed: false,
-      reason:
-        "لا يمكن حذف المدرس لأنه مرتبط بمواد دراسية. يمكنك تعطيله بدل حذفه.",
-    };
+    associations.push({ label: "ربط بمواد دراسية", count: teacherSubjectsCount });
   }
 
   if (teacherSectionsCount > 0) {
-    return {
-      allowed: false,
-      reason:
-        "لا يمكن حذف المدرس لأنه مرتبط بشعب دراسية. يمكنك تعطيله بدل حذفه.",
-    };
+    associations.push({ label: "ربط بشُعب دراسية", count: teacherSectionsCount });
   }
 
   return {
     allowed: true,
+    associations,
+    hasAssociations: associations.length > 0,
   };
 }

@@ -2,7 +2,7 @@ import { Prisma } from "@/lib/prisma-types";
 import { db } from "@/lib/db";
 import { getSupabaseConfigErrorMessage, hasSupabaseConfig } from "@/lib/supabase-client";
 import {
-  canDeleteTeacher,
+  getTeacherDeleteAssociations,
   normalizeTeacherInput,
   validateTeacherInput,
   type Teacher,
@@ -310,9 +310,41 @@ export async function deleteTeacher(
   id: string,
 ): Promise<TeacherServiceResult<null>> {
   const teacher = await db.teacher.findUnique({
-    where: {
-      id,
-    },
+    where: { id },
+  });
+
+  if (!teacher) {
+    return { ok: false, message: "لم يتم العثور على المدرس." };
+  }
+
+  try {
+    // Cascade delete: grades → attendance → schedules → teacherSubjects → teacherSections → teacher
+    // Note: grades linked via teacher's subjects
+    const teacherGradeIds = await db.grade.findMany({
+      where: { teacherId: id },
+      select: { id: true },
+    });
+    if (teacherGradeIds.length > 0) {
+      await db.grade.deleteMany({ where: { teacherId: id } });
+    }
+    await db.attendanceRecord.deleteMany({ where: { schedule: { teacherId: id } } });
+    await db.schedule.deleteMany({ where: { teacherId: id } });
+    await db.teacherSubject.deleteMany({ where: { teacherId: id } });
+    await db.teacherSection.deleteMany({ where: { teacherId: id } });
+    await db.teacher.delete({ where: { id } });
+  } catch (error) {
+    console.error("[deleteTeacher] Error:", error);
+    return { ok: false, message: "حدث خطأ أثناء حذف المدرس. حاول مرة أخرى." };
+  }
+
+  return { ok: true, data: null, message: "تم حذف المدرس وجميع البيانات المرتبطة به بنجاح." };
+}
+
+export async function getTeacherDeleteInfo(
+  id: string,
+): Promise<TeacherServiceResult<{ associations: { label: string; count: number }[] }>> {
+  const teacher = await db.teacher.findUnique({
+    where: { id },
     include: {
       _count: {
         select: {
@@ -326,45 +358,17 @@ export async function deleteTeacher(
   });
 
   if (!teacher) {
-    return {
-      ok: false,
-      message: "لم يتم العثور على المدرس.",
-    };
+    return { ok: false, message: "لم يتم العثور على المدرس." };
   }
 
-  const deleteCheck = canDeleteTeacher({
+  const check = getTeacherDeleteAssociations({
     schedulesCount: teacher._count.schedules,
     teacherSubjectsCount: teacher._count.teacherSubjects,
     teacherSectionsCount: teacher._count.teacherSections,
     gradesCount: teacher._count.grades,
   });
 
-  if (!deleteCheck.allowed) {
-    return {
-      ok: false,
-      message: deleteCheck.reason ?? "لا يمكن حذف المدرس حاليًا.",
-    };
-  }
-
-  try {
-    await db.teacher.delete({
-      where: {
-        id,
-      },
-    });
-  } catch (error) {
-    console.error("[deleteTeacher] Error:", error);
-    return {
-      ok: false,
-      message: "حدث خطأ أثناء حذف المدرس. تأكد من عدم وجود بيانات مرتبطة.",
-    };
-  }
-
-  return {
-    ok: true,
-    data: null,
-    message: "تم حذف المدرس بنجاح.",
-  };
+  return { ok: true, data: { associations: check.associations }, message: "" };
 }
 
 export async function toggleTeacherStatus(

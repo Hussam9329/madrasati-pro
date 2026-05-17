@@ -1,3 +1,7 @@
+import { type DeleteAssociation, type DeleteCheckResult } from "@/types/student";
+
+export type { DeleteAssociation, DeleteCheckResult };
+
 export type Subject = {
   id: string;
   name: string;
@@ -72,35 +76,32 @@ export function validateSubjectInput(
   };
 }
 
-export function canDeleteSubject(subject: {
+export function getSubjectDeleteAssociations(subject: {
   teachersCount?: number;
   classesCount?: number;
   gradesCount?: number;
-}): {
-  allowed: boolean;
-  reason?: string;
-} {
+}): DeleteCheckResult {
   const teachersCount = subject.teachersCount ?? 0;
   const classesCount = subject.classesCount ?? 0;
   const gradesCount = subject.gradesCount ?? 0;
 
+  const associations: DeleteAssociation[] = [];
+
   if (gradesCount > 0) {
-    return {
-      allowed: false,
-      reason:
-        "لا يمكن حذف هذه المادة لأنها تحتوي على درجات مسجلة. يمكنك تعطيلها بدل حذفها.",
-    };
+    associations.push({ label: "درجات مسجلة", count: gradesCount });
   }
 
-  if (teachersCount > 0 || classesCount > 0) {
-    return {
-      allowed: false,
-      reason:
-        "لا يمكن حذف هذه المادة لأنها مرتبطة بمدرسين أو صفوف. افصل الارتباطات أولًا أو عطّل المادة.",
-    };
+  if (teachersCount > 0) {
+    associations.push({ label: "ربط بمدرسين", count: teachersCount });
+  }
+
+  if (classesCount > 0) {
+    associations.push({ label: "ربط بصفوف", count: classesCount });
   }
 
   return {
     allowed: true,
+    associations,
+    hasAssociations: associations.length > 0,
   };
 }

@@ -243,43 +243,43 @@ export function calculateAge(birthDate?: Date | string | null): number | null {
   return age >= 0 ? age : null;
 }
 
-export function canDeleteStudent(input: {
+export type DeleteAssociation = {
+  label: string;
+  count: number;
+};
+
+export type DeleteCheckResult = {
+  allowed: true;
+  associations: DeleteAssociation[];
+  hasAssociations: boolean;
+};
+
+export function getStudentDeleteAssociations(input: {
   gradesCount?: number;
   attendanceCount?: number;
   feesCount?: number;
-}): {
-  allowed: boolean;
-  reason?: string;
-} {
+}): DeleteCheckResult {
   const gradesCount = input.gradesCount ?? 0;
   const attendanceCount = input.attendanceCount ?? 0;
   const feesCount = input.feesCount ?? 0;
 
+  const associations: DeleteAssociation[] = [];
+
   if (gradesCount > 0) {
-    return {
-      allowed: false,
-      reason:
-        "لا يمكن حذف الطالب لأنه يحتوي على درجات مسجلة. يمكنك تغيير حالته إلى متوقف أو منقول.",
-    };
+    associations.push({ label: "درجات", count: gradesCount });
   }
 
   if (attendanceCount > 0) {
-    return {
-      allowed: false,
-      reason:
-        "لا يمكن حذف الطالب لأنه يحتوي على سجلات حضور. يمكنك تغيير حالته بدل الحذف.",
-    };
+    associations.push({ label: "سجلات حضور", count: attendanceCount });
   }
 
   if (feesCount > 0) {
-    return {
-      allowed: false,
-      reason:
-        "لا يمكن حذف الطالب لأنه يحتوي على أقساط أو مدفوعات. راجع السجل المالي أولًا.",
-    };
+    associations.push({ label: "أقساط ومدفوعات", count: feesCount });
   }
 
   return {
     allowed: true,
+    associations,
+    hasAssociations: associations.length > 0,
   };
 }

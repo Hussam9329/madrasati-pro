@@ -101,6 +101,7 @@ export function PaymentCreateForm({ students, action }: PaymentCreateFormProps) 
           <Search size={18} className="pointer-events-none absolute right-4 top-[46px] text-[var(--app-text-soft)]" />
           <input
             id="studentSearch"
+            name="studentSearch"
             value={query}
             onChange={(event) => {
               setQuery(event.target.value);
@@ -165,7 +166,7 @@ export function PaymentCreateForm({ students, action }: PaymentCreateFormProps) 
           <div className="grid gap-5 md:grid-cols-2">
             <div>
               <label htmlFor="paymentMode" className="mb-2 block text-sm font-extrabold text-[var(--app-text)]">آلية دفع الرسوم الدراسية</label>
-              <select id="paymentMode" value={paymentMode} onChange={(event) => setPaymentMode(event.target.value as "full" | "installment")} className="input">
+              <select id="paymentMode" name="paymentMode" value={paymentMode} onChange={(event) => setPaymentMode(event.target.value as "full" | "installment")} className="input">
                 <option value="full">دفع كامل</option>
                 <option value="installment">دفعات</option>
               </select>
@@ -174,7 +175,7 @@ export function PaymentCreateForm({ students, action }: PaymentCreateFormProps) 
             {paymentMode === "installment" && (
               <div>
                 <label htmlFor="installmentAmount" className="mb-2 block text-sm font-extrabold text-[var(--app-text)]">مبلغ الدفعة</label>
-                <input id="installmentAmount" value={installmentAmount} onChange={(event) => setInstallmentAmount(event.target.value)} type="number" min={1} max={targetAmount || undefined} className="input" placeholder="مثال: 250000" required />
+                <input id="installmentAmount" name="installmentAmount" value={installmentAmount} onChange={(event) => setInstallmentAmount(event.target.value)} type="number" min={1} max={targetAmount || undefined} className="input" placeholder="مثال: 250000" required />
                 <p className="mt-1.5 text-xs leading-5 text-[var(--app-text-muted)]">
                   إذا كان مبلغ الدفعة مساويًا للمتبقي فسيتم تسجيلها كرسوم كاملة تلقائيًا.
                 </p>

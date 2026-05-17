@@ -2,7 +2,7 @@ import { Prisma } from "@/lib/prisma-types";
 import { db } from "@/lib/db";
 import { getSupabaseConfigErrorMessage, hasSupabaseConfig } from "@/lib/supabase-client";
 import {
-  canDeleteStudent,
+  getStudentDeleteAssociations,
   normalizeStudentInput,
   parseOptionalDate,
   validateStudentInput,
@@ -403,38 +403,54 @@ export async function deleteStudent(
     };
   }
 
-  const deleteCheck = canDeleteStudent({
-    gradesCount: student._count.grades,
-    attendanceCount: student._count.attendanceRecords,
-    feesCount: student._count.payments,
-  });
-
-  if (!deleteCheck.allowed) {
-    return {
-      ok: false,
-      message: deleteCheck.reason ?? "لا يمكن حذف الطالب حاليًا.",
-    };
-  }
-
   try {
-    await db.student.delete({
-      where: {
-        id,
-      },
-    });
+    // Cascade delete: grades → attendance → payments → student
+    await db.grade.deleteMany({ where: { studentId: id } });
+    await db.attendanceRecord.deleteMany({ where: { studentId: id } });
+    await db.payment.deleteMany({ where: { studentId: id } });
+    await db.student.delete({ where: { id } });
   } catch (error) {
     console.error("[deleteStudent] Error:", error);
     return {
       ok: false,
-      message: "حدث خطأ أثناء حذف الطالب. تأكد من عدم وجود بيانات مرتبطة.",
+      message: "حدث خطأ أثناء حذف الطالب. حاول مرة أخرى.",
     };
   }
 
   return {
     ok: true,
     data: null,
-    message: "تم حذف الطالب بنجاح.",
+    message: "تم حذف الطالب وجميع البيانات المرتبطة به بنجاح.",
   };
+}
+
+export async function getStudentDeleteInfo(
+  id: string,
+): Promise<StudentServiceResult<{ associations: { label: string; count: number }[] }>> {
+  const student = await db.student.findUnique({
+    where: { id },
+    include: {
+      _count: {
+        select: {
+          grades: true,
+          attendanceRecords: true,
+          payments: true,
+        },
+      },
+    },
+  });
+
+  if (!student) {
+    return { ok: false, message: "لم يتم العثور على الطالب." };
+  }
+
+  const check = getStudentDeleteAssociations({
+    gradesCount: student._count.grades,
+    attendanceCount: student._count.attendanceRecords,
+    feesCount: student._count.payments,
+  });
+
+  return { ok: true, data: { associations: check.associations }, message: "" };
 }
 
 export async function updateStudentStatus(

@@ -2,7 +2,7 @@ import { Prisma } from "@/lib/prisma-types";
 import { db } from "@/lib/db";
 import { getSupabaseConfigErrorMessage, hasSupabaseConfig } from "@/lib/supabase-client";
 import {
-  canDeleteSubject,
+  getSubjectDeleteAssociations,
   normalizeSubjectInput,
   validateSubjectInput,
   type Subject,
@@ -224,10 +224,33 @@ export async function updateSubject(
 export async function deleteSubject(
   id: string,
 ): Promise<SubjectServiceResult<null>> {
+  const subject = await db.subject.findUnique({ where: { id } });
+
+  if (!subject) {
+    return { ok: false, message: "لم يتم العثور على المادة الدراسية." };
+  }
+
+  try {
+    // Cascade delete: grades → schedules → exams → teacherSubjects → classSubjects → subject
+    await db.grade.deleteMany({ where: { subjectId: id } });
+    await db.schedule.deleteMany({ where: { subjectId: id } });
+    await db.exam.deleteMany({ where: { subjectId: id } });
+    await db.teacherSubject.deleteMany({ where: { subjectId: id } });
+    await db.classSubject.deleteMany({ where: { subjectId: id } });
+    await db.subject.delete({ where: { id } });
+  } catch (error) {
+    console.error("[deleteSubject] Error:", error);
+    return { ok: false, message: "حدث خطأ أثناء حذف المادة الدراسية. حاول مرة أخرى." };
+  }
+
+  return { ok: true, data: null, message: "تم حذف المادة الدراسية وجميع البيانات المرتبطة بها بنجاح." };
+}
+
+export async function getSubjectDeleteInfo(
+  id: string,
+): Promise<SubjectServiceResult<{ associations: { label: string; count: number }[] }>> {
   const subject = await db.subject.findUnique({
-    where: {
-      id,
-    },
+    where: { id },
     include: {
       _count: {
         select: {
@@ -240,44 +263,16 @@ export async function deleteSubject(
   });
 
   if (!subject) {
-    return {
-      ok: false,
-      message: "لم يتم العثور على المادة الدراسية.",
-    };
+    return { ok: false, message: "لم يتم العثور على المادة الدراسية." };
   }
 
-  const deleteCheck = canDeleteSubject({
+  const check = getSubjectDeleteAssociations({
     teachersCount: subject._count.teacherSubjects,
     classesCount: subject._count.classSubjects,
     gradesCount: subject._count.grades,
   });
 
-  if (!deleteCheck.allowed) {
-    return {
-      ok: false,
-      message: deleteCheck.reason ?? "لا يمكن حذف هذه المادة حاليًا.",
-    };
-  }
-
-  try {
-    await db.subject.delete({
-      where: {
-        id,
-      },
-    });
-  } catch (error) {
-    console.error("[deleteSubject] Error:", error);
-    return {
-      ok: false,
-      message: "حدث خطأ أثناء حذف المادة الدراسية. تأكد من عدم وجود بيانات مرتبطة.",
-    };
-  }
-
-  return {
-    ok: true,
-    data: null,
-    message: "تم حذف المادة الدراسية بنجاح.",
-  };
+  return { ok: true, data: { associations: check.associations }, message: "" };
 }
 
 export async function searchSubjects(query: string): Promise<SubjectListItem[]> {

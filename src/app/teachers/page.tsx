@@ -1,7 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { buildErrorRedirect } from "@/lib/redirect-message";
-import { db } from "@/lib/db";
 import {
   AlertTriangle,
   BookOpen,
@@ -37,7 +36,6 @@ import {
 import type { Subject } from "@/types/subject";
 import type { SectionListItem } from "@/types/class";
 import { DeleteConfirmButton } from "@/components/shared/delete-confirm-button";
-import { BulkDeleteButton } from "@/components/shared/bulk-delete-button";
 
 export const dynamic = "force-dynamic";
 
@@ -48,7 +46,6 @@ type TeachersPageProps = {
     q?: string;
     saved?: string;
     deleted?: string;
-    deletedAll?: string;
     toggled?: string;
     error?: string;
     reason?: string;
@@ -96,7 +93,6 @@ export default async function TeachersPage({
         <TeachersFeedback
           saved={resolvedSearchParams?.saved}
           deleted={resolvedSearchParams?.deleted}
-          deletedAll={resolvedSearchParams?.deletedAll}
           toggled={resolvedSearchParams?.toggled}
           error={resolvedSearchParams?.error}
           reason={resolvedSearchParams?.reason}
@@ -178,27 +174,6 @@ async function createTeacherAction(formData: FormData) {
   redirect("/teachers?saved=1");
 }
 
-async function deleteAllTeachersAction(_formData: FormData): Promise<{ ok: boolean; message?: string }> {
-  "use server";
-
-  try {
-    await db.grade.deleteMany({ where: {} });
-    await db.attendanceRecord.deleteMany({ where: {} });
-    await db.schedule.deleteMany({ where: {} });
-    await db.teacherSubject.deleteMany({ where: {} });
-    await db.teacherSection.deleteMany({ where: {} });
-    await db.teacher.deleteMany({ where: {} });
-  } catch (error) {
-    console.error("[deleteAllTeachersAction] Error:", error);
-    return { ok: false, message: "حدث خطأ أثناء حذف جميع المدرسين. تأكد من عدم وجود بيانات مرتبطة." };
-  }
-
-  revalidatePath("/");
-  revalidatePath("/teachers");
-  revalidatePath("/reports");
-  redirect("/teachers?deletedAll=1");
-}
-
 async function deleteTeacherAction(formData: FormData): Promise<{ ok: boolean; message?: string }> {
   "use server";
 
@@ -252,7 +227,6 @@ async function toggleTeacherStatusAction(formData: FormData) {
 type TeachersFeedbackProps = {
   saved?: string;
   deleted?: string;
-  deletedAll?: string;
   toggled?: string;
   error?: string;
   reason?: string;
@@ -261,7 +235,6 @@ type TeachersFeedbackProps = {
 function TeachersFeedback({
   saved,
   deleted,
-  deletedAll,
   toggled,
   error,
   reason,
@@ -282,16 +255,6 @@ function TeachersFeedback({
         tone="success"
         title="تم حذف المدرس"
         description="تم حذف المدرس من النظام لأنه غير مرتبط بمحاضرات في الجدول."
-      />
-    );
-  }
-
-  if (deletedAll === "1") {
-    return (
-      <SmartAlert
-        tone="success"
-        title="تم حذف جميع البيانات"
-        description="تم حذف جميع المدرسين والبيانات المرتبطة بهم بنجاح."
       />
     );
   }
@@ -658,12 +621,6 @@ function TeacherList({ teachers }: TeacherListProps) {
         </div>
 
         <div className="flex items-center gap-3">
-          <BulkDeleteButton
-            action={deleteAllTeachersAction}
-            entityName="المدرسين"
-            count={teachers.length}
-            description="سيتم حذف جميع الدرجات والحضور والجدول والمواد والشعب المرتبطة أيضًا."
-          />
           <span className="badge badge-info">{teachers.length} مدرس</span>
         </div>
       </div>
@@ -765,10 +722,12 @@ function TeacherRow({ teacher }: TeacherRowProps) {
         <DeleteConfirmButton
           action={deleteTeacherAction}
           itemId={teacher.id}
-          confirmTitle="هل أنت متأكد من حذف هذا المدرس؟"
-          confirmDescription="سيتم حذف بيانات المدرس نهائيًا. إذا كان مرتبطًا بمحاضرات أو درجات أو مواد، لن يتم الحذف. الأفضل تعطيله بدل الحذف."
-          confirmLabel="نعم، احذف"
-          cancelLabel="تراجع"
+          entityName="المدرس"
+          associations={[
+            ...(teacher.schedulesCount > 0 ? [{ label: "محاضرات في الجدول", count: teacher.schedulesCount }] : []),
+            ...(teacher.subjects.length > 0 ? [{ label: "ربط بمواد دراسية", count: teacher.subjects.length }] : []),
+            ...(teacher.sections.length > 0 ? [{ label: "ربط بشُعب دراسية", count: teacher.sections.length }] : []),
+          ]}
         />
       </div>
     </article>

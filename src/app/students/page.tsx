@@ -1,7 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { buildErrorRedirect } from "@/lib/redirect-message";
-import { db } from "@/lib/db";
 import {
   AlertTriangle,
   CalendarDays,
@@ -41,7 +40,6 @@ import {
 } from "@/types/student";
 import { CopyCodeButton, GenerateBadgeButton } from "@/components/students/student-actions";
 import { DeleteConfirmButton } from "@/components/shared/delete-confirm-button";
-import { BulkDeleteButton } from "@/components/shared/bulk-delete-button";
 import { StudentQrImage } from "@/components/students/student-qr-image";
 import {
   getClassDisplayName,
@@ -59,7 +57,6 @@ type StudentsPageProps = {
     status?: string;
     saved?: string;
     deleted?: string;
-    deletedAll?: string;
     statusUpdated?: string;
     error?: string;
     reason?: string;
@@ -100,7 +97,6 @@ export default async function StudentsPage({
         <StudentsFeedback
           saved={resolvedSearchParams?.saved}
           deleted={resolvedSearchParams?.deleted}
-          deletedAll={resolvedSearchParams?.deletedAll}
           statusUpdated={resolvedSearchParams?.statusUpdated}
           error={resolvedSearchParams?.error}
           reason={resolvedSearchParams?.reason}
@@ -219,25 +215,6 @@ async function updateStudentStatusAction(formData: FormData) {
   redirect("/students?statusUpdated=1");
 }
 
-async function deleteAllStudentsAction(_formData: FormData): Promise<{ ok: boolean; message?: string }> {
-  "use server";
-
-  try {
-    await db.grade.deleteMany({ where: {} });
-    await db.attendanceRecord.deleteMany({ where: {} });
-    await db.payment.deleteMany({ where: {} });
-    await db.student.deleteMany({ where: {} });
-  } catch (error) {
-    console.error("[deleteAllStudentsAction] Error:", error);
-    return { ok: false, message: "حدث خطأ أثناء حذف جميع الطلاب. تأكد من عدم وجود بيانات مرتبطة." };
-  }
-
-  revalidatePath("/");
-  revalidatePath("/students");
-  revalidatePath("/reports");
-  redirect("/students?deletedAll=1");
-}
-
 async function deleteStudentAction(formData: FormData): Promise<{ ok: boolean; message?: string }> {
   "use server";
 
@@ -268,7 +245,6 @@ async function deleteStudentAction(formData: FormData): Promise<{ ok: boolean; m
 type StudentsFeedbackProps = {
   saved?: string;
   deleted?: string;
-  deletedAll?: string;
   statusUpdated?: string;
   error?: string;
   reason?: string;
@@ -277,7 +253,6 @@ type StudentsFeedbackProps = {
 function StudentsFeedback({
   saved,
   deleted,
-  deletedAll,
   statusUpdated,
   error,
   reason,
@@ -298,16 +273,6 @@ function StudentsFeedback({
         tone="success"
         title="تم حذف الطالب"
         description="تم حذف الطالب لأنه لا يملك سجلات حضور أو درجات أو أقساط مرتبطة."
-      />
-    );
-  }
-
-  if (deletedAll === "1") {
-    return (
-      <SmartAlert
-        tone="success"
-        title="تم حذف جميع البيانات"
-        description="تم حذف جميع الطلاب والبيانات المرتبطة بهم بنجاح."
       />
     );
   }
@@ -762,12 +727,6 @@ function StudentsList({ students }: StudentsListProps) {
         </div>
 
         <div className="flex items-center gap-3">
-          <BulkDeleteButton
-            action={deleteAllStudentsAction}
-            entityName="الطلاب"
-            count={students.length}
-            description="سيتم حذف جميع الدرجات والحضور والأقساط المرتبطة أيضًا."
-          />
           <span className="badge badge-info">{students.length} طالب</span>
         </div>
       </div>
@@ -932,10 +891,12 @@ function StudentRow({ student }: StudentRowProps) {
         <DeleteConfirmButton
           action={deleteStudentAction}
           itemId={student.id}
-          confirmTitle="هل أنت متأكد من حذف هذا الطالب؟"
-          confirmDescription="سيتم حذف بيانات الطالب نهائيًا. إذا كان لديه درجات أو حضور أو أقساط، لن يتم الحذف. الأفضل تغيير حالته بدل الحذف."
-          confirmLabel="نعم، احذف"
-          cancelLabel="تراجع"
+          entityName="الطالب"
+          associations={[
+            ...(student.gradesCount > 0 ? [{ label: "درجات", count: student.gradesCount }] : []),
+            ...(student.attendanceCount > 0 ? [{ label: "سجلات حضور", count: student.attendanceCount }] : []),
+            ...(student.feesCount > 0 ? [{ label: "أقساط ومدفوعات", count: student.feesCount }] : []),
+          ]}
         />
       </div>
     </article>

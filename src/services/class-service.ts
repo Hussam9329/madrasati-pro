@@ -2,8 +2,8 @@ import { Prisma } from "@/lib/prisma-types";
 import { db } from "@/lib/db";
 import { getSupabaseConfigErrorMessage, hasSupabaseConfig } from "@/lib/supabase-client";
 import {
-  canDeleteClass,
-  canDeleteSection,
+  getClassDeleteAssociations,
+  getSectionDeleteAssociations,
   normalizeClassInput,
   normalizeSectionInput,
   validateClassInput,
@@ -302,79 +302,83 @@ export async function updateClass(
 export async function deleteClass(
   id: string,
 ): Promise<ClassServiceResult<null>> {
+  const schoolClass = await db.schoolClass.findUnique({ where: { id } });
+
+  if (!schoolClass) {
+    return { ok: false, message: "لم يتم العثور على الصف." };
+  }
+
+  try {
+    // Get all section IDs for this class
+    const sections = await db.section.findMany({
+      where: { classId: id },
+      select: { id: true },
+    });
+    const sectionIds = sections.map((s) => s.id);
+
+    // Get all student IDs in those sections
+    const students = await db.student.findMany({
+      where: { sectionId: { in: sectionIds } },
+      select: { id: true },
+    });
+    const studentIds = students.map((s) => s.id);
+
+    // Cascade delete in correct order
+    if (studentIds.length > 0) {
+      await db.grade.deleteMany({ where: { studentId: { in: studentIds } } });
+      await db.attendanceRecord.deleteMany({ where: { studentId: { in: studentIds } } });
+      await db.payment.deleteMany({ where: { studentId: { in: studentIds } } });
+    }
+    await db.schedule.deleteMany({ where: { sectionId: { in: sectionIds } } });
+    await db.exam.deleteMany({ where: { schedule: { sectionId: { in: sectionIds } } } });
+    await db.teacherSection.deleteMany({ where: { sectionId: { in: sectionIds } } });
+    await db.classSubject.deleteMany({ where: { classId: id } });
+    await db.classFeeSetting.deleteMany({ where: { classId: id } });
+    await db.student.deleteMany({ where: { sectionId: { in: sectionIds } } });
+    await db.section.deleteMany({ where: { classId: id } });
+    await db.schoolClass.delete({ where: { id } });
+  } catch (error) {
+    console.error("[deleteClass] Error:", error);
+    return { ok: false, message: "حدث خطأ أثناء حذف الصف. حاول مرة أخرى." };
+  }
+
+  return { ok: true, data: null, message: "تم حذف الصف وجميع البيانات المرتبطة به بنجاح." };
+}
+
+export async function getClassDeleteInfo(
+  id: string,
+): Promise<ClassServiceResult<{ associations: { label: string; count: number }[] }>> {
   const schoolClass = await db.schoolClass.findUnique({
-    where: {
-      id,
-    },
+    where: { id },
     include: {
       sections: {
         include: {
-          _count: {
-            select: {
-              students: true,
-              schedules: true,
-            },
-          },
+          _count: { select: { students: true, schedules: true } },
         },
       },
-      _count: {
-        select: {
-          sections: true,
-          classSubjects: true,
-        },
-      },
+      _count: { select: { sections: true, classSubjects: true } },
     },
   });
 
   if (!schoolClass) {
-    return {
-      ok: false,
-      message: "لم يتم العثور على الصف.",
-    };
+    return { ok: false, message: "لم يتم العثور على الصف." };
   }
 
   const studentsCount = schoolClass.sections.reduce(
-    (total, section) => total + section._count.students,
-    0,
+    (total, section) => total + section._count.students, 0,
   );
   const schedulesCount = schoolClass.sections.reduce(
-    (total, section) => total + section._count.schedules,
-    0,
+    (total, section) => total + section._count.schedules, 0,
   );
 
-  const deleteCheck = canDeleteClass({
+  const check = getClassDeleteAssociations({
     sectionsCount: schoolClass._count.sections,
     studentsCount,
     subjectsCount: schoolClass._count.classSubjects,
     schedulesCount,
   });
 
-  if (!deleteCheck.allowed) {
-    return {
-      ok: false,
-      message: deleteCheck.reason ?? "لا يمكن حذف الصف حاليًا.",
-    };
-  }
-
-  try {
-    await db.schoolClass.delete({
-      where: {
-        id,
-      },
-    });
-  } catch (error) {
-    console.error("[deleteClass] Error:", error);
-    return {
-      ok: false,
-      message: "حدث خطأ أثناء حذف الصف. تأكد من عدم وجود بيانات مرتبطة.",
-    };
-  }
-
-  return {
-    ok: true,
-    data: null,
-    message: "تم حذف الصف بنجاح.",
-  };
+  return { ok: true, data: { associations: check.associations }, message: "" };
 }
 
 export async function searchClasses(query: string): Promise<ClassListItem[]> {
@@ -799,58 +803,58 @@ export async function updateSection(
 export async function deleteSection(
   id: string,
 ): Promise<ClassServiceResult<null>> {
+  const section = await db.section.findUnique({ where: { id } });
+
+  if (!section) {
+    return { ok: false, message: "لم يتم العثور على الشعبة." };
+  }
+
+  try {
+    // Get all student IDs in this section
+    const students = await db.student.findMany({
+      where: { sectionId: id },
+      select: { id: true },
+    });
+    const studentIds = students.map((s) => s.id);
+
+    // Cascade delete in correct order
+    if (studentIds.length > 0) {
+      await db.grade.deleteMany({ where: { studentId: { in: studentIds } } });
+      await db.attendanceRecord.deleteMany({ where: { studentId: { in: studentIds } } });
+      await db.payment.deleteMany({ where: { studentId: { in: studentIds } } });
+    }
+    await db.schedule.deleteMany({ where: { sectionId: id } });
+    await db.teacherSection.deleteMany({ where: { sectionId: id } });
+    await db.student.deleteMany({ where: { sectionId: id } });
+    await db.section.delete({ where: { id } });
+  } catch (error) {
+    console.error("[deleteSection] Error:", error);
+    return { ok: false, message: "حدث خطأ أثناء حذف الشعبة. حاول مرة أخرى." };
+  }
+
+  return { ok: true, data: null, message: "تم حذف الشعبة وجميع البيانات المرتبطة بها بنجاح." };
+}
+
+export async function getSectionDeleteInfo(
+  id: string,
+): Promise<ClassServiceResult<{ associations: { label: string; count: number }[] }>> {
   const section = await db.section.findUnique({
-    where: {
-      id,
-    },
+    where: { id },
     include: {
-      _count: {
-        select: {
-          students: true,
-          schedules: true,
-        },
-      },
+      _count: { select: { students: true, schedules: true } },
     },
   });
 
   if (!section) {
-    return {
-      ok: false,
-      message: "لم يتم العثور على الشعبة.",
-    };
+    return { ok: false, message: "لم يتم العثور على الشعبة." };
   }
 
-  const deleteCheck = canDeleteSection({
+  const check = getSectionDeleteAssociations({
     studentsCount: section._count.students,
     schedulesCount: section._count.schedules,
   });
 
-  if (!deleteCheck.allowed) {
-    return {
-      ok: false,
-      message: deleteCheck.reason ?? "لا يمكن حذف الشعبة حاليًا.",
-    };
-  }
-
-  try {
-    await db.section.delete({
-      where: {
-        id,
-      },
-    });
-  } catch (error) {
-    console.error("[deleteSection] Error:", error);
-    return {
-      ok: false,
-      message: "حدث خطأ أثناء حذف الشعبة. تأكد من عدم وجود بيانات مرتبطة.",
-    };
-  }
-
-  return {
-    ok: true,
-    data: null,
-    message: "تم حذف الشعبة بنجاح.",
-  };
+  return { ok: true, data: { associations: check.associations }, message: "" };
 }
 
 export async function assignSubjectsToClass(classId: string, subjectIds: string[]) {

@@ -1,6 +1,5 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { db } from "@/lib/db";
 import {
   CheckCircle2,
   CheckSquare,
@@ -32,7 +31,6 @@ import {
   type AttendanceListItem,
 } from "@/types/attendance";
 import { DeleteConfirmButton } from "@/components/shared/delete-confirm-button";
-import { BulkDeleteButton } from "@/components/shared/bulk-delete-button";
 import { getSchoolSettings } from "@/services/school-settings-service";
 import { getSchoolDayLabel } from "@/types/settings";
 
@@ -47,7 +45,6 @@ type AttendancePageProps = {
     date?: string;
     saved?: string;
     deleted?: string;
-    deletedAll?: string;
     error?: string;
     reason?: string;
   }>;
@@ -96,7 +93,6 @@ export default async function AttendancePage({
         <AttendanceFeedback
           saved={resolvedSearchParams?.saved}
           deleted={resolvedSearchParams?.deleted}
-          deletedAll={resolvedSearchParams?.deletedAll}
           error={resolvedSearchParams?.error}
           reason={resolvedSearchParams?.reason}
         />
@@ -150,22 +146,6 @@ export default async function AttendancePage({
   );
 }
 
-async function deleteAllAttendanceAction(_formData: FormData): Promise<{ ok: boolean; message?: string }> {
-  "use server";
-
-  try {
-    await db.attendanceRecord.deleteMany({ where: {} });
-  } catch (error) {
-    console.error("[deleteAllAttendanceAction] Error:", error);
-    return { ok: false, message: "حدث خطأ أثناء حذف جميع سجلات الحضور. حاول مرة أخرى." };
-  }
-
-  revalidatePath("/");
-  revalidatePath("/attendance");
-  revalidatePath("/reports");
-  redirect("/attendance?deletedAll=1");
-}
-
 async function deleteAttendanceAction(formData: FormData): Promise<{ ok: boolean; message?: string }> {
   "use server";
 
@@ -198,12 +178,11 @@ async function deleteAttendanceAction(formData: FormData): Promise<{ ok: boolean
 type AttendanceFeedbackProps = {
   saved?: string;
   deleted?: string;
-  deletedAll?: string;
   error?: string;
   reason?: string;
 };
 
-function AttendanceFeedback({ saved, deleted, deletedAll, error, reason }: AttendanceFeedbackProps) {
+function AttendanceFeedback({ saved, deleted, error, reason }: AttendanceFeedbackProps) {
   if (saved === "1") {
     return (
       <SmartAlert
@@ -220,16 +199,6 @@ function AttendanceFeedback({ saved, deleted, deletedAll, error, reason }: Atten
         tone="success"
         title="تم حذف سجل الحضور"
         description="تم حذف سجل الحضور من النظام."
-      />
-    );
-  }
-
-  if (deletedAll === "1") {
-    return (
-      <SmartAlert
-        tone="success"
-        title="تم حذف جميع البيانات"
-        description="تم حذف جميع سجلات الحضور بنجاح."
       />
     );
   }
@@ -443,12 +412,6 @@ function AttendanceList({ records }: AttendanceListProps) {
         </div>
 
         <div className="flex items-center gap-3">
-          <BulkDeleteButton
-            action={deleteAllAttendanceAction}
-            entityName="سجلات الحضور"
-            count={records.length}
-            description="سيتم حذف جميع سجلات الحضور والغياب نهائيًا."
-          />
           <span className="badge badge-info">{records.length} سجل</span>
         </div>
       </div>
@@ -596,10 +559,8 @@ function AttendanceRow({ record }: AttendanceRowProps) {
         <DeleteConfirmButton
           action={deleteAttendanceAction}
           itemId={record.id}
-          confirmTitle="هل أنت متأكد من حذف سجل الحضور؟"
-          confirmDescription="سيتم حذف سجل الحضور لهذا اليوم نهائيًا."
-          confirmLabel="نعم، احذف"
-          cancelLabel="تراجع"
+          entityName="سجل الحضور"
+          associations={[]}
         />
       </div>
     </article>

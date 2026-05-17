@@ -1,3 +1,7 @@
+import { type DeleteAssociation, type DeleteCheckResult } from "@/types/student";
+
+export type { DeleteAssociation, DeleteCheckResult };
+
 export type SchoolClass = {
   id: string;
   name: string;
@@ -203,84 +207,62 @@ export function getSectionDisplayName(
   return `${section.className} / شعبة ${section.name}`;
 }
 
-export function canDeleteClass(input: {
+export function getClassDeleteAssociations(input: {
   sectionsCount?: number;
   studentsCount?: number;
   subjectsCount?: number;
   schedulesCount?: number;
-}): {
-  allowed: boolean;
-  reason?: string;
-} {
+}): DeleteCheckResult {
   const sectionsCount = input.sectionsCount ?? 0;
   const studentsCount = input.studentsCount ?? 0;
   const subjectsCount = input.subjectsCount ?? 0;
   const schedulesCount = input.schedulesCount ?? 0;
 
+  const associations: DeleteAssociation[] = [];
+
   if (studentsCount > 0) {
-    return {
-      allowed: false,
-      reason:
-        "لا يمكن حذف الصف لأنه يحتوي على طلاب داخل الشُعب. انقل الطلاب أو احذفهم أولًا.",
-    };
+    associations.push({ label: "طلاب داخل الشُعب", count: studentsCount });
   }
 
   if (schedulesCount > 0) {
-    return {
-      allowed: false,
-      reason:
-        "لا يمكن حذف الصف لأنه مرتبط بجدول دراسي. احذف المحاضرات المرتبطة أولًا.",
-    };
+    associations.push({ label: "محاضرات في الجدول", count: schedulesCount });
   }
 
   if (subjectsCount > 0) {
-    return {
-      allowed: false,
-      reason:
-        "لا يمكن حذف الصف لأنه مرتبط بمواد دراسية. افصل المواد عن الصف أولًا.",
-    };
+    associations.push({ label: "مواد دراسية مرتبطة", count: subjectsCount });
   }
 
   if (sectionsCount > 0) {
-    return {
-      allowed: false,
-      reason:
-        "لا يمكن حذف الصف لأنه يحتوي على شُعب. احذف الشُعب أولًا أو عطّل الصف بدل الحذف.",
-    };
+    associations.push({ label: "شُعب داخل الصف", count: sectionsCount });
   }
 
   return {
     allowed: true,
+    associations,
+    hasAssociations: associations.length > 0,
   };
 }
 
-export function canDeleteSection(input: {
+export function getSectionDeleteAssociations(input: {
   studentsCount?: number;
   schedulesCount?: number;
-}): {
-  allowed: boolean;
-  reason?: string;
-} {
+}): DeleteCheckResult {
   const studentsCount = input.studentsCount ?? 0;
   const schedulesCount = input.schedulesCount ?? 0;
 
+  const associations: DeleteAssociation[] = [];
+
   if (studentsCount > 0) {
-    return {
-      allowed: false,
-      reason:
-        "لا يمكن حذف الشعبة لأنها تحتوي على طلاب. انقل الطلاب إلى شعبة أخرى أولًا.",
-    };
+    associations.push({ label: "طلاب داخل الشعبة", count: studentsCount });
   }
 
   if (schedulesCount > 0) {
-    return {
-      allowed: false,
-      reason:
-        "لا يمكن حذف الشعبة لأنها مرتبطة بمحاضرات في الجدول الدراسي.",
-    };
+    associations.push({ label: "محاضرات في الجدول", count: schedulesCount });
   }
 
   return {
     allowed: true,
+    associations,
+    hasAssociations: associations.length > 0,
   };
 }
