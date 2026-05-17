@@ -339,12 +339,11 @@ function TeacherCreateForm({ subjects, sections }: TeacherCreateFormProps) {
             name="fullName"
             autoComplete="off"
             required
-            minLength={2}
             maxLength={120}
-            placeholder="مثال: أحمد علي أو زهراء علي حسين كاظم"
+            placeholder="مثال: أحمد أو زهراء علي حسين كاظم"
             className="input"
           />
-          <p className="mt-1 text-xs text-[var(--app-text-muted)]">أدخل اسم المدرس كاملًا (الاسم واللقب على الأقل)</p>
+          <p className="mt-1 text-xs text-[var(--app-text-muted)]">الاسم لا يجب أن يحتوي على أرقام</p>
         </div>
 
         <div>

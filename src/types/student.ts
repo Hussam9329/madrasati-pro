@@ -105,7 +105,7 @@ export function validateStudentInput(
   if (!normalized.fullName) {
     errors.fullName = "اسم الطالب مطلوب.";
   } else if (!validateQuadrupleName(normalized.fullName)) {
-    errors.fullName = "يرجى إدخال الاسم الكامل (الاسم واللقب على الأقل).";
+    errors.fullName = "الاسم لا يجب أن يحتوي على أرقام.";
   }
 
   if (!normalized.phone) {

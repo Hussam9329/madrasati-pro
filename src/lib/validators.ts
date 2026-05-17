@@ -5,8 +5,8 @@ export function validateIraqiPhone(phone: string): boolean {
 }
 
 export function validateFullName(name: string): boolean {
-  const parts = name.trim().split(/\s+/);
-  return parts.length >= 2;
+  // لا يقبل الأرقام فقط - يسمح بأي اسم طالما لا يحتوي على أرقام
+  return !/\d/.test(name.trim());
 }
 
 // Keep backward compatibility alias
@@ -17,5 +17,5 @@ export function getPhoneErrorMessage(): string {
 }
 
 export function getQuadrupleNameErrorMessage(): string {
-  return "يرجى إدخال الاسم الكامل (الاسم واللقب على الأقل).";
+  return "الاسم لا يجب أن يحتوي على أرقام.";
 }
