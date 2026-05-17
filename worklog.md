@@ -115,3 +115,44 @@ Replaced the `<select>` dropdown for section/class selection in the student crea
 - `npx tsc --noEmit` passes
 - `npm run build` compiles successfully
 - Deployed to Vercel production: https://madrasati-pro.vercel.app
+
+---
+
+## Date: 2026-05-17 (Update 2)
+
+## Student Class/Section Picker - Class-Based with Auto-Section
+
+### Problem
+1. Student page only showed sections — adding a class without sections showed "no classes" message
+2. `getSections()` used `orderBy: { class: { name: "asc" } }` which fails with the current Supabase client, returning empty results
+
+### Files Modified
+- `src/services/class-service.ts` — Fixed `getSections` orderBy + added `getOrCreateDefaultSectionForClass`
+- `src/app/students/page.tsx` — Class-based picker with auto-section creation
+
+### What Changed
+
+#### class-service.ts
+1. **Fixed `getSections()` orderBy** — Changed from nested relation sort (`class.name asc`) to simple `name: "asc"`, then sort in JS using `localeCompare("ar")`
+2. **Added null safety** — `section.class?.name ?? "صف غير معروف"` and `section._count?.students ?? 0`
+3. **Added `getOrCreateDefaultSectionForClass()`** — New function that:
+   - Validates classId and checks the class exists
+   - Looks for existing sections in the class first
+   - If none found, creates a default section named "عام" with a descriptive note
+   - Has fallback retry logic if creation fails due to race condition
+
+#### students/page.tsx
+1. **Now fetches both classes and sections** — `getClasses()` + `getSections()` in parallel
+2. **Groups sections under classes** — Uses `getClassDisplayName()` for class labels
+3. **Class without sections** — Shows an amber card saying "اختيار الصف" with a note that a default section will be auto-created
+4. **Class with sections** — Shows section radio cards as before
+5. **New `placementId` field** — Form uses `placementId` with values like `section:xxx` or `class:xxx`
+6. **Server action resolves placement** — `createStudentAction` parses `placementId`:
+   - `section:xxx` → uses the section directly
+   - `class:xxx` → calls `getOrCreateDefaultSectionForClass()` to get/create a section
+7. **Updated hint text** — "اختر الصف مباشرة. إذا كان الصف لا يحتوي على شعبة، سيتم إنشاء شعبة عامة تلقائيًا"
+
+### Verification
+- `npx tsc --noEmit` passes
+- `npm run build` compiles successfully
+- Deployed to Vercel production: https://madrasati-pro.vercel.app

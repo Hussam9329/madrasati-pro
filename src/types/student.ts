@@ -218,17 +218,23 @@ export function getStudentClassDisplay(input: {
   return classPart ?? "غير مرتبط بشعبة";
 }
 
-export function calculateAge(birthDate?: Date | null): number | null {
+export function calculateAge(birthDate?: Date | string | null): number | null {
   if (!birthDate) {
+    return null;
+  }
+
+  const date = birthDate instanceof Date ? birthDate : new Date(birthDate);
+
+  if (Number.isNaN(date.getTime())) {
     return null;
   }
 
   const today = new Date();
 
-  let age = today.getFullYear() - birthDate.getFullYear();
+  let age = today.getFullYear() - date.getFullYear();
 
-  const monthDifference = today.getMonth() - birthDate.getMonth();
-  const dayDifference = today.getDate() - birthDate.getDate();
+  const monthDifference = today.getMonth() - date.getMonth();
+  const dayDifference = today.getDate() - date.getDate();
 
   if (monthDifference < 0 || (monthDifference === 0 && dayDifference < 0)) {
     age -= 1;
