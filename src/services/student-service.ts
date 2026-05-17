@@ -676,20 +676,6 @@ async function validateSectionIfProvided(
     };
   }
 
-  if (!section.isActive) {
-    return {
-      ok: false,
-      message: "لا يمكن ربط الطالب بشعبة متوقف.",
-    };
-  }
-
-  if (!section.class.isActive) {
-    return {
-      ok: false,
-      message: "لا يمكن ربط الطالب بصف متوقف.",
-    };
-  }
-
   return {
     ok: true,
     message: "الشعبة صالحة.",

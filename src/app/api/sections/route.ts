@@ -5,7 +5,6 @@ import {
   deleteSection,
   getSections,
   getSectionsByClassId,
-  toggleSectionStatus,
   updateSection,
 } from "@/services/class-service";
 import type { SectionFormInput } from "@/types/class";
@@ -45,7 +44,6 @@ export async function POST(request: NextRequest) {
       name: body.name ?? "",
       capacity: body.capacity ?? "",
       description: body.description ?? "",
-      isActive: body.isActive ?? true,
       classId: body.classId ?? "",
     });
 
@@ -86,7 +84,6 @@ export async function PUT(request: NextRequest) {
       name: body.name ?? "",
       capacity: body.capacity ?? "",
       description: body.description ?? "",
-      isActive: body.isActive ?? true,
       classId: body.classId ?? "",
     });
 
@@ -100,50 +97,6 @@ export async function PUT(request: NextRequest) {
       {
         ok: false,
         message: "حدث خطأ أثناء تحديث الشعبة.",
-      },
-      { status: 500 },
-    );
-  }
-}
-
-export async function PATCH(request: NextRequest) {
-  try {
-    const searchParams = request.nextUrl.searchParams;
-    const id = searchParams.get("id");
-    const action = searchParams.get("action");
-
-    if (!id) {
-      return NextResponse.json(
-        {
-          ok: false,
-          message: "معرّف الشعبة مطلوب.",
-        },
-        { status: 400 },
-      );
-    }
-
-    if (action !== "toggle-status") {
-      return NextResponse.json(
-        {
-          ok: false,
-          message: "نوع العملية غير معروف.",
-        },
-        { status: 400 },
-      );
-    }
-
-    const result = await toggleSectionStatus(id);
-
-    if (!result.ok) {
-      return NextResponse.json(result, { status: 404 });
-    }
-
-    return NextResponse.json(result);
-  } catch {
-    return NextResponse.json(
-      {
-        ok: false,
-        message: "حدث خطأ أثناء تغيير حالة الشعبة.",
       },
       { status: 500 },
     );

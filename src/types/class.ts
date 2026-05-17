@@ -23,14 +23,12 @@ export type ClassFormInput = {
   name: string;
   level?: string;
   description?: string;
-  isActive?: boolean;
 };
 
 export type SectionFormInput = {
   name: string;
   capacity?: number | string;
   description?: string;
-  isActive?: boolean;
   classId: string;
 };
 
@@ -78,14 +76,11 @@ export type SectionValidationResult = {
   errors: Partial<Record<keyof SectionFormInput, string>>;
 };
 
-export type ClassStatus = "active" | "inactive";
-
 export function getEmptyClassForm(): ClassFormInput {
   return {
     name: "",
     level: "",
     description: "",
-    isActive: true,
   };
 }
 
@@ -94,7 +89,6 @@ export function getEmptySectionForm(classId = ""): SectionFormInput {
     name: "",
     capacity: "",
     description: "",
-    isActive: true,
     classId,
   };
 }
@@ -104,7 +98,6 @@ export function normalizeClassInput(input: ClassFormInput): ClassFormInput {
     name: input.name.trim(),
     level: input.level?.trim() || undefined,
     description: input.description?.trim() || undefined,
-    isActive: input.isActive ?? true,
   };
 }
 
@@ -123,7 +116,6 @@ export function normalizeSectionInput(
         ? undefined
         : Number(capacityValue),
     description: input.description?.trim() || undefined,
-    isActive: input.isActive ?? true,
     classId: input.classId.trim(),
   };
 }
@@ -193,21 +185,6 @@ export function validateSectionInput(
     valid: Object.keys(errors).length === 0,
     errors,
   };
-}
-
-export function getClassStatus(
-  schoolClass: Pick<SchoolClass, "isActive">,
-): ClassStatus {
-  return schoolClass.isActive ? "active" : "inactive";
-}
-
-export function getClassStatusLabel(status: ClassStatus): string {
-  const labels: Record<ClassStatus, string> = {
-    active: "فعّال",
-    inactive: "متوقف",
-  };
-
-  return labels[status];
 }
 
 export function getClassDisplayName(

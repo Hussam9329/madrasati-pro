@@ -95,7 +95,6 @@ export default async function GradesPage({ searchParams }: GradesPageProps) {
     safeQuery(() => getActiveTeachers(), []),
   ]);
 
-  const activeSections = sections.filter((section) => section.isActive !== false);
   const selectedFiltersCount = [sectionId, subjectId, teacherId, examType].filter(Boolean).length;
 
   return (
@@ -120,7 +119,7 @@ export default async function GradesPage({ searchParams }: GradesPageProps) {
 
         <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
           <GradeExamFilterForm
-            sections={activeSections}
+            sections={sections}
             subjects={subjects}
             teachers={teachers}
             sectionId={sectionId}

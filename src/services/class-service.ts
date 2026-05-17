@@ -87,9 +87,6 @@ export async function getClasses(): Promise<ClassListItem[]> {
 
 export async function getActiveClasses(): Promise<SchoolClass[]> {
   return db.schoolClass.findMany({
-    where: {
-      isActive: true,
-    },
     orderBy: [
       {
         level: "asc",
@@ -207,7 +204,7 @@ export async function createClass(
         name: data.name,
         level: data.level ?? null,
         description: data.description ?? null,
-        isActive: data.isActive ?? true,
+        isActive: true,
       },
     });
 
@@ -275,7 +272,7 @@ export async function updateClass(
         name: data.name,
         level: data.level ?? null,
         description: data.description ?? null,
-        isActive: data.isActive ?? true,
+        isActive: true,
       },
     });
 
@@ -380,36 +377,6 @@ export async function deleteClass(
   };
 }
 
-export async function toggleClassStatus(
-  id: string,
-): Promise<ClassServiceResult<SchoolClass>> {
-  const schoolClass = await getClassById(id);
-
-  if (!schoolClass) {
-    return {
-      ok: false,
-      message: "لم يتم العثور على الصف.",
-    };
-  }
-
-  const updatedClass = await db.schoolClass.update({
-    where: {
-      id,
-    },
-    data: {
-      isActive: !schoolClass.isActive,
-    },
-  });
-
-  return {
-    ok: true,
-    data: updatedClass,
-    message: updatedClass.isActive
-      ? "تم تفعيل الصف."
-      : "تم تعطيل الصف.",
-  };
-}
-
 export async function searchClasses(query: string): Promise<ClassListItem[]> {
   const normalizedQuery = query.trim();
 
@@ -497,25 +464,15 @@ export async function getClassesCount(): Promise<{
   inactive: number;
   sections: number;
 }> {
-  const [total, active, inactive, sections] = await Promise.all([
+  const [total, sections] = await Promise.all([
     db.schoolClass.count(),
-    db.schoolClass.count({
-      where: {
-        isActive: true,
-      },
-    }),
-    db.schoolClass.count({
-      where: {
-        isActive: false,
-      },
-    }),
     db.section.count(),
   ]);
 
   return {
     total,
-    active,
-    inactive,
+    active: total,
+    inactive: 0,
     sections,
   };
 }
@@ -603,7 +560,6 @@ export async function getActiveSectionsByClassId(
   return db.section.findMany({
     where: {
       classId,
-      isActive: true,
     },
     orderBy: {
       name: "asc",
@@ -657,7 +613,7 @@ export async function createSection(
         capacity:
           data.capacity === undefined ? null : Number(data.capacity),
         description: data.description ?? null,
-        isActive: data.isActive ?? true,
+        isActive: true,
         classId: data.classId,
       },
     });
@@ -727,7 +683,7 @@ export async function updateSection(
         capacity:
           data.capacity === undefined ? null : Number(data.capacity),
         description: data.description ?? null,
-        isActive: data.isActive ?? true,
+        isActive: true,
         classId: data.classId,
       },
     });
@@ -812,36 +768,6 @@ export async function deleteSection(
   };
 }
 
-export async function toggleSectionStatus(
-  id: string,
-): Promise<ClassServiceResult<Section>> {
-  const section = await getSectionById(id);
-
-  if (!section) {
-    return {
-      ok: false,
-      message: "لم يتم العثور على الشعبة.",
-    };
-  }
-
-  const updatedSection = await db.section.update({
-    where: {
-      id,
-    },
-    data: {
-      isActive: !section.isActive,
-    },
-  });
-
-  return {
-    ok: true,
-    data: updatedSection,
-    message: updatedSection.isActive
-      ? "تم تفعيل الشعبة."
-      : "تم تعطيل الشعبة.",
-  };
-}
-
 export async function assignSubjectsToClass(classId: string, subjectIds: string[]) {
   const uniqueSubjectIds = Array.from(new Set(subjectIds.filter(Boolean)));
 
@@ -857,7 +783,6 @@ export async function assignSubjectsToClass(classId: string, subjectIds: string[
   const validSubjects = await db.subject.findMany({
     where: {
       id: { in: uniqueSubjectIds },
-      isActive: true,
     },
     select: { id: true },
   });

@@ -36,8 +36,6 @@ export default async function ExamsPage({ searchParams }: ExamsPageProps) {
     safeQuery(() => getActiveTeachers(), []),
   ]);
 
-  const activeSections = sections.filter((section) => section.isActive !== false);
-
   return (
     <AppShell>
       <div className="mx-auto flex w-full max-w-[1300px] flex-col gap-6">
@@ -80,7 +78,7 @@ export default async function ExamsPage({ searchParams }: ExamsPageProps) {
                   <label className="mb-2 block text-sm font-extrabold text-[var(--app-text)]" htmlFor="sectionId"><Layers size={14} className="ml-1 inline" /> الصف / الشعبة</label>
                   <select id="sectionId" name="sectionId" className="input" required defaultValue="">
                     <option value="" disabled>اختر الصف</option>
-                    {activeSections.map((section) => <option key={section.id} value={section.id}>{getSectionDisplayName(section)}</option>)}
+                    {sections.map((section) => <option key={section.id} value={section.id}>{getSectionDisplayName(section)}</option>)}
                   </select>
                 </div>
 

@@ -1283,9 +1283,6 @@ function ClassesTable({ rows }: ClassesTableProps) {
               <th className="px-5 py-3 text-center font-extrabold text-[var(--app-text-muted)]">
                 المواد
               </th>
-              <th className="px-5 py-3 text-center font-extrabold text-[var(--app-text-muted)]">
-                الحالة
-              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[var(--app-border-soft)]">
@@ -1308,16 +1305,6 @@ function ClassesTable({ rows }: ClassesTableProps) {
                 </td>
                 <td className="px-5 py-3 text-center font-bold text-purple-600">
                   {row.subjectsCount}
-                </td>
-                <td className="px-5 py-3 text-center">
-                  <span
-                    className={[
-                      "badge",
-                      row.isActive ? "badge-success" : "badge-warning",
-                    ].join(" ")}
-                  >
-                    {row.isActive ? "فعّال" : "متوقف"}
-                  </span>
                 </td>
               </tr>
             ))}

@@ -534,26 +534,6 @@ async function validateScheduleRelations(
     };
   }
 
-  if (!section.isActive) {
-    return {
-      ok: false,
-      message: "لا يمكن إضافة محاضرة لشعبة متوقف.",
-      errors: {
-        sectionId: "الشعبة متوقف.",
-      },
-    };
-  }
-
-  if (!section.class.isActive) {
-    return {
-      ok: false,
-      message: "لا يمكن إضافة محاضرة لصف متوقف.",
-      errors: {
-        sectionId: "الصف المرتبط بهذه الشعبة متوقف.",
-      },
-    };
-  }
-
   if (!subject) {
     return {
       ok: false,
@@ -564,32 +544,12 @@ async function validateScheduleRelations(
     };
   }
 
-  if (!subject.isActive) {
-    return {
-      ok: false,
-      message: "لا يمكن إضافة مادة متوقف إلى الجدول.",
-      errors: {
-        subjectId: "المادة متوقف.",
-      },
-    };
-  }
-
   if (!teacher) {
     return {
       ok: false,
       message: "المدرس المحدد غير موجود.",
       errors: {
         teacherId: "المدرس المحدد غير موجود.",
-      },
-    };
-  }
-
-  if (!teacher.isActive) {
-    return {
-      ok: false,
-      message: "لا يمكن إسناد المحاضرة لمدرس متوقف.",
-      errors: {
-        teacherId: "المدرس متوقف.",
       },
     };
   }

@@ -10,7 +10,6 @@ export type Subject = {
 export type SubjectFormInput = {
   name: string;
   description?: string;
-  isActive?: boolean;
 };
 
 export type SubjectListItem = {
@@ -29,13 +28,10 @@ export type SubjectValidationResult = {
   errors: Partial<Record<keyof SubjectFormInput, string>>;
 };
 
-export type SubjectStatus = "active" | "inactive";
-
 export function getEmptySubjectForm(): SubjectFormInput {
   return {
     name: "",
     description: "",
-    isActive: true,
   };
 }
 
@@ -45,7 +41,6 @@ export function normalizeSubjectInput(
   return {
     name: input.name.trim(),
     description: input.description?.trim() || undefined,
-    isActive: input.isActive ?? true,
   };
 }
 
@@ -75,25 +70,6 @@ export function validateSubjectInput(
     valid: Object.keys(errors).length === 0,
     errors,
   };
-}
-
-export function getSubjectStatus(subject: Pick<Subject, "isActive">): SubjectStatus {
-  return subject.isActive ? "active" : "inactive";
-}
-
-export function getSubjectStatusLabel(status: SubjectStatus): string {
-  const labels: Record<SubjectStatus, string> = {
-    active: "فعّال",
-    inactive: "متوقف",
-  };
-
-  return labels[status];
-}
-
-export function getSubjectStatusTone(
-  status: SubjectStatus,
-): "success" | "warning" {
-  return status === "active" ? "success" : "warning";
 }
 
 export function canDeleteSubject(subject: {

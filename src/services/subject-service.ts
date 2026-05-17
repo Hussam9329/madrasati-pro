@@ -52,9 +52,6 @@ export async function getSubjects(): Promise<SubjectListItem[]> {
 
 export async function getActiveSubjects(): Promise<Subject[]> {
   return db.subject.findMany({
-    where: {
-      isActive: true,
-    },
     orderBy: {
       name: "asc",
     },
@@ -129,7 +126,7 @@ export async function createSubject(
       data: {
         name: data.name,
         description: data.description ?? null,
-        isActive: data.isActive ?? true,
+        isActive: true,
       },
     });
 
@@ -197,7 +194,7 @@ export async function updateSubject(
       data: {
         name: data.name,
         description: data.description ?? null,
-        isActive: data.isActive ?? true,
+        isActive: true,
       },
     });
 
@@ -283,36 +280,6 @@ export async function deleteSubject(
   };
 }
 
-export async function toggleSubjectStatus(
-  id: string,
-): Promise<SubjectServiceResult<Subject>> {
-  const subject = await getSubjectById(id);
-
-  if (!subject) {
-    return {
-      ok: false,
-      message: "لم يتم العثور على المادة الدراسية.",
-    };
-  }
-
-  const updatedSubject = await db.subject.update({
-    where: {
-      id,
-    },
-    data: {
-      isActive: !subject.isActive,
-    },
-  });
-
-  return {
-    ok: true,
-    data: updatedSubject,
-    message: updatedSubject.isActive
-      ? "تم تفعيل المادة الدراسية."
-      : "تم تعطيل المادة الدراسية.",
-  };
-}
-
 export async function searchSubjects(query: string): Promise<SubjectListItem[]> {
   const normalizedQuery = query.trim();
 
@@ -366,24 +333,12 @@ export async function getSubjectsCount(): Promise<{
   active: number;
   inactive: number;
 }> {
-  const [total, active, inactive] = await Promise.all([
-    db.subject.count(),
-    db.subject.count({
-      where: {
-        isActive: true,
-      },
-    }),
-    db.subject.count({
-      where: {
-        isActive: false,
-      },
-    }),
-  ]);
+  const total = await db.subject.count();
 
   return {
     total,
-    active,
-    inactive,
+    active: total,
+    inactive: 0,
   };
 }
 

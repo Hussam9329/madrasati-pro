@@ -2,12 +2,10 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { buildErrorRedirect } from "@/lib/redirect-message";
 import {
-  AlertTriangle,
   BookOpen,
   CheckCircle2,
   FileText,
   Layers3,
-  Power,
   Search,
 } from "lucide-react";
 import { safeQuery } from "@/lib/db";
@@ -21,11 +19,8 @@ import {
   deleteSubject,
   getSubjectsCount,
   searchSubjects,
-  toggleSubjectStatus,
 } from "@/services/subject-service";
 import {
-  getSubjectStatus,
-  getSubjectStatusLabel,
   type SubjectFormInput,
   type SubjectListItem,
 } from "@/types/subject";
@@ -40,7 +35,6 @@ type SubjectsPageProps = {
     q?: string;
     saved?: string;
     deleted?: string;
-    toggled?: string;
     error?: string;
     reason?: string;
   }>;
@@ -73,7 +67,6 @@ export default async function SubjectsPage({
         <SubjectsFeedback
           saved={resolvedSearchParams?.saved}
           deleted={resolvedSearchParams?.deleted}
-          toggled={resolvedSearchParams?.toggled}
           error={resolvedSearchParams?.error}
           reason={resolvedSearchParams?.reason}
         />
@@ -90,11 +83,7 @@ export default async function SubjectsPage({
           <SubjectCreateForm />
 
           <div className="flex flex-col gap-6">
-            <SubjectStats
-              total={counts.total}
-              active={counts.active}
-              inactive={counts.inactive}
-            />
+            <SubjectStats total={counts.total} />
 
             <SubjectSearchForm query={query} />
           </div>
@@ -132,7 +121,6 @@ async function createSubjectAction(formData: FormData) {
   const input: SubjectFormInput = {
     name: String(formData.get("name") ?? ""),
     description: String(formData.get("description") ?? ""),
-    isActive: formData.get("isActive") === "on",
   };
 
   const result = await createSubject(input);
@@ -145,27 +133,6 @@ async function createSubjectAction(formData: FormData) {
   revalidatePath("/subjects");
   revalidatePath("/reports");
   redirect("/subjects?saved=1");
-}
-
-async function toggleSubjectAction(formData: FormData) {
-  "use server";
-
-  const id = String(formData.get("id") ?? "");
-
-  if (!id) {
-    redirect("/subjects?error=missing-id");
-  }
-
-  const result = await toggleSubjectStatus(id);
-
-  if (!result.ok) {
-    redirect("/subjects?error=toggle");
-  }
-
-  revalidatePath("/");
-  revalidatePath("/subjects");
-  revalidatePath("/reports");
-  redirect("/subjects?toggled=1");
 }
 
 async function deleteSubjectAction(formData: FormData): Promise<{ ok: boolean; message?: string }> {
@@ -198,7 +165,6 @@ async function deleteSubjectAction(formData: FormData): Promise<{ ok: boolean; m
 type SubjectsFeedbackProps = {
   saved?: string;
   deleted?: string;
-  toggled?: string;
   error?: string;
   reason?: string;
 };
@@ -206,7 +172,6 @@ type SubjectsFeedbackProps = {
 function SubjectsFeedback({
   saved,
   deleted,
-  toggled,
   error,
   reason,
 }: SubjectsFeedbackProps) {
@@ -230,22 +195,12 @@ function SubjectsFeedback({
     );
   }
 
-  if (toggled === "1") {
-    return (
-      <SmartAlert
-        tone="success"
-        title="تم تحديث حالة المادة"
-        description="تم تغيير حالة المادة بين فعّال ومتوقف بنجاح."
-      />
-    );
-  }
-
   if (error) {
     let description: string;
     if (reason) {
       description = reason;
     } else if (error === "delete") {
-      description = "لا يمكن حذف المادة إذا كانت مرتبطة بمدرسين أو صفوف أو درجات. عطّلها بدل حذفها.";
+      description = "لا يمكن حذف المادة إذا كانت مرتبطة بمدرسين أو صفوف أو درجات.";
     } else {
       description = "تأكد من إدخال اسم المادة بشكل صحيح، وأن الاسم غير مكرر.";
     }
@@ -326,27 +281,6 @@ function SubjectCreateForm() {
             autoComplete="off"
           />
         </div>
-
-        <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-[var(--app-border-soft)] bg-gradient-to-l to-indigo-50/30 to-amber-50/20 p-4">
-          <input
-            type="checkbox"
-            id="isActive"
-            name="isActive"
-            defaultChecked
-            className="h-5 w-5 accent-indigo-600"
-            autoComplete="off"
-          />
-
-          <span>
-            <span className="block font-extrabold text-[var(--app-text)]">
-              المادة فعّال
-            </span>
-
-            <span className="mt-1 block text-sm leading-6 text-[var(--app-text-muted)]">
-              المواد الفعّال تظهر في الربط مع المدرسين والصفوف.
-            </span>
-          </span>
-        </label>
       </div>
 
       <div className="flex flex-col gap-3 border-t border-[var(--app-border-soft)] bg-gradient-to-l to-indigo-50/30 to-amber-50/20 p-6 sm:flex-row sm:items-center sm:justify-between">
@@ -365,29 +299,15 @@ function SubjectCreateForm() {
 
 type SubjectStatsProps = {
   total: number;
-  active: number;
-  inactive: number;
 };
 
-function SubjectStats({ total, active, inactive }: SubjectStatsProps) {
+function SubjectStats({ total }: SubjectStatsProps) {
   const stats = [
     {
       label: "إجمالي المواد",
       value: total,
       icon: Layers3,
       className: "bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700",
-    },
-    {
-      label: "مواد فعّال",
-      value: active,
-      icon: CheckCircle2,
-      className: "bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-700",
-    },
-    {
-      label: "مواد متوقف",
-      value: inactive,
-      icon: AlertTriangle,
-      className: "bg-gradient-to-br from-amber-100 to-orange-100 text-amber-700",
     },
   ];
 
@@ -478,7 +398,7 @@ function SubjectList({ subjects }: SubjectListProps) {
           </h3>
 
           <p className="mt-1 text-sm leading-6 text-[var(--app-text-muted)]">
-            يمكنك متابعة المواد، حالتها، وعدد الارتباطات الخاصة بها.
+            يمكنك متابعة المواد وعدد الارتباطات الخاصة بها.
           </p>
         </div>
 
@@ -499,12 +419,6 @@ type SubjectRowProps = {
 };
 
 function SubjectRow({ subject }: SubjectRowProps) {
-  const status = getSubjectStatus(subject);
-  const statusLabel = getSubjectStatusLabel(status);
-
-  const statusClass =
-    status === "active" ? "badge-success" : "badge-warning";
-
   return (
     <article className="grid gap-4 p-5 transition hover:bg-indigo-50/40 lg:grid-cols-[1fr_auto] lg:items-center">
       <div className="flex min-w-0 gap-4">
@@ -517,10 +431,6 @@ function SubjectRow({ subject }: SubjectRowProps) {
             <h4 className="text-lg font-extrabold text-[var(--app-text)]">
               {subject.name}
             </h4>
-
-            <span className={["badge", statusClass].join(" ")}>
-              {statusLabel}
-            </span>
           </div>
 
           <div className="mt-2 flex flex-wrap gap-2 text-sm text-[var(--app-text-muted)]">
@@ -557,20 +467,11 @@ function SubjectRow({ subject }: SubjectRowProps) {
       </div>
 
       <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
-        <form action={toggleSubjectAction}>
-          <input type="hidden" name="id" value={subject.id} />
-
-          <button type="submit" className="btn btn-secondary w-full">
-            <Power size={17} />
-            {subject.isActive ? "تعطيل" : "تفعيل"}
-          </button>
-        </form>
-
         <DeleteConfirmButton
           action={deleteSubjectAction}
           itemId={subject.id}
           confirmTitle="هل أنت متأكد من حذف هذه المادة؟"
-          confirmDescription="سيتم حذف المادة نهائيًا. إذا كانت مرتبطة بمدرسين أو صفوف أو درجات، لن يتم الحذف. الأفضل تعطيلها بدل الحذف."
+          confirmDescription="سيتم حذف المادة نهائيًا. إذا كانت مرتبطة بمدرسين أو صفوف أو درجات، لن يتم الحذف."
           confirmLabel="نعم، احذف"
           cancelLabel="تراجع"
         />

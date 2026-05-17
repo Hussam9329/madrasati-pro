@@ -5,7 +5,6 @@ import {
   deleteSubject,
   getSubjects,
   searchSubjects,
-  toggleSubjectStatus,
   updateSubject,
 } from "@/services/subject-service";
 import type { SubjectFormInput } from "@/types/subject";
@@ -44,7 +43,6 @@ export async function POST(request: NextRequest) {
     const result = await createSubject({
       name: body.name ?? "",
       description: body.description ?? "",
-      isActive: body.isActive ?? true,
     });
 
     if (!result.ok) {
@@ -83,7 +81,6 @@ export async function PUT(request: NextRequest) {
     const result = await updateSubject(id, {
       name: body.name ?? "",
       description: body.description ?? "",
-      isActive: body.isActive ?? true,
     });
 
     if (!result.ok) {
@@ -96,50 +93,6 @@ export async function PUT(request: NextRequest) {
       {
         ok: false,
         message: "حدث خطأ أثناء تحديث المادة الدراسية.",
-      },
-      { status: 500 },
-    );
-  }
-}
-
-export async function PATCH(request: NextRequest) {
-  try {
-    const searchParams = request.nextUrl.searchParams;
-    const id = searchParams.get("id");
-    const action = searchParams.get("action");
-
-    if (!id) {
-      return NextResponse.json(
-        {
-          ok: false,
-          message: "معرّف المادة الدراسية مطلوب.",
-        },
-        { status: 400 },
-      );
-    }
-
-    if (action !== "toggle-status") {
-      return NextResponse.json(
-        {
-          ok: false,
-          message: "نوع العملية غير معروف.",
-        },
-        { status: 400 },
-      );
-    }
-
-    const result = await toggleSubjectStatus(id);
-
-    if (!result.ok) {
-      return NextResponse.json(result, { status: 404 });
-    }
-
-    return NextResponse.json(result);
-  } catch {
-    return NextResponse.json(
-      {
-        ok: false,
-        message: "حدث خطأ أثناء تغيير حالة المادة الدراسية.",
       },
       { status: 500 },
     );

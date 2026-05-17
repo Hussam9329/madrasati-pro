@@ -2,13 +2,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { buildErrorRedirect } from "@/lib/redirect-message";
 import {
-  AlertTriangle,
   CheckCircle2,
   DoorOpen,
   GraduationCap,
   Layers3,
   ListTree,
-  Power,
   Search,
   Users,
 } from "lucide-react";
@@ -28,14 +26,10 @@ import {
   getClassesCount,
   getSections,
   searchClasses,
-  toggleClassStatus,
-  toggleSectionStatus,
 } from "@/services/class-service";
 import { getActiveSubjects } from "@/services/subject-service";
 import {
   getClassDisplayName,
-  getClassStatus,
-  getClassStatusLabel,
   getSectionDisplayName,
   type ClassFormInput,
   type ClassListItem,
@@ -55,7 +49,6 @@ type ClassesPageProps = {
     classSaved?: string;
     sectionSaved?: string;
     deleted?: string;
-    toggled?: string;
     error?: string;
     reason?: string;
   }>;
@@ -91,7 +84,6 @@ export default async function ClassesPage({ searchParams }: ClassesPageProps) {
           classSaved={resolvedSearchParams?.classSaved}
           sectionSaved={resolvedSearchParams?.sectionSaved}
           deleted={resolvedSearchParams?.deleted}
-          toggled={resolvedSearchParams?.toggled}
           error={resolvedSearchParams?.error}
           reason={resolvedSearchParams?.reason}
         />
@@ -110,8 +102,6 @@ export default async function ClassesPage({ searchParams }: ClassesPageProps) {
           <div className="flex flex-col gap-6">
             <ClassesStats
               total={counts.total}
-              active={counts.active}
-              inactive={counts.inactive}
               sections={counts.sections}
             />
 
@@ -158,7 +148,6 @@ async function createClassAction(formData: FormData) {
     name: String(formData.get("name") ?? ""),
     level: String(formData.get("level") ?? ""),
     description: String(formData.get("description") ?? ""),
-    isActive: formData.get("isActive") === "on",
   };
 
   const result = await createClass(input);
@@ -181,7 +170,6 @@ async function createSectionAction(formData: FormData) {
     capacity: String(formData.get("capacity") ?? ""),
     description: String(formData.get("description") ?? ""),
     classId: String(formData.get("classId") ?? ""),
-    isActive: formData.get("isActive") === "on",
   };
 
   const result = await createSection(input);
@@ -194,27 +182,6 @@ async function createSectionAction(formData: FormData) {
   revalidatePath("/classes");
   revalidatePath("/reports");
   redirect("/classes?sectionSaved=1");
-}
-
-async function toggleClassAction(formData: FormData) {
-  "use server";
-
-  const id = String(formData.get("id") ?? "");
-
-  if (!id) {
-    redirect("/classes?error=missing-id");
-  }
-
-  const result = await toggleClassStatus(id);
-
-  if (!result.ok) {
-    redirect("/classes?error=toggle-class");
-  }
-
-  revalidatePath("/");
-  revalidatePath("/classes");
-  revalidatePath("/reports");
-  redirect("/classes?toggled=1");
 }
 
 async function deleteClassAction(formData: FormData): Promise<{ ok: boolean; message?: string }> {
@@ -242,27 +209,6 @@ async function deleteClassAction(formData: FormData): Promise<{ ok: boolean; mes
   revalidatePath("/classes");
   revalidatePath("/reports");
   redirect("/classes?deleted=1");
-}
-
-async function toggleSectionAction(formData: FormData) {
-  "use server";
-
-  const id = String(formData.get("id") ?? "");
-
-  if (!id) {
-    redirect("/classes?error=missing-id");
-  }
-
-  const result = await toggleSectionStatus(id);
-
-  if (!result.ok) {
-    redirect("/classes?error=toggle-section");
-  }
-
-  revalidatePath("/");
-  revalidatePath("/classes");
-  revalidatePath("/reports");
-  redirect("/classes?toggled=1");
 }
 
 async function deleteSectionAction(formData: FormData): Promise<{ ok: boolean; message?: string }> {
@@ -312,7 +258,6 @@ type ClassesFeedbackProps = {
   classSaved?: string;
   sectionSaved?: string;
   deleted?: string;
-  toggled?: string;
   error?: string;
   reason?: string;
 };
@@ -321,7 +266,6 @@ function ClassesFeedback({
   classSaved,
   sectionSaved,
   deleted,
-  toggled,
   error,
   reason,
 }: ClassesFeedbackProps) {
@@ -351,16 +295,6 @@ function ClassesFeedback({
         tone="success"
         title="تم الحذف بنجاح"
         description="تم حذف العنصر لأنه غير مرتبط بالطلاب أو جدول دراسي."
-      />
-    );
-  }
-
-  if (toggled === "1") {
-    return (
-      <SmartAlert
-        tone="success"
-        title="تم تحديث الحالة"
-        description="تم تغيير الحالة بين فعّال ومتوقف بنجاح."
       />
     );
   }
@@ -471,27 +405,6 @@ function ClassCreateForm() {
             className="input min-h-[110px] resize-y leading-7"
           />
         </div>
-
-        <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-[var(--app-border-soft)] bg-gradient-to-l to-indigo-50/30 to-amber-50/20 p-4">
-          <input
-            type="checkbox"
-            id="class-isActive"
-            name="isActive"
-            autoComplete="off"
-            defaultChecked
-            className="h-5 w-5 accent-indigo-600"
-          />
-
-          <span>
-            <span className="block font-extrabold text-[var(--app-text)]">
-              الصف فعّال
-            </span>
-
-            <span className="mt-1 block text-sm leading-6 text-[var(--app-text-muted)]">
-              الصفوف الفعّال تظهر عند إضافة الشُعب والطلاب.
-            </span>
-          </span>
-        </label>
       </div>
 
       <div className="flex flex-col gap-3 border-t border-[var(--app-border-soft)] bg-gradient-to-l to-indigo-50/30 to-amber-50/20 p-6 sm:flex-row sm:items-center sm:justify-between">
@@ -564,7 +477,7 @@ function SectionCreateForm({ classes }: SectionCreateFormProps) {
 
           {classes.length === 0 ? (
             <p className="mt-2 text-sm leading-6 text-amber-700">
-              أضف صفًا فعّالًا أولًا حتى تتمكن من إنشاء الشُعب.
+              أضف صفًا أولًا حتى تتمكن من إنشاء الشُعب.
             </p>
           ) : null}
         </div>
@@ -627,27 +540,6 @@ function SectionCreateForm({ classes }: SectionCreateFormProps) {
             className="input min-h-[110px] resize-y leading-7"
           />
         </div>
-
-        <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-[var(--app-border-soft)] bg-gradient-to-l to-indigo-50/30 to-amber-50/20 p-4">
-          <input
-            type="checkbox"
-            id="section-isActive"
-            name="isActive"
-            autoComplete="off"
-            defaultChecked
-            className="h-5 w-5 accent-indigo-600"
-          />
-
-          <span>
-            <span className="block font-extrabold text-[var(--app-text)]">
-              الشعبة فعّال
-            </span>
-
-            <span className="mt-1 block text-sm leading-6 text-[var(--app-text-muted)]">
-              الشُعب الفعّال تظهر عند تسجيل الطلاب.
-            </span>
-          </span>
-        </label>
       </div>
 
       <div className="flex flex-col gap-3 border-t border-[var(--app-border-soft)] bg-gradient-to-l to-indigo-50/30 to-amber-50/20 p-6 sm:flex-row sm:items-center sm:justify-between">
@@ -670,30 +562,16 @@ function SectionCreateForm({ classes }: SectionCreateFormProps) {
 
 type ClassesStatsProps = {
   total: number;
-  active: number;
-  inactive: number;
   sections: number;
 };
 
-function ClassesStats({ total, active, inactive, sections }: ClassesStatsProps) {
+function ClassesStats({ total, sections }: ClassesStatsProps) {
   const stats = [
     {
       label: "إجمالي الصفوف",
       value: total,
       icon: GraduationCap,
       className: "bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700",
-    },
-    {
-      label: "صفوف فعّال",
-      value: active,
-      icon: CheckCircle2,
-      className: "bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-700",
-    },
-    {
-      label: "صفوف متوقف",
-      value: inactive,
-      icon: AlertTriangle,
-      className: "bg-gradient-to-br from-amber-100 to-orange-100 text-amber-700",
     },
     {
       label: "إجمالي الشُعب",
@@ -821,9 +699,6 @@ type SectionRowProps = {
 };
 
 function SectionRow({ section }: SectionRowProps) {
-  const statusClass = section.isActive ? "badge-success" : "badge-warning";
-  const statusLabel = section.isActive ? "فعّال" : "متوقف";
-
   return (
     <article className="grid gap-4 p-5 transition hover:bg-indigo-50/40 lg:grid-cols-[1fr_auto] lg:items-center">
       <div className="flex gap-4">
@@ -836,10 +711,6 @@ function SectionRow({ section }: SectionRowProps) {
             <h4 className="font-extrabold text-[var(--app-text)]">
               {getSectionDisplayName(section)}
             </h4>
-
-            <span className={["badge", statusClass].join(" ")}>
-              {statusLabel}
-            </span>
           </div>
 
           <div className="mt-2 flex flex-wrap gap-2">
@@ -865,15 +736,6 @@ function SectionRow({ section }: SectionRowProps) {
       </div>
 
       <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
-        <form action={toggleSectionAction}>
-          <input type="hidden" name="id" value={section.id} />
-
-          <button type="submit" className="btn btn-secondary w-full">
-            <Power size={17} />
-            {section.isActive ? "تعطيل" : "تفعيل"}
-          </button>
-        </form>
-
         <DeleteConfirmButton
           action={deleteSectionAction}
           itemId={section.id}
@@ -924,10 +786,6 @@ type ClassRowProps = {
 };
 
 function ClassRow({ schoolClass, subjects }: ClassRowProps) {
-  const status = getClassStatus(schoolClass);
-  const statusLabel = getClassStatusLabel(status);
-  const statusClass = status === "active" ? "badge-success" : "badge-warning";
-
   return (
     <article className="grid gap-4 p-5 transition hover:bg-indigo-50/40 lg:grid-cols-[1fr_auto] lg:items-center">
       <div className="flex min-w-0 gap-4">
@@ -940,10 +798,6 @@ function ClassRow({ schoolClass, subjects }: ClassRowProps) {
             <h4 className="text-lg font-extrabold text-[var(--app-text)]">
               {getClassDisplayName(schoolClass)}
             </h4>
-
-            <span className={["badge", statusClass].join(" ")}>
-              {statusLabel}
-            </span>
           </div>
 
           {schoolClass.description ? (
@@ -980,15 +834,6 @@ function ClassRow({ schoolClass, subjects }: ClassRowProps) {
       </div>
 
       <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
-        <form action={toggleClassAction}>
-          <input type="hidden" name="id" value={schoolClass.id} />
-
-          <button type="submit" className="btn btn-secondary w-full">
-            <Power size={17} />
-            {schoolClass.isActive ? "تعطيل" : "تفعيل"}
-          </button>
-        </form>
-
         <DeleteConfirmButton
           action={deleteClassAction}
           itemId={schoolClass.id}

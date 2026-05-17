@@ -75,7 +75,6 @@ export default async function StudentsPage({
     safeQuery(() => getStudentsCount(), { total: 0, active: 0, inactive: 0, graduated: 0, transferred: 0, withoutSection: 0 }),
   ]);
 
-  const activeSections = sections.filter((section) => section.isActive !== false);
   const hasStudents = counts.total > 0;
 
   return (
@@ -105,7 +104,7 @@ export default async function StudentsPage({
         />
 
         <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-          <StudentCreateForm sections={activeSections} />
+          <StudentCreateForm sections={sections} />
 
           <div className="flex flex-col gap-6">
             <StudentsStats
