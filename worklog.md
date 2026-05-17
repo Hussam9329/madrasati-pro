@@ -87,3 +87,31 @@ The vercel.json already had proper settings including `buildCommand`, `outputDir
 - TypeScript compilation passes with no errors (`npx tsc --noEmit` succeeded)
 - All fallback values match the exact return types of their corresponding service functions
 - The app structure and functionality remain unchanged - only error resilience was added
+
+---
+
+## Date: 2026-05-17
+
+## Student Section Picker - Card-Based UI
+
+### Change
+Replaced the `<select>` dropdown for section/class selection in the student creation form with card-based radio buttons grouped by class.
+
+### File Modified
+- `src/app/students/page.tsx` — `StudentCreateForm` component
+
+### What Changed
+1. **Grouped sections by class** — sections are now organized under their parent class using `reduce()` to create class groups
+2. **Card-based radio selection** — each section is displayed as a selectable card with:
+   - Radio input (`name="sectionId"`) so the same form field is submitted
+   - Section name displayed prominently
+   - Student count and capacity info shown as subtitle
+   - Visual feedback on hover and selection (`has-[:checked]:` CSS)
+3. **Empty state** — when no classes/sections exist, shows a helpful message directing to the classes page
+4. **Scrollable container** — section cards area is scrollable (`max-h-80 overflow-y-auto`) for many classes/sections
+5. **Same form field name** — still uses `sectionId` as the name, so the API/backend logic is completely unchanged
+
+### Verification
+- `npx tsc --noEmit` passes
+- `npm run build` compiles successfully
+- Deployed to Vercel production: https://madrasati-pro.vercel.app

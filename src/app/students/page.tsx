@@ -19,7 +19,9 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { SmartAlert } from "@/components/shared/smart-alert";
 import { safeQuery } from "@/lib/db";
 import {
-  getSections
+  getClasses,
+  getOrCreateDefaultSectionForClass,
+  getSections,
 } from "@/services/class-service";
 import {
   createStudent,
@@ -39,7 +41,11 @@ import {
 import { CopyCodeButton, GenerateBadgeButton } from "@/components/students/student-actions";
 import { DeleteConfirmButton } from "@/components/shared/delete-confirm-button";
 import { StudentQrImage } from "@/components/students/student-qr-image";
-import type { SectionListItem } from "@/types/class";
+import {
+  getClassDisplayName,
+  type ClassListItem,
+  type SectionListItem,
+} from "@/types/class";
 
 export const dynamic = "force-dynamic";
 
@@ -66,11 +72,12 @@ export default async function StudentsPage({
   const query = resolvedSearchParams?.q?.trim() ?? "";
   const status = resolvedSearchParams?.status?.trim() ?? "";
 
-  const [students, sections, counts] = await Promise.all([
+  const [students, classes, sections, counts] = await Promise.all([
     safeQuery(() => getStudents({
       query,
       status,
     }), []),
+    safeQuery(() => getClasses(), []),
     safeQuery(() => getSections(), []),
     safeQuery(() => getStudentsCount(), { total: 0, active: 0, inactive: 0, graduated: 0, transferred: 0, withoutSection: 0 }),
   ]);
@@ -104,7 +111,7 @@ export default async function StudentsPage({
         />
 
         <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-          <StudentCreateForm sections={sections} />
+          <StudentCreateForm classes={classes} sections={sections} />
 
           <div className="flex flex-col gap-6">
             <StudentsStats
@@ -149,12 +156,29 @@ export default async function StudentsPage({
 async function createStudentAction(formData: FormData) {
   "use server";
 
+  const placementId = String(formData.get("placementId") ?? "");
+  const [placementType, selectedId] = placementId.split(":");
+
+  let sectionId = "";
+
+  if (placementType === "section" && selectedId) {
+    sectionId = selectedId;
+  } else if (placementType === "class" && selectedId) {
+    const defaultSectionResult = await getOrCreateDefaultSectionForClass(selectedId);
+
+    if (!defaultSectionResult.ok || !defaultSectionResult.data) {
+      redirect(buildErrorRedirect("/students", "create", defaultSectionResult.message));
+    }
+
+    sectionId = defaultSectionResult.data.id;
+  }
+
   const input: StudentFormInput = {
     fullName: String(formData.get("fullName") ?? ""),
     phone: String(formData.get("phone") ?? ""),
     guardianPhone: String(formData.get("guardianPhone") ?? ""),
     birthDate: String(formData.get("birthDate") ?? ""),
-    sectionId: String(formData.get("sectionId") ?? ""),
+    sectionId,
   };
 
   const result = await createStudent(input);
@@ -287,28 +311,35 @@ function StudentsFeedback({
   return null;
 }
 
-type StudentCreateFormProps = {
+type StudentClassGroup = {
+  classId: string;
+  className: string;
   sections: SectionListItem[];
 };
 
-function StudentCreateForm({ sections }: StudentCreateFormProps) {
-  const groupedSections = sections.reduce<
-    Record<string, { classId: string; className: string; sections: SectionListItem[] }>
-  >((groups, section) => {
-    if (!groups[section.classId]) {
-      groups[section.classId] = {
-        classId: section.classId,
-        className: section.className,
-        sections: [],
-      };
-    }
+type StudentCreateFormProps = {
+  classes: ClassListItem[];
+  sections: SectionListItem[];
+};
 
-    groups[section.classId].sections.push(section);
-    return groups;
-  }, {});
+function StudentCreateForm({ classes, sections }: StudentCreateFormProps) {
+  const sectionsByClassId = sections.reduce<Record<string, SectionListItem[]>>(
+    (groups, section) => {
+      if (!groups[section.classId]) {
+        groups[section.classId] = [];
+      }
 
-  const classGroups = Object.values(groupedSections);
-  const firstSectionId = sections[0]?.id ?? "";
+      groups[section.classId].push(section);
+      return groups;
+    },
+    {},
+  );
+
+  const classGroups: StudentClassGroup[] = classes.map((schoolClass) => ({
+    classId: schoolClass.id,
+    className: getClassDisplayName(schoolClass),
+    sections: sectionsByClassId[schoolClass.id] ?? [],
+  }));
 
   return (
     <form
@@ -342,7 +373,7 @@ function StudentCreateForm({ sections }: StudentCreateFormProps) {
               <AlertTriangle size={16} />
             </div>
             <p className="text-sm leading-7 text-indigo-800">
-              تأكد من اختيار الصف والشعبة قبل حفظ الطالب حتى تظهر بياناته في الحضور والدرجات والأقساط.
+              اختر الصف مباشرة. إذا كان الصف لا يحتوي على شعبة، سيتم إنشاء شعبة عامة تلقائيًا عند حفظ الطالب.
             </p>
           </div>
         </div>
@@ -438,7 +469,7 @@ function StudentCreateForm({ sections }: StudentCreateFormProps) {
 
             {classGroups.length === 0 ? (
               <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-7 text-amber-800">
-                لا توجد صفوف أو شعب مضافة حاليًا. أضف الصفوف والشُعب من صفحة إدارة الصفوف أولًا.
+                لا توجد صفوف مضافة حاليًا. أضف الصف من صفحة إدارة الصفوف أولًا.
               </div>
             ) : (
               <div className="max-h-80 overflow-y-auto rounded-2xl border border-[var(--app-border-soft)] bg-white/70 p-3">
@@ -449,41 +480,69 @@ function StudentCreateForm({ sections }: StudentCreateFormProps) {
                         {group.className}
                       </legend>
 
-                      <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                        {group.sections.map((section) => {
-                          const studentLabel = section.studentsCount === 1 ? "طالب واحد" : `${section.studentsCount} طالب`;
-                          const capacityLabel = section.capacity ? ` / السعة ${section.capacity}` : "";
+                      {group.sections.length === 0 ? (
+                        <label
+                          htmlFor={`class-${group.classId}`}
+                          className="mt-2 block cursor-pointer rounded-2xl border border-amber-200 bg-amber-50/80 p-3 transition hover:border-blue-300 hover:bg-blue-50/60 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 has-[:checked]:shadow-sm"
+                        >
+                          <span className="flex items-start gap-3">
+                            <input
+                              id={`class-${group.classId}`}
+                              name="placementId"
+                              type="radio"
+                              value={`class:${group.classId}`}
+                              required
+                              className="mt-1 h-4 w-4 shrink-0 accent-blue-600"
+                            />
 
-                          return (
-                            <label
-                              key={section.id}
-                              htmlFor={`section-${section.id}`}
-                              className="group cursor-pointer rounded-2xl border border-[var(--app-border-soft)] bg-white p-3 transition hover:border-blue-300 hover:bg-blue-50/60 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 has-[:checked]:shadow-sm"
-                            >
-                              <span className="flex items-start gap-3">
-                                <input
-                                  id={`section-${section.id}`}
-                                  name="sectionId"
-                                  type="radio"
-                                  value={section.id}
-                                  required={firstSectionId === section.id}
-                                  className="mt-1 h-4 w-4 shrink-0 accent-blue-600"
-                                />
+                            <span className="min-w-0">
+                              <span className="block font-extrabold text-[var(--app-text)]">
+                                اختيار الصف
+                              </span>
 
-                                <span className="min-w-0">
-                                  <span className="block font-extrabold text-[var(--app-text)]">
-                                    شعبة {section.name}
-                                  </span>
+                              <span className="mt-1 block text-xs leading-6 text-amber-800">
+                                لا توجد شعبة داخل هذا الصف؛ سيتم إنشاء شعبة عامة تلقائيًا عند الحفظ.
+                              </span>
+                            </span>
+                          </span>
+                        </label>
+                      ) : (
+                        <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                          {group.sections.map((section) => {
+                            const studentLabel = section.studentsCount === 1 ? "طالب واحد" : `${section.studentsCount} طالب`;
+                            const capacityLabel = section.capacity ? ` / السعة ${section.capacity}` : "";
 
-                                  <span className="mt-1 block text-xs leading-6 text-[var(--app-text-muted)]">
-                                    {studentLabel}{capacityLabel}
+                            return (
+                              <label
+                                key={section.id}
+                                htmlFor={`section-${section.id}`}
+                                className="group cursor-pointer rounded-2xl border border-[var(--app-border-soft)] bg-white p-3 transition hover:border-blue-300 hover:bg-blue-50/60 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 has-[:checked]:shadow-sm"
+                              >
+                                <span className="flex items-start gap-3">
+                                  <input
+                                    id={`section-${section.id}`}
+                                    name="placementId"
+                                    type="radio"
+                                    value={`section:${section.id}`}
+                                    required
+                                    className="mt-1 h-4 w-4 shrink-0 accent-blue-600"
+                                  />
+
+                                  <span className="min-w-0">
+                                    <span className="block font-extrabold text-[var(--app-text)]">
+                                      شعبة {section.name}
+                                    </span>
+
+                                    <span className="mt-1 block text-xs leading-6 text-[var(--app-text-muted)]">
+                                      {studentLabel}{capacityLabel}
+                                    </span>
                                   </span>
                                 </span>
-                              </span>
-                            </label>
-                          );
-                        })}
-                      </div>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      )}
                     </fieldset>
                   ))}
                 </div>
@@ -491,7 +550,7 @@ function StudentCreateForm({ sections }: StudentCreateFormProps) {
             )}
 
             <p className="mt-2 text-xs leading-6 text-[var(--app-text-muted)]">
-              اختر الشعبة مباشرة من البطاقات بدل القائمة المنسدلة.
+              تستطيع اختيار الصف مباشرة، أو اختيار شعبة محددة إذا كانت موجودة.
             </p>
           </div>
         </div>

@@ -484,16 +484,9 @@ export async function hasClasses(): Promise<boolean> {
 
 export async function getSections(): Promise<SectionListItem[]> {
   const sections = await db.section.findMany({
-    orderBy: [
-      {
-        class: {
-          name: "asc",
-        },
-      },
-      {
-        name: "asc",
-      },
-    ],
+    orderBy: {
+      name: "asc",
+    },
     include: {
       class: true,
       _count: {
@@ -505,18 +498,110 @@ export async function getSections(): Promise<SectionListItem[]> {
     },
   });
 
-  return sections.map((section) => ({
-    id: section.id,
-    name: section.name,
-    capacity: section.capacity,
-    description: section.description,
-    isActive: section.isActive,
-    classId: section.classId,
-    className: section.class.name,
-    studentsCount: section._count.students,
-    schedulesCount: section._count.schedules,
-    createdAt: section.createdAt,
-  }));
+  return sections
+    .map((section) => ({
+      id: section.id,
+      name: section.name,
+      capacity: section.capacity,
+      description: section.description,
+      isActive: section.isActive,
+      classId: section.classId,
+      className: section.class?.name ?? "صف غير معروف",
+      studentsCount: section._count?.students ?? 0,
+      schedulesCount: section._count?.schedules ?? 0,
+      createdAt: section.createdAt,
+    }))
+    .sort((a, b) => {
+      const classCompare = a.className.localeCompare(b.className, "ar");
+      return classCompare !== 0 ? classCompare : a.name.localeCompare(b.name, "ar");
+    });
+}
+
+export async function getOrCreateDefaultSectionForClass(
+  classId: string,
+): Promise<ClassServiceResult<Section>> {
+  const normalizedClassId = classId.trim();
+
+  if (!normalizedClassId) {
+    return {
+      ok: false,
+      message: "يجب اختيار الصف.",
+    };
+  }
+
+  if (!hasSupabaseConfig()) {
+    return {
+      ok: false,
+      message: getSupabaseConfigErrorMessage(),
+    };
+  }
+
+  const schoolClass = await getClassById(normalizedClassId);
+
+  if (!schoolClass) {
+    return {
+      ok: false,
+      message: "لم يتم العثور على الصف المحدد.",
+    };
+  }
+
+  const existingSection = await db.section.findFirst({
+    where: {
+      classId: normalizedClassId,
+    },
+    orderBy: {
+      name: "asc",
+    },
+  });
+
+  if (existingSection) {
+    return {
+      ok: true,
+      data: existingSection,
+      message: "تم اختيار شعبة موجودة داخل الصف.",
+    };
+  }
+
+  try {
+    const section = await db.section.create({
+      data: {
+        name: "عام",
+        capacity: null,
+        description: "شعبة تلقائية أُنشئت عند إضافة طالب إلى صف بدون شُعب.",
+        isActive: true,
+        classId: normalizedClassId,
+      },
+    });
+
+    return {
+      ok: true,
+      data: section,
+      message: "تم إنشاء شعبة عامة للصف.",
+    };
+  } catch (error) {
+    const fallbackSection = await db.section.findFirst({
+      where: {
+        classId: normalizedClassId,
+      },
+      orderBy: {
+        name: "asc",
+      },
+    });
+
+    if (fallbackSection) {
+      return {
+        ok: true,
+        data: fallbackSection,
+        message: "تم اختيار شعبة موجودة داخل الصف.",
+      };
+    }
+
+    console.error("[getOrCreateDefaultSectionForClass] Error:", error);
+    return {
+      ok: false,
+      message: "تعذر تجهيز شعبة داخل الصف المحدد.",
+    };
+  }
 }
 
 export async function getSectionsByClassId(
