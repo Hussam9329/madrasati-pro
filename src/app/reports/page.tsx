@@ -5,6 +5,7 @@
  * ───────────────────────────────────────────── */
 
 import { useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   BarChart3,
   BookOpen,
@@ -37,6 +38,7 @@ import {
   type ReportPeriod,
   type TeacherReportRow,
 } from "@/types/report";
+import { ATTENDANCE_STATUSES } from "@/types/attendance";
 import {
   calculateChartBarWidth,
   calculateSharePercent,
@@ -58,8 +60,24 @@ const PERIODS: { value: ReportPeriod; label: string }[] = [
 // ── Main Page ────────────────────────────────
 
 export default function ReportsPage() {
+  const searchParams = useSearchParams();
+  const initialPeriod = (searchParams.get("period") as ReportPeriod | null) ?? "monthly";
+
   const [filter, setFilter] = useState<ReportFilter>({
-    period: "monthly",
+    period: PERIODS.some((period) => period.value === initialPeriod)
+      ? initialPeriod
+      : "monthly",
+    fromDate: searchParams.get("fromDate") ?? undefined,
+    toDate: searchParams.get("toDate") ?? undefined,
+    classId: searchParams.get("classId") ?? undefined,
+    sectionId: searchParams.get("sectionId") ?? undefined,
+    subjectId: searchParams.get("subjectId") ?? undefined,
+    teacherId: searchParams.get("teacherId") ?? undefined,
+    studentId: searchParams.get("studentId") ?? undefined,
+    status: searchParams.get("status") ?? undefined,
+    term: searchParams.get("term") ?? undefined,
+    source: searchParams.get("source") ?? undefined,
+    missingCheckOut: searchParams.get("missingCheckOut") === "yes",
   });
 
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
@@ -74,9 +92,18 @@ export default function ReportsPage() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const initialTab = searchParams.get("tab");
   const [activeTab, setActiveTab] = useState<
     "summary" | "attendance" | "grades" | "payments" | "classes" | "teachers"
-  >("summary");
+  >(
+    initialTab === "attendance" ||
+      initialTab === "grades" ||
+      initialTab === "payments" ||
+      initialTab === "classes" ||
+      initialTab === "teachers"
+      ? initialTab
+      : "summary",
+  );
 
   const fetchReport = useCallback(async () => {
     setLoading(true);
@@ -95,6 +122,8 @@ export default function ReportsPage() {
       if (filter.studentId) params.set("studentId", filter.studentId);
       if (filter.status) params.set("status", filter.status);
       if (filter.term) params.set("term", filter.term);
+      if (filter.source) params.set("source", filter.source);
+      if (filter.missingCheckOut) params.set("missingCheckOut", "yes");
 
       const [summaryRes, chartsRes, attendanceRes, gradesRes, paymentsRes, classesRes, teachersRes] =
         await Promise.all([
@@ -405,6 +434,94 @@ function ReportFilterForm({
                 <option value="first">الفصل الأول</option>
                 <option value="second">الفصل الثاني</option>
                 <option value="annual">السعي السنوي</option>
+              </select>
+              <ChevronDown
+                size={16}
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--app-text-soft)]"
+              />
+            </div>
+          </div>
+
+          {/* Attendance Status */}
+          <div>
+            <label
+              htmlFor="report-attendance-status"
+              className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
+            >
+              حالة الحضور
+            </label>
+            <div className="relative">
+              <select
+                id="report-attendance-status"
+                name="status"
+                autoComplete="off"
+                value={filter.status ?? ""}
+                onChange={(e) => updateFilter({ status: e.target.value || undefined })}
+                className="input appearance-none"
+              >
+                <option value="">كل حالات الحضور</option>
+                {ATTENDANCE_STATUSES.map((status) => (
+                  <option key={status.value} value={status.value}>
+                    {status.label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown
+                size={16}
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--app-text-soft)]"
+              />
+            </div>
+          </div>
+
+          {/* Attendance Source */}
+          <div>
+            <label
+              htmlFor="report-attendance-source"
+              className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
+            >
+              مصدر تسجيل الحضور
+            </label>
+            <div className="relative">
+              <select
+                id="report-attendance-source"
+                name="source"
+                autoComplete="off"
+                value={filter.source ?? ""}
+                onChange={(e) => updateFilter({ source: e.target.value || undefined })}
+                className="input appearance-none"
+              >
+                <option value="">كل المصادر</option>
+                <option value="qr">QR</option>
+                <option value="manual-code">رمز يدوي</option>
+                <option value="manual-name">باسم الطالب</option>
+                <option value="manual">يدوي</option>
+              </select>
+              <ChevronDown
+                size={16}
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--app-text-soft)]"
+              />
+            </div>
+          </div>
+
+          {/* Missing Checkout */}
+          <div>
+            <label
+              htmlFor="report-missing-checkout"
+              className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
+            >
+              الانصراف
+            </label>
+            <div className="relative">
+              <select
+                id="report-missing-checkout"
+                name="missingCheckOut"
+                autoComplete="off"
+                value={filter.missingCheckOut ? "yes" : ""}
+                onChange={(e) => updateFilter({ missingCheckOut: e.target.value === "yes" })}
+                className="input appearance-none"
+              >
+                <option value="">كل سجلات الانصراف</option>
+                <option value="yes">حضر ولم يسجل انصراف</option>
               </select>
               <ChevronDown
                 size={16}
@@ -905,10 +1022,10 @@ function AttendanceTable({ rows }: AttendanceTableProps) {
       <div className="flex flex-col gap-2 border-b border-[var(--app-border-soft)] p-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-lg font-extrabold text-[var(--app-text)]">
-            تقرير الحضور
+            تقرير الحضور المفصل
           </h3>
           <p className="mt-1 text-sm text-[var(--app-text-muted)]">
-            نسبة حضور كل طالب في الفترة المحددة
+            إجماليات كل طالب مع الحضور، الغياب، التأخير، الإجازات، الدخول، الانصراف، وآخر حالة.
           </p>
         </div>
         <span className="badge badge-info">
@@ -917,39 +1034,24 @@ function AttendanceTable({ rows }: AttendanceTableProps) {
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[900px] text-sm">
+        <table className="w-full min-w-[1200px] text-sm">
           <thead>
-            <tr className="border-b border-[var(--app-border-soft)] bg-gradient-to-l to-indigo-50/60 to-amber-50/40">
-              <th className="px-5 py-3 text-right font-extrabold text-[var(--app-text-muted)]">
-                الطالب
-              </th>
-              <th className="px-5 py-3 text-right font-extrabold text-[var(--app-text-muted)]">
-                الصف
-              </th>
-              <th className="px-5 py-3 text-center font-extrabold text-[var(--app-text-muted)]">
-                الجلسات
-              </th>
-              <th className="px-5 py-3 text-center font-extrabold text-[var(--app-text-muted)]">
-                حاضر
-              </th>
-              <th className="px-5 py-3 text-center font-extrabold text-[var(--app-text-muted)]">
-                غائب
-              </th>
-              <th className="px-5 py-3 text-center font-extrabold text-[var(--app-text-muted)]">
-                متأخر
-              </th>
-              <th className="px-5 py-3 text-center font-extrabold text-[var(--app-text-muted)]">
-                المصدر
-              </th>
-              <th className="px-5 py-3 text-center font-extrabold text-[var(--app-text-muted)]">
-                المدة
-              </th>
-              <th className="px-5 py-3 text-center font-extrabold text-[var(--app-text-muted)]">
-                النسبة
-              </th>
-              <th className="px-5 py-3 text-center font-extrabold text-[var(--app-text-muted)]">
-                التقييم
-              </th>
+            <tr className="border-b border-[var(--app-border-soft)] bg-gradient-to-l from-indigo-50/60 to-amber-50/40">
+              <th className="px-5 py-3 text-right font-extrabold text-[var(--app-text-muted)]">الطالب</th>
+              <th className="px-5 py-3 text-right font-extrabold text-[var(--app-text-muted)]">الصف / الشعبة</th>
+              <th className="px-5 py-3 text-center font-extrabold text-[var(--app-text-muted)]">السجلات</th>
+              <th className="px-5 py-3 text-center font-extrabold text-[var(--app-text-muted)]">حاضر</th>
+              <th className="px-5 py-3 text-center font-extrabold text-[var(--app-text-muted)]">غائب</th>
+              <th className="px-5 py-3 text-center font-extrabold text-[var(--app-text-muted)]">متأخر</th>
+              <th className="px-5 py-3 text-center font-extrabold text-[var(--app-text-muted)]">مجاز</th>
+              <th className="px-5 py-3 text-center font-extrabold text-[var(--app-text-muted)]">دخول</th>
+              <th className="px-5 py-3 text-center font-extrabold text-[var(--app-text-muted)]">انصراف</th>
+              <th className="px-5 py-3 text-center font-extrabold text-[var(--app-text-muted)]">لم ينصرف</th>
+              <th className="px-5 py-3 text-center font-extrabold text-[var(--app-text-muted)]">المصدر</th>
+              <th className="px-5 py-3 text-center font-extrabold text-[var(--app-text-muted)]">آخر مدة</th>
+              <th className="px-5 py-3 text-center font-extrabold text-[var(--app-text-muted)]">النسبة</th>
+              <th className="px-5 py-3 text-center font-extrabold text-[var(--app-text-muted)]">آخر حالة</th>
+              <th className="px-5 py-3 text-center font-extrabold text-[var(--app-text-muted)]">التقييم</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[var(--app-border-soft)]">
@@ -969,7 +1071,7 @@ function AttendanceTable({ rows }: AttendanceTableProps) {
                   </div>
                 </td>
                 <td className="px-5 py-3 text-[var(--app-text-muted)]">
-                  {row.className ?? "—"}
+                  {row.className ?? "—"}{row.sectionName ? ` / ${row.sectionName}` : ""}
                 </td>
                 <td className="px-5 py-3 text-center font-bold text-[var(--app-text)]">
                   {row.totalSessions}
@@ -983,14 +1085,36 @@ function AttendanceTable({ rows }: AttendanceTableProps) {
                 <td className="px-5 py-3 text-center font-bold text-amber-600">
                   {row.late}
                 </td>
+                <td className="px-5 py-3 text-center font-bold text-sky-600">
+                  {row.excused}
+                </td>
+                <td className="px-5 py-3 text-center font-bold text-emerald-700">
+                  {row.checkedIn}
+                </td>
+                <td className="px-5 py-3 text-center font-bold text-amber-700">
+                  {row.checkedOut}
+                </td>
+                <td className="px-5 py-3 text-center font-bold text-rose-600">
+                  {row.missingCheckOut}
+                </td>
                 <td className="px-5 py-3 text-center text-[var(--app-text-muted)]">
-                  {row.source === "qr" ? "QR" : row.source === "manual" ? "يدوي" : "—"}
+                  {getReportSourceLabel(row.source)}
                 </td>
                 <td className="px-5 py-3 text-center text-[var(--app-text-muted)]">
                   {row.duration ?? "—"}
                 </td>
                 <td className="px-5 py-3 text-center font-extrabold text-[var(--app-text)]">
                   {formatReportPercent(row.attendanceRate)}
+                </td>
+                <td className="px-5 py-3 text-center">
+                  <span className="font-bold text-[var(--app-text)]">
+                    {row.lastStatusLabel ?? "—"}
+                  </span>
+                  {row.lastDate ? (
+                    <p className="mt-1 text-xs text-[var(--app-text-soft)]">
+                      {new Date(row.lastDate).toLocaleDateString("ar-IQ")}
+                    </p>
+                  ) : null}
                 </td>
                 <td className="px-5 py-3 text-center">
                   <span
@@ -1016,6 +1140,15 @@ function AttendanceTable({ rows }: AttendanceTableProps) {
     </section>
   );
 }
+
+function getReportSourceLabel(source: string | null): string {
+  if (source === "qr") return "QR";
+  if (source === "manual-code") return "رمز يدوي";
+  if (source === "manual-name") return "باسم الطالب";
+  if (source === "manual") return "يدوي";
+  return "—";
+}
+
 
 // ── Grades Table ─────────────────────────────
 

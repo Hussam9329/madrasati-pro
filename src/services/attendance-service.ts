@@ -15,6 +15,8 @@ import {
   type AttendanceFormInput,
   type AttendanceListItem,
   type AttendanceRecord,
+  type AttendanceStudentTotal,
+  type AttendanceSummary,
   type AttendanceScanInput,
   type AttendanceScanResult,
 } from "@/types/attendance";
@@ -114,50 +116,7 @@ function toAttendanceListItem(
 async function buildAttendanceWhere(
   filter: AttendanceFilter,
 ): Promise<Prisma.AttendanceRecordWhereInput> {
-  const query = filter.query?.trim();
   const where: Prisma.AttendanceRecordWhereInput = {};
-
-  if (query) {
-    where.OR = [
-      {
-        student: {
-          fullName: {
-            contains: query,
-          },
-        },
-      },
-      {
-        student: {
-          studentCode: {
-            contains: query,
-          },
-        },
-      },
-      {
-        notes: {
-          contains: query,
-        },
-      },
-      {
-        schedule: {
-          subject: {
-            name: {
-              contains: query,
-            },
-          },
-        },
-      },
-      {
-        schedule: {
-          teacher: {
-            fullName: {
-              contains: query,
-            },
-          },
-        },
-      },
-    ];
-  }
 
   if (filter.status) {
     where.status = filter.status;
@@ -234,58 +193,6 @@ async function buildAttendanceWhere(
     };
   }
 
-  if (filter.sectionId) {
-    // Use direct studentId filter combined with schedule sectionId
-    where.OR = [
-      {
-        student: {
-          sectionId: filter.sectionId,
-        },
-      },
-      {
-        schedule: {
-          sectionId: filter.sectionId,
-        },
-      },
-    ];
-  }
-
-  // classId filter: pre-fetch sectionIds and use them
-  // (Supabase REST doesn't support nested relation filters in where)
-  if (filter.classId) {
-    const sections = await db.section.findMany({
-      where: { classId: filter.classId },
-      select: { id: true },
-    });
-    const sectionIds = sections.map((s: any) => s.id);
-    where.OR = [
-      {
-        student: {
-          sectionId: { in: sectionIds },
-        },
-      },
-      {
-        schedule: {
-          sectionId: { in: sectionIds },
-        },
-      },
-    ];
-  }
-
-  if (filter.subjectId) {
-    where.schedule = {
-      ...((where.schedule as Prisma.ScheduleWhereInput) ?? {}),
-      subjectId: filter.subjectId,
-    };
-  }
-
-  if (filter.teacherId) {
-    where.schedule = {
-      ...((where.schedule as Prisma.ScheduleWhereInput) ?? {}),
-      teacherId: filter.teacherId,
-    };
-  }
-
   if (filter.source) {
     where.source = filter.source;
   }
@@ -308,6 +215,82 @@ async function buildAttendanceWhere(
   }
 
   return where;
+}
+
+function normalizeSearchText(value: unknown): string {
+  return String(value ?? "").trim().toLowerCase();
+}
+
+function matchesAttendanceListFilter(
+  record: AttendanceListItem,
+  filter: AttendanceFilter,
+): boolean {
+  const query = normalizeSearchText(filter.query);
+
+  if (query) {
+    const haystack = [
+      record.studentName,
+      record.studentCode,
+      record.className,
+      record.sectionName,
+      record.subjectName,
+      record.teacherName,
+      record.notes,
+    ]
+      .map(normalizeSearchText)
+      .join(" ");
+
+    if (!haystack.includes(query)) {
+      return false;
+    }
+  }
+
+  if (filter.classId && record.classId !== filter.classId) {
+    return false;
+  }
+
+  if (filter.sectionId && record.sectionId !== filter.sectionId) {
+    return false;
+  }
+
+  if (filter.subjectId && record.subjectId !== filter.subjectId) {
+    return false;
+  }
+
+  if (filter.teacherId && record.teacherId !== filter.teacherId) {
+    return false;
+  }
+
+  return true;
+}
+
+function buildAttendanceSummary(
+  records: AttendanceListItem[],
+): AttendanceSummary {
+  const present = records.filter((record) => record.status === "present").length;
+  const absent = records.filter((record) => record.status === "absent").length;
+  const late = records.filter((record) => record.status === "late").length;
+  const excused = records.filter((record) => record.status === "excused").length;
+  const checkedIn = records.filter((record) => Boolean(record.checkInAt)).length;
+  const checkedOut = records.filter((record) => Boolean(record.checkOutAt)).length;
+  const missingCheckOut = records.filter(
+    (record) => Boolean(record.checkInAt) && !record.checkOutAt,
+  ).length;
+  const total = records.length;
+  const attendanceBase = present + late + excused;
+  const attendanceRate = total > 0 ? Math.round((attendanceBase / total) * 100) : 0;
+
+  return {
+    total,
+    present,
+    absent,
+    late,
+    excused,
+    checkedIn,
+    checkedOut,
+    missingCheckOut,
+    attendanceRate,
+  };
 }
 
 // ─── Validation Helpers ──────────────────────────────────────────
@@ -403,7 +386,9 @@ export async function getAttendanceRecords(
     ],
   });
 
-  return records.map((record) => toAttendanceListItem(record));
+  return records
+    .map((record) => toAttendanceListItem(record))
+    .filter((record) => matchesAttendanceListFilter(record, filter));
 }
 
 export async function searchAttendanceRecords(
@@ -1066,36 +1051,111 @@ export async function scanAttendanceByStudentId(input: {
 
 // ─── Counts & Aggregations ───────────────────────────────────────
 
-export async function getAttendanceCounts(): Promise<{
-  total: number;
-  present: number;
-  absent: number;
-  late: number;
-  excused: number;
-}> {
-  const [total, present, absent, late, excused] = await Promise.all([
-    db.attendanceRecord.count(),
-    db.attendanceRecord.count({
-      where: { status: "present" },
+export async function getAttendanceCounts(
+  filter: AttendanceFilter = {},
+): Promise<AttendanceSummary> {
+  const records = await getAttendanceRecords(filter);
+  return buildAttendanceSummary(records);
+}
+
+export async function getAttendanceStudentTotals(
+  filter: AttendanceFilter = {},
+): Promise<AttendanceStudentTotal[]> {
+  const studentWhere: Prisma.StudentWhereInput = {};
+
+  if (filter.studentId) {
+    studentWhere.id = filter.studentId;
+  }
+
+  if (filter.sectionId) {
+    studentWhere.sectionId = filter.sectionId;
+  }
+
+  if (filter.classId) {
+    const sections = await db.section.findMany({
+      where: { classId: filter.classId },
+      select: { id: true },
+    });
+    const sectionIds = sections.map((section: { id: string }) => section.id);
+    studentWhere.sectionId = { in: sectionIds };
+  }
+
+  const [students, records] = await Promise.all([
+    db.student.findMany({
+      where: studentWhere,
+      include: {
+        section: {
+          include: {
+            class: true,
+          },
+        },
+      },
+      orderBy: [
+        { status: "asc" },
+        { fullName: "asc" },
+      ],
     }),
-    db.attendanceRecord.count({
-      where: { status: "absent" },
-    }),
-    db.attendanceRecord.count({
-      where: { status: "late" },
-    }),
-    db.attendanceRecord.count({
-      where: { status: "excused" },
-    }),
+    getAttendanceRecords(filter),
   ]);
 
-  return {
-    total,
-    present,
-    absent,
-    late,
-    excused,
-  };
+  const recordsByStudent = new Map<string, AttendanceListItem[]>();
+  for (const record of records) {
+    const existing = recordsByStudent.get(record.studentId) ?? [];
+    existing.push(record);
+    recordsByStudent.set(record.studentId, existing);
+  }
+
+  const query = normalizeSearchText(filter.query);
+
+  return students
+    .map((student: any): AttendanceStudentTotal => {
+      const studentRecords = recordsByStudent.get(student.id) ?? [];
+      const summary = buildAttendanceSummary(studentRecords);
+      const lastRecord = studentRecords
+        .slice()
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+
+      return {
+        studentId: student.id,
+        studentName: student.fullName,
+        studentCode: student.studentCode ?? null,
+        classId: student.section?.classId ?? null,
+        className: student.section?.class?.name ?? null,
+        sectionId: student.sectionId ?? null,
+        sectionName: student.section?.name ?? null,
+        totalRecords: summary.total,
+        present: summary.present,
+        absent: summary.absent,
+        late: summary.late,
+        excused: summary.excused,
+        checkedIn: summary.checkedIn,
+        checkedOut: summary.checkedOut,
+        missingCheckOut: summary.missingCheckOut,
+        attendanceRate: summary.attendanceRate,
+        lastStatus: lastRecord?.status ?? null,
+        lastStatusLabel: lastRecord?.statusLabel ?? null,
+        lastDate: lastRecord?.date ?? null,
+      };
+    })
+    .filter((row) => {
+      if (!query) return true;
+
+      const studentHaystack = [
+        row.studentName,
+        row.studentCode,
+        row.className,
+        row.sectionName,
+      ]
+        .map(normalizeSearchText)
+        .join(" ");
+
+      return studentHaystack.includes(query) || recordsByStudent.has(row.studentId);
+    })
+    .sort((a, b) => {
+      if (b.absent !== a.absent) return b.absent - a.absent;
+      if (b.late !== a.late) return b.late - a.late;
+      return a.studentName.localeCompare(b.studentName, "ar");
+    });
 }
 
 // ─── Query by Relations ──────────────────────────────────────────

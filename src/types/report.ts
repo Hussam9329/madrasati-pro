@@ -88,6 +88,12 @@ export type AttendanceReportRow = {
   checkOutAt: Date | null;
   source: string | null;
   duration: string | null;
+  checkedIn: number;
+  checkedOut: number;
+  missingCheckOut: number;
+  lastDate: Date | null;
+  lastStatus: string | null;
+  lastStatusLabel: string | null;
   totalSessions: number;
   present: number;
   absent: number;

@@ -54,6 +54,8 @@ export async function GET(request: NextRequest) {
     const studentId = searchParams.get("studentId") ?? undefined;
     const status = searchParams.get("status") ?? undefined;
     const term = searchParams.get("term") ?? undefined;
+    const source = searchParams.get("source") ?? undefined;
+    const missingCheckOut = searchParams.get("missingCheckOut") === "yes";
 
     // Validate type
     if (!VALID_TYPES.includes(type)) {
@@ -88,6 +90,8 @@ export async function GET(request: NextRequest) {
       studentId,
       status,
       term,
+      source,
+      missingCheckOut,
     };
 
     switch (type) {

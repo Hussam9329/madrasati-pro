@@ -267,70 +267,8 @@ export async function getAttendanceReport(
   filter?: ReportFilter,
 ): Promise<AttendanceReportRow[]> {
   const dateRange = getDateRangeFromFilter(filter);
+  const records = await getAttendanceRecords(dateRange, filter);
 
-  const whereClause: Record<string, unknown> = {};
-
-  // AttendanceRecord has a `date` field directly — no `session` relation
-  if (dateRange) {
-    whereClause.date = {
-      gte: dateRange.from,
-      lt: dateRange.to,
-    };
-  }
-
-  if (filter?.studentId) {
-    whereClause.studentId = filter.studentId;
-  }
-
-  if (filter?.sectionId) {
-    whereClause.student = {
-      sectionId: filter.sectionId,
-    };
-  }
-
-  if (filter?.classId) {
-    whereClause.student = {
-      ...(whereClause.student as Record<string, unknown>),
-      section: {
-        classId: filter.classId,
-      },
-    };
-  }
-
-  if (filter?.status) {
-    whereClause.status = filter.status;
-  }
-
-  const records = await db.attendanceRecord.findMany({
-    where: whereClause as Prisma.AttendanceRecordWhereInput,
-    include: {
-      student: {
-        include: {
-          section: {
-            include: {
-              class: true,
-            },
-          },
-        },
-      },
-      schedule: {
-        include: {
-          subject: true,
-          teacher: true,
-          section: {
-            include: {
-              class: true,
-            },
-          },
-        },
-      },
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
-
-  // Group by student
   const studentMap = new Map<
     string,
     {
@@ -346,6 +284,12 @@ export async function getAttendanceReport(
       checkOutAt: Date | null;
       source: string | null;
       duration: string | null;
+      checkedIn: number;
+      checkedOut: number;
+      missingCheckOut: number;
+      lastDate: Date | null;
+      lastStatus: string | null;
+      lastStatusLabel: string | null;
       totalSessions: number;
       present: number;
       absent: number;
@@ -356,31 +300,28 @@ export async function getAttendanceReport(
 
   for (const record of records) {
     const studentId = record.studentId;
+    const recordDate = new Date(record.date);
 
     if (!studentMap.has(studentId)) {
-      // Calculate duration if both check-in and check-out exist
-      let duration: string | null = null;
-      if (record.checkInAt && record.checkOutAt) {
-        const diffMs = new Date(record.checkOutAt).getTime() - new Date(record.checkInAt).getTime();
-        const diffMins = Math.round(diffMs / 60000);
-        const hours = Math.floor(diffMins / 60);
-        const mins = diffMins % 60;
-        duration = hours > 0 ? `${hours} ساعة ${mins} دقيقة` : `${mins} دقيقة`;
-      }
-
       studentMap.set(studentId, {
         studentId,
         studentName: record.student.fullName,
         studentCode: record.student.studentCode,
-        className: record.student.section?.class?.name ?? null,
-        sectionName: record.student.section?.name ?? null,
+        className: record.student.section?.class?.name ?? record.schedule?.section?.class?.name ?? null,
+        sectionName: record.student.section?.name ?? record.schedule?.section?.name ?? null,
         subjectName: record.schedule?.subject?.name ?? null,
         teacherName: record.schedule?.teacher?.fullName ?? null,
         date: record.date,
         checkInAt: record.checkInAt ?? null,
         checkOutAt: record.checkOutAt ?? null,
         source: record.source ?? null,
-        duration,
+        duration: formatAttendanceDuration(record.checkInAt, record.checkOutAt),
+        checkedIn: 0,
+        checkedOut: 0,
+        missingCheckOut: 0,
+        lastDate: record.date,
+        lastStatus: record.status,
+        lastStatusLabel: getAttendanceStatusLabelForReport(record.status),
         totalSessions: 0,
         present: 0,
         absent: 0,
@@ -401,6 +342,23 @@ export async function getAttendanceReport(
     } else if (record.status === "excused") {
       entry.excused += 1;
     }
+
+    if (record.checkInAt) entry.checkedIn += 1;
+    if (record.checkOutAt) entry.checkedOut += 1;
+    if (record.checkInAt && !record.checkOutAt) entry.missingCheckOut += 1;
+
+    if (!entry.lastDate || recordDate.getTime() > new Date(entry.lastDate).getTime()) {
+      entry.lastDate = record.date;
+      entry.lastStatus = record.status;
+      entry.lastStatusLabel = getAttendanceStatusLabelForReport(record.status);
+      entry.date = record.date;
+      entry.checkInAt = record.checkInAt ?? null;
+      entry.checkOutAt = record.checkOutAt ?? null;
+      entry.source = record.source ?? null;
+      entry.duration = formatAttendanceDuration(record.checkInAt, record.checkOutAt);
+      entry.subjectName = record.schedule?.subject?.name ?? entry.subjectName;
+      entry.teacherName = record.schedule?.teacher?.fullName ?? entry.teacherName;
+    }
   }
 
   return Array.from(studentMap.values()).map((entry) => {
@@ -411,17 +369,64 @@ export async function getAttendanceReport(
 
     return {
       ...entry,
-      subjectName: entry.subjectName,
-      teacherName: entry.teacherName,
-      date: entry.date,
-      checkInAt: entry.checkInAt,
-      checkOutAt: entry.checkOutAt,
-      source: entry.source,
-      duration: entry.duration,
       attendanceRate,
       attendanceRating: getReportRating(attendanceRate),
     };
   });
+}
+
+function formatAttendanceDuration(
+  checkInAt?: Date | string | null,
+  checkOutAt?: Date | string | null,
+): string | null {
+  if (!checkInAt || !checkOutAt) return null;
+
+  const diffMs = new Date(checkOutAt).getTime() - new Date(checkInAt).getTime();
+  if (!Number.isFinite(diffMs) || diffMs < 0) return null;
+
+  const diffMins = Math.round(diffMs / 60000);
+  const hours = Math.floor(diffMins / 60);
+  const mins = diffMins % 60;
+  return hours > 0 ? `${hours} ساعة ${mins} دقيقة` : `${mins} دقيقة`;
+}
+
+function getAttendanceStatusLabelForReport(status: string): string {
+  switch (status) {
+    case "present":
+      return "حاضر";
+    case "absent":
+      return "غائب";
+    case "late":
+      return "متأخر";
+    case "excused":
+      return "مجاز";
+    default:
+      return status || "—";
+  }
+}
+
+function matchesAttendanceReportFilter(record: any, filter?: ReportFilter): boolean {
+  if (!filter) return true;
+
+  if (filter.sectionId) {
+    const sectionId = record.student?.sectionId ?? record.schedule?.sectionId ?? null;
+    if (sectionId !== filter.sectionId) return false;
+  }
+
+  if (filter.classId) {
+    const classId = record.student?.section?.classId ?? record.schedule?.section?.classId ?? null;
+    if (classId !== filter.classId) return false;
+  }
+
+  if (filter.subjectId && record.schedule?.subjectId !== filter.subjectId) {
+    return false;
+  }
+
+  if (filter.teacherId && record.schedule?.teacherId !== filter.teacherId) {
+    return false;
+  }
+
+  return true;
 }
 
 // ── Grades Report ────────────────────────────
@@ -699,7 +704,6 @@ async function getAttendanceRecords(
 ) {
   const whereClause: Record<string, unknown> = {};
 
-  // AttendanceRecord has a `date` field directly — no `session` relation
   if (dateRange) {
     whereClause.date = {
       gte: dateRange.from,
@@ -711,31 +715,46 @@ async function getAttendanceRecords(
     whereClause.studentId = filter.studentId;
   }
 
-  if (filter?.sectionId) {
-    whereClause.student = {
-      sectionId: filter.sectionId,
-    };
-  }
-
-  if (filter?.classId) {
-    whereClause.student = {
-      ...(whereClause.student as Record<string, unknown>),
-      section: {
-        classId: filter.classId,
-      },
-    };
-  }
-
   if (filter?.status) {
     whereClause.status = filter.status;
   }
 
-  return db.attendanceRecord.findMany({
+  if (filter?.source) {
+    whereClause.source = filter.source;
+  }
+
+  if (filter?.missingCheckOut) {
+    whereClause.checkInAt = { not: null };
+    whereClause.checkOutAt = null;
+  }
+
+  const records = await db.attendanceRecord.findMany({
     where: whereClause as Prisma.AttendanceRecordWhereInput,
-    select: {
-      status: true,
+    include: {
+      student: {
+        include: {
+          section: {
+            include: {
+              class: true,
+            },
+          },
+        },
+      },
+      schedule: {
+        include: {
+          subject: true,
+          teacher: true,
+          section: {
+            include: {
+              class: true,
+            },
+          },
+        },
+      },
     },
   });
+
+  return records.filter((record: any) => matchesAttendanceReportFilter(record, filter));
 }
 
 async function getGradeRecords(

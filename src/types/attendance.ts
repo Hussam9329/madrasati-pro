@@ -74,6 +74,40 @@ export type AttendanceDetails = AttendanceListItem & {
   updatedAt: Date;
 };
 
+export type AttendanceSummary = {
+  total: number;
+  present: number;
+  absent: number;
+  late: number;
+  excused: number;
+  checkedIn: number;
+  checkedOut: number;
+  missingCheckOut: number;
+  attendanceRate: number;
+};
+
+export type AttendanceStudentTotal = {
+  studentId: string;
+  studentName: string;
+  studentCode: string | null;
+  classId: string | null;
+  className: string | null;
+  sectionId: string | null;
+  sectionName: string | null;
+  totalRecords: number;
+  present: number;
+  absent: number;
+  late: number;
+  excused: number;
+  checkedIn: number;
+  checkedOut: number;
+  missingCheckOut: number;
+  attendanceRate: number;
+  lastStatus: string | null;
+  lastStatusLabel: string | null;
+  lastDate: Date | null;
+};
+
 export type AttendanceValidationResult = {
   valid: boolean;
   errors: Partial<Record<keyof AttendanceFormInput, string>>;
