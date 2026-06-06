@@ -22,6 +22,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { SmartAlert } from "@/components/shared/smart-alert";
 import { AttendanceEntryPanel } from "@/components/attendance/attendance-entry-panel";
+import { AbsentNamesToggle } from "@/components/attendance/absent-names-toggle";
 import { DeleteConfirmButton } from "@/components/shared/delete-confirm-button";
 import { PrintButton } from "@/components/reports/print-button";
 import { getClasses, getSections } from "@/services/class-service";
@@ -100,7 +101,7 @@ export default async function AttendancePage({
 
   const todayStr = getDateInputValue(new Date());
 
-  const [records, summary, allSummary, studentTotals, classes, sections, schoolSettings, todayAbsentSummary] =
+  const [records, summary, allSummary, studentTotals, classes, sections, schoolSettings, todayAbsentSummary, todayAbsentRecords] =
     await Promise.all([
       safeQuery(() => getAttendanceRecords(filter), []),
       safeQuery(() => getAttendanceCounts(filter), emptyAttendanceSummary),
@@ -118,12 +119,20 @@ export default async function AttendancePage({
         updatedAt: new Date(),
       }),
       safeQuery(() => getAttendanceCounts({ date: todayStr }), emptyAttendanceSummary),
+      safeQuery(() => getAttendanceRecords({ date: todayStr, status: "absent" }), []),
     ]);
 
   const hasAnyRecords = allSummary.total > 0;
   const today = todayStr;
   const reportsHref = buildReportsHref(filter);
   const todayAbsentCount = todayAbsentSummary.absent;
+  const todayAbsentStudents = todayAbsentRecords.map((r) => ({
+    studentName: r.studentName,
+    studentCode: r.studentCode,
+    className: r.className,
+    sectionName: r.sectionName,
+    isComputedAbsence: r.isComputedAbsence,
+  }));
 
   return (
     <AppShell>
@@ -167,7 +176,7 @@ export default async function AttendancePage({
           />
         </section>
 
-        <AttendancePeriodReport summary={summary} recordsCount={records.length} filter={filter} todayAbsentCount={todayAbsentCount} />
+        <AttendancePeriodReport summary={summary} recordsCount={records.length} filter={filter} todayAbsentCount={todayAbsentCount} todayAbsentStudents={todayAbsentStudents} />
 
         <StudentTotalsReport rows={studentTotals} />
 
@@ -627,14 +636,23 @@ function AttendanceSearchForm({
 
 // ─── Period Report ───────────────────────────────────────────────
 
+type AbsentStudentInfo = {
+  studentName: string;
+  studentCode: string | null;
+  className: string | null;
+  sectionName: string | null;
+  isComputedAbsence?: boolean;
+};
+
 type AttendancePeriodReportProps = {
   summary: AttendanceSummary;
   recordsCount: number;
   filter: AttendanceFilter;
   todayAbsentCount: number;
+  todayAbsentStudents: AbsentStudentInfo[];
 };
 
-function AttendancePeriodReport({ summary, recordsCount, filter, todayAbsentCount }: AttendancePeriodReportProps) {
+function AttendancePeriodReport({ summary, recordsCount, filter, todayAbsentCount, todayAbsentStudents }: AttendancePeriodReportProps) {
   const isTodayAbsentFilter =
     filter.date === getDateInputValue(new Date()) &&
     filter.status === "absent";
@@ -661,18 +679,21 @@ function AttendancePeriodReport({ summary, recordsCount, filter, todayAbsentCoun
       </div>
 
       {isTodayAbsentFilter && todayAbsentCount > 0 && (
-        <div className="flex items-center gap-4 border-b border-red-100 bg-gradient-to-l from-red-50 to-rose-50 p-5">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-red-100 text-red-600">
-            <XCircle size={28} />
+        <div className="border-b border-red-100 bg-gradient-to-l from-red-50 to-rose-50 p-5">
+          <div className="flex items-center gap-4">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-red-100 text-red-600">
+              <XCircle size={28} />
+            </div>
+            <div>
+              <h4 className="text-lg font-extrabold text-red-700">
+                عدد الطلاب الذين لم يحضروا اليوم: {todayAbsentCount}
+              </h4>
+              <p className="mt-1 text-sm font-bold text-red-500">
+                يشمل الطلاب المسجّل غيابهم فعليًا والطلاب الذين ليس لديهم سجل حضور اليوم (غياب محسوب).
+              </p>
+            </div>
           </div>
-          <div>
-            <h4 className="text-lg font-extrabold text-red-700">
-              عدد الطلاب الذين لم يحضروا اليوم: {todayAbsentCount}
-            </h4>
-            <p className="mt-1 text-sm font-bold text-red-500">
-              يشمل الطلاب المسجّل غيابهم فعليًا والطلاب الذين ليس لديهم سجل حضور اليوم (غياب محسوب).
-            </p>
-          </div>
+          <AbsentNamesToggle students={todayAbsentStudents} />
         </div>
       )}
 
