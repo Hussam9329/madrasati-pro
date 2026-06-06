@@ -386,9 +386,21 @@ export async function getAttendanceRecords(
     ],
   });
 
-  return records
+  let result = records
     .map((record) => toAttendanceListItem(record))
     .filter((record) => matchesAttendanceListFilter(record, filter));
+
+  // Add computed absences for active students without records when a date filter is present
+  const shouldComputeAbsences =
+    (filter.date || filter.fromDate) &&
+    (!filter.status || filter.status === "absent");
+
+  if (shouldComputeAbsences) {
+    const computed = await computeAbsentStudents(filter, result);
+    result = [...result, ...computed];
+  }
+
+  return result;
 }
 
 export async function searchAttendanceRecords(
@@ -1198,6 +1210,156 @@ function isUniqueConstraintError(error: unknown): boolean {
       error.code === "P2002") ||
     ((error as any)?.code === "P2002")
   );
+}
+
+// ─── Computed Absence Logic ──────────────────────────────────────
+
+/**
+ * Compute virtual "absent" records for active students who have no
+ * attendance record for the date(s) specified in the filter.
+ *
+ * This is only called when a date or date-range filter is active and
+ * the status filter is either absent or not set — because a student
+ * with no record is effectively absent on that day.
+ */
+async function computeAbsentStudents(
+  filter: AttendanceFilter,
+  _existingRecords: AttendanceListItem[],
+): Promise<AttendanceListItem[]> {
+  // Build student filter (only active students)
+  const studentWhere: Prisma.StudentWhereInput = { status: "active" };
+
+  if (filter.studentId) {
+    studentWhere.id = filter.studentId;
+  }
+  if (filter.sectionId) {
+    studentWhere.sectionId = filter.sectionId;
+  }
+  if (filter.classId) {
+    const sections = await db.section.findMany({
+      where: { classId: filter.classId },
+      select: { id: true },
+    });
+    const sectionIds = sections.map((s: { id: string }) => s.id);
+    studentWhere.sectionId = { in: sectionIds };
+  }
+
+  // Fetch active students matching the class/section filter
+  const students = await db.student.findMany({
+    where: studentWhere,
+    include: {
+      section: {
+        include: {
+          class: true,
+        },
+      },
+    },
+  });
+
+  if (students.length === 0) return [];
+
+  // Determine the dates for which we need to check absences
+  let dates: Date[] = [];
+
+  if (filter.date) {
+    const parsed = normalizeDateOnly(filter.date);
+    if (parsed) dates = [parsed];
+  } else if (filter.fromDate) {
+    const from = normalizeDateOnly(filter.fromDate);
+    const to = filter.toDate ? normalizeDateOnly(filter.toDate) : normalizeDateOnly(new Date());
+    if (from && to) {
+      const current = new Date(from.getFullYear(), from.getMonth(), from.getDate());
+      const toMidnight = new Date(to.getFullYear(), to.getMonth(), to.getDate());
+      // Cap at 31 days to avoid huge ranges
+      let safety = 0;
+      while (current <= toMidnight && safety < 31) {
+        dates.push(new Date(current));
+        current.setDate(current.getDate() + 1);
+        safety++;
+      }
+    }
+  }
+
+  if (dates.length === 0) return [];
+
+  // Find student IDs that already have ANY record for the date range
+  // (we query without status filter to know who has records at all)
+  const allDateRecords = await db.attendanceRecord.findMany({
+    where: await buildAttendanceWhere({
+      ...filter,
+      status: undefined, // remove status filter to get ALL records
+    }),
+    select: {
+      studentId: true,
+      date: true,
+    },
+  });
+
+  // Build a Set of "studentId|dateStr" for quick lookup
+  const existingKeys = new Set(
+    allDateRecords.map((r: { studentId: string; date: Date }) => {
+      const d = new Date(r.date);
+      const key = `${r.studentId}|${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      return key;
+    }),
+  );
+
+  // Also track student IDs that have at least one record (for query text filtering)
+  const studentsWithAnyRecord = new Set(allDateRecords.map((r: { studentId: string }) => r.studentId));
+
+  // For each student × date without a record, create a computed absence
+  const computed: AttendanceListItem[] = [];
+
+  for (const student of students) {
+    for (const date of dates) {
+      const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+      const key = `${student.id}|${dateStr}`;
+
+      if (existingKeys.has(key)) continue; // Student already has a record for this date
+
+      computed.push({
+        id: `computed-absent-${student.id}-${dateStr}`,
+        date,
+        mode: "daily",
+        status: "absent",
+        statusLabel: "غائب",
+        notes: "غياب محسوب — لا يوجد سجل حضور",
+        checkInAt: null,
+        checkOutAt: null,
+        source: null,
+        isComputedAbsence: true,
+        studentId: student.id,
+        studentName: student.fullName,
+        studentCode: student.studentCode ?? null,
+        sectionId: student.sectionId ?? null,
+        sectionName: student.section?.name ?? null,
+        classId: student.section?.classId ?? null,
+        className: student.section?.class?.name ?? null,
+        classLevel: student.section?.class?.level ?? null,
+        scheduleId: null,
+        dayOfWeek: null,
+        startTime: null,
+        endTime: null,
+        subjectId: null,
+        subjectName: null,
+        teacherId: null,
+        teacherName: null,
+        createdAt: date,
+      });
+    }
+  }
+
+  // Apply text search filter to computed absences too
+  const query = normalizeSearchText(filter.query);
+
+  if (!query) return computed;
+
+  return computed.filter((item) => {
+    const haystack = [item.studentName, item.studentCode, item.className, item.sectionName]
+      .map(normalizeSearchText)
+      .join(" ");
+    return haystack.includes(query) || studentsWithAnyRecord.has(item.studentId);
+  });
 }
 
 // ─── Student Search for Attendance ──────────────────────────────

@@ -45,6 +45,9 @@ export type AttendanceListItem = {
   checkOutAt: Date | null;
   source: string | null;
 
+  /** True when this record represents a computed absence (student has no DB record for the date). */
+  isComputedAbsence?: boolean;
+
   studentId: string;
   studentName: string;
   studentCode: string | null;

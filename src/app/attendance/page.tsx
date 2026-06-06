@@ -807,6 +807,12 @@ function AttendanceRow({ record }: AttendanceRowProps) {
             <span className={["badge", statusClass].join(" ")}>
               {record.statusLabel}
             </span>
+
+            {record.isComputedAbsence && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1 text-xs font-extrabold text-amber-700 border border-amber-200">
+                غياب محسوب
+              </span>
+            )}
           </div>
 
           <div className="mt-2 flex flex-wrap gap-2 text-sm text-[var(--app-text-muted)]">
@@ -889,12 +895,14 @@ function AttendanceRow({ record }: AttendanceRowProps) {
       </div>
 
       <div className="grid gap-2 sm:grid-cols-1 xl:w-[160px]">
-        <DeleteConfirmButton
-          action={deleteAttendanceAction}
-          itemId={record.id}
-          entityName="سجل الحضور"
-          associations={[]}
-        />
+        {!record.isComputedAbsence && (
+          <DeleteConfirmButton
+            action={deleteAttendanceAction}
+            itemId={record.id}
+            entityName="سجل الحضور"
+            associations={[]}
+          />
+        )}
       </div>
     </article>
   );

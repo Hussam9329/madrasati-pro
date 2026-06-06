@@ -891,7 +891,25 @@ class SupabaseModelHandler {
       } else if (value === null) {
         query = query.is(key, null);
       } else if (typeof value === "object" && value !== null) {
-        if (value.contains !== undefined) {
+        // Range operators (gt, gte, lt, lte) can be combined and must all be applied.
+        // Other operators (contains, startsWith, eq, etc.) are mutually exclusive.
+        const hasRangeOps = value.gt !== undefined || value.gte !== undefined || value.lt !== undefined || value.lte !== undefined;
+
+        if (hasRangeOps) {
+          // Apply each range operator independently — they AND together correctly
+          if (value.gt !== undefined) {
+            query = query.gt(key, value.gt instanceof Date ? value.gt.toISOString() : value.gt);
+          }
+          if (value.gte !== undefined) {
+            query = query.gte(key, value.gte instanceof Date ? value.gte.toISOString() : value.gte);
+          }
+          if (value.lt !== undefined) {
+            query = query.lt(key, value.lt instanceof Date ? value.lt.toISOString() : value.lt);
+          }
+          if (value.lte !== undefined) {
+            query = query.lte(key, value.lte instanceof Date ? value.lte.toISOString() : value.lte);
+          }
+        } else if (value.contains !== undefined) {
           query = query.ilike(key, `%${value.contains}%`);
         } else if (value.startsWith !== undefined) {
           query = query.ilike(key, `${value.startsWith}%`);
@@ -907,14 +925,6 @@ class SupabaseModelHandler {
           }
         } else if (value.in !== undefined) {
           query = query.in(key, Array.isArray(value.in) ? value.in : [value.in]);
-        } else if (value.gt !== undefined) {
-          query = query.gt(key, value.gt instanceof Date ? value.gt.toISOString() : value.gt);
-        } else if (value.gte !== undefined) {
-          query = query.gte(key, value.gte instanceof Date ? value.gte.toISOString() : value.gte);
-        } else if (value.lt !== undefined) {
-          query = query.lt(key, value.lt instanceof Date ? value.lt.toISOString() : value.lt);
-        } else if (value.lte !== undefined) {
-          query = query.lte(key, value.lte instanceof Date ? value.lte.toISOString() : value.lte);
         } else if (key === "section" || key === "class" || key === "student" || key === "teacher" || key === "subject") {
           // Relation filter - need special handling
           // For now, we'll handle the most common cases
