@@ -126,7 +126,15 @@ export async function getSession(): Promise<SessionPayload | null> {
 }
 
 /**
+ * In-memory revocation cache — avoids a Supabase DB round-trip on every page load.
+ * Key: jti, Value: true = revoked. TTL = 30 seconds (matches middleware JWT cache).
+ */
+const revocationCache = new Map<string, { revoked: boolean; expiresAt: number }>();
+const REVOCATION_CACHE_TTL_MS = 30_000;
+
+/**
  * Verify session and check if it's been revoked.
+ * Uses an in-memory cache to avoid hitting Supabase on every request.
  * Used by withApiAuth and any code that needs to ensure the session is still valid.
  */
 export async function verifySession(): Promise<SessionPayload | null> {
@@ -135,6 +143,16 @@ export async function verifySession(): Promise<SessionPayload | null> {
 
   // Check session revocation if jti is present
   if (session.jti) {
+    const cached = revocationCache.get(session.jti);
+    const now = Date.now();
+
+    // Use cached result if still fresh
+    if (cached && cached.expiresAt > now) {
+      if (cached.revoked) return null;
+      return session;
+    }
+
+    // Cache miss or expired — check Supabase
     try {
       const { supabase } = await import("@/lib/supabase-client");
       const { data, error } = await supabase
@@ -143,15 +161,37 @@ export async function verifySession(): Promise<SessionPayload | null> {
         .eq("jti", session.jti)
         .single();
 
-      if (!error && data && data.revokedAt !== null) {
-        return null; // Session has been revoked
+      const isRevoked = !error && data && data.revokedAt !== null;
+
+      // Update cache
+      revocationCache.set(session.jti, {
+        revoked: Boolean(isRevoked),
+        expiresAt: now + REVOCATION_CACHE_TTL_MS,
+      });
+
+      // Periodically clean up old entries (every ~100 checks)
+      if (revocationCache.size > 100) {
+        for (const [key, val] of revocationCache) {
+          if (val.expiresAt <= now) revocationCache.delete(key);
+        }
       }
+
+      if (isRevoked) return null;
     } catch {
       // admin_sessions table may not exist yet — don't block
     }
   }
 
   return session;
+}
+
+/**
+ * Invalidate the revocation cache for a given jti (call after logout/revocation).
+ */
+export function invalidateRevocationCache(jti?: string) {
+  if (jti) {
+    revocationCache.delete(jti);
+  }
 }
 
 export async function requireAdmin() {
@@ -174,6 +214,7 @@ export async function logout() {
 
   // Revoke session in admin_sessions table
   if (session?.jti) {
+    invalidateRevocationCache(session.jti);
     try {
       const { supabase } = await import("@/lib/supabase-client");
       await supabase

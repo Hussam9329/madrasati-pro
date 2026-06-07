@@ -10,14 +10,16 @@ type RoleKey = "system_admin" | "admin_user";
 
 export default async function PermissionsPage() {
   const session = await requireAdmin();
-  const currentAdmin = await safeQuery(
-    () => db.admin.findUnique({ where: { id: session.adminId } }),
-    null,
-  );
-  const users = await safeQuery(
-    () => db.admin.findMany({ orderBy: { createdAt: "asc" } }),
-    [],
-  );
+  const [currentAdmin, users] = await Promise.all([
+    safeQuery(
+      () => db.admin.findUnique({ where: { id: session.adminId } }),
+      null,
+    ),
+    safeQuery(
+      () => db.admin.findMany({ orderBy: { createdAt: "asc" } }),
+      [],
+    ),
+  ]);
 
   const preparedUsers = users.map((user: any) => ({
     id: user.id,
