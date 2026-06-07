@@ -8,3 +8,13 @@ prisma/*.db-journal
 .env.production.local
 .vercel
 .env*.local
+
+# Development artifacts
+skills/
+madrasati-pro/
+download/
+upload/
+worklog.md
+db/
+*.md
+!README.md

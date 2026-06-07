@@ -17,7 +17,7 @@ import {
 } from "@/types/settings";
 import { saveSchoolSettings } from "@/services/school-settings-service";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 30;
 
 
 type SettingsPageProps = {

@@ -1070,6 +1070,16 @@ export async function getAttendanceCounts(
   return buildAttendanceSummary(records);
 }
 
+/**
+ * Build attendance summary from pre-fetched records.
+ * Use this when records are already available to avoid duplicate DB queries.
+ */
+export function buildAttendanceSummaryFromRecords(
+  records: AttendanceListItem[],
+): AttendanceSummary {
+  return buildAttendanceSummary(records);
+}
+
 export async function getAttendanceStudentTotals(
   filter: AttendanceFilter = {},
 ): Promise<AttendanceStudentTotal[]> {

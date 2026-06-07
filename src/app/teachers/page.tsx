@@ -37,7 +37,7 @@ import type { Subject } from "@/types/subject";
 import type { SectionListItem } from "@/types/class";
 import { DeleteConfirmButton } from "@/components/shared/delete-confirm-button";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 30;
 
 
 

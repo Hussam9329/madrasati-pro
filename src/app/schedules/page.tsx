@@ -42,7 +42,7 @@ import {
 import type { SectionListItem } from "@/types/class";
 import type { Teacher } from "@/types/teacher";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 30;
 
 
 

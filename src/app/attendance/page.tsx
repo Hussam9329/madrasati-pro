@@ -28,9 +28,9 @@ import { PrintButton } from "@/components/reports/print-button";
 import { getClasses, getSections } from "@/services/class-service";
 import {
   deleteAttendanceRecord,
-  getAttendanceCounts,
   getAttendanceRecords,
   getAttendanceStudentTotals,
+  buildAttendanceSummaryFromRecords,
 } from "@/services/attendance-service";
 import {
   ATTENDANCE_STATUSES,
@@ -101,11 +101,13 @@ export default async function AttendancePage({
 
   const todayStr = getDateInputValue(new Date());
 
-  const [records, summary, allSummary, studentTotals, classes, sections, schoolSettings, todayAbsentSummary, todayAbsentRecords] =
+  // Fetch records once, then derive summary from them to avoid triple-fetching.
+  // Previously: getAttendanceRecords + getAttendanceCounts + getAttendanceStudentTotals
+  // each called getAttendanceRecords internally = 3× the DB calls.
+  const [records, allRecords, studentTotals, classes, sections, schoolSettings, todayAbsentRecords] =
     await Promise.all([
       safeQuery(() => getAttendanceRecords(filter), []),
-      safeQuery(() => getAttendanceCounts(filter), emptyAttendanceSummary),
-      safeQuery(() => getAttendanceCounts(), emptyAttendanceSummary),
+      safeQuery(() => getAttendanceRecords({}), []),
       safeQuery(() => getAttendanceStudentTotals(filter), []),
       safeQuery(() => getClasses(), []),
       safeQuery(() => getSections(), []),
@@ -118,9 +120,13 @@ export default async function AttendancePage({
         createdAt: new Date(),
         updatedAt: new Date(),
       }),
-      safeQuery(() => getAttendanceCounts({ date: todayStr }), emptyAttendanceSummary),
       safeQuery(() => getAttendanceRecords({ date: todayStr, status: "absent" }), []),
     ]);
+
+  // Derive summaries from pre-fetched records (no extra DB calls)
+  const summary = buildAttendanceSummaryFromRecords(records);
+  const allSummary = buildAttendanceSummaryFromRecords(allRecords);
+  const todayAbsentSummary = buildAttendanceSummaryFromRecords(todayAbsentRecords);
 
   const hasAnyRecords = allSummary.total > 0;
   const today = todayStr;

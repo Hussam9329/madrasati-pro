@@ -26,7 +26,7 @@ import {
 } from "@/types/subject";
 import { DeleteConfirmButton } from "@/components/shared/delete-confirm-button";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 30;
 
 
 
