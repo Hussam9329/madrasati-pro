@@ -515,7 +515,7 @@ html.dark .hover\:text-indigo-600:hover {
 /* ===== Utility Classes ===== */
 @layer utilities {
   .animate-soft-in {
-    animation: softIn 300ms ease both;
+    animation: softIn 100ms ease both;
   }
 
   .animate-rise {

@@ -404,12 +404,10 @@ export async function deleteStudent(
   }
 
   try {
-    // Cascade delete: grades, attendance, payments in parallel, then student
-    await Promise.all([
-      db.grade.deleteMany({ where: { studentId: id } }),
-      db.attendanceRecord.deleteMany({ where: { studentId: id } }),
-      db.payment.deleteMany({ where: { studentId: id } }),
-    ]);
+    // Cascade delete: grades → attendance → payments → student
+    await db.grade.deleteMany({ where: { studentId: id } });
+    await db.attendanceRecord.deleteMany({ where: { studentId: id } });
+    await db.payment.deleteMany({ where: { studentId: id } });
     await db.student.delete({ where: { id } });
   } catch (error) {
     console.error("[deleteStudent] Error:", error);

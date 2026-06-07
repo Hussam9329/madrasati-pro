@@ -1,15 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import dynamic from "next/dynamic";
 import { Smartphone, Monitor, Camera } from "lucide-react";
-import { QuickCodeAttendance } from "./quick-code-attendance";
+import dynamic from "next/dynamic";
 
-// Dynamic import QR scanner — @zxing/browser is ~200KB and only needed on mobile
+// Lazy-load QR scanner — @zxing/browser is heavy (~100KB) and only needed on mobile
 const QrAttendanceScanner = dynamic(
-  () => import("./qr-attendance-scanner").then((m) => ({ default: m.QrAttendanceScanner })),
-  { ssr: false, loading: () => <div className="app-card flex min-h-[300px] items-center justify-center"><p className="text-sm font-bold text-[var(--app-text-muted)]">جارٍ تحميل ماسح QR...</p></div> }
+  () => import("./qr-attendance-scanner").then((mod) => ({ default: mod.QrAttendanceScanner })),
+  { ssr: false },
 );
+import { QuickCodeAttendance } from "./quick-code-attendance";
 
 /**
  * AttendanceEntryPanel — Smart wrapper that detects the device type

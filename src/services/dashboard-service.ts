@@ -1,4 +1,5 @@
 import { db, ensureDatabase, safeQuery } from "@/lib/db";
+import { unstable_cache } from "next/cache";
 
 function startOfToday() {
   const d = new Date();
@@ -29,11 +30,13 @@ const emptyStats = {
   readinessRate: 0,
 };
 
-export async function getDashboardStats() {
-  // Ensure database is initialized on Vercel
-  await ensureDatabase();
-
-  return safeQuery(async () => {
+/**
+ * Cached version of dashboard stats query.
+ * Revalidates every 30 seconds so the dashboard feels live
+ * without hammering Supabase on every page load.
+ */
+const getCachedDashboardStats = unstable_cache(
+  async () => {
     const todayStart = startOfToday();
     const tomorrowStart = startOfTomorrow();
     const monthStart = startOfMonth();
@@ -104,5 +107,17 @@ export async function getDashboardStats() {
         (setupChecks.filter(Boolean).length / setupChecks.length) * 100,
       ),
     };
-  }, emptyStats);
+  },
+  ["dashboard-stats"],
+  {
+    revalidate: 30, // Revalidate every 30 seconds
+    tags: ["dashboard"],
+  },
+);
+
+export async function getDashboardStats() {
+  // Ensure database is initialized on Vercel
+  await ensureDatabase();
+
+  return safeQuery(async () => getCachedDashboardStats(), emptyStats);
 }

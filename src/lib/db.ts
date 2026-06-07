@@ -1,4 +1,5 @@
 import bcrypt from "bcryptjs";
+import { cache as reactCache } from "react";
 import { supabaseDB } from "@/lib/supabase-client";
 
 /**
@@ -17,18 +18,19 @@ export const db = supabaseDB;
 // Track whether database has been initialized in this process
 let dbInitialized = false;
 let dbInitPromise: Promise<void> | null = null;
+let adminSeeded = false; // Skip seedAdmin after first successful check
 
 function hasDatabaseEnv() {
   return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
 }
 
-export async function ensureDatabase() {
+export const ensureDatabase = reactCache(async () => {
   // Do not open a placeholder Supabase connection during production builds or local checks.
   if (!hasDatabaseEnv()) {
     return;
   }
 
-  // If already initialized in this process, skip
+  // If already initialized in this process, skip entirely
   if (dbInitialized) return;
 
   // If initialization is already running, wait for it
@@ -47,7 +49,7 @@ export async function ensureDatabase() {
     console.error("[ensureDatabase] Initialization failed:", e);
     // Don't throw - let queries fail gracefully via safeQuery
   }
-}
+});
 
 async function initializeDatabase() {
   if (!hasDatabaseEnv()) {
@@ -61,8 +63,11 @@ async function initializeDatabase() {
     throw e;
   }
 
-  // Seed admin account if it doesn't exist
-  await seedAdmin();
+  // Seed admin account only once per serverless lifecycle
+  if (!adminSeeded) {
+    await seedAdmin();
+    adminSeeded = true;
+  }
 }
 
 async function seedAdmin() {
@@ -90,8 +95,15 @@ async function seedAdmin() {
 /**
  * Safely executes a database query with a fallback value.
  * Used to prevent Server Component crashes when the database is unavailable.
+ *
+ * Wrapped with React cache() for request-level deduplication:
+ * if multiple server components call safeQuery with the same function
+ * reference during the same render, only one execution will occur.
  */
-export async function safeQuery<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
+export const safeQuery = reactCache(async function safeQuery<T>(
+  fn: () => Promise<T>,
+  fallback: T,
+): Promise<T> {
   if (!hasDatabaseEnv()) {
     return fallback;
   }
@@ -101,7 +113,7 @@ export async function safeQuery<T>(fn: () => Promise<T>, fallback: T): Promise<T
   } catch {
     return fallback;
   }
-}
+});
 
 export async function checkDatabaseConnection() {
   try {

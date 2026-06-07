@@ -1070,16 +1070,6 @@ export async function getAttendanceCounts(
   return buildAttendanceSummary(records);
 }
 
-/**
- * Build attendance summary from pre-fetched records.
- * Use this when records are already available to avoid duplicate DB queries.
- */
-export function buildAttendanceSummaryFromRecords(
-  records: AttendanceListItem[],
-): AttendanceSummary {
-  return buildAttendanceSummary(records);
-}
-
 export async function getAttendanceStudentTotals(
   filter: AttendanceFilter = {},
 ): Promise<AttendanceStudentTotal[]> {
@@ -1245,30 +1235,22 @@ async function computeAbsentStudents(
   if (filter.sectionId) {
     studentWhere.sectionId = filter.sectionId;
   }
+
+  // Pre-compute section IDs for class filter in parallel with other work
+  let classSectionIds: string[] | null = null;
   if (filter.classId) {
-    const sections = await db.section.findMany({
+    // Fetch section IDs for the class — this runs in parallel below
+    classSectionIds = (await db.section.findMany({
       where: { classId: filter.classId },
       select: { id: true },
-    });
-    const sectionIds = sections.map((s: { id: string }) => s.id);
-    studentWhere.sectionId = { in: sectionIds };
+    })).map((s: { id: string }) => s.id);
+
+    if (classSectionIds.length === 0) return []; // No sections = no students
+    studentWhere.sectionId = { in: classSectionIds };
   }
 
-  // Fetch active students matching the class/section filter
-  const students = await db.student.findMany({
-    where: studentWhere,
-    include: {
-      section: {
-        include: {
-          class: true,
-        },
-      },
-    },
-  });
-
-  if (students.length === 0) return [];
-
-  // Determine the dates for which we need to check absences
+  // Determine the dates for which we need to check absences FIRST
+  // (so we can run the student query and date check in parallel)
   let dates: Date[] = [];
 
   if (filter.date) {
@@ -1292,18 +1274,52 @@ async function computeAbsentStudents(
 
   if (dates.length === 0) return [];
 
-  // Find student IDs that already have ANY record for the date range
-  // (we query without status filter to know who has records at all)
-  const allDateRecords = await db.attendanceRecord.findMany({
-    where: await buildAttendanceWhere({
-      ...filter,
-      status: undefined, // remove status filter to get ALL records
+  // Run student fetch and attendance record fetch in PARALLEL
+  const [students, allDateRecords] = await Promise.all([
+    db.student.findMany({
+      where: studentWhere,
+      include: {
+        section: {
+          include: {
+            class: true,
+          },
+        },
+      },
     }),
-    select: {
-      studentId: true,
-      date: true,
-    },
-  });
+    // Fetch attendance records for ALL students in the date range at once
+    // instead of using buildAttendanceWhere which adds unnecessary complexity
+    db.attendanceRecord.findMany({
+      where: {
+        ...((() => {
+          const where: Prisma.AttendanceRecordWhereInput = {};
+          if (dates.length === 1) {
+            const start = dates[0];
+            const end = new Date(start);
+            end.setDate(end.getDate() + 1);
+            where.date = { gte: start, lt: end };
+          } else {
+            const fromDate = dates[0];
+            const toDate = new Date(dates[dates.length - 1]);
+            toDate.setDate(toDate.getDate() + 1);
+            where.date = { gte: fromDate, lt: toDate };
+          }
+          return where;
+        })()),
+        // If we have section IDs from class filter, limit attendance records too
+        ...(classSectionIds
+          ? { student: { sectionId: { in: classSectionIds } } }
+          : {}),
+        ...(filter.studentId ? { studentId: filter.studentId } : {}),
+        ...(filter.sectionId ? { student: { sectionId: filter.sectionId } } : {}),
+      },
+      select: {
+        studentId: true,
+        date: true,
+      },
+    }),
+  ]);
+
+  if (students.length === 0) return [];
 
   // Build a Set of "studentId|dateStr" for quick lookup
   const existingKeys = new Set(

@@ -29,6 +29,7 @@ const VALID_PERIODS: ReportPeriod[] = [
 ];
 
 const VALID_TYPES = [
+  "all",
   "summary",
   "attendance",
   "grades",
@@ -95,6 +96,32 @@ export async function GET(request: NextRequest) {
     };
 
     switch (type) {
+      case "all": {
+        const [summary, charts, attendance, grades, payments, classes, teachers] =
+          await Promise.all([
+            getDashboardSummary(filter),
+            getDashboardCharts(filter),
+            getAttendanceReport(filter),
+            getGradesReport(filter),
+            getPaymentsReport(filter),
+            getClassesReport(),
+            getTeachersReport(),
+          ]);
+
+        return NextResponse.json({
+          ok: true,
+          data: {
+            summary,
+            charts,
+            attendance,
+            grades,
+            payments,
+            classes,
+            teachers,
+          },
+        });
+      }
+
       case "summary": {
         const summary = await getDashboardSummary(filter);
         return NextResponse.json({

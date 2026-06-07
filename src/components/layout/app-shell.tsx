@@ -24,7 +24,7 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import {
   navigationGroups,
   orderedNavigationItems,
@@ -78,13 +78,13 @@ export function AppShell({ children }: AppShellProps) {
     );
   }, [pathname]);
 
-  function closeMobileSidebar() {
+  const closeMobileSidebar = useCallback(() => {
     setIsMobileSidebarOpen(false);
-  }
+  }, []);
 
   return (
     <div className="min-h-screen bg-transparent">
-      <MobileSidebarBackdrop
+      <MemoizedMobileSidebarBackdrop
         isOpen={isMobileSidebarOpen}
         onClose={closeMobileSidebar}
       />
@@ -100,7 +100,7 @@ export function AppShell({ children }: AppShellProps) {
         {/* Subtle top glow */}
         <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-indigo-700/[0.08] to-transparent" />
 
-        <SidebarContent
+        <MemoizedSidebarContent
           pathname={pathname}
           onNavigate={closeMobileSidebar}
         />
@@ -139,9 +139,9 @@ export function AppShell({ children }: AppShellProps) {
             </div>
 
             <div className="flex items-center gap-2">
-              <TopbarSearch />
+              <MemoizedTopbarSearch />
 
-              <ThemeToggle />
+              <MemoizedThemeToggle />
 
               <a
                 href="/logout"
@@ -178,12 +178,14 @@ export function AppShell({ children }: AppShellProps) {
   );
 }
 
+// ─── Memoized Sub-Components ────────────────────────────────────
+
 type SidebarContentProps = {
   pathname: string;
   onNavigate: () => void;
 };
 
-function SidebarContent({ pathname, onNavigate }: SidebarContentProps) {
+const SidebarContent = memo(function SidebarContent({ pathname, onNavigate }: SidebarContentProps) {
   return (
     <div className="relative flex h-full flex-col">
       <div className="relative border-b border-white/[0.06] px-5 py-5">
@@ -238,6 +240,7 @@ function SidebarContent({ pathname, onNavigate }: SidebarContentProps) {
                       <Link
                         key={item.href}
                         href={item.href}
+                        prefetch={true}
                         onClick={onNavigate}
                         className={[
                           "group flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-bold transition-all duration-200",
@@ -298,7 +301,8 @@ function SidebarContent({ pathname, onNavigate }: SidebarContentProps) {
       </div>
     </div>
   );
-}
+});
+const MemoizedSidebarContent = SidebarContent;
 
 type GlobalSearchResult = {
   type: string;
@@ -307,7 +311,7 @@ type GlobalSearchResult = {
   href: string;
 };
 
-function TopbarSearch() {
+const TopbarSearch = memo(function TopbarSearch() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<GlobalSearchResult[]>([]);
   const [open, setOpen] = useState(false);
@@ -330,7 +334,7 @@ function TopbarSearch() {
       } catch {
         if (!controller.signal.aborted) setResults([]);
       }
-    }, 250);
+    }, 300); // Slightly increased debounce for less API calls
 
     return () => {
       controller.abort();
@@ -382,14 +386,15 @@ function TopbarSearch() {
       )}
     </div>
   );
-}
+});
+const MemoizedTopbarSearch = TopbarSearch;
 
 type MobileSidebarBackdropProps = {
   isOpen: boolean;
   onClose: () => void;
 };
 
-function MobileSidebarBackdrop({
+const MobileSidebarBackdrop = memo(function MobileSidebarBackdrop({
   isOpen,
   onClose,
 }: MobileSidebarBackdropProps) {
@@ -409,9 +414,10 @@ function MobileSidebarBackdrop({
       </button>
     </div>
   );
-}
+});
+const MemoizedMobileSidebarBackdrop = MobileSidebarBackdrop;
 
-function ThemeToggle() {
+const ThemeToggle = memo(function ThemeToggle() {
   const { theme, toggleTheme } = useTheme();
   const isDark = theme === "dark";
 
@@ -426,4 +432,5 @@ function ThemeToggle() {
       {isDark ? <Sun size={18} /> : <Moon size={18} />}
     </button>
   );
-}
+});
+const MemoizedThemeToggle = ThemeToggle;

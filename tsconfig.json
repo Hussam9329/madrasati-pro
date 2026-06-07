@@ -35,9 +35,6 @@
   ],
   "exclude": [
     "node_modules",
-    "skills",
-    "madrasati-pro",
-    "download",
-    "upload"
+    "skills"
   ]
 }

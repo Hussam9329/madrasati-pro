@@ -10,6 +10,95 @@ const globalForSupabase = globalThis as unknown as {
   supabase?: SupabaseClient;
 };
 
+// ─── In-Memory Query Cache ─────────────────────────────────────
+// Caches read query results for a short TTL to avoid redundant
+// HTTP round-trips to Supabase within the same serverless invocation
+// or during SSR of the same page.
+
+type CacheEntry = {
+  data: any;
+  expiresAt: number;
+};
+
+const queryCache = new Map<string, CacheEntry>();
+
+/** Default TTL for cached reads (15 seconds — balances freshness with performance) */
+const DEFAULT_CACHE_TTL_MS = 15_000;
+
+/** Maximum cache entries to prevent unbounded memory growth */
+const MAX_CACHE_ENTRIES = 200;
+
+function getCacheKey(table: string, method: string, args: Record<string, any>): string {
+  try {
+    return `${table}:${method}:${JSON.stringify(args)}`;
+  } catch {
+    return `${table}:${method}:${Date.now()}`;
+  }
+}
+
+function getCached(key: string): CacheEntry | undefined {
+  const entry = queryCache.get(key);
+  if (!entry) return undefined;
+  if (Date.now() > entry.expiresAt) {
+    queryCache.delete(key);
+    return undefined;
+  }
+  return entry;
+}
+
+function setCache(key: string, data: any, ttlMs = DEFAULT_CACHE_TTL_MS): void {
+  // Evict oldest entries if cache is full
+  if (queryCache.size >= MAX_CACHE_ENTRIES) {
+    const now = Date.now();
+    let oldestKey: string | null = null;
+    let oldestTime = Infinity;
+    for (const [k, v] of queryCache) {
+      if (v.expiresAt < oldestTime) {
+        oldestTime = v.expiresAt;
+        oldestKey = k;
+      }
+      // Also clean expired entries while iterating
+      if (now > v.expiresAt) {
+        queryCache.delete(k);
+      }
+    }
+    if (oldestKey && queryCache.size >= MAX_CACHE_ENTRIES) {
+      queryCache.delete(oldestKey);
+    }
+  }
+
+  queryCache.set(key, {
+    data,
+    expiresAt: Date.now() + ttlMs,
+  });
+}
+
+/**
+ * Invalidate all cache entries for a given table.
+ * Called automatically after write operations (create, update, delete).
+ */
+function invalidateTableCache(table: string): void {
+  const prefix = `${table}:`;
+  for (const key of queryCache.keys()) {
+    if (key.startsWith(prefix)) {
+      queryCache.delete(key);
+    }
+  }
+}
+
+// Tables with data that rarely changes — can use longer TTL
+const LONG_CACHE_TABLES = new Set([
+  "school_settings",
+  "school_classes",
+  "subjects",
+  "sections",
+]);
+const LONG_CACHE_TTL_MS = 60_000; // 60 seconds
+
+function getCacheTtlForTable(table: string): number {
+  return LONG_CACHE_TABLES.has(table) ? LONG_CACHE_TTL_MS : DEFAULT_CACHE_TTL_MS;
+}
+
 /**
  * Get or create the Supabase client lazily.
  * This avoids "supabaseUrl is required" errors during build time
@@ -81,12 +170,16 @@ const MODEL_TO_TABLE: Record<string, string> = {
 
 // Relation mappings for include/select operations
 // Maps Prisma relation names to { table, foreignKey, thisKey } info
-const RELATION_MAP: Record<string, Record<string, {
+type RelationInfo = {
   table: string;
   foreignKey: string;
   thisKey: string;
   isMany: boolean;
-}>> = {
+};
+
+const SUPABASE_IN_BATCH_SIZE = 200;
+
+const RELATION_MAP: Record<string, Record<string, RelationInfo>> = {
   student: {
     section: { table: "sections", foreignKey: "id", thisKey: "sectionId", isMany: false },
     grades: { table: "grades", foreignKey: "studentId", thisKey: "id", isMany: true },
@@ -349,6 +442,67 @@ function transformRow<T>(row: Record<string, any>): T {
   return row as T;
 }
 
+function getTruthySelectKeys(select?: Record<string, any>): string[] {
+  if (!select) return [];
+  return Object.entries(select)
+    .filter(([, enabled]) => Boolean(enabled))
+    .map(([key]) => key);
+}
+
+function uniqueCompactValues(values: any[]): any[] {
+  const seen = new Set<string>();
+  const unique: any[] = [];
+
+  for (const value of values) {
+    if (value === null || value === undefined || value === "") continue;
+    const key = String(value);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    unique.push(value);
+  }
+
+  return unique;
+}
+
+function chunkArray<T>(items: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let index = 0; index < items.length; index += size) {
+    chunks.push(items.slice(index, index + size));
+  }
+  return chunks;
+}
+
+function groupRowsByKey(rows: Record<string, any>[], keyName: string): Map<string, Record<string, any>[]> {
+  const grouped = new Map<string, Record<string, any>[]>();
+
+  for (const row of rows) {
+    const key = row[keyName];
+    if (key === null || key === undefined) continue;
+
+    const mapKey = String(key);
+    const existing = grouped.get(mapKey);
+    if (existing) {
+      existing.push(row);
+    } else {
+      grouped.set(mapKey, [row]);
+    }
+  }
+
+  return grouped;
+}
+
+function pickSelectedColumns(row: Record<string, any>, selectedKeys?: Set<string>): Record<string, any> {
+  if (!selectedKeys) return row;
+
+  const picked: Record<string, any> = {};
+  for (const key of selectedKeys) {
+    if (Object.prototype.hasOwnProperty.call(row, key)) {
+      picked[key] = row[key];
+    }
+  }
+  return picked;
+}
+
 /**
  * Supabase-backed model handler that mimics Prisma's model API
  */
@@ -374,14 +528,14 @@ class SupabaseModelHandler {
     scalarData: Record<string, any>;
     nestedCreates: Array<{
       relationName: string;
-      relation: { table: string; foreignKey: string; thisKey: string; isMany: boolean };
+      relation: RelationInfo;
       rows: Record<string, any>[];
     }>;
   } {
     const scalarData: Record<string, any> = {};
     const nestedCreates: Array<{
       relationName: string;
-      relation: { table: string; foreignKey: string; thisKey: string; isMany: boolean };
+      relation: RelationInfo;
       rows: Record<string, any>[];
     }> = [];
     const relations = RELATION_MAP[this.model] || {};
@@ -413,7 +567,7 @@ class SupabaseModelHandler {
     parent: Record<string, any>,
     nestedCreates: Array<{
       relationName: string;
-      relation: { table: string; foreignKey: string; thisKey: string; isMany: boolean };
+      relation: RelationInfo;
       rows: Record<string, any>[];
     }>
   ) {
@@ -440,6 +594,86 @@ class SupabaseModelHandler {
     }
   }
 
+  private getBaseSelect(select?: Record<string, any>): string {
+    const keys = getTruthySelectKeys(select);
+    return keys.length > 0 ? keys.join(",") : "*";
+  }
+
+  private getRelationSelect(
+    value: any,
+    relation: RelationInfo,
+  ): { select: string; selectedKeys?: Set<string> } {
+    if (typeof value === "object" && value !== null && value.select) {
+      const keys = getTruthySelectKeys(value.select);
+      const selectedKeys = new Set(keys);
+      const technicalKey = relation.foreignKey;
+
+      if (!keys.includes(technicalKey)) {
+        keys.push(technicalKey);
+      }
+
+      return {
+        select: keys.length > 0 ? keys.join(",") : "*",
+        selectedKeys,
+      };
+    }
+
+    return { select: "*" };
+  }
+
+  private applyOrderBy(query: any, orderBy?: any): any {
+    if (!orderBy) return query;
+
+    const orderByArr = Array.isArray(orderBy) ? orderBy : [orderBy];
+    for (const ob of orderByArr) {
+      const [key, dir] = Object.entries(ob)[0] as [string, string];
+      query = query.order(key, { ascending: dir === "asc", nullsFirst: false });
+    }
+
+    return query;
+  }
+
+  private async fetchRowsByIn(
+    table: string,
+    select: string,
+    column: string,
+    values: any[],
+    options?: { orderBy?: any; where?: Record<string, any>; model?: string },
+  ): Promise<Record<string, any>[]> {
+    const uniqueValues = uniqueCompactValues(values);
+    if (uniqueValues.length === 0) return [];
+
+    const relatedHandler = options?.model
+      ? new SupabaseModelHandler(options.model, table)
+      : this;
+
+    const batches = await Promise.all(
+      chunkArray(uniqueValues, SUPABASE_IN_BATCH_SIZE).map(async (batch) => {
+        let query = this.getClient()
+          .from(table)
+          .select(select)
+          .in(column, batch);
+
+        if (options?.where) {
+          query = relatedHandler.applyWhere(query, options.where);
+        }
+
+        query = this.applyOrderBy(query, options?.orderBy);
+
+        const { data, error } = await query;
+
+        if (error) {
+          console.error(`[SupabaseModel.fetchRowsByIn] Error on ${table}:`, error);
+          return [] as Record<string, any>[];
+        }
+
+        return (data || []) as Record<string, any>[];
+      }),
+    );
+
+    return batches.flat();
+  }
+
   async findUnique(args: { where: Record<string, any>; include?: Record<string, any>; select?: Record<string, any> }): Promise<any> {
     const where = args.where;
     const id = where.id;
@@ -449,9 +683,13 @@ class SupabaseModelHandler {
       return this.findFirst(args);
     }
 
-    // Use PostgREST join select when include is specified (single query vs N+1)
-    const selectStr = buildSelectString(this.model, args.include, args.select) || "*";
-    let query = this.getClient().from(this.table).select(selectStr);
+    // Check query cache
+    const cacheKey = getCacheKey(this.table, "findUnique", args);
+    const cached = getCached(cacheKey);
+    if (cached) return cached.data;
+
+    const baseSelect = args.include ? "*" : this.getBaseSelect(args.select);
+    let query = this.getClient().from(this.table).select(baseSelect);
 
     if (id) {
       query = query.eq("id", id);
@@ -467,82 +705,64 @@ class SupabaseModelHandler {
 
     if (error) {
       if (error.code === "PGRST116") return null; // No rows found
-      // Fallback: if PostgREST join fails, try without join and use processResult
-      console.warn(`[SupabaseModel.findUnique] Join select failed on ${this.table}, falling back to N+1:`, error.message);
-      let fallbackQuery = this.getClient().from(this.table).select("*");
-      if (id) fallbackQuery = fallbackQuery.eq("id", id);
-      else if (where.username) fallbackQuery = fallbackQuery.eq("username", where.username);
-      else if (where.studentCode) fallbackQuery = fallbackQuery.eq("studentCode", where.studentCode);
-      else if (where.receiptNumber) fallbackQuery = fallbackQuery.eq("receiptNumber", where.receiptNumber);
-      const fallback = await fallbackQuery.limit(1).single();
-      if (fallback.error || !fallback.data) return null;
-      return this.processResult(fallback.data, args.include);
+      console.error(`[SupabaseModel.findUnique] Error on ${this.table}:`, error);
+      return null;
     }
 
-    return this.processJoinedResult(data, args.include);
+    const [result] = await this.processResults(data ? [data] : [], args.include);
+    const finalResult = result ?? null;
+
+    setCache(cacheKey, finalResult, getCacheTtlForTable(this.table));
+    return finalResult;
   }
 
   async findFirst(args: { where?: Record<string, any>; orderBy?: any; include?: Record<string, any>; select?: Record<string, any> }): Promise<any> {
-    // Use PostgREST join select when include is specified (single query vs N+1)
-    const selectStr = buildSelectString(this.model, args.include, args.select) || "*";
-    let query = this.getClient().from(this.table).select(selectStr);
+    // Check query cache
+    const cacheKey = getCacheKey(this.table, "findFirst", args);
+    const cached = getCached(cacheKey);
+    if (cached) return cached.data;
+
+    const baseSelect = args.include ? "*" : this.getBaseSelect(args.select);
+    let query = this.getClient().from(this.table).select(baseSelect);
 
     // Apply where filters
     if (args.where) {
-      this.applyWhere(query, args.where);
+      query = this.applyWhere(query, args.where);
     }
 
-    // Apply orderBy
-    if (args.orderBy) {
-      const orderByArr = Array.isArray(args.orderBy) ? args.orderBy : [args.orderBy];
-      for (const ob of orderByArr) {
-        const [key, dir] = Object.entries(ob)[0] as [string, string];
-        query = query.order(key, { ascending: dir === "asc", nullsFirst: false });
-      }
-    }
+    query = this.applyOrderBy(query, args.orderBy);
 
     const { data, error } = await query.limit(1);
 
     if (error) {
-      // Fallback: if PostgREST join fails, try without join
-      console.warn(`[SupabaseModel.findFirst] Join select failed on ${this.table}, falling back to N+1:`, error.message);
-      let fallbackQuery = this.getClient().from(this.table).select("*");
-      if (args.where) this.applyWhere(fallbackQuery, args.where);
-      if (args.orderBy) {
-        const orderByArr = Array.isArray(args.orderBy) ? args.orderBy : [args.orderBy];
-        for (const ob of orderByArr) {
-          const [key, dir] = Object.entries(ob)[0] as [string, string];
-          fallbackQuery = fallbackQuery.order(key, { ascending: dir === "asc", nullsFirst: false });
-        }
-      }
-      const fallback = await fallbackQuery.limit(1);
-      if (fallback.error || !fallback.data || fallback.data.length === 0) return null;
-      return this.processResult(fallback.data[0], args.include);
+      console.error(`[SupabaseModel.findFirst] Error on ${this.table}:`, error);
+      return null;
     }
 
     if (!data || data.length === 0) return null;
 
-    return this.processJoinedResult(data[0], args.include);
+    const [result] = await this.processResults(data, args.include);
+    const finalResult = result ?? null;
+
+    setCache(cacheKey, finalResult, getCacheTtlForTable(this.table));
+    return finalResult;
   }
 
   async findMany(args: { where?: Record<string, any>; orderBy?: any; include?: Record<string, any>; select?: Record<string, any>; take?: number; skip?: number } = {}): Promise<any[]> {
-    // Use PostgREST join select when include is specified (single query vs N+1)
-    const selectStr = buildSelectString(this.model, args.include, args.select) || "*";
-    let query = this.getClient().from(this.table).select(selectStr);
+    // Check query cache
+    const cacheKey = getCacheKey(this.table, "findMany", args);
+    const cached = getCached(cacheKey);
+    if (cached) return cached.data;
+
+    const baseSelect = args.include ? "*" : this.getBaseSelect(args.select);
+    let query = this.getClient().from(this.table).select(baseSelect);
 
     // Apply where filters
     if (args.where) {
-      this.applyWhere(query, args.where);
+      query = this.applyWhere(query, args.where);
     }
 
-    // Apply orderBy
-    if (args.orderBy) {
-      const orderByArr = Array.isArray(args.orderBy) ? args.orderBy : [args.orderBy];
-      for (const ob of orderByArr) {
-        const [key, dir] = Object.entries(ob)[0] as [string, string];
-        query = query.order(key, { ascending: dir === "asc", nullsFirst: false });
-      }
-    }
+    query = this.applyOrderBy(query, args.orderBy);
 
     // Apply pagination
     if (args.skip) {
@@ -554,35 +774,14 @@ class SupabaseModelHandler {
     const { data, error } = await query;
 
     if (error) {
-      // Fallback: if PostgREST join fails, try without join and use processResult
-      console.warn(`[SupabaseModel.findMany] Join select failed on ${this.table}, falling back to N+1:`, error.message);
-      let fallbackQuery = this.getClient().from(this.table).select("*");
-      if (args.where) this.applyWhere(fallbackQuery, args.where);
-      if (args.orderBy) {
-        const orderByArr = Array.isArray(args.orderBy) ? args.orderBy : [args.orderBy];
-        for (const ob of orderByArr) {
-          const [key, dir] = Object.entries(ob)[0] as [string, string];
-          fallbackQuery = fallbackQuery.order(key, { ascending: dir === "asc", nullsFirst: false });
-        }
-      }
-      if (args.skip) fallbackQuery = fallbackQuery.range(args.skip, args.skip + (args.take || 100) - 1);
-      else if (args.take) fallbackQuery = fallbackQuery.limit(args.take);
-      const fallback = await fallbackQuery;
-      if (fallback.error || !fallback.data) return [];
-      return Promise.all(fallback.data.map((row: any) => this.processResult(row, args.include)));
+      console.error(`[SupabaseModel.findMany] Error on ${this.table}:`, error);
+      return [];
     }
 
-    // Process joined results — PostgREST already resolved relations, just remap keys
-    const results = (data || []).map((row: any) => this.processJoinedResult(row, args.include));
+    const result = await this.processResults((data || []) as Record<string, any>[], args.include);
 
-    // Handle _count post-processing (PostgREST can't do _count natively)
-    if (args.include?._count) {
-      await Promise.all(results.map(async (result: any) => {
-        result._count = await this.computeCountFields(result.id, args.include._count);
-      }));
-    }
-
-    return results;
+    setCache(cacheKey, result, getCacheTtlForTable(this.table));
+    return result;
   }
 
   private toPrismaLikeError(error: any): Error & { code?: string; meta?: Record<string, any> } {
@@ -612,7 +811,7 @@ class SupabaseModelHandler {
     parent: Record<string, any>,
     nestedCreates: Array<{
       relationName: string;
-      relation: { table: string; foreignKey: string; thisKey: string; isMany: boolean };
+      relation: RelationInfo;
       rows: Record<string, any>[];
     }>
   ) {
@@ -661,6 +860,9 @@ class SupabaseModelHandler {
       data.updatedAt = now;
     }
 
+    // Invalidate cache before write
+    invalidateTableCache(this.table);
+
     const { data: result, error } = await this.getClient()
       .from(this.table)
       .insert(data)
@@ -688,6 +890,9 @@ class SupabaseModelHandler {
     if (args.data.length === 0) {
       return { count: 0 };
     }
+
+    // Invalidate cache before write
+    invalidateTableCache(this.table);
 
     const now = new Date().toISOString();
     const rows = args.data.map((d) =>
@@ -723,6 +928,9 @@ class SupabaseModelHandler {
   }
 
   async update(args: { where: Record<string, any>; data: Record<string, any>; include?: Record<string, any> }): Promise<any> {
+    // Invalidate cache before write
+    invalidateTableCache(this.table);
+
     const where = args.where;
     const { scalarData, nestedCreates } = this.splitNestedWrites({ ...args.data });
     // Auto-update the updatedAt timestamp (mimics Prisma @updatedAt)
@@ -768,6 +976,9 @@ class SupabaseModelHandler {
   }
 
   async delete(args: { where: Record<string, any> }): Promise<any> {
+    // Invalidate cache before write
+    invalidateTableCache(this.table);
+
     const where = args.where;
     let query = this.getClient()
       .from(this.table)
@@ -800,12 +1011,15 @@ class SupabaseModelHandler {
   }
 
   async deleteMany(args: { where?: Record<string, any> } = {}): Promise<{ count: number }> {
+    // Invalidate cache before write
+    invalidateTableCache(this.table);
+
     let query = this.getClient()
       .from(this.table)
       .delete();
 
     if (args.where) {
-      this.applyWhere(query, args.where);
+      query = this.applyWhere(query, args.where);
     }
 
     const { data: result, error } = await query.select();
@@ -819,13 +1033,18 @@ class SupabaseModelHandler {
   }
 
   async count(args: { where?: Record<string, any> } = {}): Promise<number> {
+    // Check query cache for counts
+    const cacheKey = getCacheKey(this.table, "count", args);
+    const cached = getCached(cacheKey);
+    if (cached) return cached.data as number;
+
     // Use head: true to get count without fetching data
     let query = this.getClient()
       .from(this.table)
       .select("*", { count: "exact", head: true });
 
     if (args.where) {
-      this.applyWhere(query, args.where);
+      query = this.applyWhere(query, args.where);
     }
 
     const { count, error } = await query;
@@ -835,26 +1054,30 @@ class SupabaseModelHandler {
       return 0;
     }
 
-    return count || 0;
+    const result = count || 0;
+    setCache(cacheKey, result, getCacheTtlForTable(this.table));
+    return result;
   }
 
   async aggregate(args: { where?: Record<string, any>; _sum?: Record<string, true>; _avg?: Record<string, true>; _count?: boolean | Record<string, true>; _min?: Record<string, true>; _max?: Record<string, true> }): Promise<any> {
-    // Build select string with only the columns needed for aggregation
-    // instead of fetching all columns with select("*")
-    const neededColumns = new Set<string>();
-    if (args._sum) for (const key of Object.keys(args._sum)) neededColumns.add(key);
-    if (args._avg) for (const key of Object.keys(args._avg)) neededColumns.add(key);
-    if (args._min) for (const key of Object.keys(args._min)) neededColumns.add(key);
-    if (args._max) for (const key of Object.keys(args._max)) neededColumns.add(key);
-    if (typeof args._count === "object") for (const key of Object.keys(args._count)) neededColumns.add(key);
+    // Supabase REST does not expose Prisma-style aggregate helpers.
+    // Fetch only the columns needed for the requested calculations to reduce payload size.
+    const aggregateColumns = new Set<string>();
+    for (const group of [args._sum, args._avg, args._min, args._max]) {
+      if (group) {
+        Object.keys(group).forEach((key) => aggregateColumns.add(key));
+      }
+    }
+    if (typeof args._count === "object") {
+      Object.keys(args._count).forEach((key) => aggregateColumns.add(key));
+    }
 
-    const selectStr = neededColumns.size > 0 ? Array.from(neededColumns).join(",") : "id";
     let query = this.getClient()
       .from(this.table)
-      .select(selectStr);
+      .select(aggregateColumns.size > 0 ? Array.from(aggregateColumns).join(",") : "id");
 
     if (args.where) {
-      this.applyWhere(query, args.where);
+      query = this.applyWhere(query, args.where);
     }
 
     const { data, error } = await query;
@@ -912,7 +1135,7 @@ class SupabaseModelHandler {
     return result;
   }
 
-  private applyWhere(query: any, where: Record<string, any>): void {
+  private applyWhere(query: any, where: Record<string, any>): any {
     for (const [key, value] of Object.entries(where)) {
       if (key === "OR") {
         if (Array.isArray(value)) {
@@ -921,30 +1144,42 @@ class SupabaseModelHandler {
             const subParts: string[] = [];
             for (const [k, v] of Object.entries(cond)) {
               const vo = typeof v === "object" && v !== null ? v as Record<string, any> : null;
+
+              // PostgREST OR cannot express our nested Prisma-like relation filters here.
+              // They are intentionally skipped instead of generating invalid column names.
+              if (vo && RELATION_MAP[this.model]?.[k]) continue;
+
               if (v === null) {
                 subParts.push(`${k}.is.null`);
               } else if (vo && vo.contains !== undefined) {
-                subParts.push(`${k}.like.*${vo.contains}*`);
+                subParts.push(`${k}.ilike.*${vo.contains}*`);
               } else if (vo && vo.startsWith !== undefined) {
-                subParts.push(`${k}.like.${vo.startsWith}*`);
+                subParts.push(`${k}.ilike.${vo.startsWith}*`);
               } else if (vo && vo.not !== undefined) {
                 if (vo.not === null) {
                   subParts.push(`${k}.not.is.null`);
                 } else {
                   subParts.push(`${k}.neq.${vo.not}`);
                 }
-              } else {
+              } else if (vo && vo.in !== undefined) {
+                const vals = Array.isArray(vo.in) ? vo.in.join(",") : vo.in;
+                subParts.push(`${k}.in.(${vals})`);
+              } else if (!vo) {
                 subParts.push(`${k}.eq.${v}`);
               }
             }
-            orParts.push(subParts.join(","));
+            if (subParts.length > 0) {
+              orParts.push(subParts.join(","));
+            }
           }
-          query = query.or(orParts.join(","));
+          if (orParts.length > 0) {
+            query = query.or(orParts.join(","));
+          }
         }
       } else if (key === "AND") {
         if (Array.isArray(value)) {
           for (const cond of value) {
-            this.applyWhere(query, cond);
+            query = this.applyWhere(query, cond);
           }
         }
       } else if (value === null) {
@@ -984,227 +1219,157 @@ class SupabaseModelHandler {
           }
         } else if (value.in !== undefined) {
           query = query.in(key, Array.isArray(value.in) ? value.in : [value.in]);
-        } else if (key === "section" || key === "class" || key === "student" || key === "teacher" || key === "subject") {
-          // Relation filter - need special handling
-          // For now, we'll handle the most common cases
-          const relations = RELATION_MAP[this.model] || {};
-          const relation = relations[key];
-          if (relation) {
-            // This is a relation filter - apply to the foreign key
-            // e.g., { section: { classId: "xxx" } } -> filter by sectionId where section has classId
-            // This needs a join which PostgREST handles differently
-            // For simple foreign key filters, we can use the foreign key directly
-            for (const [fk, fv] of Object.entries(value)) {
-              if (fk === "classId" && key === "section") {
-                // Need to find sections with this classId, then filter students by those sectionIds
-                // This is complex - handle in post-filtering for now
-              }
-            }
-          }
+        } else if (RELATION_MAP[this.model]?.[key]) {
+          // Relation filters require joins; service-level code handles the most important cases.
+          continue;
         }
       } else {
         query = query.eq(key, value);
       }
     }
-  }
 
-  /**
-   * Process a row returned by a PostgREST join query.
-   * PostgREST returns nested objects using table names as keys,
-   * but our app expects Prisma-style keys (relation names).
-   * This method remaps table-name keys to Prisma relation names.
-   */
-  private processJoinedResult(row: Record<string, any>, include?: Record<string, any>): any {
-    if (!include) return transformRow(row);
-
-    const result: Record<string, any> = { ...row };
-    const relations = RELATION_MAP[this.model] || {};
-
-    for (const [key, value] of Object.entries(include)) {
-      if (key === "_count") continue; // handled separately
-
-      const relation = relations[key];
-      if (!relation) continue;
-
-      // PostgREST uses the table name as the key, not the Prisma relation name
-      const tableName = relation.table;
-      const nestedData = result[tableName];
-
-      if (nestedData === undefined || nestedData === null) {
-        result[key] = relation.isMany ? [] : null;
-        // Clean up the table-name key
-        delete result[tableName];
-        continue;
-      }
-
-      // Move from table-name key to Prisma relation-name key
-      if (relation.isMany) {
-        const nestedInclude = typeof value === "object" && value !== null ? value.include : undefined;
-        if (nestedInclude && Array.isArray(nestedData)) {
-          const nestedModel = getTableModelName(relation.table);
-          const handler = new SupabaseModelHandler(nestedModel, relation.table);
-          result[key] = nestedData.map((item: any) => handler.processJoinedResult(item, nestedInclude));
-        } else {
-          result[key] = Array.isArray(nestedData) ? nestedData.map(transformRow) : [];
-        }
-      } else {
-        const nestedInclude = typeof value === "object" && value !== null ? value.include : undefined;
-        if (nestedInclude && typeof nestedData === "object") {
-          const nestedModel = getTableModelName(relation.table);
-          const handler = new SupabaseModelHandler(nestedModel, relation.table);
-          result[key] = handler.processJoinedResult(nestedData, nestedInclude);
-        } else {
-          result[key] = typeof nestedData === "object" && nestedData !== null ? transformRow(nestedData) : nestedData;
-        }
-      }
-
-      // Clean up the table-name key to avoid duplicate data
-      delete result[tableName];
-    }
-
-    return transformRow(result);
-  }
-
-  /**
-   * Compute _count fields for a record.
-   * PostgREST doesn't support _count natively, so we use count queries.
-   */
-  private async computeCountFields(recordId: string, countSpec: Record<string, any>): Promise<Record<string, number>> {
-    const relations = RELATION_MAP[this.model] || {};
-    const countSelect = countSpec.select || countSpec;
-    const entries = Object.entries(countSelect) as [string, boolean][];
-
-    const counts = await Promise.all(
-      entries.map(async ([relationName, enabled]) => {
-        if (!enabled) return [relationName, 0] as const;
-        const relation = relations[relationName];
-        if (!relation) return [relationName, 0] as const;
-
-        const { count, error } = await this.getClient()
-          .from(relation.table)
-          .select("*", { count: "exact", head: true })
-          .eq(relation.foreignKey, recordId);
-
-        if (error) {
-          console.warn(`[computeCountFields] Error counting ${relationName}:`, error.message);
-          return [relationName, 0] as const;
-        }
-
-        return [relationName, count || 0] as const;
-      })
-    );
-
-    return Object.fromEntries(counts);
+    return query;
   }
 
   private async processResult(row: Record<string, any>, include?: Record<string, any>): Promise<any> {
-    const result: Record<string, any> = transformRow(row);
+    const [result] = await this.processResults(row ? [row] : [], include);
+    return result ?? null;
+  }
 
-    if (!include) return result;
+  private async processResults(rows: Record<string, any>[], include?: Record<string, any>): Promise<any[]> {
+    const results = rows.map((row) => transformRow<Record<string, any>>({ ...row }));
+
+    if (!include || results.length === 0) return results;
 
     const relations = RELATION_MAP[this.model] || {};
-
-    // Process all includes (relations + _count) in parallel
     const tasks: Promise<void>[] = [];
 
-    // Handle _count
     if (include._count) {
-      const countSelect = include._count.select || {};
       tasks.push(
         (async () => {
+          const countSelect = include._count.select || {};
           const countEntries = Object.entries(countSelect) as [string, boolean][];
-          const countResults = await Promise.all(
+
+          const countMaps = await Promise.all(
             countEntries.map(async ([relationName, enabled]) => {
-              if (!enabled) return [relationName, 0] as const;
+              const countsByParent = new Map<string, number>();
+              if (!enabled) return [relationName, countsByParent] as const;
+
               const relation = relations[relationName];
-              if (!relation) return [relationName, 0] as const;
+              if (!relation) return [relationName, countsByParent] as const;
 
-              const { count, error } = await this.getClient()
-                .from(relation.table)
-                .select("*", { count: "exact", head: true })
-                .eq(relation.foreignKey, result["id"] as string);
+              const parentKeys = uniqueCompactValues(
+                results.map((result) => result[relation.thisKey] ?? result.id),
+              );
 
-              return [relationName, count || 0] as const;
-            })
+              const relatedRows = await this.fetchRowsByIn(
+                relation.table,
+                relation.foreignKey,
+                relation.foreignKey,
+                parentKeys,
+                { model: getTableModelName(relation.table) },
+              );
+
+              for (const row of relatedRows) {
+                const parentKey = row[relation.foreignKey];
+                if (parentKey === null || parentKey === undefined) continue;
+                const key = String(parentKey);
+                countsByParent.set(key, (countsByParent.get(key) || 0) + 1);
+              }
+
+              return [relationName, countsByParent] as const;
+            }),
           );
-          result._count = Object.fromEntries(countResults);
-        })()
+
+          for (const result of results) {
+            const countPayload: Record<string, number> = {};
+            for (const [relationName, countsByParent] of countMaps) {
+              const relation = relations[relationName];
+              const parentKey = relation ? result[relation.thisKey] ?? result.id : undefined;
+              countPayload[relationName] = parentKey === undefined ? 0 : countsByParent.get(String(parentKey)) || 0;
+            }
+            result._count = countPayload;
+          }
+        })(),
       );
     }
 
-    // Handle relation includes
     for (const [key, value] of Object.entries(include)) {
       if (key === "_count") continue;
+
       const relation = relations[key];
       if (!relation) continue;
 
       tasks.push(
         (async () => {
+          const nestedInclude = typeof value === "object" && value !== null ? value.include : undefined;
+          const relationWhere = typeof value === "object" && value !== null ? value.where : undefined;
+          const relationOrderBy = typeof value === "object" && value !== null ? value.orderBy : undefined;
+          const { select, selectedKeys } = this.getRelationSelect(value, relation);
+          const nestedModel = getTableModelName(relation.table);
+          const nestedHandler = new SupabaseModelHandler(nestedModel, relation.table);
+
           if (relation.isMany) {
-            // Has-many relation: fetch related rows where foreignKey = this.id
-            const nestedInclude = typeof value === "object" && value !== null ? value.include : undefined;
-            const nestedSelect = typeof value === "object" && value !== null && value.select ? Object.keys(value.select).join(",") : "*";
+            const parentKeys = uniqueCompactValues(
+              results.map((result) => result[relation.thisKey] ?? result.id),
+            );
 
-            const { data, error } = await this.getClient()
-              .from(relation.table)
-              .select(nestedSelect)
-              .eq(relation.foreignKey, result["id"] as string);
+            const relatedRows = await this.fetchRowsByIn(
+              relation.table,
+              select,
+              relation.foreignKey,
+              parentKeys,
+              { orderBy: relationOrderBy, where: relationWhere, model: nestedModel },
+            );
 
-            if (error) {
-              console.error(`[processResult] Error fetching ${key}:`, error);
-              result[key] = [];
-              return;
-            }
+            const processedRows = nestedInclude
+              ? await nestedHandler.processResults(relatedRows, nestedInclude)
+              : relatedRows.map((row) => transformRow<Record<string, any>>({ ...row }));
 
-            // Recursively process nested includes
-            if (nestedInclude && data) {
-              const nestedModel = getTableModelName(relation.table);
-              result[key] = await Promise.all(
-                data.map(async (item: any) => {
-                  const handler = new SupabaseModelHandler(nestedModel, relation.table);
-                  return handler.processResult(item, nestedInclude);
-                })
-              );
-            } else {
-              result[key] = (data || []).map(transformRow);
+            const grouped = groupRowsByKey(processedRows, relation.foreignKey);
+
+            for (const result of results) {
+              const parentKey = result[relation.thisKey] ?? result.id;
+              const rowsForParent = parentKey === undefined ? [] : grouped.get(String(parentKey)) || [];
+              result[key] = rowsForParent.map((row) => pickSelectedColumns(row, selectedKeys));
             }
           } else {
-            // Belongs-to relation: fetch related row where id = this.thisKey
-            const fkValue = result[relation.thisKey];
-            if (!fkValue) {
-              result[key] = null;
-              return;
+            const foreignKeys = uniqueCompactValues(
+              results.map((result) => result[relation.thisKey]),
+            );
+
+            const relatedRows = await this.fetchRowsByIn(
+              relation.table,
+              select,
+              relation.foreignKey,
+              foreignKeys,
+              { orderBy: relationOrderBy, where: relationWhere, model: nestedModel },
+            );
+
+            const processedRows = nestedInclude
+              ? await nestedHandler.processResults(relatedRows, nestedInclude)
+              : relatedRows.map((row) => transformRow<Record<string, any>>({ ...row }));
+
+            const rowsByKey = new Map<string, Record<string, any>>();
+            for (const row of processedRows) {
+              const rowKey = row[relation.foreignKey];
+              if (rowKey !== null && rowKey !== undefined) {
+                rowsByKey.set(String(rowKey), row);
+              }
             }
 
-            const nestedInclude = typeof value === "object" && value !== null ? value.include : undefined;
-            const nestedSelect = typeof value === "object" && value !== null && value.select ? Object.keys(value.select).join(",") : "*";
-
-            const { data, error } = await this.getClient()
-              .from(relation.table)
-              .select(nestedSelect)
-              .eq("id", fkValue)
-              .limit(1);
-
-            if (error || !data || data.length === 0) {
-              result[key] = null;
-              return;
-            }
-
-            // Recursively process nested includes
-            if (nestedInclude) {
-              const nestedModel = getTableModelName(relation.table);
-              const handler = new SupabaseModelHandler(nestedModel, relation.table);
-              result[key] = await handler.processResult(data[0], nestedInclude);
-            } else {
-              result[key] = transformRow(data[0]);
+            for (const result of results) {
+              const fkValue = result[relation.thisKey];
+              const relatedRow = fkValue === undefined || fkValue === null ? null : rowsByKey.get(String(fkValue)) || null;
+              result[key] = relatedRow ? pickSelectedColumns(relatedRow, selectedKeys) : null;
             }
           }
-        })()
+        })(),
       );
     }
 
     await Promise.all(tasks);
-    return result;
+    return results;
   }
 
   private getRelatedModel(relationName: string): string {
