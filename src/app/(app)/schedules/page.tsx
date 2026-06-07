@@ -53,7 +53,6 @@ type SchedulesPageProps = {
     deleted?: string;
     toggled?: string;
     error?: string;
-    reason?: string;
   }>;
 };
 
@@ -93,7 +92,6 @@ export default async function SchedulesPage({
           deleted={resolvedSearchParams?.deleted}
           toggled={resolvedSearchParams?.toggled}
           error={resolvedSearchParams?.error}
-          reason={resolvedSearchParams?.reason}
         />
 
         <SmartAlert
@@ -228,7 +226,6 @@ type SchedulesFeedbackProps = {
   deleted?: string;
   toggled?: string;
   error?: string;
-  reason?: string;
 };
 
 function SchedulesFeedback({
@@ -236,7 +233,6 @@ function SchedulesFeedback({
   deleted,
   toggled,
   error,
-  reason: _reason,
 }: SchedulesFeedbackProps) {
   if (saved === "1") {
     return (
