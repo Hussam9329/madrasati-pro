@@ -1,10 +1,9 @@
-import { cookies } from "next/headers";
+import { logout } from "@/lib/auth";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
 export async function POST() {
-  const cookieStore = await cookies();
-  cookieStore.delete("madrasati_session");
+  await logout();
   return NextResponse.json({ success: true });
 }

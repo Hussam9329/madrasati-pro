@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/auth";
+import { withApiAuth } from "@/lib/api-auth";
 import { safeQuery } from "@/lib/db";
 import { getStudents } from "@/services/student-service";
 import { searchTeachers } from "@/services/teacher-service";
@@ -7,13 +7,7 @@ import { searchClasses } from "@/services/class-service";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(request: NextRequest) {
-  try {
-    await requireAdmin();
-  } catch {
-    return NextResponse.json({ ok: false, message: "غير مصرح." }, { status: 401 });
-  }
-
+export const GET = withApiAuth(async (request: NextRequest) => {
   const q = request.nextUrl.searchParams.get("q")?.trim() ?? "";
   if (q.length < 2) {
     return NextResponse.json({ ok: true, data: [] });
@@ -41,4 +35,4 @@ export async function GET(request: NextRequest) {
   ].slice(0, 10);
 
   return NextResponse.json({ ok: true, data });
-}
+});

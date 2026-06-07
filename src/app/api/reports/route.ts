@@ -7,6 +7,7 @@ export const revalidate = 0;
 
 import { NextRequest, NextResponse } from "next/server";
 import { ensureDatabase } from "@/lib/db";
+import { withApiAuth } from "@/lib/api-auth";
 import {
   getAttendanceReport,
   getClassesReport,
@@ -39,7 +40,7 @@ const VALID_TYPES = [
   "charts",
 ];
 
-export async function GET(request: NextRequest) {
+export const GET = withApiAuth(async (request: NextRequest) => {
   await ensureDatabase();
   try {
     const { searchParams } = request.nextUrl;
@@ -198,4 +199,4 @@ export async function GET(request: NextRequest) {
       { status: 500 },
     );
   }
-}
+});

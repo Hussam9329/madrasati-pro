@@ -1,9 +1,21 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const JWT_SECRET_TEXT = process.env.JWT_SECRET || "madrasati-secret-key-2024-marina-school";
+/**
+ * JWT secret — no hardcoded fallback.
+ * In production, JWT_SECRET MUST be set.
+ * In development, a dev-only key is used.
+ */
+const JWT_SECRET_TEXT = process.env.JWT_SECRET || (
+  process.env.NODE_ENV === "production"
+    ? "" // Will cause all JWT verifications to fail in production without the env var
+    : "madrasati-dev-only-secret-key-not-for-production"
+);
 const SESSION_COOKIE_NAME = "madrasati_session";
 const publicRoutes = ["/login"];
+
+// API routes that do NOT require authentication
+const publicApiRoutes = ["/api/auth/login"];
 
 // ─── JWT Verification Cache ─────────────────────────────────────
 // Avoids re-computing crypto.subtle.verify for the same token
@@ -68,6 +80,9 @@ function isTokenExpired(token: string): boolean {
 }
 
 async function verifyHs256Jwt(token: string): Promise<boolean> {
+  // If no JWT_SECRET is configured, reject all tokens
+  if (!JWT_SECRET_TEXT) return false;
+
   // Fast path: check cache
   const cached = getCachedJwt(token);
   if (cached !== null) return cached;
@@ -111,20 +126,47 @@ async function verifyHs256Jwt(token: string): Promise<boolean> {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Skip public routes
+  // Skip public page routes
   if (publicRoutes.some((route) => pathname.startsWith(route))) {
     return NextResponse.next();
   }
 
-  // Skip static files, API routes, and Next.js internals
+  // Handle API routes: check auth for protected API routes
+  if (pathname.startsWith("/api")) {
+    // Allow public API routes (like login) without auth
+    if (publicApiRoutes.some((route) => pathname.startsWith(route))) {
+      return NextResponse.next();
+    }
+
+    // For all other API routes, verify the JWT token
+    const token = request.cookies.get(SESSION_COOKIE_NAME)?.value;
+
+    if (!token) {
+      return NextResponse.json(
+        { ok: false, message: "انتهت الجلسة. يرجى تسجيل الدخول مرة أخرى." },
+        { status: 401 }
+      );
+    }
+
+    if (!(await verifyHs256Jwt(token))) {
+      return NextResponse.json(
+        { ok: false, message: "انتهت الجلسة. يرجى تسجيل الدخول مرة أخرى." },
+        { status: 401 }
+      );
+    }
+
+    return NextResponse.next();
+  }
+
+  // Skip static files and Next.js internals
   if (
     pathname.startsWith("/_next") ||
-    pathname.startsWith("/api") ||
     pathname.includes(".")
   ) {
     return NextResponse.next();
   }
 
+  // Page routes: redirect to login if not authenticated
   const token = request.cookies.get(SESSION_COOKIE_NAME)?.value;
 
   if (!token) {

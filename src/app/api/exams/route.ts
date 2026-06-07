@@ -1,18 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withApiAuth } from "@/lib/api-auth";
 import { ensureDatabase } from "@/lib/db";
-import { requireAdmin } from "@/lib/auth";
 import { createExam, getExams } from "@/services/exam-service";
 
-export async function GET(request: NextRequest) {
+export const GET = withApiAuth(async (request: NextRequest) => {
   await ensureDatabase();
-  try {
-    await requireAdmin();
-  } catch {
-    return NextResponse.json(
-      { ok: false, message: "غير مصرح." },
-      { status: 401 },
-    );
-  }
 
   try {
     const subjectId =
@@ -27,18 +19,10 @@ export async function GET(request: NextRequest) {
       { status: 500 },
     );
   }
-}
+});
 
-export async function POST(request: NextRequest) {
+export const POST = withApiAuth(async (request: NextRequest) => {
   await ensureDatabase();
-  try {
-    await requireAdmin();
-  } catch {
-    return NextResponse.json(
-      { ok: false, message: "غير مصرح." },
-      { status: 401 },
-    );
-  }
 
   try {
     const body = await request.json();
@@ -55,4 +39,4 @@ export async function POST(request: NextRequest) {
       { status: 500 },
     );
   }
-}
+});

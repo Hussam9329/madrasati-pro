@@ -43,51 +43,35 @@ type GradeWithRelations = Prisma.GradeGetPayload<{
   include: typeof gradeListInclude;
 }>;
 
-function buildGradeWhere(filter: GradeFilter): Prisma.GradeWhereInput {
+/**
+ * Build a grade where clause that works with the Supabase adapter.
+ * Nested Prisma-style relation filters are resolved to explicit ID filters
+ * using pre-queries since the Supabase REST adapter doesn't support them.
+ */
+async function buildGradeWhere(filter: GradeFilter): Promise<Prisma.GradeWhereInput> {
   const query = filter.query?.trim();
   const where: Prisma.GradeWhereInput = {};
 
   if (query) {
-    where.OR = [
-      {
-        title: {
-          contains: query,
-        },
-      },
-      {
-        student: {
-          fullName: {
-            contains: query,
-          },
-        },
-      },
-      {
-        student: {
-          studentCode: {
-            contains: query,
-          },
-        },
-      },
-      {
-        subject: {
-          name: {
-            contains: query,
-          },
-        },
-      },
-      {
-        teacher: {
-          fullName: {
-            contains: query,
-          },
-        },
-      },
-      {
-        notes: {
-          contains: query,
-        },
-      },
+    // Resolve student and teacher IDs from search query
+    const [searchStudentIds, searchTeacherIds] = await Promise.all([
+      resolveGradeStudentIdsBySearch(query),
+      resolveGradeTeacherIdsBySearch(query),
+    ]);
+
+    const orParts: Prisma.GradeWhereInput[] = [
+      { title: { contains: query } },
+      { notes: { contains: query } },
     ];
+
+    if (searchStudentIds.length > 0) {
+      orParts.push({ studentId: { in: searchStudentIds } });
+    }
+    if (searchTeacherIds.length > 0) {
+      orParts.push({ teacherId: { in: searchTeacherIds } });
+    }
+
+    where.OR = orParts;
   }
 
   if (filter.studentId) {
@@ -132,23 +116,95 @@ function buildGradeWhere(filter: GradeFilter): Prisma.GradeWhereInput {
     }
   }
 
-  const studentFilter: Prisma.StudentWhereInput = {};
-
-  if (filter.sectionId) {
-    studentFilter.sectionId = filter.sectionId;
-  }
-
-  if (filter.classId) {
-    studentFilter.section = {
-      classId: filter.classId,
-    };
-  }
-
-  if (Object.keys(studentFilter).length > 0) {
-    where.student = studentFilter;
+  // Resolve sectionId/classId to studentId filter using pre-queries
+  if (filter.sectionId || filter.classId) {
+    const resolvedStudentIds = await resolveGradeStudentIds(filter);
+    if (resolvedStudentIds !== null) {
+      if (where.studentId && typeof where.studentId === "string") {
+        // filter.studentId is already set — keep it as it's more specific
+      } else {
+        where.studentId = { in: resolvedStudentIds };
+      }
+    }
   }
 
   return where;
+}
+
+/**
+ * Resolve student IDs from sectionId/classId filters for grade queries.
+ */
+async function resolveGradeStudentIds(filter: GradeFilter): Promise<string[] | null> {
+  if (!filter.sectionId && !filter.classId) return null;
+
+  if (filter.sectionId && filter.classId) {
+    const sections = await db.section.findMany({
+      where: { classId: filter.classId, id: filter.sectionId },
+      select: { id: true },
+    });
+    const sectionIds = sections.map((s: any) => s.id);
+    if (sectionIds.length === 0) return [];
+    const students = await db.student.findMany({
+      where: { sectionId: { in: sectionIds } },
+      select: { id: true },
+    });
+    return students.map((s: any) => s.id);
+  }
+
+  if (filter.sectionId) {
+    const students = await db.student.findMany({
+      where: { sectionId: filter.sectionId },
+      select: { id: true },
+    });
+    return students.map((s: any) => s.id);
+  }
+
+  if (filter.classId) {
+    const sections = await db.section.findMany({
+      where: { classId: filter.classId },
+      select: { id: true },
+    });
+    const sectionIds = sections.map((s: any) => s.id);
+    if (sectionIds.length === 0) return [];
+    const students = await db.student.findMany({
+      where: { sectionId: { in: sectionIds } },
+      select: { id: true },
+    });
+    return students.map((s: any) => s.id);
+  }
+
+  return null;
+}
+
+async function resolveGradeStudentIdsBySearch(query: string): Promise<string[]> {
+  if (!query.trim()) return [];
+  try {
+    const students = await db.student.findMany({
+      where: {
+        OR: [
+          { fullName: { contains: query } },
+          { studentCode: { contains: query } },
+        ],
+      },
+      select: { id: true },
+    });
+    return students.map((s: any) => s.id);
+  } catch {
+    return [];
+  }
+}
+
+async function resolveGradeTeacherIdsBySearch(query: string): Promise<string[]> {
+  if (!query.trim()) return [];
+  try {
+    const teachers = await db.teacher.findMany({
+      where: { fullName: { contains: query } },
+      select: { id: true },
+    });
+    return teachers.map((t: any) => t.id);
+  } catch {
+    return [];
+  }
 }
 
 async function validateGradeRelations(input: {
@@ -264,7 +320,7 @@ function toGradeListItem(grade: GradeWithRelations): GradeListItem {
 export async function getGrades(
   filter: GradeFilter = {},
 ): Promise<GradeListItem[]> {
-  const where = buildGradeWhere(filter);
+  const where = await buildGradeWhere(filter);
 
   const grades = await db.grade.findMany({
     where,

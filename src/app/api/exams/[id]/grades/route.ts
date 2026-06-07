@@ -1,24 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withApiAuth } from "@/lib/api-auth";
 import { ensureDatabase } from "@/lib/db";
-import { requireAdmin } from "@/lib/auth";
 import { saveExamGrades, getExamById } from "@/services/exam-service";
 
-export async function POST(
+export const POST = withApiAuth(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+  ctx: { params: Promise<Record<string, string>> },
+) => {
   await ensureDatabase();
-  try {
-    await requireAdmin();
-  } catch {
-    return NextResponse.json(
-      { ok: false, message: "غير مصرح." },
-      { status: 401 },
-    );
-  }
 
   try {
-    const { id } = await params;
+    const { id } = await ctx.params;
     const body = await request.json();
     const { grades } = body;
 
@@ -42,24 +34,16 @@ export async function POST(
       { status: 500 },
     );
   }
-}
+});
 
-export async function GET(
+export const GET = withApiAuth(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+  ctx: { params: Promise<Record<string, string>> },
+) => {
   await ensureDatabase();
-  try {
-    await requireAdmin();
-  } catch {
-    return NextResponse.json(
-      { ok: false, message: "غير مصرح." },
-      { status: 401 },
-    );
-  }
 
   try {
-    const { id } = await params;
+    const { id } = await ctx.params;
     const exam = await getExamById(id);
 
     if (!exam) {
@@ -76,4 +60,4 @@ export async function GET(
       { status: 500 },
     );
   }
-}
+});

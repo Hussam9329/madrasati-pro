@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ensureDatabase } from "@/lib/db";
+import { withApiAuth } from "@/lib/api-auth";
 import {
   createClass,
   deleteClass,
@@ -9,80 +10,64 @@ import {
 } from "@/services/class-service";
 import type { ClassFormInput } from "@/types/class";
 
-export async function GET(request: NextRequest) {
+export const GET = withApiAuth(async (request: NextRequest) => {
   await ensureDatabase();
   try {
     const searchParams = request.nextUrl.searchParams;
-    const query = searchParams.get("q") ?? "";
+    const action = searchParams.get("action");
 
-    const classes = query.trim()
-      ? await searchClasses(query)
-      : await getClasses();
+    if (action === "search") {
+      const q = searchParams.get("q") ?? "";
+      const results = await searchClasses(q);
+      return NextResponse.json({ ok: true, data: results });
+    }
 
-    return NextResponse.json({
-      ok: true,
-      message: "تم جلب الصفوف بنجاح.",
-      data: classes,
-    });
+    const classes = await getClasses();
+    return NextResponse.json({ ok: true, data: classes });
   } catch {
     return NextResponse.json(
-      {
-        ok: false,
-        message: "حدث خطأ أثناء جلب الصفوف.",
-      },
+      { ok: false, message: "حدث خطأ أثناء جلب الصفوف." },
       { status: 500 },
     );
   }
-}
+});
 
-export async function POST(request: NextRequest) {
+export const POST = withApiAuth(async (request: NextRequest) => {
   await ensureDatabase();
   try {
     const body = (await request.json()) as Partial<ClassFormInput>;
-
     const result = await createClass({
       name: body.name ?? "",
       level: body.level ?? "",
-      description: body.description ?? "",
     });
-
     if (!result.ok) {
       return NextResponse.json(result, { status: 400 });
     }
-
     return NextResponse.json(result, { status: 201 });
   } catch {
     return NextResponse.json(
-      {
-        ok: false,
-        message: "حدث خطأ أثناء إضافة الصف.",
-      },
+      { ok: false, message: "حدث خطأ أثناء إضافة الصف." },
       { status: 500 },
     );
   }
-}
+});
 
-export async function PUT(request: NextRequest) {
+export const PUT = withApiAuth(async (request: NextRequest) => {
   try {
     const searchParams = request.nextUrl.searchParams;
     const id = searchParams.get("id");
 
     if (!id) {
       return NextResponse.json(
-        {
-          ok: false,
-          message: "معرّف الصف مطلوب.",
-        },
+        { ok: false, message: "معرّف الصف مطلوب." },
         { status: 400 },
       );
     }
 
     const body = (await request.json()) as Partial<ClassFormInput>;
-
     const result = await updateClass(id, {
       name: body.name ?? "",
       level: body.level ?? "",
-      description: body.description ?? "",
     });
 
     if (!result.ok) {
@@ -92,44 +77,33 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json(result);
   } catch {
     return NextResponse.json(
-      {
-        ok: false,
-        message: "حدث خطأ أثناء تحديث الصف.",
-      },
+      { ok: false, message: "حدث خطأ أثناء تحديث الصف." },
       { status: 500 },
     );
   }
-}
+});
 
-export async function DELETE(request: NextRequest) {
+export const DELETE = withApiAuth(async (request: NextRequest) => {
   try {
     const searchParams = request.nextUrl.searchParams;
     const id = searchParams.get("id");
 
     if (!id) {
       return NextResponse.json(
-        {
-          ok: false,
-          message: "معرّف الصف مطلوب.",
-        },
+        { ok: false, message: "معرّف الصف مطلوب." },
         { status: 400 },
       );
     }
 
     const result = await deleteClass(id);
-
     if (!result.ok) {
       return NextResponse.json(result, { status: 400 });
     }
-
     return NextResponse.json(result);
   } catch {
     return NextResponse.json(
-      {
-        ok: false,
-        message: "حدث خطأ أثناء حذف الصف.",
-      },
+      { ok: false, message: "حدث خطأ أثناء حذف الصف." },
       { status: 500 },
     );
   }
-}
+});

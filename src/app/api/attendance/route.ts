@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ensureDatabase } from "@/lib/db";
+import { withApiAuth } from "@/lib/api-auth";
 import {
   createAttendanceRecord,
   deleteAttendanceRecord,
@@ -14,7 +15,7 @@ import type {
   AttendanceFormInput,
 } from "@/types/attendance";
 
-export async function GET(request: NextRequest) {
+export const GET = withApiAuth(async (request: NextRequest) => {
   await ensureDatabase();
   try {
     const searchParams = request.nextUrl.searchParams;
@@ -80,9 +81,9 @@ export async function GET(request: NextRequest) {
       { status: 500 },
     );
   }
-}
+});
 
-export async function POST(request: NextRequest) {
+export const POST = withApiAuth(async (request: NextRequest) => {
   await ensureDatabase();
   try {
     const searchParams = request.nextUrl.searchParams;
@@ -140,9 +141,9 @@ export async function POST(request: NextRequest) {
       { status: 500 },
     );
   }
-}
+});
 
-export async function PUT(request: NextRequest) {
+export const PUT = withApiAuth(async (request: NextRequest) => {
   try {
     const searchParams = request.nextUrl.searchParams;
     const id = searchParams.get("id");
@@ -181,9 +182,9 @@ export async function PUT(request: NextRequest) {
       { status: 500 },
     );
   }
-}
+});
 
-export async function DELETE(request: NextRequest) {
+export const DELETE = withApiAuth(async (request: NextRequest) => {
   try {
     const searchParams = request.nextUrl.searchParams;
     const id = searchParams.get("id");
@@ -214,4 +215,4 @@ export async function DELETE(request: NextRequest) {
       { status: 500 },
     );
   }
-}
+});

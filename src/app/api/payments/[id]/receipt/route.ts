@@ -1,17 +1,16 @@
+import { NextRequest } from "next/server";
+import { withApiAuth } from "@/lib/api-auth";
 import { notFound } from "next/navigation";
-import { requireAdmin } from "@/lib/auth";
 import { generatePaymentReceiptHtml } from "@/lib/receipt-html";
 import { getPaymentDetails } from "@/services/payment-service";
 
 export const dynamic = "force-dynamic";
 
-type RouteContext = {
-  params: Promise<{ id: string }>;
-};
-
-export async function GET(_request: Request, context: RouteContext) {
-  await requireAdmin();
-  const { id } = await context.params;
+export const GET = withApiAuth(async (
+  _request: NextRequest,
+  ctx: { params: Promise<Record<string, string>> },
+) => {
+  const { id } = await ctx.params;
   const payment = await getPaymentDetails(id);
 
   if (!payment) {
@@ -48,4 +47,4 @@ export async function GET(_request: Request, context: RouteContext) {
       "cache-control": "no-store",
     },
   });
-}
+});

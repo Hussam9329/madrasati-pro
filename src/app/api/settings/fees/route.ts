@@ -1,18 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withApiAuth } from "@/lib/api-auth";
 import { ensureDatabase } from "@/lib/db";
-import { requireAdmin } from "@/lib/auth";
 import { getClassFeeSettings, upsertClassFeeSetting } from "@/services/class-fee-service";
 
-export async function GET(request: NextRequest) {
+export const GET = withApiAuth(async (request: NextRequest) => {
   await ensureDatabase();
-  try {
-    await requireAdmin();
-  } catch {
-    return NextResponse.json(
-      { ok: false, message: "غير مصرح." },
-      { status: 401 },
-    );
-  }
 
   try {
     const academicYear =
@@ -25,18 +17,10 @@ export async function GET(request: NextRequest) {
       { status: 500 },
     );
   }
-}
+});
 
-export async function POST(request: NextRequest) {
+export const POST = withApiAuth(async (request: NextRequest) => {
   await ensureDatabase();
-  try {
-    await requireAdmin();
-  } catch {
-    return NextResponse.json(
-      { ok: false, message: "غير مصرح." },
-      { status: 401 },
-    );
-  }
 
   try {
     const body = await request.json();
@@ -69,4 +53,4 @@ export async function POST(request: NextRequest) {
       { status: 500 },
     );
   }
-}
+});

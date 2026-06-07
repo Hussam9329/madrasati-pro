@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import { ensureDatabase } from "@/lib/db";
+import { withApiAuth } from "@/lib/api-auth";
 
-export async function GET() {
-  await ensureDatabase();
+export const GET = withApiAuth(async () => {
   return NextResponse.json({ message: "Use /api/payments instead" });
-}
+});

@@ -97,38 +97,32 @@ function toPaymentListItem(payment: PaymentWithRelations): PaymentListItem {
   };
 }
 
-function buildPaymentWhere(filter: PaymentFilter): Prisma.PaymentWhereInput {
+/**
+ * Build a payment where clause that works with the Supabase adapter.
+ * Nested Prisma-style relation filters (e.g., { student: { section: { classId } } })
+ * are NOT supported by the Supabase REST adapter.
+ * Instead, we resolve them to explicit studentId filters using pre-queries.
+ */
+async function buildPaymentWhere(filter: PaymentFilter): Promise<Prisma.PaymentWhereInput> {
   const query = filter.query?.trim();
   const where: Prisma.PaymentWhereInput = {};
 
+  // Collect student IDs from relation filters
+  const resolvedStudentIds = await resolveStudentIds(filter);
+
   if (query) {
+    // For search queries, we also need to find matching student IDs
+    const searchStudentIds = await resolveStudentIdsBySearch(query);
+
     where.OR = [
       {
         feeTitle: {
           contains: query,
         },
       },
-      {
-        student: {
-          fullName: {
-            contains: query,
-          },
-        },
-      },
-      {
-        student: {
-          studentCode: {
-            contains: query,
-          },
-        },
-      },
-      {
-        student: {
-          guardianName: {
-            contains: query,
-          },
-        },
-      },
+      ...(searchStudentIds.length > 0 ? [{
+        studentId: { in: searchStudentIds },
+      }] : []),
       {
         notes: {
           contains: query,
@@ -141,22 +135,14 @@ function buildPaymentWhere(filter: PaymentFilter): Prisma.PaymentWhereInput {
     where.studentId = filter.studentId;
   }
 
-  if (filter.sectionId) {
-    const studentWhere: Prisma.StudentWhereInput = {
-      ...(typeof where.student === "object" ? where.student : {}),
-      sectionId: filter.sectionId,
-    };
-    where.student = studentWhere;
-  }
-
-  if (filter.classId) {
-    const studentWhere: Prisma.StudentWhereInput = {
-      ...(typeof where.student === "object" ? where.student : {}),
-      section: {
-        classId: filter.classId,
-      },
-    };
-    where.student = studentWhere;
+  // Apply resolved student ID filters from sectionId/classId
+  if (resolvedStudentIds !== null) {
+    // Combine with existing studentId filter if any
+    if (where.studentId) {
+      // If filter.studentId is also set, just keep it (it's more specific)
+    } else {
+      where.studentId = { in: resolvedStudentIds };
+    }
   }
 
   if (filter.feeType) {
@@ -233,6 +219,77 @@ function buildPaymentWhere(filter: PaymentFilter): Prisma.PaymentWhereInput {
   return where;
 }
 
+/**
+ * Resolve student IDs from sectionId/classId filters.
+ * Returns null if no relation filters are active (no filtering needed).
+ * Returns an array of student IDs if sectionId or classId filtering is needed.
+ */
+async function resolveStudentIds(filter: PaymentFilter): Promise<string[] | null> {
+  if (!filter.sectionId && !filter.classId) return null;
+
+  if (filter.sectionId && filter.classId) {
+    // Both filters: find sections that match classId, then students in those sections
+    const sections = await db.section.findMany({
+      where: { classId: filter.classId, id: filter.sectionId },
+      select: { id: true },
+    });
+    const sectionIds = sections.map((s: any) => s.id);
+    if (sectionIds.length === 0) return [];
+    const students = await db.student.findMany({
+      where: { sectionId: { in: sectionIds }, status: "active" },
+      select: { id: true },
+    });
+    return students.map((s: any) => s.id);
+  }
+
+  if (filter.sectionId) {
+    const students = await db.student.findMany({
+      where: { sectionId: filter.sectionId },
+      select: { id: true },
+    });
+    return students.map((s: any) => s.id);
+  }
+
+  if (filter.classId) {
+    // Find sections for this class, then students in those sections
+    const sections = await db.section.findMany({
+      where: { classId: filter.classId },
+      select: { id: true },
+    });
+    const sectionIds = sections.map((s: any) => s.id);
+    if (sectionIds.length === 0) return [];
+    const students = await db.student.findMany({
+      where: { sectionId: { in: sectionIds } },
+      select: { id: true },
+    });
+    return students.map((s: any) => s.id);
+  }
+
+  return null;
+}
+
+/**
+ * Find student IDs that match a search query on fullName, studentCode, or guardianName.
+ */
+async function resolveStudentIdsBySearch(query: string): Promise<string[]> {
+  if (!query.trim()) return [];
+  try {
+    const students = await db.student.findMany({
+      where: {
+        OR: [
+          { fullName: { contains: query } },
+          { studentCode: { contains: query } },
+          { guardianName: { contains: query } },
+        ],
+      },
+      select: { id: true },
+    });
+    return students.map((s: any) => s.id);
+  } catch {
+    return [];
+  }
+}
+
 async function validatePaymentRelations(input: PaymentFormInput): Promise<{
   ok: boolean;
   message: string;
@@ -266,7 +323,7 @@ async function validatePaymentRelations(input: PaymentFormInput): Promise<{
 export async function getPayments(
   filter: PaymentFilter = {},
 ): Promise<PaymentListItem[]> {
-  const where = buildPaymentWhere(filter);
+  const where = await buildPaymentWhere(filter);
 
   const payments = await db.payment.findMany({
     where,

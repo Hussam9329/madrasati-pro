@@ -1,16 +1,7 @@
 import { db, ensureDatabase } from "@/lib/db";
 import bcrypt from "bcryptjs";
-import { SignJWT } from "jose";
-import { cookies } from "next/headers";
+import { createSession } from "@/lib/auth";
 import { NextResponse } from "next/server";
-
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || "madrasati-secret-key-2024-marina-school"
-);
-
-const SESSION_COOKIE_NAME = "madrasati_session";
-const DEFAULT_SESSION_SECONDS = 8 * 60 * 60;
-const REMEMBER_ME_SESSION_SECONDS = 30 * 24 * 60 * 60;
 
 export const dynamic = "force-dynamic";
 
@@ -45,26 +36,8 @@ export async function POST(request: Request) {
       );
     }
 
-    const sessionSeconds = rememberMe
-      ? REMEMBER_ME_SESSION_SECONDS
-      : DEFAULT_SESSION_SECONDS;
-
-    // Create JWT token
-    const token = await new SignJWT({ adminId: admin.id, isRoot: Boolean(admin.isRoot) })
-      .setProtectedHeader({ alg: "HS256" })
-      .setIssuedAt()
-      .setExpirationTime(`${sessionSeconds}s`)
-      .sign(JWT_SECRET);
-
-    // Set cookie
-    const cookieStore = await cookies();
-    cookieStore.set(SESSION_COOKIE_NAME, token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: sessionSeconds,
-      path: "/",
-    });
+    // Create session with jti-based revocation support
+    await createSession(admin.id, Boolean(rememberMe));
 
     return NextResponse.json({ success: true });
   } catch (error) {

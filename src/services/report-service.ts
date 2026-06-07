@@ -454,16 +454,8 @@ export async function getGradesReport(
   }
 
   if (filter?.classId || filter?.sectionId) {
-    const studentWhere: Record<string, unknown> = {};
-    if (filter.sectionId) {
-      studentWhere.sectionId = filter.sectionId;
-    }
-    if (filter.classId) {
-      studentWhere.section = {
-        classId: filter.classId,
-      };
-    }
-    whereClause.student = studentWhere;
+    const studentFilter = await resolveStudentFilter(filter);
+    applyStudentFilter(whereClause, studentFilter, filter?.studentId);
   }
 
   if (filter?.term) {
@@ -533,16 +525,8 @@ export async function getPaymentsReport(
   }
 
   if (filter?.classId || filter?.sectionId) {
-    const studentWhere: Record<string, unknown> = {};
-    if (filter.sectionId) {
-      studentWhere.sectionId = filter.sectionId;
-    }
-    if (filter.classId) {
-      studentWhere.section = {
-        classId: filter.classId,
-      };
-    }
-    whereClause.student = studentWhere;
+    const studentFilter = await resolveStudentFilter(filter);
+    applyStudentFilter(whereClause, studentFilter, filter?.studentId);
   }
 
   if (filter?.status) {
@@ -670,6 +654,71 @@ export async function getTeachersReport(): Promise<TeacherReportRow[]> {
 
 // ── Internal Helpers ─────────────────────────
 
+/**
+ * Resolve classId/sectionId to a studentId filter that works with the Supabase adapter.
+ * Returns null if no relation filters are active.
+ */
+async function resolveStudentFilter(
+  filter?: ReportFilter,
+): Promise<{ studentId: { in: string[] } } | null> {
+  if (!filter?.classId && !filter?.sectionId) return null;
+
+  if (filter.sectionId && filter.classId) {
+    const sections = await db.section.findMany({
+      where: { classId: filter.classId, id: filter.sectionId },
+      select: { id: true },
+    });
+    const sectionIds = sections.map((s: any) => s.id);
+    if (sectionIds.length === 0) return { studentId: { in: [] } };
+    const students = await db.student.findMany({
+      where: { sectionId: { in: sectionIds } },
+      select: { id: true },
+    });
+    return { studentId: { in: students.map((s: any) => s.id) } };
+  }
+
+  if (filter.sectionId) {
+    const students = await db.student.findMany({
+      where: { sectionId: filter.sectionId },
+      select: { id: true },
+    });
+    return { studentId: { in: students.map((s: any) => s.id) } };
+  }
+
+  if (filter.classId) {
+    const sections = await db.section.findMany({
+      where: { classId: filter.classId },
+      select: { id: true },
+    });
+    const sectionIds = sections.map((s: any) => s.id);
+    if (sectionIds.length === 0) return { studentId: { in: [] } };
+    const students = await db.student.findMany({
+      where: { sectionId: { in: sectionIds } },
+      select: { id: true },
+    });
+    return { studentId: { in: students.map((s: any) => s.id) } };
+  }
+
+  return null;
+}
+
+/**
+ * Apply the resolved student filter to a whereClause object.
+ */
+function applyStudentFilter(
+  whereClause: Record<string, unknown>,
+  studentFilter: { studentId: { in: string[] } } | null,
+  existingStudentId?: string,
+) {
+  if (!studentFilter) return;
+
+  if (existingStudentId) {
+    // filter.studentId is already set — keep it as it's more specific
+  } else {
+    whereClause.studentId = studentFilter.studentId;
+  }
+}
+
 function getDateRangeFromFilter(
   filter?: ReportFilter,
 ): ReportDateRange | undefined {
@@ -779,16 +828,8 @@ async function getGradeRecords(
   }
 
   if (filter?.classId || filter?.sectionId) {
-    const studentWhere: Record<string, unknown> = {};
-    if (filter?.sectionId) {
-      studentWhere.sectionId = filter.sectionId;
-    }
-    if (filter?.classId) {
-      studentWhere.section = {
-        classId: filter.classId,
-      };
-    }
-    whereClause.student = studentWhere;
+    const studentFilter = await resolveStudentFilter(filter);
+    applyStudentFilter(whereClause, studentFilter, filter?.studentId);
   }
 
   if (filter?.term) {
@@ -822,16 +863,8 @@ async function getPaymentRecords(
   }
 
   if (filter?.classId || filter?.sectionId) {
-    const studentWhere: Record<string, unknown> = {};
-    if (filter?.sectionId) {
-      studentWhere.sectionId = filter.sectionId;
-    }
-    if (filter?.classId) {
-      studentWhere.section = {
-        classId: filter.classId,
-      };
-    }
-    whereClause.student = studentWhere;
+    const studentFilter = await resolveStudentFilter(filter);
+    applyStudentFilter(whereClause, studentFilter, filter?.studentId);
   }
 
   if (filter?.status) {

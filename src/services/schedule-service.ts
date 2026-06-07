@@ -24,7 +24,7 @@ export type ScheduleServiceResult<T> = {
 export async function getSchedules(
   filter: ScheduleFilter = {},
 ): Promise<ScheduleListItem[]> {
-  const where = buildScheduleWhere(filter);
+  const where = await buildScheduleWhere(filter);
 
   const schedules = await db.schedule.findMany({
     where,
@@ -415,56 +415,42 @@ export async function findScheduleConflicts(
   });
 }
 
-function buildScheduleWhere(
+/**
+ * Build a schedule where clause that works with the Supabase adapter.
+ * Nested Prisma-style relation filters are resolved to explicit ID filters
+ * using pre-queries since the Supabase REST adapter doesn't support them.
+ */
+async function buildScheduleWhere(
   filter: ScheduleFilter,
-): Prisma.ScheduleWhereInput {
+): Promise<Prisma.ScheduleWhereInput> {
   const query = filter.query?.trim();
 
   const where: Prisma.ScheduleWhereInput = {};
 
   if (query) {
-    where.OR = [
-      {
-        room: {
-          contains: query,
-        },
-      },
-      {
-        notes: {
-          contains: query,
-        },
-      },
-      {
-        section: {
-          name: {
-            contains: query,
-          },
-        },
-      },
-      {
-        section: {
-          class: {
-            name: {
-              contains: query,
-            },
-          },
-        },
-      },
-      {
-        subject: {
-          name: {
-            contains: query,
-          },
-        },
-      },
-      {
-        teacher: {
-          fullName: {
-            contains: query,
-          },
-        },
-      },
+    // Resolve section, subject, teacher IDs from search query
+    const [searchSectionIds, searchSubjectIds, searchTeacherIds] = await Promise.all([
+      resolveScheduleSectionIdsBySearch(query),
+      resolveScheduleSubjectIdsBySearch(query),
+      resolveScheduleTeacherIdsBySearch(query),
+    ]);
+
+    const orParts: Prisma.ScheduleWhereInput[] = [
+      { room: { contains: query } },
+      { notes: { contains: query } },
     ];
+
+    if (searchSectionIds.length > 0) {
+      orParts.push({ sectionId: { in: searchSectionIds } });
+    }
+    if (searchSubjectIds.length > 0) {
+      orParts.push({ subjectId: { in: searchSubjectIds } });
+    }
+    if (searchTeacherIds.length > 0) {
+      orParts.push({ teacherId: { in: searchTeacherIds } });
+    }
+
+    where.OR = orParts;
   }
 
   if (filter.dayOfWeek) {
@@ -483,10 +469,24 @@ function buildScheduleWhere(
     where.teacherId = filter.teacherId;
   }
 
+  // Resolve classId to sectionId filter using pre-query
   if (filter.classId) {
-    where.section = {
-      classId: filter.classId,
-    };
+    const sections = await db.section.findMany({
+      where: { classId: filter.classId },
+      select: { id: true },
+    });
+    const sectionIds = sections.map((s: any) => s.id);
+    if (sectionIds.length > 0) {
+      // Combine with existing sectionId filter if any
+      if (where.sectionId && typeof where.sectionId === "string") {
+        // If both sectionId and classId filters, sectionId is more specific — keep it
+      } else {
+        where.sectionId = { in: sectionIds };
+      }
+    } else {
+      // No sections found for this class — no results possible
+      where.sectionId = { in: [] };
+    }
   }
 
   if (typeof filter.isActive === "boolean") {
@@ -494,6 +494,56 @@ function buildScheduleWhere(
   }
 
   return where;
+}
+
+async function resolveScheduleSectionIdsBySearch(query: string): Promise<string[]> {
+  if (!query.trim()) return [];
+  try {
+    // Search sections by name and by class name
+    const [sectionsByName, sectionsByClassName] = await Promise.all([
+      db.section.findMany({
+        where: { name: { contains: query } },
+        select: { id: true },
+      }),
+      db.section.findMany({
+        where: { class: { name: { contains: query } } },
+        select: { id: true },
+      }),
+    ]);
+    const ids = new Set<string>();
+    for (const s of [...sectionsByName, ...sectionsByClassName]) {
+      ids.add((s as any).id);
+    }
+    return Array.from(ids);
+  } catch {
+    return [];
+  }
+}
+
+async function resolveScheduleSubjectIdsBySearch(query: string): Promise<string[]> {
+  if (!query.trim()) return [];
+  try {
+    const subjects = await db.subject.findMany({
+      where: { name: { contains: query } },
+      select: { id: true },
+    });
+    return subjects.map((s: any) => s.id);
+  } catch {
+    return [];
+  }
+}
+
+async function resolveScheduleTeacherIdsBySearch(query: string): Promise<string[]> {
+  if (!query.trim()) return [];
+  try {
+    const teachers = await db.teacher.findMany({
+      where: { fullName: { contains: query } },
+      select: { id: true },
+    });
+    return teachers.map((t: any) => t.id);
+  } catch {
+    return [];
+  }
 }
 
 async function validateScheduleRelations(

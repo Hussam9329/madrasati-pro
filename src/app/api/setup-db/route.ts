@@ -3,8 +3,16 @@ import { NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  // Disable in production — setup endpoints should not be exposed
+  if (process.env.NODE_ENV === "production") {
+    return NextResponse.json(
+      { ok: false, message: "هذا المسار غير متاح في بيئة الإنتاج." },
+      { status: 404 },
+    );
+  }
+
+  // Development-only: check table existence
   try {
-    // Check if tables exist by querying the OpenAPI spec
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/`,
       {

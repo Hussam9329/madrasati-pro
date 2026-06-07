@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 import { db, ensureDatabase } from "@/lib/db";
-import { getSession } from "@/lib/auth";
+import { getSession, revokeAllAdminSessions } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -203,6 +203,12 @@ export async function PATCH(request: Request) {
     }
 
     const user = await db.admin.update({ where: { id }, data: updateData });
+
+    // If password was changed, revoke all sessions for this admin
+    if (password) {
+      await revokeAllAdminSessions(id);
+    }
+
     return NextResponse.json({ ok: true, user: sanitizeUser(user) });
   } catch (error) {
     console.error("[permissions.users.PATCH] Error:", error);

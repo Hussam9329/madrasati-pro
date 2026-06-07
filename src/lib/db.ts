@@ -1,4 +1,3 @@
-import bcrypt from "bcryptjs";
 import { cache as reactCache } from "react";
 import { supabaseDB } from "@/lib/supabase-client";
 
@@ -18,7 +17,6 @@ export const db = supabaseDB;
 // Track whether database has been initialized in this process
 let dbInitialized = false;
 let dbInitPromise: Promise<void> | null = null;
-let adminSeeded = false; // Skip seedAdmin after first successful check
 
 function hasDatabaseEnv() {
   return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
@@ -63,33 +61,9 @@ async function initializeDatabase() {
     throw e;
   }
 
-  // Seed admin account only once per serverless lifecycle
-  if (!adminSeeded) {
-    await seedAdmin();
-    adminSeeded = true;
-  }
-}
-
-async function seedAdmin() {
-  try {
-    const existingAdmin = await db.admin.findUnique({
-      where: { username: "admin" },
-    });
-
-    if (!existingAdmin) {
-      const passwordHash = await bcrypt.hash("1993", 12);
-      await db.admin.create({
-        data: {
-          username: "admin",
-          passwordHash,
-          isRoot: true,
-        },
-      });
-      console.log("[seedAdmin] Admin account created (username: admin)");
-    }
-  } catch (e) {
-    console.error("[seedAdmin] Failed to seed admin:", e);
-  }
+  // Note: Admin account seeding removed for security.
+  // Create admin accounts via /api/permissions/users (system admin only)
+  // or manually in Supabase SQL Editor.
 }
 
 /**

@@ -1,12 +1,19 @@
-import { db } from "@/lib/db";
-import { supabase } from "@/lib/supabase-client";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
 export async function POST() {
+  // Disable in production — migration endpoints should not be exposed
+  if (process.env.NODE_ENV === "production") {
+    return NextResponse.json(
+      { ok: false, message: "هذا المسار غير متاح في بيئة الإنتاج." },
+      { status: 404 },
+    );
+  }
+
+  // Development-only: verify tables exist
   try {
-    // Check if tables exist by trying to query them via REST API
+    const { supabase } = await import("@/lib/supabase-client");
     const { error: adminError } = await supabase
       .from("admins")
       .select("id")
@@ -19,25 +26,9 @@ export async function POST() {
       }, { status: 500 });
     }
 
-    // Tables exist - check if admin needs seeding
-    try {
-      const existingAdmin = await db.admin.findUnique({ where: { username: "admin" } });
-      if (!existingAdmin) {
-        const bcrypt = await import("bcryptjs");
-        const passwordHash = await bcrypt.default.hash("1993", 12);
-        await db.admin.create({ data: { username: "admin", passwordHash, isRoot: true } });
-        return NextResponse.json({
-          status: "migration_complete",
-          message: "Tables verified, admin account seeded.",
-        });
-      }
-    } catch {
-      // Admin might already exist, that's fine
-    }
-
     return NextResponse.json({
       status: "already_migrated",
-      message: "Database tables exist and admin account is ready.",
+      message: "Database tables exist. Run the SQL migration in Supabase SQL Editor if needed.",
     });
   } catch (e: any) {
     return NextResponse.json({

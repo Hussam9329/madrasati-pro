@@ -236,7 +236,7 @@ function SchedulesFeedback({
   deleted,
   toggled,
   error,
-  reason,
+  reason: _reason,
 }: SchedulesFeedbackProps) {
   if (saved === "1") {
     return (

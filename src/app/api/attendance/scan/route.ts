@@ -1,15 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/auth";
+import { withApiAuth } from "@/lib/api-auth";
 import { scanAttendanceByStudentCode, scanAttendanceByStudentId } from "@/services/attendance-service";
 import type { AttendanceScanInput } from "@/types/attendance";
 
-export async function POST(request: NextRequest) {
-  try {
-    await requireAdmin();
-  } catch {
-    return NextResponse.json({ ok: false, message: "غير مصرح." }, { status: 401 });
-  }
-
+export const POST = withApiAuth(async (request: NextRequest) => {
   const body = await request.json();
   const { studentCode, studentId, mode, source } = body;
 
@@ -42,4 +36,4 @@ export async function POST(request: NextRequest) {
   const result = await scanAttendanceByStudentCode(input);
 
   return NextResponse.json(result);
-}
+});
