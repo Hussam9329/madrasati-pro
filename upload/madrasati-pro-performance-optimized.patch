@@ -1,0 +1,801 @@
+diff -ruN /mnt/data/orig_madrasati/madrasati-pro-main/database/2026-06-07-performance-indexes.sql /mnt/data/work_madrasati/madrasati-pro-main/database/2026-06-07-performance-indexes.sql
+--- /mnt/data/orig_madrasati/madrasati-pro-main/database/2026-06-07-performance-indexes.sql	1970-01-01 00:00:00.000000000 +0000
++++ /mnt/data/work_madrasati/madrasati-pro-main/database/2026-06-07-performance-indexes.sql	2026-06-07 10:51:50.693192579 +0000
+@@ -0,0 +1,56 @@
++-- فهارس أداء إضافية لتسريع تحميل العلاقات والقوائم والتقارير.
++-- شغّل الملف مرة واحدة من Supabase SQL Editor بعد تطبيق التحديث.
++
++create index if not exists sections_class_active_idx
++  on sections ("classId", "isActive");
++
++create index if not exists students_section_status_idx
++  on students ("sectionId", "status");
++
++create index if not exists students_status_created_idx
++  on students ("status", "createdAt" desc);
++
++create index if not exists teacher_subjects_teacher_created_idx
++  on teacher_subjects ("teacherId", "createdAt" desc);
++
++create index if not exists teacher_subjects_subject_idx
++  on teacher_subjects ("subjectId");
++
++create index if not exists teacher_sections_teacher_created_idx
++  on teacher_sections ("teacherId", "createdAt" desc);
++
++create index if not exists teacher_sections_section_idx
++  on teacher_sections ("sectionId");
++
++create index if not exists class_subjects_class_idx
++  on class_subjects ("classId");
++
++create index if not exists class_subjects_subject_idx
++  on class_subjects ("subjectId");
++
++create index if not exists schedules_section_day_idx
++  on schedules ("sectionId", "dayOfWeek");
++
++create index if not exists schedules_teacher_day_idx
++  on schedules ("teacherId", "dayOfWeek");
++
++create index if not exists schedules_subject_idx
++  on schedules ("subjectId");
++
++create index if not exists attendance_records_schedule_date_idx
++  on attendance_records ("scheduleId", "date");
++
++create index if not exists attendance_records_status_date_idx
++  on attendance_records ("status", "date");
++
++create index if not exists grades_student_date_idx
++  on grades ("studentId", "date" desc);
++
++create index if not exists grades_teacher_date_idx
++  on grades ("teacherId", "date" desc);
++
++create index if not exists payments_student_status_idx
++  on payments ("studentId", "status");
++
++create index if not exists payments_status_due_date_idx
++  on payments ("status", "dueDate");
+diff -ruN /mnt/data/orig_madrasati/madrasati-pro-main/src/app/api/reports/route.ts /mnt/data/work_madrasati/madrasati-pro-main/src/app/api/reports/route.ts
+--- /mnt/data/orig_madrasati/madrasati-pro-main/src/app/api/reports/route.ts	2026-06-06 13:27:43.000000000 +0000
++++ /mnt/data/work_madrasati/madrasati-pro-main/src/app/api/reports/route.ts	2026-06-07 10:49:35.488427706 +0000
+@@ -29,6 +29,7 @@
+ ];
+ 
+ const VALID_TYPES = [
++  "all",
+   "summary",
+   "attendance",
+   "grades",
+@@ -95,6 +96,32 @@
+     };
+ 
+     switch (type) {
++      case "all": {
++        const [summary, charts, attendance, grades, payments, classes, teachers] =
++          await Promise.all([
++            getDashboardSummary(filter),
++            getDashboardCharts(filter),
++            getAttendanceReport(filter),
++            getGradesReport(filter),
++            getPaymentsReport(filter),
++            getClassesReport(),
++            getTeachersReport(),
++          ]);
++
++        return NextResponse.json({
++          ok: true,
++          data: {
++            summary,
++            charts,
++            attendance,
++            grades,
++            payments,
++            classes,
++            teachers,
++          },
++        });
++      }
++
+       case "summary": {
+         const summary = await getDashboardSummary(filter);
+         return NextResponse.json({
+diff -ruN /mnt/data/orig_madrasati/madrasati-pro-main/src/app/reports/page.tsx /mnt/data/work_madrasati/madrasati-pro-main/src/app/reports/page.tsx
+--- /mnt/data/orig_madrasati/madrasati-pro-main/src/app/reports/page.tsx	2026-06-06 13:27:43.000000000 +0000
++++ /mnt/data/work_madrasati/madrasati-pro-main/src/app/reports/page.tsx	2026-06-07 10:49:35.490332922 +0000
+@@ -125,35 +125,20 @@
+       if (filter.source) params.set("source", filter.source);
+       if (filter.missingCheckOut) params.set("missingCheckOut", "yes");
+ 
+-      const [summaryRes, chartsRes, attendanceRes, gradesRes, paymentsRes, classesRes, teachersRes] =
+-        await Promise.all([
+-          fetch(`/api/reports?type=summary&${params.toString()}`, { cache: "no-store" }),
+-          fetch(`/api/reports?type=charts&${params.toString()}`, { cache: "no-store" }),
+-          fetch(`/api/reports?type=attendance&${params.toString()}`, { cache: "no-store" }),
+-          fetch(`/api/reports?type=grades&${params.toString()}`, { cache: "no-store" }),
+-          fetch(`/api/reports?type=payments&${params.toString()}`, { cache: "no-store" }),
+-          fetch(`/api/reports?type=classes`, { cache: "no-store" }),
+-          fetch(`/api/reports?type=teachers`, { cache: "no-store" }),
+-        ]);
++      const response = await fetch(`/api/reports?type=all&${params.toString()}`, { cache: "no-store" });
++      const reportData = await response.json();
+ 
+-      const [summaryData, chartsData, attendanceData, gradesData, paymentsData, classesData, teachersData] =
+-        await Promise.all([
+-          summaryRes.json(),
+-          chartsRes.json(),
+-          attendanceRes.json(),
+-          gradesRes.json(),
+-          paymentsRes.json(),
+-          classesRes.json(),
+-          teachersRes.json(),
+-        ]);
++      if (!response.ok || !reportData.ok) {
++        throw new Error(reportData.message || "Failed to load reports");
++      }
+ 
+-      if (summaryData.ok) setSummary(summaryData.data);
+-      if (chartsData.ok) setCharts(chartsData.data);
+-      if (attendanceData.ok) setAttendanceRows(attendanceData.data);
+-      if (gradesData.ok) setGradeRows(gradesData.data);
+-      if (paymentsData.ok) setPaymentRows(paymentsData.data);
+-      if (classesData.ok) setClassRows(classesData.data);
+-      if (teachersData.ok) setTeacherRows(teachersData.data);
++      setSummary(reportData.data.summary);
++      setCharts(reportData.data.charts);
++      setAttendanceRows(reportData.data.attendance);
++      setGradeRows(reportData.data.grades);
++      setPaymentRows(reportData.data.payments);
++      setClassRows(reportData.data.classes);
++      setTeacherRows(reportData.data.teachers);
+     } catch {
+       setError("حدث خطأ أثناء تحميل التقرير. حاول مرة أخرى.");
+     } finally {
+diff -ruN /mnt/data/orig_madrasati/madrasati-pro-main/src/lib/supabase-client.ts /mnt/data/work_madrasati/madrasati-pro-main/src/lib/supabase-client.ts
+--- /mnt/data/orig_madrasati/madrasati-pro-main/src/lib/supabase-client.ts	2026-06-06 13:27:43.000000000 +0000
++++ /mnt/data/work_madrasati/madrasati-pro-main/src/lib/supabase-client.ts	2026-06-07 10:46:34.959088156 +0000
+@@ -81,12 +81,16 @@
+ 
+ // Relation mappings for include/select operations
+ // Maps Prisma relation names to { table, foreignKey, thisKey } info
+-const RELATION_MAP: Record<string, Record<string, {
++type RelationInfo = {
+   table: string;
+   foreignKey: string;
+   thisKey: string;
+   isMany: boolean;
+-}>> = {
++};
++
++const SUPABASE_IN_BATCH_SIZE = 200;
++
++const RELATION_MAP: Record<string, Record<string, RelationInfo>> = {
+   student: {
+     section: { table: "sections", foreignKey: "id", thisKey: "sectionId", isMany: false },
+     grades: { table: "grades", foreignKey: "studentId", thisKey: "id", isMany: true },
+@@ -349,6 +353,67 @@
+   return row as T;
+ }
+ 
++function getTruthySelectKeys(select?: Record<string, any>): string[] {
++  if (!select) return [];
++  return Object.entries(select)
++    .filter(([, enabled]) => Boolean(enabled))
++    .map(([key]) => key);
++}
++
++function uniqueCompactValues(values: any[]): any[] {
++  const seen = new Set<string>();
++  const unique: any[] = [];
++
++  for (const value of values) {
++    if (value === null || value === undefined || value === "") continue;
++    const key = String(value);
++    if (seen.has(key)) continue;
++    seen.add(key);
++    unique.push(value);
++  }
++
++  return unique;
++}
++
++function chunkArray<T>(items: T[], size: number): T[][] {
++  const chunks: T[][] = [];
++  for (let index = 0; index < items.length; index += size) {
++    chunks.push(items.slice(index, index + size));
++  }
++  return chunks;
++}
++
++function groupRowsByKey(rows: Record<string, any>[], keyName: string): Map<string, Record<string, any>[]> {
++  const grouped = new Map<string, Record<string, any>[]>();
++
++  for (const row of rows) {
++    const key = row[keyName];
++    if (key === null || key === undefined) continue;
++
++    const mapKey = String(key);
++    const existing = grouped.get(mapKey);
++    if (existing) {
++      existing.push(row);
++    } else {
++      grouped.set(mapKey, [row]);
++    }
++  }
++
++  return grouped;
++}
++
++function pickSelectedColumns(row: Record<string, any>, selectedKeys?: Set<string>): Record<string, any> {
++  if (!selectedKeys) return row;
++
++  const picked: Record<string, any> = {};
++  for (const key of selectedKeys) {
++    if (Object.prototype.hasOwnProperty.call(row, key)) {
++      picked[key] = row[key];
++    }
++  }
++  return picked;
++}
++
+ /**
+  * Supabase-backed model handler that mimics Prisma's model API
+  */
+@@ -374,14 +439,14 @@
+     scalarData: Record<string, any>;
+     nestedCreates: Array<{
+       relationName: string;
+-      relation: { table: string; foreignKey: string; thisKey: string; isMany: boolean };
++      relation: RelationInfo;
+       rows: Record<string, any>[];
+     }>;
+   } {
+     const scalarData: Record<string, any> = {};
+     const nestedCreates: Array<{
+       relationName: string;
+-      relation: { table: string; foreignKey: string; thisKey: string; isMany: boolean };
++      relation: RelationInfo;
+       rows: Record<string, any>[];
+     }> = [];
+     const relations = RELATION_MAP[this.model] || {};
+@@ -413,7 +478,7 @@
+     parent: Record<string, any>,
+     nestedCreates: Array<{
+       relationName: string;
+-      relation: { table: string; foreignKey: string; thisKey: string; isMany: boolean };
++      relation: RelationInfo;
+       rows: Record<string, any>[];
+     }>
+   ) {
+@@ -440,6 +505,86 @@
+     }
+   }
+ 
++  private getBaseSelect(select?: Record<string, any>): string {
++    const keys = getTruthySelectKeys(select);
++    return keys.length > 0 ? keys.join(",") : "*";
++  }
++
++  private getRelationSelect(
++    value: any,
++    relation: RelationInfo,
++  ): { select: string; selectedKeys?: Set<string> } {
++    if (typeof value === "object" && value !== null && value.select) {
++      const keys = getTruthySelectKeys(value.select);
++      const selectedKeys = new Set(keys);
++      const technicalKey = relation.foreignKey;
++
++      if (!keys.includes(technicalKey)) {
++        keys.push(technicalKey);
++      }
++
++      return {
++        select: keys.length > 0 ? keys.join(",") : "*",
++        selectedKeys,
++      };
++    }
++
++    return { select: "*" };
++  }
++
++  private applyOrderBy(query: any, orderBy?: any): any {
++    if (!orderBy) return query;
++
++    const orderByArr = Array.isArray(orderBy) ? orderBy : [orderBy];
++    for (const ob of orderByArr) {
++      const [key, dir] = Object.entries(ob)[0] as [string, string];
++      query = query.order(key, { ascending: dir === "asc", nullsFirst: false });
++    }
++
++    return query;
++  }
++
++  private async fetchRowsByIn(
++    table: string,
++    select: string,
++    column: string,
++    values: any[],
++    options?: { orderBy?: any; where?: Record<string, any>; model?: string },
++  ): Promise<Record<string, any>[]> {
++    const uniqueValues = uniqueCompactValues(values);
++    if (uniqueValues.length === 0) return [];
++
++    const relatedHandler = options?.model
++      ? new SupabaseModelHandler(options.model, table)
++      : this;
++
++    const batches = await Promise.all(
++      chunkArray(uniqueValues, SUPABASE_IN_BATCH_SIZE).map(async (batch) => {
++        let query = this.getClient()
++          .from(table)
++          .select(select)
++          .in(column, batch);
++
++        if (options?.where) {
++          query = relatedHandler.applyWhere(query, options.where);
++        }
++
++        query = this.applyOrderBy(query, options?.orderBy);
++
++        const { data, error } = await query;
++
++        if (error) {
++          console.error(`[SupabaseModel.fetchRowsByIn] Error on ${table}:`, error);
++          return [] as Record<string, any>[];
++        }
++
++        return (data || []) as Record<string, any>[];
++      }),
++    );
++
++    return batches.flat();
++  }
++
+   async findUnique(args: { where: Record<string, any>; include?: Record<string, any>; select?: Record<string, any> }): Promise<any> {
+     const where = args.where;
+     const id = where.id;
+@@ -449,7 +594,8 @@
+       return this.findFirst(args);
+     }
+ 
+-    let query = this.getClient().from(this.table).select("*");
++    const baseSelect = args.include ? "*" : this.getBaseSelect(args.select);
++    let query = this.getClient().from(this.table).select(baseSelect);
+ 
+     if (id) {
+       query = query.eq("id", id);
+@@ -469,25 +615,20 @@
+       return null;
+     }
+ 
+-    return this.processResult(data, args.include);
++    const [result] = await this.processResults(data ? [data] : [], args.include);
++    return result ?? null;
+   }
+ 
+   async findFirst(args: { where?: Record<string, any>; orderBy?: any; include?: Record<string, any>; select?: Record<string, any> }): Promise<any> {
+-    let query = this.getClient().from(this.table).select("*");
++    const baseSelect = args.include ? "*" : this.getBaseSelect(args.select);
++    let query = this.getClient().from(this.table).select(baseSelect);
+ 
+     // Apply where filters
+     if (args.where) {
+-      this.applyWhere(query, args.where);
++      query = this.applyWhere(query, args.where);
+     }
+ 
+-    // Apply orderBy
+-    if (args.orderBy) {
+-      const orderByArr = Array.isArray(args.orderBy) ? args.orderBy : [args.orderBy];
+-      for (const ob of orderByArr) {
+-        const [key, dir] = Object.entries(ob)[0] as [string, string];
+-        query = query.order(key, { ascending: dir === "asc", nullsFirst: false });
+-      }
+-    }
++    query = this.applyOrderBy(query, args.orderBy);
+ 
+     const { data, error } = await query.limit(1);
+ 
+@@ -498,25 +639,20 @@
+ 
+     if (!data || data.length === 0) return null;
+ 
+-    return this.processResult(data[0], args.include);
++    const [result] = await this.processResults(data, args.include);
++    return result ?? null;
+   }
+ 
+   async findMany(args: { where?: Record<string, any>; orderBy?: any; include?: Record<string, any>; select?: Record<string, any>; take?: number; skip?: number } = {}): Promise<any[]> {
+-    let query = this.getClient().from(this.table).select("*");
++    const baseSelect = args.include ? "*" : this.getBaseSelect(args.select);
++    let query = this.getClient().from(this.table).select(baseSelect);
+ 
+     // Apply where filters
+     if (args.where) {
+-      this.applyWhere(query, args.where);
++      query = this.applyWhere(query, args.where);
+     }
+ 
+-    // Apply orderBy
+-    if (args.orderBy) {
+-      const orderByArr = Array.isArray(args.orderBy) ? args.orderBy : [args.orderBy];
+-      for (const ob of orderByArr) {
+-        const [key, dir] = Object.entries(ob)[0] as [string, string];
+-        query = query.order(key, { ascending: dir === "asc", nullsFirst: false });
+-      }
+-    }
++    query = this.applyOrderBy(query, args.orderBy);
+ 
+     // Apply pagination
+     if (args.skip) {
+@@ -532,7 +668,7 @@
+       return [];
+     }
+ 
+-    return Promise.all((data || []).map((row: any) => this.processResult(row, args.include)));
++    return this.processResults((data || []) as Record<string, any>[], args.include);
+   }
+ 
+   private toPrismaLikeError(error: any): Error & { code?: string; meta?: Record<string, any> } {
+@@ -562,7 +698,7 @@
+     parent: Record<string, any>,
+     nestedCreates: Array<{
+       relationName: string;
+-      relation: { table: string; foreignKey: string; thisKey: string; isMany: boolean };
++      relation: RelationInfo;
+       rows: Record<string, any>[];
+     }>
+   ) {
+@@ -755,7 +891,7 @@
+       .delete();
+ 
+     if (args.where) {
+-      this.applyWhere(query, args.where);
++      query = this.applyWhere(query, args.where);
+     }
+ 
+     const { data: result, error } = await query.select();
+@@ -775,7 +911,7 @@
+       .select("*", { count: "exact", head: true });
+ 
+     if (args.where) {
+-      this.applyWhere(query, args.where);
++      query = this.applyWhere(query, args.where);
+     }
+ 
+     const { count, error } = await query;
+@@ -789,13 +925,24 @@
+   }
+ 
+   async aggregate(args: { where?: Record<string, any>; _sum?: Record<string, true>; _avg?: Record<string, true>; _count?: boolean | Record<string, true>; _min?: Record<string, true>; _max?: Record<string, true> }): Promise<any> {
+-    // Supabase doesn't have a direct aggregate API, so we fetch and compute
++    // Supabase REST does not expose Prisma-style aggregate helpers.
++    // Fetch only the columns needed for the requested calculations to reduce payload size.
++    const aggregateColumns = new Set<string>();
++    for (const group of [args._sum, args._avg, args._min, args._max]) {
++      if (group) {
++        Object.keys(group).forEach((key) => aggregateColumns.add(key));
++      }
++    }
++    if (typeof args._count === "object") {
++      Object.keys(args._count).forEach((key) => aggregateColumns.add(key));
++    }
++
+     let query = this.getClient()
+       .from(this.table)
+-      .select("*");
++      .select(aggregateColumns.size > 0 ? Array.from(aggregateColumns).join(",") : "id");
+ 
+     if (args.where) {
+-      this.applyWhere(query, args.where);
++      query = this.applyWhere(query, args.where);
+     }
+ 
+     const { data, error } = await query;
+@@ -853,7 +1000,7 @@
+     return result;
+   }
+ 
+-  private applyWhere(query: any, where: Record<string, any>): void {
++  private applyWhere(query: any, where: Record<string, any>): any {
+     for (const [key, value] of Object.entries(where)) {
+       if (key === "OR") {
+         if (Array.isArray(value)) {
+@@ -862,30 +1009,42 @@
+             const subParts: string[] = [];
+             for (const [k, v] of Object.entries(cond)) {
+               const vo = typeof v === "object" && v !== null ? v as Record<string, any> : null;
++
++              // PostgREST OR cannot express our nested Prisma-like relation filters here.
++              // They are intentionally skipped instead of generating invalid column names.
++              if (vo && RELATION_MAP[this.model]?.[k]) continue;
++
+               if (v === null) {
+                 subParts.push(`${k}.is.null`);
+               } else if (vo && vo.contains !== undefined) {
+-                subParts.push(`${k}.like.*${vo.contains}*`);
++                subParts.push(`${k}.ilike.*${vo.contains}*`);
+               } else if (vo && vo.startsWith !== undefined) {
+-                subParts.push(`${k}.like.${vo.startsWith}*`);
++                subParts.push(`${k}.ilike.${vo.startsWith}*`);
+               } else if (vo && vo.not !== undefined) {
+                 if (vo.not === null) {
+                   subParts.push(`${k}.not.is.null`);
+                 } else {
+                   subParts.push(`${k}.neq.${vo.not}`);
+                 }
+-              } else {
++              } else if (vo && vo.in !== undefined) {
++                const vals = Array.isArray(vo.in) ? vo.in.join(",") : vo.in;
++                subParts.push(`${k}.in.(${vals})`);
++              } else if (!vo) {
+                 subParts.push(`${k}.eq.${v}`);
+               }
+             }
+-            orParts.push(subParts.join(","));
++            if (subParts.length > 0) {
++              orParts.push(subParts.join(","));
++            }
++          }
++          if (orParts.length > 0) {
++            query = query.or(orParts.join(","));
+           }
+-          query = query.or(orParts.join(","));
+         }
+       } else if (key === "AND") {
+         if (Array.isArray(value)) {
+           for (const cond of value) {
+-            this.applyWhere(query, cond);
++            query = this.applyWhere(query, cond);
+           }
+         }
+       } else if (value === null) {
+@@ -925,138 +1084,157 @@
+           }
+         } else if (value.in !== undefined) {
+           query = query.in(key, Array.isArray(value.in) ? value.in : [value.in]);
+-        } else if (key === "section" || key === "class" || key === "student" || key === "teacher" || key === "subject") {
+-          // Relation filter - need special handling
+-          // For now, we'll handle the most common cases
+-          const relations = RELATION_MAP[this.model] || {};
+-          const relation = relations[key];
+-          if (relation) {
+-            // This is a relation filter - apply to the foreign key
+-            // e.g., { section: { classId: "xxx" } } -> filter by sectionId where section has classId
+-            // This needs a join which PostgREST handles differently
+-            // For simple foreign key filters, we can use the foreign key directly
+-            for (const [fk, fv] of Object.entries(value)) {
+-              if (fk === "classId" && key === "section") {
+-                // Need to find sections with this classId, then filter students by those sectionIds
+-                // This is complex - handle in post-filtering for now
+-              }
+-            }
+-          }
++        } else if (RELATION_MAP[this.model]?.[key]) {
++          // Relation filters require joins; service-level code handles the most important cases.
++          continue;
+         }
+       } else {
+         query = query.eq(key, value);
+       }
+     }
++
++    return query;
+   }
+ 
+   private async processResult(row: Record<string, any>, include?: Record<string, any>): Promise<any> {
+-    const result: Record<string, any> = transformRow(row);
++    const [result] = await this.processResults(row ? [row] : [], include);
++    return result ?? null;
++  }
+ 
+-    if (!include) return result;
++  private async processResults(rows: Record<string, any>[], include?: Record<string, any>): Promise<any[]> {
++    const results = rows.map((row) => transformRow<Record<string, any>>({ ...row }));
+ 
+-    const relations = RELATION_MAP[this.model] || {};
++    if (!include || results.length === 0) return results;
+ 
+-    // Process all includes (relations + _count) in parallel
++    const relations = RELATION_MAP[this.model] || {};
+     const tasks: Promise<void>[] = [];
+ 
+-    // Handle _count
+     if (include._count) {
+-      const countSelect = include._count.select || {};
+       tasks.push(
+         (async () => {
++          const countSelect = include._count.select || {};
+           const countEntries = Object.entries(countSelect) as [string, boolean][];
+-          const countResults = await Promise.all(
++
++          const countMaps = await Promise.all(
+             countEntries.map(async ([relationName, enabled]) => {
+-              if (!enabled) return [relationName, 0] as const;
++              const countsByParent = new Map<string, number>();
++              if (!enabled) return [relationName, countsByParent] as const;
++
+               const relation = relations[relationName];
+-              if (!relation) return [relationName, 0] as const;
++              if (!relation) return [relationName, countsByParent] as const;
+ 
+-              const { count, error } = await this.getClient()
+-                .from(relation.table)
+-                .select("*", { count: "exact", head: true })
+-                .eq(relation.foreignKey, result["id"] as string);
++              const parentKeys = uniqueCompactValues(
++                results.map((result) => result[relation.thisKey] ?? result.id),
++              );
++
++              const relatedRows = await this.fetchRowsByIn(
++                relation.table,
++                relation.foreignKey,
++                relation.foreignKey,
++                parentKeys,
++                { model: getTableModelName(relation.table) },
++              );
+ 
+-              return [relationName, count || 0] as const;
+-            })
++              for (const row of relatedRows) {
++                const parentKey = row[relation.foreignKey];
++                if (parentKey === null || parentKey === undefined) continue;
++                const key = String(parentKey);
++                countsByParent.set(key, (countsByParent.get(key) || 0) + 1);
++              }
++
++              return [relationName, countsByParent] as const;
++            }),
+           );
+-          result._count = Object.fromEntries(countResults);
+-        })()
++
++          for (const result of results) {
++            const countPayload: Record<string, number> = {};
++            for (const [relationName, countsByParent] of countMaps) {
++              const relation = relations[relationName];
++              const parentKey = relation ? result[relation.thisKey] ?? result.id : undefined;
++              countPayload[relationName] = parentKey === undefined ? 0 : countsByParent.get(String(parentKey)) || 0;
++            }
++            result._count = countPayload;
++          }
++        })(),
+       );
+     }
+ 
+-    // Handle relation includes
+     for (const [key, value] of Object.entries(include)) {
+       if (key === "_count") continue;
++
+       const relation = relations[key];
+       if (!relation) continue;
+ 
+       tasks.push(
+         (async () => {
+-          if (relation.isMany) {
+-            // Has-many relation: fetch related rows where foreignKey = this.id
+-            const nestedInclude = typeof value === "object" && value !== null ? value.include : undefined;
+-            const nestedSelect = typeof value === "object" && value !== null && value.select ? Object.keys(value.select).join(",") : "*";
+-
+-            const { data, error } = await this.getClient()
+-              .from(relation.table)
+-              .select(nestedSelect)
+-              .eq(relation.foreignKey, result["id"] as string);
+-
+-            if (error) {
+-              console.error(`[processResult] Error fetching ${key}:`, error);
+-              result[key] = [];
+-              return;
+-            }
++          const nestedInclude = typeof value === "object" && value !== null ? value.include : undefined;
++          const relationWhere = typeof value === "object" && value !== null ? value.where : undefined;
++          const relationOrderBy = typeof value === "object" && value !== null ? value.orderBy : undefined;
++          const { select, selectedKeys } = this.getRelationSelect(value, relation);
++          const nestedModel = getTableModelName(relation.table);
++          const nestedHandler = new SupabaseModelHandler(nestedModel, relation.table);
+ 
+-            // Recursively process nested includes
+-            if (nestedInclude && data) {
+-              const nestedModel = getTableModelName(relation.table);
+-              result[key] = await Promise.all(
+-                data.map(async (item: any) => {
+-                  const handler = new SupabaseModelHandler(nestedModel, relation.table);
+-                  return handler.processResult(item, nestedInclude);
+-                })
+-              );
+-            } else {
+-              result[key] = (data || []).map(transformRow);
++          if (relation.isMany) {
++            const parentKeys = uniqueCompactValues(
++              results.map((result) => result[relation.thisKey] ?? result.id),
++            );
++
++            const relatedRows = await this.fetchRowsByIn(
++              relation.table,
++              select,
++              relation.foreignKey,
++              parentKeys,
++              { orderBy: relationOrderBy, where: relationWhere, model: nestedModel },
++            );
++
++            const processedRows = nestedInclude
++              ? await nestedHandler.processResults(relatedRows, nestedInclude)
++              : relatedRows.map((row) => transformRow<Record<string, any>>({ ...row }));
++
++            const grouped = groupRowsByKey(processedRows, relation.foreignKey);
++
++            for (const result of results) {
++              const parentKey = result[relation.thisKey] ?? result.id;
++              const rowsForParent = parentKey === undefined ? [] : grouped.get(String(parentKey)) || [];
++              result[key] = rowsForParent.map((row) => pickSelectedColumns(row, selectedKeys));
+             }
+           } else {
+-            // Belongs-to relation: fetch related row where id = this.thisKey
+-            const fkValue = result[relation.thisKey];
+-            if (!fkValue) {
+-              result[key] = null;
+-              return;
+-            }
+-
+-            const nestedInclude = typeof value === "object" && value !== null ? value.include : undefined;
+-            const nestedSelect = typeof value === "object" && value !== null && value.select ? Object.keys(value.select).join(",") : "*";
+-
+-            const { data, error } = await this.getClient()
+-              .from(relation.table)
+-              .select(nestedSelect)
+-              .eq("id", fkValue)
+-              .limit(1);
+-
+-            if (error || !data || data.length === 0) {
+-              result[key] = null;
+-              return;
++            const foreignKeys = uniqueCompactValues(
++              results.map((result) => result[relation.thisKey]),
++            );
++
++            const relatedRows = await this.fetchRowsByIn(
++              relation.table,
++              select,
++              relation.foreignKey,
++              foreignKeys,
++              { orderBy: relationOrderBy, where: relationWhere, model: nestedModel },
++            );
++
++            const processedRows = nestedInclude
++              ? await nestedHandler.processResults(relatedRows, nestedInclude)
++              : relatedRows.map((row) => transformRow<Record<string, any>>({ ...row }));
++
++            const rowsByKey = new Map<string, Record<string, any>>();
++            for (const row of processedRows) {
++              const rowKey = row[relation.foreignKey];
++              if (rowKey !== null && rowKey !== undefined) {
++                rowsByKey.set(String(rowKey), row);
++              }
+             }
+ 
+-            // Recursively process nested includes
+-            if (nestedInclude) {
+-              const nestedModel = getTableModelName(relation.table);
+-              const handler = new SupabaseModelHandler(nestedModel, relation.table);
+-              result[key] = await handler.processResult(data[0], nestedInclude);
+-            } else {
+-              result[key] = transformRow(data[0]);
++            for (const result of results) {
++              const fkValue = result[relation.thisKey];
++              const relatedRow = fkValue === undefined || fkValue === null ? null : rowsByKey.get(String(fkValue)) || null;
++              result[key] = relatedRow ? pickSelectedColumns(relatedRow, selectedKeys) : null;
+             }
+           }
+-        })()
++        })(),
+       );
+     }
+ 
+     await Promise.all(tasks);
+-    return result;
++    return results;
+   }
+ 
+   private getRelatedModel(relationName: string): string {
