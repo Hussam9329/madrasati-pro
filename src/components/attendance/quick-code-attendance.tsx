@@ -152,6 +152,7 @@ export function QuickCodeAttendance({ qrAvailable, checkoutWarningTime }: QuickC
             studentId: student.id,
             mode,
             source: "manual-name",
+            clientTime: new Date().toISOString(),
           }),
         });
 
@@ -207,6 +208,7 @@ export function QuickCodeAttendance({ qrAvailable, checkoutWarningTime }: QuickC
               studentId: selectedStudent.id,
               mode,
               source: "manual-name",
+              clientTime: new Date().toISOString(),
             }),
           });
 
@@ -247,7 +249,7 @@ export function QuickCodeAttendance({ qrAvailable, checkoutWarningTime }: QuickC
           const res = await fetch("/api/attendance/scan", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ studentCode: code, mode, source: "manual-code" }),
+            body: JSON.stringify({ studentCode: code, mode, source: "manual-code", clientTime: new Date().toISOString() }),
           });
 
           const data: AttendanceScanResult = await res.json();

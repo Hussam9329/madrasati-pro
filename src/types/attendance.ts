@@ -142,6 +142,8 @@ export type AttendanceScanInput = {
   studentCode: string;
   mode: AttendanceScanMode;
   source?: AttendanceScanSource;
+  /** ISO string of the client's local time — used instead of server time for checkInAt/checkOutAt */
+  clientTime?: string;
 };
 
 export type AttendanceScanResult = {

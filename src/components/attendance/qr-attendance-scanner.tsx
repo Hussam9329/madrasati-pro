@@ -70,7 +70,7 @@ export function QrAttendanceScanner({
         const res = await fetch("/api/attendance/scan", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ studentCode, mode, source: "qr" }),
+          body: JSON.stringify({ studentCode, mode, source: "qr", clientTime: new Date().toISOString() }),
         });
 
         const data: AttendanceScanResult = await res.json();

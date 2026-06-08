@@ -818,8 +818,10 @@ async function registerDailyStudentAttendance(input: {
   };
   mode: "check-in" | "check-out";
   source: "qr" | "manual-code" | "manual-name";
+  /** ISO string from the client's device clock */
+  clientTime?: string;
 }): Promise<AttendanceScanResult> {
-  const { student, mode, source } = input;
+  const { student, mode, source, clientTime } = input;
   const studentCode = student.studentCode ?? "";
 
   if (student.status !== "active") {
@@ -835,7 +837,8 @@ async function registerDailyStudentAttendance(input: {
     };
   }
 
-  const today = normalizeDateOnly(new Date());
+  // Use the client's local time for determining "today" so the date matches the client's calendar
+  const today = normalizeDateOnly(clientTime ? new Date(clientTime) : new Date());
 
   if (!today) {
     return {
@@ -873,7 +876,8 @@ async function registerDailyStudentAttendance(input: {
     },
   });
 
-  const now = new Date();
+  // Use the client's local time if provided, otherwise fall back to server time
+  const now = clientTime ? new Date(clientTime) : new Date();
   const previousAttendanceMessage = mode === "check-in"
     ? await getPreviousAttendanceMessage(student.id, today)
     : "";
@@ -1027,6 +1031,7 @@ export async function scanAttendanceByStudentCode(
     student,
     mode,
     source,
+    clientTime: input.clientTime,
   });
 }
 
@@ -1034,8 +1039,10 @@ export async function scanAttendanceByStudentId(input: {
   studentId: string;
   mode: "check-in" | "check-out";
   source: "manual-name";
+  /** ISO string from the client's device clock */
+  clientTime?: string;
 }): Promise<AttendanceScanResult> {
-  const { studentId, mode, source } = input;
+  const { studentId, mode, source, clientTime } = input;
 
   const student = await db.student.findUnique({
     where: { id: studentId },
@@ -1058,6 +1065,7 @@ export async function scanAttendanceByStudentId(input: {
     student,
     mode,
     source,
+    clientTime,
   });
 }
 
