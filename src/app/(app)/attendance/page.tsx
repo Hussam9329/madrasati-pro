@@ -101,7 +101,7 @@ export default async function AttendancePage({
 
   const todayStr = getDateInputValue(new Date());
 
-  const [records, summary, allSummary, studentTotals, classes, sections, schoolSettings, todayAbsentSummary, todayAbsentRecords] =
+  const [records, summary, allSummary, studentTotals, classes, sections, schoolSettings, todaySummary, todayAbsentRecords] =
     await Promise.all([
       safeQuery(() => getAttendanceRecords(filter), []),
       safeQuery(() => getAttendanceCounts(filter), emptyAttendanceSummary),
@@ -118,14 +118,17 @@ export default async function AttendancePage({
         createdAt: new Date(),
         updatedAt: new Date(),
       }),
-      safeQuery(() => getAttendanceCounts({ date: todayStr }), emptyAttendanceSummary),
+      safeQuery(() => getAttendanceCounts({ date: todayStr }), emptyAttendanceSummary), // todaySummary
       safeQuery(() => getAttendanceRecords({ date: todayStr, status: "absent" }), []),
     ]);
 
   const hasAnyRecords = allSummary.total > 0;
   const today = todayStr;
   const reportsHref = buildReportsHref(filter);
-  const todayAbsentCount = todayAbsentSummary.absent;
+  const todayAbsentCount = todaySummary.absent;
+  const todayLateCount = todaySummary.late;
+  const todayPresentCount = todaySummary.present;
+  const todayMissingCheckOutCount = todaySummary.missingCheckOut;
   const todayAbsentStudents = todayAbsentRecords.map((r) => ({
     studentName: r.studentName,
     studentCode: r.studentCode,
@@ -165,7 +168,7 @@ export default async function AttendancePage({
         <section className="flex flex-col gap-6">
           <AttendanceStats summary={summary} />
 
-          <AttendanceQuickFilters today={today} todayAbsentCount={todayAbsentCount} />
+          <AttendanceQuickFilters today={today} todayAbsentCount={todayAbsentCount} todayLateCount={todayLateCount} todayPresentCount={todayPresentCount} todayMissingCheckOutCount={todayMissingCheckOutCount} />
 
           <AttendanceSearchForm
             filter={filter}
@@ -370,9 +373,12 @@ function AttendanceStats({ summary }: AttendanceStatsProps) {
 type AttendanceQuickFiltersProps = {
   today: string;
   todayAbsentCount: number;
+  todayLateCount: number;
+  todayPresentCount: number;
+  todayMissingCheckOutCount: number;
 };
 
-function AttendanceQuickFilters({ today, todayAbsentCount }: AttendanceQuickFiltersProps) {
+function AttendanceQuickFilters({ today, todayAbsentCount, todayLateCount, todayPresentCount, todayMissingCheckOutCount }: AttendanceQuickFiltersProps) {
   const items = [
     {
       href: `/attendance?date=${today}&status=absent`,
@@ -380,27 +386,31 @@ function AttendanceQuickFilters({ today, todayAbsentCount }: AttendanceQuickFilt
       count: todayAbsentCount,
       icon: XCircle,
       className: "border-red-200 bg-red-50 text-red-700",
+      badgeClass: "bg-red-600",
     },
     {
       href: `/attendance?date=${today}&status=late`,
       label: "متأخرو اليوم",
-      count: undefined,
+      count: todayLateCount,
       icon: Clock,
       className: "border-amber-200 bg-amber-50 text-amber-700",
+      badgeClass: "bg-amber-600",
     },
     {
       href: `/attendance?date=${today}&status=present`,
       label: "حضور اليوم",
-      count: undefined,
+      count: todayPresentCount,
       icon: CheckCircle2,
       className: "border-emerald-200 bg-emerald-50 text-emerald-700",
+      badgeClass: "bg-emerald-600",
     },
     {
       href: `/attendance?date=${today}&missingCheckOut=yes`,
       label: "لم ينصرفوا اليوم",
-      count: undefined,
+      count: todayMissingCheckOutCount,
       icon: LogOut,
       className: "border-rose-200 bg-rose-50 text-rose-700",
+      badgeClass: "bg-rose-600",
     },
     {
       href: "/attendance",
@@ -408,6 +418,7 @@ function AttendanceQuickFilters({ today, todayAbsentCount }: AttendanceQuickFilt
       count: undefined,
       icon: CalendarDays,
       className: "border-slate-200 bg-white text-[var(--app-text-muted)]",
+      badgeClass: "",
     },
   ];
 
@@ -427,7 +438,7 @@ function AttendanceQuickFilters({ today, todayAbsentCount }: AttendanceQuickFilt
             <Icon size={17} />
             {item.label}
             {item.count !== undefined && item.count > 0 && (
-              <span className="inline-flex h-6 min-w-[24px] items-center justify-center rounded-full bg-red-600 px-1.5 text-xs font-extrabold text-white">
+              <span className={["inline-flex h-6 min-w-[24px] items-center justify-center rounded-full px-1.5 text-xs font-extrabold text-white", item.badgeClass || "bg-red-600"].join(" ")}>
                 {item.count}
               </span>
             )}
@@ -950,7 +961,7 @@ function AttendanceRow({ record }: AttendanceRowProps) {
         </div>
       </div>
 
-      <div className="grid gap-2 sm:grid-cols-1 xl:w-[160px]">
+      <div className="flex items-center gap-2 xl:w-[160px]">
         {!record.isComputedAbsence && (
           <DeleteConfirmButton
             action={deleteAttendanceAction}
