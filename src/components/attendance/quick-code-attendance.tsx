@@ -14,6 +14,7 @@ import {
   User,
 } from "lucide-react";
 import type { AttendanceScanResult } from "@/types/attendance";
+import { getLocalTimeISO, formatAttendanceTime } from "@/types/attendance";
 
 type QuickCodeAttendanceProps = {
   /** Whether QR camera scanner is also available on this device */
@@ -152,7 +153,7 @@ export function QuickCodeAttendance({ qrAvailable, checkoutWarningTime }: QuickC
             studentId: student.id,
             mode,
             source: "manual-name",
-            clientTime: new Date().toISOString(),
+            clientTime: getLocalTimeISO(),
           }),
         });
 
@@ -208,7 +209,7 @@ export function QuickCodeAttendance({ qrAvailable, checkoutWarningTime }: QuickC
               studentId: selectedStudent.id,
               mode,
               source: "manual-name",
-              clientTime: new Date().toISOString(),
+              clientTime: getLocalTimeISO(),
             }),
           });
 
@@ -249,7 +250,7 @@ export function QuickCodeAttendance({ qrAvailable, checkoutWarningTime }: QuickC
           const res = await fetch("/api/attendance/scan", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ studentCode: code, mode, source: "manual-code", clientTime: new Date().toISOString() }),
+            body: JSON.stringify({ studentCode: code, mode, source: "manual-code", clientTime: getLocalTimeISO() }),
           });
 
           const data: AttendanceScanResult = await res.json();
@@ -515,7 +516,7 @@ export function QuickCodeAttendance({ qrAvailable, checkoutWarningTime }: QuickC
                       <p>
                         وقت الحضور:{" "}
                         <span className="font-bold">
-                          {new Date(result.checkInAt).toLocaleTimeString("ar-IQ")}
+                          {formatAttendanceTime(result.checkInAt)}
                         </span>
                       </p>
                     )}
@@ -523,7 +524,7 @@ export function QuickCodeAttendance({ qrAvailable, checkoutWarningTime }: QuickC
                       <p>
                         وقت الانصراف:{" "}
                         <span className="font-bold">
-                          {new Date(result.checkOutAt).toLocaleTimeString("ar-IQ")}
+                          {formatAttendanceTime(result.checkOutAt)}
                         </span>
                       </p>
                     )}

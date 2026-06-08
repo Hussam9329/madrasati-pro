@@ -13,6 +13,7 @@ import { getAttendanceByStudentId } from "@/services/attendance-service";
 import { getPaymentsByStudentId, getStudentPaymentSummary } from "@/services/payment-service";
 import { formatMoney } from "@/types/payment";
 import { getStudentClassDisplay, getStudentStatusLabel } from "@/types/student";
+import { formatAttendanceTime } from "@/types/attendance";
 
 export const dynamic = "force-dynamic";
 
@@ -109,8 +110,8 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
               <tr key={record.id}>
                 <td>{new Date(record.date).toLocaleDateString("ar-IQ")}</td>
                 <td>{record.statusLabel}</td>
-                <td>{record.checkInAt ? new Date(record.checkInAt).toLocaleTimeString("ar-IQ") : "-"}</td>
-                <td>{record.checkOutAt ? new Date(record.checkOutAt).toLocaleTimeString("ar-IQ") : "-"}</td>
+                <td>{record.checkInAt ? formatAttendanceTime(record.checkInAt) : "-"}</td>
+                <td>{record.checkOutAt ? formatAttendanceTime(record.checkOutAt) : "-"}</td>
               </tr>
             ))}
           </ReportTable>

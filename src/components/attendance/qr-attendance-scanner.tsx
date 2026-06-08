@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Camera, CheckCircle2, XCircle, RefreshCw } from "lucide-react";
 import type { AttendanceScanResult } from "@/types/attendance";
+import { getLocalTimeISO, formatAttendanceTime } from "@/types/attendance";
 
 type QrAttendanceScannerProps = {
   mode: "check-in" | "check-out";
@@ -70,7 +71,7 @@ export function QrAttendanceScanner({
         const res = await fetch("/api/attendance/scan", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ studentCode, mode, source: "qr", clientTime: new Date().toISOString() }),
+          body: JSON.stringify({ studentCode, mode, source: "qr", clientTime: getLocalTimeISO() }),
         });
 
         const data: AttendanceScanResult = await res.json();
@@ -248,7 +249,7 @@ export function QrAttendanceScanner({
                   <p>
                     وقت الحضور:{" "}
                     <span className="font-bold">
-                      {new Date(result.checkInAt).toLocaleTimeString("ar-IQ")}
+                      {formatAttendanceTime(result.checkInAt)}
                     </span>
                   </p>
                 )}
@@ -256,7 +257,7 @@ export function QrAttendanceScanner({
                   <p>
                     وقت الانصراف:{" "}
                     <span className="font-bold">
-                      {new Date(result.checkOutAt).toLocaleTimeString("ar-IQ")}
+                      {formatAttendanceTime(result.checkOutAt)}
                     </span>
                   </p>
                 )}

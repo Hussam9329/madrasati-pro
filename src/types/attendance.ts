@@ -343,6 +343,38 @@ export function getAttendanceStatusTone(
   );
 }
 
+/**
+ * Get the client's local time as an ISO-like string WITHOUT the 'Z' suffix.
+ *
+ * Why: `new Date().toISOString()` converts to UTC (e.g. 1:29 PM UTC+3 → "10:29:22.000Z").
+ * Supabase stores this in a `timestamp without time zone` column, which drops the 'Z'.
+ * When the frontend later does `new Date("2026-06-08T10:29:22")`, JavaScript treats it as
+ * LOCAL time — so it displays 10:29 AM instead of the real 1:29 PM.
+ *
+ * Sending the local time directly (e.g. "2026-06-08T13:29:22") avoids the UTC round-trip.
+ * The database stores "13:29:22", and when retrieved without 'Z' the browser correctly
+ * interprets it as 1:29 PM local time.
+ */
+export function getLocalTimeISO(): string {
+  const now = new Date();
+  const offset = now.getTimezoneOffset(); // negative for UTC+ (e.g. -180 for UTC+3)
+  const localMs = now.getTime() - offset * 60_000;
+  // toISOString() gives "2026-06-08T13:29:22.000Z"; remove the trailing 'Z'
+  return new Date(localMs).toISOString().slice(0, -1);
+}
+
+/**
+ * Format a date/time value (from the database) as a local time string.
+ * Handles both strings with and without timezone info:
+ *   - "2026-06-08T13:29:22"        → treated as local time → correct
+ *   - "2026-06-08T10:29:22.000Z"   → treated as UTC → converted to local → correct
+ */
+export function formatAttendanceTime(dateValue: string | Date | null): string {
+  if (!dateValue) return "";
+  const date = typeof dateValue === "string" ? new Date(dateValue) : dateValue;
+  return date.toLocaleTimeString("ar-IQ");
+}
+
 export function formatAttendanceDate(date: Date): string {
   return new Intl.DateTimeFormat("ar-IQ", {
     year: "numeric",

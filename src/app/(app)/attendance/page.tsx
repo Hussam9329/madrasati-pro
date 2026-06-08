@@ -35,6 +35,7 @@ import {
   ATTENDANCE_STATUSES,
   calculateAttendanceRate,
   formatAttendanceShortDate,
+  formatAttendanceTime,
   getAttendanceStatusBadgeClass,
   type AttendanceFilter,
   type AttendanceListItem,
@@ -899,12 +900,12 @@ function AttendanceRow({ record }: AttendanceRowProps) {
             <div className="mt-2 flex flex-wrap gap-2 text-sm">
               {record.checkInAt && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 font-bold text-emerald-700">
-                  حضور: {new Date(record.checkInAt).toLocaleTimeString("ar-IQ")}
+                  حضور: {formatAttendanceTime(record.checkInAt)}
                 </span>
               )}
               {record.checkOutAt && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1 font-bold text-amber-700">
-                  انصراف: {new Date(record.checkOutAt).toLocaleTimeString("ar-IQ")}
+                  انصراف: {formatAttendanceTime(record.checkOutAt)}
                 </span>
               )}
               {record.checkInAt && !record.checkOutAt ? (
