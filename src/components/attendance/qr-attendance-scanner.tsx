@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Camera, CheckCircle2, XCircle, RefreshCw } from "lucide-react";
 import type { AttendanceScanResult } from "@/types/attendance";
@@ -20,6 +20,7 @@ export function QrAttendanceScanner({
   description,
 }: QrAttendanceScannerProps) {
   const router = useRouter();
+  const [, startRefreshTransition] = useTransition();
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const readerRef = useRef<any>(null);
@@ -80,7 +81,7 @@ export function QrAttendanceScanner({
         if (!data.ok) {
           setError(data.message);
         } else {
-          router.refresh();
+          startRefreshTransition(() => router.refresh());
         }
       } catch {
         setError("حدث خطأ في الاتصال بالخادم.");
@@ -88,7 +89,7 @@ export function QrAttendanceScanner({
         setLoading(false);
       }
     },
-    [mode, router, confirmEarlyCheckout],
+    [mode, router, confirmEarlyCheckout, startRefreshTransition],
   );
 
   const startCamera = useCallback(async () => {

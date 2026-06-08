@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   CheckCircle2,
@@ -41,6 +41,7 @@ type ScanHistoryEntry = {
 
 export function QuickCodeAttendance({ qrAvailable, checkoutWarningTime }: QuickCodeAttendanceProps) {
   const router = useRouter();
+  const [, startRefreshTransition] = useTransition();
   const [mode, setMode] = useState<"check-in" | "check-out">("check-in");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<StudentSearchResult[]>([]);
@@ -56,36 +57,63 @@ export function QuickCodeAttendance({ qrAvailable, checkoutWarningTime }: QuickC
   const historyIdRef = useRef(0);
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const searchAbortRef = useRef<AbortController | null>(null);
+  const searchCacheRef = useRef<Map<string, StudentSearchResult[]>>(new Map());
+
   // Search students by name or code only (no class/section filters)
   const searchStudents = useCallback(async (query: string) => {
     const trimmed = query.trim();
-    if (!trimmed) {
+    if (!trimmed || (trimmed.length < 2 && !trimmed.startsWith("MarSch-"))) {
       setSearchResults([]);
       setShowDropdown(false);
       return;
     }
 
+    // Check cache first
+    const cacheKey = trimmed.toLowerCase();
+    const cached = searchCacheRef.current.get(cacheKey);
+    if (cached) {
+      setSearchResults(cached.slice(0, 15));
+      setShowDropdown(cached.length > 0);
+      return;
+    }
+
+    // Abort previous search
+    if (searchAbortRef.current) {
+      searchAbortRef.current.abort();
+    }
+    const abortController = new AbortController();
+    searchAbortRef.current = abortController;
+
     setSearching(true);
     try {
       // Search by name or code only — no classId/sectionId filters
-      const res = await fetch(`/api/students?q=${encodeURIComponent(trimmed)}`);
+      const res = await fetch(`/api/attendance/students?q=${encodeURIComponent(trimmed)}`, {
+        signal: abortController.signal,
+      });
       const data = await res.json();
 
       if (data.ok && data.data) {
         const activeStudents = data.data.filter(
           (s: StudentSearchResult) => s.status === "active"
         );
-        setSearchResults(activeStudents.slice(0, 15));
-        setShowDropdown(activeStudents.length > 0);
+        const results = activeStudents.slice(0, 15);
+        // Cache results
+        searchCacheRef.current.set(cacheKey, results);
+        setSearchResults(results);
+        setShowDropdown(results.length > 0);
       } else {
         setSearchResults([]);
         setShowDropdown(false);
       }
-    } catch {
+    } catch (err: any) {
+      if (err?.name === "AbortError") return;
       setSearchResults([]);
       setShowDropdown(false);
     } finally {
-      setSearching(false);
+      if (searchAbortRef.current === abortController) {
+        setSearching(false);
+      }
     }
   }, []);
 
@@ -107,7 +135,7 @@ export function QuickCodeAttendance({ qrAvailable, checkoutWarningTime }: QuickC
       } else {
         searchTimeoutRef.current = setTimeout(() => {
           searchStudents(value);
-        }, 300);
+        }, 180);
       }
     },
     [searchStudents],
@@ -177,7 +205,7 @@ export function QuickCodeAttendance({ qrAvailable, checkoutWarningTime }: QuickC
           setSearchQuery("");
           setSelectedStudent(null);
           setSearchResults([]);
-          router.refresh();
+          startRefreshTransition(() => router.refresh());
         }
       } catch {
         setError("حدث خطأ في الاتصال بالخادم.");
@@ -186,7 +214,7 @@ export function QuickCodeAttendance({ qrAvailable, checkoutWarningTime }: QuickC
         inputRef.current?.focus();
       }
     },
-    [confirmEarlyCheckout, mode, router],
+    [confirmEarlyCheckout, mode, router, startRefreshTransition],
   );
 
   // Submit attendance for direct code entry
@@ -232,7 +260,7 @@ export function QuickCodeAttendance({ qrAvailable, checkoutWarningTime }: QuickC
             setSearchQuery("");
             setSelectedStudent(null);
             setSearchResults([]);
-            router.refresh();
+            startRefreshTransition(() => router.refresh());
           }
         } catch {
           setError("حدث خطأ في الاتصال بالخادم.");
@@ -272,7 +300,7 @@ export function QuickCodeAttendance({ qrAvailable, checkoutWarningTime }: QuickC
             setSearchQuery("");
             setSelectedStudent(null);
             setSearchResults([]);
-            router.refresh();
+            startRefreshTransition(() => router.refresh());
           }
         } catch {
           setError("حدث خطأ في الاتصال بالخادم.");
@@ -282,7 +310,7 @@ export function QuickCodeAttendance({ qrAvailable, checkoutWarningTime }: QuickC
         }
       }
     },
-    [searchQuery, selectedStudent, mode, router, confirmEarlyCheckout],
+    [searchQuery, selectedStudent, mode, router, confirmEarlyCheckout, startRefreshTransition],
   );
 
   const handleModeSwitch = useCallback((newMode: "check-in" | "check-out") => {
@@ -309,12 +337,13 @@ export function QuickCodeAttendance({ qrAvailable, checkoutWarningTime }: QuickC
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Cleanup timeout
+  // Cleanup timeout and abort controller
   useEffect(() => {
     return () => {
       if (searchTimeoutRef.current) {
         clearTimeout(searchTimeoutRef.current);
       }
+      searchAbortRef.current?.abort();
     };
   }, []);
 

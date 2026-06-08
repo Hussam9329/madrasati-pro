@@ -1,7 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
-  CalendarDays,
   CheckCircle2,
   CheckSquare,
   Clock,
@@ -21,15 +20,18 @@ import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { SmartAlert } from "@/components/shared/smart-alert";
 import { AttendanceEntryPanel } from "@/components/attendance/attendance-entry-panel";
+import { AttendanceQuickActions } from "@/components/attendance/attendance-quick-actions";
 import { AbsentNamesToggle } from "@/components/attendance/absent-names-toggle";
 import { DeleteConfirmButton } from "@/components/shared/delete-confirm-button";
 import { PrintButton } from "@/components/reports/print-button";
 import { getClasses, getSections } from "@/services/class-service";
 import {
   deleteAttendanceRecord,
-  getAttendanceCounts,
   getAttendanceRecords,
   getAttendanceStudentTotals,
+  getDailyAttendanceSummary,
+  hasAttendanceRecords,
+  summarizeAttendanceRecords,
 } from "@/services/attendance-service";
 import {
   ATTENDANCE_STATUSES,
@@ -64,6 +66,7 @@ type AttendancePageProps = {
     deleted?: string;
     error?: string;
     reason?: string;
+    view?: string;
   }>;
 };
 
@@ -100,13 +103,13 @@ export default async function AttendancePage({
   };
 
   const todayStr = getDateInputValue(new Date());
+  const showAllRequested = resolvedSearchParams?.view?.trim() === "all";
+  const hasFilterRequest = hasAttendanceFilter(filter);
+  const shouldLoadDetailedAttendance = showAllRequested || hasFilterRequest;
 
-  const [records, summary, allSummary, studentTotals, classes, sections, schoolSettings, todaySummary, todayAbsentRecords] =
+  const [hasAnyStoredRecords, classes, sections, schoolSettings, todaySummary] =
     await Promise.all([
-      safeQuery(() => getAttendanceRecords(filter), []),
-      safeQuery(() => getAttendanceCounts(filter), emptyAttendanceSummary),
-      safeQuery(() => getAttendanceCounts(), emptyAttendanceSummary),
-      safeQuery(() => getAttendanceStudentTotals(filter), []),
+      safeQuery(() => hasAttendanceRecords(), false),
       safeQuery(() => getClasses(), []),
       safeQuery(() => getSections(), []),
       safeQuery(() => getSchoolSettings(), {
@@ -118,24 +121,37 @@ export default async function AttendancePage({
         createdAt: new Date(),
         updatedAt: new Date(),
       }),
-      safeQuery(() => getAttendanceCounts({ date: todayStr }), emptyAttendanceSummary), // todaySummary
-      safeQuery(() => getAttendanceRecords({ date: todayStr, status: "absent" }), []),
+      safeQuery(() => getDailyAttendanceSummary(todayStr), emptyAttendanceSummary),
     ]);
 
-  const hasAnyRecords = allSummary.total > 0;
+  let records: AttendanceListItem[] = [];
+  let summary: AttendanceSummary = todaySummary;
+  let studentTotals: AttendanceStudentTotal[] = [];
+
+  if (shouldLoadDetailedAttendance) {
+    records = await safeQuery(() => getAttendanceRecords(filter), []);
+    summary = summarizeAttendanceRecords(records);
+    studentTotals = await safeQuery(() => getAttendanceStudentTotals(filter, records), []);
+  }
+
+  const hasAnyRecords = hasAnyStoredRecords || records.length > 0;
   const today = todayStr;
   const reportsHref = buildReportsHref(filter);
   const todayAbsentCount = todaySummary.absent;
   const todayLateCount = todaySummary.late;
   const todayPresentCount = todaySummary.present;
   const todayMissingCheckOutCount = todaySummary.missingCheckOut;
-  const todayAbsentStudents = todayAbsentRecords.map((r) => ({
-    studentName: r.studentName,
-    studentCode: r.studentCode,
-    className: r.className,
-    sectionName: r.sectionName,
-    isComputedAbsence: r.isComputedAbsence,
-  }));
+  const todayAbsentStudents = isTodayAbsentRequest(filter)
+    ? records
+        .filter((record) => record.status === "absent")
+        .map((record) => ({
+          studentName: record.studentName,
+          studentCode: record.studentCode,
+          className: record.className,
+          sectionName: record.sectionName,
+          isComputedAbsence: record.isComputedAbsence,
+        }))
+    : [];
 
   return (
     <div className="mx-auto flex w-full max-w-[1350px] flex-col gap-6">
@@ -168,7 +184,17 @@ export default async function AttendancePage({
         <section className="flex flex-col gap-6">
           <AttendanceStats summary={summary} />
 
-          <AttendanceQuickFilters today={today} todayAbsentCount={todayAbsentCount} todayLateCount={todayLateCount} todayPresentCount={todayPresentCount} todayMissingCheckOutCount={todayMissingCheckOutCount} />
+          <AttendanceQuickActions
+            today={today}
+            activeDate={filter.date}
+            activeStatus={filter.status}
+            missingCheckOut={filter.missingCheckOut}
+            showAllRequested={showAllRequested}
+            todayAbsentCount={todayAbsentCount}
+            todayLateCount={todayLateCount}
+            todayPresentCount={todayPresentCount}
+            todayMissingCheckOutCount={todayMissingCheckOutCount}
+          />
 
           <AttendanceSearchForm
             filter={filter}
@@ -178,28 +204,40 @@ export default async function AttendancePage({
           />
         </section>
 
-        <AttendancePeriodReport summary={summary} recordsCount={records.length} filter={filter} todayAbsentCount={todayAbsentCount} todayAbsentStudents={todayAbsentStudents} />
+        {shouldLoadDetailedAttendance ? (
+          <>
+            <AttendancePeriodReport
+              summary={summary}
+              recordsCount={records.length}
+              filter={filter}
+              todayAbsentCount={isTodayAbsentRequest(filter) ? summary.absent : todayAbsentCount}
+              todayAbsentStudents={todayAbsentStudents}
+            />
 
-        <StudentTotalsReport rows={studentTotals} />
+            <StudentTotalsReport rows={studentTotals} />
 
-        {!hasAnyRecords ? (
-          <EmptyState
-            icon="attendance"
-            title="لا توجد سجلات حضور بعد"
-            description="ابدأ بكتابة اسم الطالب أو رمزه في لوحة الإدخال أعلاه، وسيظهر السجل مباشرة في الجدول والتقرير."
-            actionLabel="إدارة الطلاب"
-            actionHref="/students"
-          />
-        ) : records.length === 0 ? (
-          <EmptyState
-            icon="search"
-            title="لا توجد نتائج مطابقة"
-            description="جرّب تغيير التاريخ، الحالة، الصف، الشعبة، أو مسح الفلاتر المتقدمة."
-            actionLabel="عرض كل السجلات"
-            actionHref="/attendance"
-          />
+            {!hasAnyRecords ? (
+              <EmptyState
+                icon="attendance"
+                title="لا توجد سجلات حضور بعد"
+                description="ابدأ بكتابة اسم الطالب أو رمزه في لوحة الإدخال أعلاه، وسيظهر السجل مباشرة في الجدول والتقرير."
+                actionLabel="إدارة الطلاب"
+                actionHref="/students"
+              />
+            ) : records.length === 0 ? (
+              <EmptyState
+                icon="search"
+                title="لا توجد نتائج مطابقة"
+                description="جرّب تغيير التاريخ، الحالة، الصف، الشعبة، أو مسح الفلاتر المتقدمة."
+                actionLabel="عرض كل السجلات"
+                actionHref="/attendance?view=all"
+              />
+            ) : (
+              <AttendanceList records={records} />
+            )}
+          </>
         ) : (
-          <AttendanceList records={records} />
+          <AttendanceDeferredNotice today={today} />
         )}
       </div>
   );
@@ -368,84 +406,37 @@ function AttendanceStats({ summary }: AttendanceStatsProps) {
   );
 }
 
-// ─── Quick Filters ───────────────────────────────────────────────
+// ─── Deferred Detail Notice ──────────────────────────────────────
 
-type AttendanceQuickFiltersProps = {
-  today: string;
-  todayAbsentCount: number;
-  todayLateCount: number;
-  todayPresentCount: number;
-  todayMissingCheckOutCount: number;
-};
-
-function AttendanceQuickFilters({ today, todayAbsentCount, todayLateCount, todayPresentCount, todayMissingCheckOutCount }: AttendanceQuickFiltersProps) {
-  const items = [
-    {
-      href: `/attendance?date=${today}&status=absent`,
-      label: "غياب اليوم",
-      count: todayAbsentCount,
-      icon: XCircle,
-      className: "border-red-200 bg-red-50 text-red-700",
-      badgeClass: "bg-red-600",
-    },
-    {
-      href: `/attendance?date=${today}&status=late`,
-      label: "متأخرو اليوم",
-      count: todayLateCount,
-      icon: Clock,
-      className: "border-amber-200 bg-amber-50 text-amber-700",
-      badgeClass: "bg-amber-600",
-    },
-    {
-      href: `/attendance?date=${today}&status=present`,
-      label: "حضور اليوم",
-      count: todayPresentCount,
-      icon: CheckCircle2,
-      className: "border-emerald-200 bg-emerald-50 text-emerald-700",
-      badgeClass: "bg-emerald-600",
-    },
-    {
-      href: `/attendance?date=${today}&missingCheckOut=yes`,
-      label: "لم ينصرفوا اليوم",
-      count: todayMissingCheckOutCount,
-      icon: LogOut,
-      className: "border-rose-200 bg-rose-50 text-rose-700",
-      badgeClass: "bg-rose-600",
-    },
-    {
-      href: "/attendance",
-      label: "مسح الفلاتر",
-      count: undefined,
-      icon: CalendarDays,
-      className: "border-slate-200 bg-white text-[var(--app-text-muted)]",
-      badgeClass: "",
-    },
-  ];
-
+function AttendanceDeferredNotice({ today }: { today: string }) {
   return (
-    <div className="grid gap-3 md:grid-cols-5">
-      {items.map((item) => {
-        const Icon = item.icon;
-        return (
-          <a
-            key={item.label}
-            href={item.href}
-            className={[
-              "flex items-center justify-center gap-2 rounded-2xl border px-4 py-3 text-sm font-extrabold transition hover:-translate-y-0.5 hover:shadow-sm",
-              item.className,
-            ].join(" ")}
-          >
-            <Icon size={17} />
-            {item.label}
-            {item.count !== undefined && item.count > 0 && (
-              <span className={["inline-flex h-6 min-w-[24px] items-center justify-center rounded-full px-1.5 text-xs font-extrabold text-white", item.badgeClass || "bg-red-600"].join(" ")}>
-                {item.count}
-              </span>
-            )}
+    <section className="app-card overflow-hidden border-dashed border-indigo-200 bg-gradient-to-l from-indigo-50/70 to-white">
+      <div className="grid gap-5 p-6 md:grid-cols-[auto_1fr_auto] md:items-center">
+        <div className="flex h-14 w-14 items-center justify-center rounded-3xl bg-indigo-100 text-indigo-700">
+          <ClipboardList size={28} />
+        </div>
+
+        <div>
+          <h3 className="text-xl font-extrabold text-[var(--app-text)]">
+            السجلات التفصيلية لا تُحمّل إلا عند الطلب
+          </h3>
+          <p className="mt-2 text-sm leading-7 text-[var(--app-text-muted)]">
+            اختر حاضرون، غائبون، متأخرون، غير المنصرفين، أو استخدم الفلاتر المتقدمة. بهذه الطريقة تبقى واجهة الحضور سريعة ولا ينتظر المستخدم تحميل كل السجلات.
+          </p>
+        </div>
+
+        <div className="flex flex-wrap gap-2 md:justify-end">
+          <a href={`/attendance?date=${today}&status=present`} className="btn btn-primary">
+            <CheckCircle2 size={17} />
+            حضور اليوم
           </a>
-        );
-      })}
-    </div>
+          <a href="/attendance?view=all" className="btn btn-secondary">
+            <ClipboardList size={17} />
+            عرض كل السجلات
+          </a>
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -662,9 +653,7 @@ type AttendancePeriodReportProps = {
 };
 
 function AttendancePeriodReport({ summary, recordsCount, filter, todayAbsentCount, todayAbsentStudents }: AttendancePeriodReportProps) {
-  const isTodayAbsentFilter =
-    filter.date === getDateInputValue(new Date()) &&
-    filter.status === "absent";
+  const isTodayAbsentFilter = isTodayAbsentRequest(filter);
 
   const items = [
     { label: "السجلات المطابقة", value: recordsCount, icon: ClipboardList, className: "text-indigo-700 bg-indigo-50" },
@@ -1011,6 +1000,26 @@ function getDateInputValue(date: Date): string {
     month: "2-digit",
     day: "2-digit",
   }).format(date);
+}
+
+function hasAttendanceFilter(filter: AttendanceFilter): boolean {
+  return Boolean(
+    filter.query ||
+      filter.status ||
+      filter.date ||
+      filter.fromDate ||
+      filter.toDate ||
+      filter.classId ||
+      filter.sectionId ||
+      filter.source ||
+      filter.hasCheckIn ||
+      filter.hasCheckOut ||
+      filter.missingCheckOut,
+  );
+}
+
+function isTodayAbsentRequest(filter: AttendanceFilter): boolean {
+  return filter.date === getDateInputValue(new Date()) && filter.status === "absent";
 }
 
 function buildReportsHref(filter: AttendanceFilter): string {

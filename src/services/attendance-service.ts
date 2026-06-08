@@ -293,6 +293,12 @@ function buildAttendanceSummary(
   };
 }
 
+export function summarizeAttendanceRecords(
+  records: AttendanceListItem[],
+): AttendanceSummary {
+  return buildAttendanceSummary(records);
+}
+
 // ─── Validation Helpers ──────────────────────────────────────────
 
 async function validateAttendanceRelations(
@@ -1078,8 +1084,95 @@ export async function getAttendanceCounts(
   return buildAttendanceSummary(records);
 }
 
+export async function getDailyAttendanceSummary(
+  dateInput: string | Date,
+): Promise<AttendanceSummary> {
+  const date = normalizeDateOnly(dateInput);
+
+  if (!date) {
+    return {
+      total: 0,
+      present: 0,
+      absent: 0,
+      late: 0,
+      excused: 0,
+      checkedIn: 0,
+      checkedOut: 0,
+      missingCheckOut: 0,
+      attendanceRate: 0,
+    };
+  }
+
+  const dayStart = new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+    0,
+    0,
+    0,
+    0,
+  );
+  const dayEnd = new Date(dayStart);
+  dayEnd.setDate(dayEnd.getDate() + 1);
+
+  const [records, activeStudents] = await Promise.all([
+    db.attendanceRecord.findMany({
+      where: {
+        date: {
+          gte: dayStart,
+          lt: dayEnd,
+        },
+      },
+      select: {
+        studentId: true,
+        status: true,
+        checkInAt: true,
+        checkOutAt: true,
+      },
+    }),
+    db.student.findMany({
+      where: { status: "active" },
+      select: { id: true },
+    }),
+  ]);
+
+  const studentsWithRecord = new Set(
+    records.map((record: { studentId: string }) => record.studentId),
+  );
+  const computedAbsent = activeStudents.filter(
+    (student: { id: string }) => !studentsWithRecord.has(student.id),
+  ).length;
+
+  const present = records.filter((record: { status: string }) => record.status === "present").length;
+  const explicitAbsent = records.filter((record: { status: string }) => record.status === "absent").length;
+  const late = records.filter((record: { status: string }) => record.status === "late").length;
+  const excused = records.filter((record: { status: string }) => record.status === "excused").length;
+  const checkedIn = records.filter((record: { checkInAt: Date | null }) => Boolean(record.checkInAt)).length;
+  const checkedOut = records.filter((record: { checkOutAt: Date | null }) => Boolean(record.checkOutAt)).length;
+  const missingCheckOut = records.filter(
+    (record: { checkInAt: Date | null; checkOutAt: Date | null }) => Boolean(record.checkInAt) && !record.checkOutAt,
+  ).length;
+  const absent = explicitAbsent + computedAbsent;
+  const total = records.length + computedAbsent;
+  const attendanceBase = present + late + excused;
+  const attendanceRate = total > 0 ? Math.round((attendanceBase / total) * 100) : 0;
+
+  return {
+    total,
+    present,
+    absent,
+    late,
+    excused,
+    checkedIn,
+    checkedOut,
+    missingCheckOut,
+    attendanceRate,
+  };
+}
+
 export async function getAttendanceStudentTotals(
   filter: AttendanceFilter = {},
+  preloadedRecords?: AttendanceListItem[],
 ): Promise<AttendanceStudentTotal[]> {
   const studentWhere: Prisma.StudentWhereInput = {};
 
@@ -1115,7 +1208,7 @@ export async function getAttendanceStudentTotals(
         { fullName: "asc" },
       ],
     }),
-    getAttendanceRecords(filter),
+    preloadedRecords ? Promise.resolve(preloadedRecords) : getAttendanceRecords(filter),
   ]);
 
   const recordsByStudent = new Map<string, AttendanceListItem[]>();
@@ -1404,6 +1497,7 @@ export async function findStudentForAttendance(query: string) {
 
   const students = await db.student.findMany({
     where: {
+      status: "active",
       OR: [
         { fullName: { contains: trimmed } },
         { studentCode: { contains: trimmed } },
@@ -1418,6 +1512,7 @@ export async function findStudentForAttendance(query: string) {
       },
     },
     take: 20,
+    orderBy: { fullName: "asc" },
   });
 
   return students.map((s) => ({
