@@ -25,6 +25,7 @@ import {
   getClassesCount,
   getSections,
   searchClasses,
+  updateSectionCapacity,
 } from "@/services/class-service";
 import { getActiveSubjects } from "@/services/subject-service";
 import {
@@ -47,6 +48,7 @@ type ClassesPageProps = {
     q?: string;
     classSaved?: string;
     sectionSaved?: string;
+    capacityUpdated?: string;
     deleted?: string;
     error?: string;
     reason?: string;
@@ -81,6 +83,7 @@ export default async function ClassesPage({ searchParams }: ClassesPageProps) {
         <ClassesFeedback
           classSaved={resolvedSearchParams?.classSaved}
           sectionSaved={resolvedSearchParams?.sectionSaved}
+          capacityUpdated={resolvedSearchParams?.capacityUpdated}
           deleted={resolvedSearchParams?.deleted}
           error={resolvedSearchParams?.error}
           reason={resolvedSearchParams?.reason}
@@ -181,6 +184,25 @@ async function createSectionAction(formData: FormData) {
   redirect("/classes?sectionSaved=1");
 }
 
+async function updateSectionCapacityAction(formData: FormData) {
+  "use server";
+
+  const id = String(formData.get("id") ?? "");
+  const capacity = String(formData.get("capacity") ?? "");
+
+  const result = await updateSectionCapacity(id, capacity);
+
+  if (!result.ok) {
+    redirect(buildErrorRedirect("/classes", "update-section-capacity", result.message));
+  }
+
+  revalidatePath("/");
+  revalidatePath("/classes");
+  revalidatePath("/students");
+  revalidatePath("/reports");
+  redirect("/classes?capacityUpdated=1");
+}
+
 async function deleteClassAction(formData: FormData): Promise<{ ok: boolean; message?: string }> {
   "use server";
 
@@ -254,6 +276,7 @@ async function assignClassSubjectsAction(formData: FormData) {
 type ClassesFeedbackProps = {
   classSaved?: string;
   sectionSaved?: string;
+  capacityUpdated?: string;
   deleted?: string;
   error?: string;
   reason?: string;
@@ -262,6 +285,7 @@ type ClassesFeedbackProps = {
 function ClassesFeedback({
   classSaved,
   sectionSaved,
+  capacityUpdated,
   deleted,
   error,
   reason,
@@ -282,6 +306,16 @@ function ClassesFeedback({
         tone="success"
         title="تمت إضافة الشعبة بنجاح"
         description="تم إنشاء الشعبة وربطها بالصف المختار."
+      />
+    );
+  }
+
+  if (capacityUpdated === "1") {
+    return (
+      <SmartAlert
+        tone="success"
+        title="تم تحديث سعة الشعبة"
+        description="تم حفظ السعة الجديدة، وستظهر مباشرة في سجل الشُعب والطلاب والتقارير."
       />
     );
   }
@@ -733,6 +767,47 @@ function SectionRow({ section }: SectionRowProps) {
       </div>
 
       <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
+        <details className="rounded-2xl border border-[var(--app-border-soft)] bg-white/80 p-3 shadow-sm">
+          <summary className="cursor-pointer text-sm font-extrabold text-[var(--primary)] hover:underline">
+            تعديل السعة
+          </summary>
+
+          <form action={updateSectionCapacityAction} className="mt-3 grid gap-3">
+            <input type="hidden" name="id" value={section.id} />
+
+            <div>
+              <label
+                htmlFor={`capacity-${section.id}`}
+                className="mb-2 block text-xs font-extrabold text-[var(--app-text-muted)]"
+              >
+                السعة الجديدة
+              </label>
+
+              <input
+                id={`capacity-${section.id}`}
+                name="capacity"
+                autoComplete="off"
+                type="number"
+                min={section.studentsCount > 0 ? section.studentsCount : 1}
+                defaultValue={section.capacity ?? ""}
+                placeholder="اتركها فارغة لإزالة السعة"
+                className="input text-sm"
+              />
+
+              {section.studentsCount > 0 ? (
+                <p className="mt-2 text-xs leading-6 text-[var(--app-text-muted)]">
+                  أقل سعة مسموحة حاليًا هي {section.studentsCount} بسبب عدد الطلاب الموجودين داخل الشعبة.
+                </p>
+              ) : null}
+            </div>
+
+            <button type="submit" className="btn btn-secondary justify-center text-sm">
+              <CheckCircle2 size={16} />
+              حفظ السعة
+            </button>
+          </form>
+        </details>
+
         <DeleteConfirmButton
           action={deleteSectionAction}
           itemId={section.id}

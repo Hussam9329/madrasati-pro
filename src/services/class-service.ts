@@ -800,6 +800,95 @@ export async function updateSection(
   }
 }
 
+
+export async function updateSectionCapacity(
+  id: string,
+  capacity: string | number | null | undefined,
+): Promise<ClassServiceResult<Section>> {
+  const normalizedId = id.trim();
+  const rawCapacity = typeof capacity === "string" ? capacity.trim() : capacity;
+  const normalizedCapacity = rawCapacity === "" || rawCapacity === null || rawCapacity === undefined
+    ? null
+    : Number(rawCapacity);
+
+  if (!normalizedId) {
+    return {
+      ok: false,
+      message: "معرّف الشعبة مفقود.",
+    };
+  }
+
+  if (normalizedCapacity !== null && (Number.isNaN(normalizedCapacity) || normalizedCapacity < 1)) {
+    return {
+      ok: false,
+      message: "سعة الشعبة يجب أن تكون رقمًا أكبر من صفر، أو اتركها فارغة لإزالة السعة.",
+      errors: {
+        capacity: "سعة الشعبة غير صحيحة.",
+      },
+    };
+  }
+
+  if (!hasSupabaseConfig()) {
+    return {
+      ok: false,
+      message: getSupabaseConfigErrorMessage(),
+    };
+  }
+
+  const existingSection = await db.section.findUnique({
+    where: {
+      id: normalizedId,
+    },
+    include: {
+      _count: {
+        select: {
+          students: true,
+        },
+      },
+    },
+  });
+
+  if (!existingSection) {
+    return {
+      ok: false,
+      message: "لم يتم العثور على الشعبة.",
+    };
+  }
+
+  if (normalizedCapacity !== null && normalizedCapacity < existingSection._count.students) {
+    return {
+      ok: false,
+      message: `لا يمكن جعل السعة ${normalizedCapacity} لأن داخل الشعبة ${existingSection._count.students} طالب.`,
+      errors: {
+        capacity: "السعة أقل من عدد الطلاب الحالي.",
+      },
+    };
+  }
+
+  try {
+    const section = await db.section.update({
+      where: {
+        id: normalizedId,
+      },
+      data: {
+        capacity: normalizedCapacity,
+      },
+    });
+
+    return {
+      ok: true,
+      data: section,
+      message: "تم تحديث سعة الشعبة بنجاح.",
+    };
+  } catch (error) {
+    console.error("[updateSectionCapacity] Error:", error);
+    return {
+      ok: false,
+      message: "حدث خطأ أثناء تحديث سعة الشعبة.",
+    };
+  }
+}
+
 export async function deleteSection(
   id: string,
 ): Promise<ClassServiceResult<null>> {
