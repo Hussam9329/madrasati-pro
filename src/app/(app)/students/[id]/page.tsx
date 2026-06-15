@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ElementType, ReactNode } from "react";
-import { ArrowRight, Award, Banknote, FileText, GraduationCap, UserRound } from "lucide-react";
+import { ArrowRight, Award, Banknote, CalendarDays, FileText, GraduationCap, UserRound } from "lucide-react";
 import { requireAdmin } from "@/lib/auth";
 import { safeQuery } from "@/lib/db";
 import { PageHeader } from "@/components/layout/page-header";
@@ -14,13 +14,36 @@ import { getPaymentsByStudentId, getStudentPaymentSummary } from "@/services/pay
 import { formatMoney } from "@/types/payment";
 import { getStudentClassDisplay, getStudentStatusLabel } from "@/types/student";
 import { formatAttendanceTime } from "@/types/attendance";
+import {
+  formatReportDate,
+  getReportDateRange,
+  parseReportDate,
+  type ReportDateRange,
+  type ReportPeriod,
+} from "@/types/report";
 
 export const dynamic = "force-dynamic";
 
 
-export default async function StudentProfilePage({ params }: { params: Promise<{ id: string }> }) {
+type StudentProfilePageProps = {
+  params: Promise<{ id: string }>;
+  searchParams?: Promise<{
+    period?: string;
+    fromDate?: string;
+    toDate?: string;
+  }>;
+};
+
+export default async function StudentProfilePage({ params, searchParams }: StudentProfilePageProps) {
   await requireAdmin();
   const { id } = await params;
+  const resolvedSearchParams = await searchParams;
+  const reportPeriod = normalizeStudentReportPeriod(resolvedSearchParams?.period);
+  const reportDateRange = getStudentReportDateRange(
+    reportPeriod,
+    resolvedSearchParams?.fromDate,
+    resolvedSearchParams?.toDate,
+  );
 
   const student = await getStudentDetails(id);
   if (!student) notFound();
@@ -32,19 +55,24 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
     safeQuery(() => getStudentPaymentSummary(id), { totalPaid: 0, totalPending: 0, totalRefunded: 0, paymentsCount: 0 }),
   ]);
 
+  const reportGrades = filterItemsByReportRange(grades, (grade) => grade.date, reportDateRange);
+  const reportAttendance = filterItemsByReportRange(attendance, (record) => record.date, reportDateRange);
+
   const classDisplay = getStudentClassDisplay({
     className: student.className,
     classLevel: student.classLevel,
     sectionName: student.sectionName,
   });
 
-  const gradeStats = calculateGradeStats(grades);
-  const attendanceStats = calculateAttendanceStats(attendance);
+  const gradeStats = calculateGradeStats(reportGrades);
+  const attendanceStats = calculateAttendanceStats(reportAttendance);
   const financialStats = calculateFinancialStats(payments, paymentSummary.totalPaid);
   const averageLabel = gradeStats.average == null ? "لا توجد درجات" : `${gradeStats.average}%`;
   const attendanceSummary = `${attendanceStats.presentCount} حضور / ${attendanceStats.absentCount} غياب / ${attendanceStats.lateCount} تأخير`;
   const financialSummary = `مدفوع ${formatMoney(financialStats.totalPaid)} — متبقّي ${formatMoney(financialStats.totalRemaining)} — الزي ${financialStats.uniformPaid ? "مدفوع" : "غير مدفوع"}`;
-  const gradeSummary = buildGradeWhatsappSummary(grades);
+  const gradeSummary = buildGradeWhatsappSummary(reportGrades);
+  const reportFromDate = formatDateInputValue(reportDateRange.from);
+  const reportToDate = formatDateInputValue(getInclusiveEndDate(reportDateRange));
 
   return (
     <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-6 print:max-w-none print:gap-4">
@@ -70,9 +98,14 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
           gradeSummary={gradeSummary}
           attendanceSummary={attendanceSummary}
           financialSummary={financialSummary}
+          reportPeriod={reportPeriod}
+          reportFromDate={reportFromDate}
+          reportToDate={reportToDate}
+          reportRangeLabel={reportDateRange.label}
         />
 
-        <section data-report-section="summary" className="grid gap-4 md:grid-cols-4 print:grid-cols-4">
+        <section data-report-section="summary" className="grid gap-4 md:grid-cols-5 print:grid-cols-5">
+          <SummaryCard title="فترة التقرير" value={reportDateRange.label} icon={CalendarDays} />
           <SummaryCard title="الصف" value={classDisplay} icon={GraduationCap} />
           <SummaryCard title="الحالة" value={getStudentStatusLabel(student.status)} icon={UserRound} />
           <SummaryCard title="المعدل" value={averageLabel} icon={Award} />
@@ -88,13 +121,14 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
             <InfoRow label="هاتف ولي الأمر" value={student.guardianPhone || "غير مضاف"} />
             <InfoRow label="الصف والشعبة" value={classDisplay} />
             <InfoRow label="تاريخ التسجيل" value={new Date(student.enrollmentDate).toLocaleDateString("ar-IQ")} />
+            <InfoRow label="فترة التقرير" value={reportDateRange.label} />
           </div>
         </section>
 
         <section className="grid gap-6 xl:grid-cols-2">
           <div data-report-section="academic">
-          <ReportTable title="الدرجات" empty="لا توجد درجات مسجلة" headers={["المادة", "الامتحان", "الدرجة", "النسبة", "التاريخ"]}>
-            {grades.slice(0, 30).map((grade) => (
+          <ReportTable title={`الدرجات خلال ${reportDateRange.label}`} empty="لا توجد درجات مسجلة خلال الفترة المحددة" headers={["المادة", "الامتحان", "الدرجة", "النسبة", "التاريخ"]}>
+            {reportGrades.slice(0, 30).map((grade) => (
               <tr key={grade.id}>
                 <td>{grade.subjectName}</td>
                 <td>{grade.title}</td>
@@ -107,8 +141,8 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
           </div>
 
           <div data-report-section="attendance">
-          <ReportTable title="الحضور" empty="لا توجد سجلات حضور" headers={["التاريخ", "الحالة", "دخول", "انصراف"]}>
-            {attendance.slice(0, 30).map((record) => (
+          <ReportTable title={`الحضور خلال ${reportDateRange.label}`} empty="لا توجد سجلات حضور خلال الفترة المحددة" headers={["التاريخ", "الحالة", "دخول", "انصراف"]}>
+            {reportAttendance.slice(0, 30).map((record) => (
               <tr key={record.id}>
                 <td>{new Date(record.date).toLocaleDateString("ar-IQ")}</td>
                 <td>{record.statusLabel}</td>
@@ -170,6 +204,96 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
         </section>
       </div>
   );
+}
+
+const STUDENT_REPORT_PERIODS: ReportPeriod[] = [
+  "daily",
+  "weekly",
+  "monthly",
+  "quarterly",
+  "semester",
+  "annual",
+  "custom",
+];
+
+function normalizeStudentReportPeriod(value?: string): ReportPeriod {
+  return STUDENT_REPORT_PERIODS.includes(value as ReportPeriod)
+    ? (value as ReportPeriod)
+    : "weekly";
+}
+
+function getStudentReportDateRange(
+  period: ReportPeriod,
+  fromDate?: string,
+  toDate?: string,
+): ReportDateRange {
+  if (period === "custom") {
+    const parsedFrom = parseReportDate(fromDate);
+    const parsedTo = parseReportDate(toDate);
+
+    if (parsedFrom && parsedTo) {
+      const from = new Date(
+        parsedFrom.getFullYear(),
+        parsedFrom.getMonth(),
+        parsedFrom.getDate(),
+        0,
+        0,
+        0,
+        0,
+      );
+      const to = new Date(
+        parsedTo.getFullYear(),
+        parsedTo.getMonth(),
+        parsedTo.getDate() + 1,
+        0,
+        0,
+        0,
+        0,
+      );
+
+      return {
+        from,
+        to,
+        label: `من ${formatReportDate(from)} إلى ${formatReportDate(parsedTo)}`,
+      };
+    }
+
+    return {
+      ...getReportDateRange("weekly"),
+      label: `${getReportDateRange("weekly").label} — حدد تاريخ البداية والنهاية للفترة المخصصة`,
+    };
+  }
+
+  return getReportDateRange(period);
+}
+
+function filterItemsByReportRange<T>(
+  items: T[],
+  getDate: (item: T) => Date | string | null | undefined,
+  range: ReportDateRange,
+): T[] {
+  return items.filter((item) => {
+    const value = getDate(item);
+    if (!value) return false;
+
+    const itemDate = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(itemDate.getTime())) return false;
+
+    return itemDate >= range.from && itemDate < range.to;
+  });
+}
+
+function getInclusiveEndDate(range: ReportDateRange) {
+  const date = new Date(range.to);
+  date.setDate(date.getDate() - 1);
+  return date;
+}
+
+function formatDateInputValue(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 function SummaryCard({ title, value, icon: Icon }: { title: string; value: string; icon: ElementType }) {

@@ -726,16 +726,35 @@ function getDateRangeFromFilter(
     return undefined;
   }
 
-  // If custom period with explicit dates
+  // If custom period with explicit dates, include the whole selected "to" day.
   if (filter.period === "custom" && filter.fromDate && filter.toDate) {
-    const from = parseReportDate(filter.fromDate);
-    const to = parseReportDate(filter.toDate);
+    const parsedFrom = parseReportDate(filter.fromDate);
+    const parsedTo = parseReportDate(filter.toDate);
 
-    if (from && to) {
+    if (parsedFrom && parsedTo) {
+      const from = new Date(
+        parsedFrom.getFullYear(),
+        parsedFrom.getMonth(),
+        parsedFrom.getDate(),
+        0,
+        0,
+        0,
+        0,
+      );
+      const to = new Date(
+        parsedTo.getFullYear(),
+        parsedTo.getMonth(),
+        parsedTo.getDate() + 1,
+        0,
+        0,
+        0,
+        0,
+      );
+
       return {
         from,
         to,
-        label: `من ${from.toLocaleDateString("ar-IQ")} إلى ${to.toLocaleDateString("ar-IQ")}`,
+        label: `من ${from.toLocaleDateString("ar-IQ")} إلى ${parsedTo.toLocaleDateString("ar-IQ")}`,
       };
     }
   }

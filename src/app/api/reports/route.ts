@@ -46,7 +46,7 @@ export const GET = withApiAuth(async (request: NextRequest) => {
     const { searchParams } = request.nextUrl;
 
     const type = searchParams.get("type") ?? "summary";
-    const period = searchParams.get("period") ?? "monthly";
+    const period = searchParams.get("period") ?? "weekly";
     const fromDate = searchParams.get("fromDate") ?? undefined;
     const toDate = searchParams.get("toDate") ?? undefined;
     const classId = searchParams.get("classId") ?? undefined;

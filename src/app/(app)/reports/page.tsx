@@ -61,12 +61,12 @@ const PERIODS: { value: ReportPeriod; label: string }[] = [
 
 export default function ReportsPage() {
   const searchParams = useSearchParams();
-  const initialPeriod = (searchParams.get("period") as ReportPeriod | null) ?? "monthly";
+  const initialPeriod = (searchParams.get("period") as ReportPeriod | null) ?? "weekly";
 
   const [filter, setFilter] = useState<ReportFilter>({
     period: PERIODS.some((period) => period.value === initialPeriod)
       ? initialPeriod
-      : "monthly",
+      : "weekly",
     fromDate: searchParams.get("fromDate") ?? undefined,
     toDate: searchParams.get("toDate") ?? undefined,
     classId: searchParams.get("classId") ?? undefined,
@@ -545,8 +545,7 @@ type ReportCoverProps = {
 };
 
 function ReportCover({ filter, summary }: ReportCoverProps) {
-  const periodLabel =
-    PERIODS.find((p) => p.value === filter.period)?.label ?? filter.period;
+  const periodLabel = getReportFilterDisplayLabel(filter);
 
   return (
     <section className="report-cover app-card overflow-hidden print:shadow-none">
@@ -608,6 +607,19 @@ type CoverStatProps = {
   value: number;
   color: string;
 };
+
+function getReportFilterDisplayLabel(filter: ReportFilter) {
+  if (filter.period === "custom" && filter.fromDate && filter.toDate) {
+    const from = new Date(filter.fromDate);
+    const to = new Date(filter.toDate);
+
+    if (!Number.isNaN(from.getTime()) && !Number.isNaN(to.getTime())) {
+      return `مخصص — من ${from.toLocaleDateString("ar-IQ")} إلى ${to.toLocaleDateString("ar-IQ")}`;
+    }
+  }
+
+  return PERIODS.find((p) => p.value === filter.period)?.label ?? filter.period;
+}
 
 function CoverStat({ icon: Icon, label, value, color }: CoverStatProps) {
   return (
