@@ -8,6 +8,7 @@ import {
   FileText,
   GraduationCap,
   MessageCircle,
+  Pencil,
   Search,
   UserRound,
   Users,
@@ -27,6 +28,7 @@ import {
   deleteStudent,
   getStudents,
   getStudentsCount,
+  moveStudentToSection,
   updateStudentStatus,
 } from "@/services/student-service";
 import {
@@ -57,6 +59,7 @@ type StudentsPageProps = {
     saved?: string;
     deleted?: string;
     statusUpdated?: string;
+    sectionUpdated?: string;
     error?: string;
     reason?: string;
   }>;
@@ -82,6 +85,7 @@ export default async function StudentsPage({
   ]);
 
   const hasStudents = counts.total > 0;
+  const classGroups = buildStudentClassGroups(classes, sections);
 
   return (
     <div className="mx-auto flex w-full max-w-[1350px] flex-col gap-6">
@@ -96,6 +100,7 @@ export default async function StudentsPage({
           saved={resolvedSearchParams?.saved}
           deleted={resolvedSearchParams?.deleted}
           statusUpdated={resolvedSearchParams?.statusUpdated}
+          sectionUpdated={resolvedSearchParams?.sectionUpdated}
           error={resolvedSearchParams?.error}
           reason={resolvedSearchParams?.reason}
         />
@@ -109,7 +114,7 @@ export default async function StudentsPage({
         />
 
         <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-          <StudentCreateForm classes={classes} sections={sections} />
+          <StudentCreateForm classGroups={classGroups} />
 
           <div className="flex flex-col gap-6">
             <StudentsStats
@@ -144,7 +149,7 @@ export default async function StudentsPage({
             actionHref="/students"
           />
         ) : (
-          <StudentsList students={students} />
+          <StudentsList students={students} classGroups={classGroups} />
         )}
       </div>
   );
@@ -212,6 +217,31 @@ async function updateStudentStatusAction(formData: FormData) {
   redirect("/students?statusUpdated=1");
 }
 
+async function updateStudentSectionAction(formData: FormData) {
+  "use server";
+
+  const id = String(formData.get("id") ?? "");
+  const sectionId = String(formData.get("sectionId") ?? "").trim();
+
+  if (!id) {
+    redirect("/students?error=missing-data");
+  }
+
+  const result = await moveStudentToSection(id, sectionId || null);
+
+  if (!result.ok) {
+    redirect(buildErrorRedirect("/students", "section", result.message));
+  }
+
+  revalidatePath("/");
+  revalidatePath("/students");
+  revalidatePath(`/students/${id}`);
+  revalidatePath("/attendance");
+  revalidatePath("/grades");
+  revalidatePath("/reports");
+  redirect("/students?sectionUpdated=1");
+}
+
 async function deleteStudentAction(formData: FormData): Promise<{ ok: boolean; message?: string }> {
   "use server";
 
@@ -243,6 +273,7 @@ type StudentsFeedbackProps = {
   saved?: string;
   deleted?: string;
   statusUpdated?: string;
+  sectionUpdated?: string;
   error?: string;
   reason?: string;
 };
@@ -251,6 +282,7 @@ function StudentsFeedback({
   saved,
   deleted,
   statusUpdated,
+  sectionUpdated,
   error,
   reason,
 }: StudentsFeedbackProps) {
@@ -280,6 +312,16 @@ function StudentsFeedback({
         tone="success"
         title="تم تحديث حالة الطالب"
         description="تم تغيير حالة الطالب بنجاح."
+      />
+    );
+  }
+
+  if (sectionUpdated === "1") {
+    return (
+      <SmartAlert
+        tone="success"
+        title="تم تحديث شعبة الطالب"
+        description="تم نقل الطالب إلى الشعبة المحددة وتحديث ربطه في السجلات."
       />
     );
   }
@@ -314,12 +356,10 @@ type StudentClassGroup = {
   sections: SectionListItem[];
 };
 
-type StudentCreateFormProps = {
-  classes: ClassListItem[];
-  sections: SectionListItem[];
-};
-
-function StudentCreateForm({ classes, sections }: StudentCreateFormProps) {
+function buildStudentClassGroups(
+  classes: ClassListItem[],
+  sections: SectionListItem[],
+): StudentClassGroup[] {
   const sectionsByClassId = sections.reduce<Record<string, SectionListItem[]>>(
     (groups, section) => {
       if (!groups[section.classId]) {
@@ -332,12 +372,18 @@ function StudentCreateForm({ classes, sections }: StudentCreateFormProps) {
     {},
   );
 
-  const classGroups: StudentClassGroup[] = classes.map((schoolClass) => ({
+  return classes.map((schoolClass) => ({
     classId: schoolClass.id,
     className: getClassDisplayName(schoolClass),
     sections: sectionsByClassId[schoolClass.id] ?? [],
   }));
+}
 
+type StudentCreateFormProps = {
+  classGroups: StudentClassGroup[];
+};
+
+function StudentCreateForm({ classGroups }: StudentCreateFormProps) {
   return (
     <form
       id="student-form"
@@ -707,9 +753,10 @@ function StudentSearchForm({ query, status }: StudentSearchFormProps) {
 
 type StudentsListProps = {
   students: StudentListItem[];
+  classGroups: StudentClassGroup[];
 };
 
-function StudentsList({ students }: StudentsListProps) {
+function StudentsList({ students, classGroups }: StudentsListProps) {
   return (
     <section className="app-card overflow-hidden">
       <div className="flex flex-col gap-2 border-b border-[var(--app-border-soft)] p-6 sm:flex-row sm:items-center sm:justify-between">
@@ -730,7 +777,7 @@ function StudentsList({ students }: StudentsListProps) {
 
       <div className="divide-y divide-[var(--app-border-soft)]">
         {students.map((student) => (
-          <StudentRow key={student.id} student={student} />
+          <StudentRow key={student.id} student={student} classGroups={classGroups} />
         ))}
       </div>
     </section>
@@ -739,7 +786,73 @@ function StudentsList({ students }: StudentsListProps) {
 
 type StudentRowProps = {
   student: StudentListItem;
+  classGroups: StudentClassGroup[];
 };
+
+function StudentSectionEditForm({
+  student,
+  classGroups,
+}: {
+  student: StudentListItem;
+  classGroups: StudentClassGroup[];
+}) {
+  const hasSections = classGroups.some((group) => group.sections.length > 0);
+
+  return (
+    <details className="rounded-2xl border border-[var(--app-border-soft)] bg-white/80 p-2">
+      <summary className="btn btn-secondary w-full cursor-pointer list-none justify-center">
+        <Pencil size={16} />
+        تعديل الشعبة
+      </summary>
+
+      <form action={updateStudentSectionAction} className="mt-3 grid gap-3">
+        <input type="hidden" name="id" value={student.id} />
+
+        <label
+          htmlFor={`student-section-${student.id}`}
+          className="text-xs font-extrabold text-[var(--app-text-muted)]"
+        >
+          اختر الشعبة الجديدة
+        </label>
+
+        <select
+          id={`student-section-${student.id}`}
+          name="sectionId"
+          defaultValue={student.sectionId ?? ""}
+          className="input h-11 py-0 text-sm"
+          disabled={!hasSections}
+        >
+          {hasSections ? (
+            <>
+              <option value="">بدون شعبة</option>
+              {classGroups.map((group) =>
+                group.sections.length > 0 ? (
+                  <optgroup key={group.classId} label={group.className}>
+                    {group.sections.map((section) => (
+                      <option key={section.id} value={section.id}>
+                        {group.className} / شعبة {section.name}
+                      </option>
+                    ))}
+                  </optgroup>
+                ) : null,
+              )}
+            </>
+          ) : (
+            <option value="">لا توجد شُعب متاحة</option>
+          )}
+        </select>
+
+        <button
+          type="submit"
+          className="btn btn-primary h-10 w-full"
+          disabled={!hasSections}
+        >
+          حفظ الشعبة
+        </button>
+      </form>
+    </details>
+  );
+}
 
 function getWhatsappUrl(phone?: string | null) {
   if (!phone) return null;
@@ -753,7 +866,7 @@ function getWhatsappUrl(phone?: string | null) {
   return `https://wa.me/${normalized}`;
 }
 
-function StudentRow({ student }: StudentRowProps) {
+function StudentRow({ student, classGroups }: StudentRowProps) {
   const age = calculateAge(student.birthDate);
   const statusClass = getStudentStatusBadgeClass(student.status);
 
@@ -861,6 +974,8 @@ function StudentRow({ student }: StudentRowProps) {
             حفظ
           </button>
         </form>
+
+        <StudentSectionEditForm student={student} classGroups={classGroups} />
 
         <a
           href={`/students/${student.id}`}
