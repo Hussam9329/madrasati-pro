@@ -143,23 +143,47 @@ export async function getExams(filter?: { subjectId?: string; sectionId?: string
 }
 
 export async function getExamById(id: string) {
-  return db.exam.findUnique({
-    where: { id },
-    include: {
-      subject: true,
-      teacher: true,
-      section: {
-        include: {
-          class: true,
-          students: {
-            where: { status: "active" },
+  try {
+    const exam = await db.exam.findUnique({ where: { id } });
+    if (!exam) return null;
+
+    const [subject, teacher, section, grades] = await Promise.all([
+      exam.subjectId ? db.subject.findUnique({ where: { id: exam.subjectId } }) : Promise.resolve(null),
+      exam.teacherId ? db.teacher.findUnique({ where: { id: exam.teacherId } }) : Promise.resolve(null),
+      exam.sectionId ? db.section.findUnique({ where: { id: exam.sectionId } }) : Promise.resolve(null),
+      db.grade.findMany({
+        where: { examId: id },
+        orderBy: { createdAt: "asc" },
+      }),
+    ]);
+
+    const [schoolClass, students] = await Promise.all([
+      section?.classId ? db.schoolClass.findUnique({ where: { id: section.classId } }) : Promise.resolve(null),
+      exam.sectionId
+        ? db.student.findMany({
+            where: { sectionId: exam.sectionId, status: "active" },
             orderBy: { fullName: "asc" },
-          },
-        },
-      },
-      grades: { include: { student: true } },
-    },
-  });
+          })
+        : Promise.resolve([]),
+    ]);
+
+    return {
+      ...exam,
+      subject,
+      teacher,
+      section: section
+        ? {
+            ...section,
+            class: schoolClass,
+            students,
+          }
+        : null,
+      grades,
+    };
+  } catch (error) {
+    console.error("[getExamById] Error:", error);
+    return null;
+  }
 }
 
 export async function deleteExam(id: string): Promise<ExamServiceResult<null>> {

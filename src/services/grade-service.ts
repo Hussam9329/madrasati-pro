@@ -279,6 +279,11 @@ function toGradeListItem(grade: GradeWithRelations): GradeListItem {
   const percentage = getGradePercentage(grade.score, grade.maxScore);
   const rating = getGradeRating(percentage);
   const ratingClass = getGradeRatingClass(percentage);
+  const student = grade.student ?? {};
+  const section = student.section ?? null;
+  const schoolClass = section?.class ?? null;
+  const subject = grade.subject ?? null;
+  const teacher = grade.teacher ?? null;
 
   return {
     id: grade.id,
@@ -296,21 +301,21 @@ function toGradeListItem(grade: GradeWithRelations): GradeListItem {
     notes: grade.notes,
 
     studentId: grade.studentId,
-    studentName: grade.student.fullName,
-    studentCode: grade.student.studentCode,
+    studentName: student.fullName ?? "طالب غير معروف",
+    studentCode: student.studentCode ?? null,
 
-    sectionId: grade.student.sectionId,
-    sectionName: grade.student.section?.name ?? null,
+    sectionId: student.sectionId ?? null,
+    sectionName: section?.name ?? null,
 
-    classId: grade.student.section?.classId ?? null,
-    className: grade.student.section?.class.name ?? null,
-    classLevel: grade.student.section?.class.level ?? null,
+    classId: section?.classId ?? null,
+    className: schoolClass?.name ?? null,
+    classLevel: schoolClass?.level ?? null,
 
     subjectId: grade.subjectId,
-    subjectName: grade.subject.name,
+    subjectName: subject?.name ?? "مادة غير محددة",
 
     teacherId: grade.teacherId,
-    teacherName: grade.teacher?.fullName ?? null,
+    teacherName: teacher?.fullName ?? null,
     examId: (grade as any).examId ?? null,
 
     createdAt: grade.createdAt,

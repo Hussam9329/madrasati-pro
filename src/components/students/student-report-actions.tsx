@@ -31,6 +31,7 @@ type StudentReportActionsProps = {
   guardianPhone?: string | null;
   classDisplay: string;
   averageLabel: string;
+  gradeSummary: string;
   attendanceSummary: string;
   financialSummary: string;
 };
@@ -40,6 +41,7 @@ export function StudentReportActions({
   guardianPhone,
   classDisplay,
   averageLabel,
+  gradeSummary,
   attendanceSummary,
   financialSummary,
 }: StudentReportActionsProps) {
@@ -58,11 +60,13 @@ export function StudentReportActions({
       `تقرير الطالب: ${studentName}`,
       `الصف: ${classDisplay}`,
       `المعدل: ${averageLabel}`,
+      "درجات المواد:",
+      gradeSummary,
       `الحضور: ${attendanceSummary}`,
       `الجانب المالي: ${financialSummary}`,
       "يمكن حفظ التقرير PDF من زر طباعة / حفظ PDF داخل ملف الطالب في النظام.",
     ].join("\n");
-  }, [attendanceSummary, averageLabel, classDisplay, financialSummary, studentName]);
+  }, [attendanceSummary, averageLabel, classDisplay, financialSummary, gradeSummary, studentName]);
 
   const whatsappUrl = getWhatsappUrl(guardianPhone, whatsappMessage);
 

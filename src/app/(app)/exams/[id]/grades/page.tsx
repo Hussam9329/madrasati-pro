@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { redirect, notFound } from "next/navigation";
 import { ArrowRight, BookOpen, GraduationCap, Layers } from "lucide-react";
 import { requireAdmin } from "@/lib/auth";
+import { safeQuery } from "@/lib/db";
 import { PageHeader } from "@/components/layout/page-header";
 import { SmartAlert } from "@/components/shared/smart-alert";
 import { ExamGradeEntryTable } from "@/components/grades/exam-grade-entry-table";
@@ -22,7 +23,7 @@ export default async function ExamGradesPage({ params, searchParams }: ExamGrade
   await requireAdmin();
   const { id } = await params;
   const resolvedSearchParams = await searchParams;
-  const exam = await getExamById(id);
+  const exam = await safeQuery(() => getExamById(id), null);
 
   if (!exam) notFound();
 

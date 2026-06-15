@@ -44,6 +44,7 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
   const averageLabel = gradeStats.average == null ? "لا توجد درجات" : `${gradeStats.average}%`;
   const attendanceSummary = `${attendanceStats.presentCount} حضور / ${attendanceStats.absentCount} غياب / ${attendanceStats.lateCount} تأخير`;
   const financialSummary = `مدفوع ${formatMoney(financialStats.totalPaid)} — متبقّي ${formatMoney(financialStats.totalRemaining)} — الزي ${financialStats.uniformPaid ? "مدفوع" : "غير مدفوع"}`;
+  const gradeSummary = buildGradeWhatsappSummary(grades);
 
   return (
     <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-6 print:max-w-none print:gap-4">
@@ -66,6 +67,7 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
           guardianPhone={student.guardianPhone || student.phone}
           classDisplay={classDisplay}
           averageLabel={averageLabel}
+          gradeSummary={gradeSummary}
           attendanceSummary={attendanceSummary}
           financialSummary={financialSummary}
         />
@@ -220,6 +222,54 @@ function calculateGradeStats(grades: { score: number; maxScore: number }[]) {
   const successCount = percentages.filter((value) => value >= 50).length;
 
   return { average, successCount, failedCount: grades.length - successCount };
+}
+
+type WhatsappGradeSummaryItem = {
+  subjectName?: string | null;
+  title?: string | null;
+  score: number;
+  maxScore: number;
+  percentage?: number | null;
+};
+
+function buildGradeWhatsappSummary(grades: WhatsappGradeSummaryItem[]) {
+  if (grades.length === 0) {
+    return "لا توجد درجات مسجلة.";
+  }
+
+  const gradesBySubject = new Map<string, WhatsappGradeSummaryItem[]>();
+
+  for (const grade of grades) {
+    const subjectName = grade.subjectName?.trim() || "مادة غير محددة";
+    const current = gradesBySubject.get(subjectName) ?? [];
+    current.push(grade);
+    gradesBySubject.set(subjectName, current);
+  }
+
+  return Array.from(gradesBySubject.entries())
+    .map(([subjectName, subjectGrades]) => {
+      const entries = subjectGrades
+        .map((grade) => {
+          const title = grade.title?.trim() || "درجة";
+          const percentage = Number.isFinite(Number(grade.percentage))
+            ? ` (${Math.round(Number(grade.percentage))}%)`
+            : "";
+
+          return `${title}: ${formatGradeValue(grade.score)}/${formatGradeValue(grade.maxScore)}${percentage}`;
+        })
+        .join("، ");
+      const subjectAverage = calculateGradeStats(subjectGrades).average;
+      const averagePart = subjectGrades.length > 1 && subjectAverage != null ? ` — معدل المادة ${subjectAverage}%` : "";
+
+      return `• ${subjectName}: ${entries}${averagePart}`;
+    })
+    .join("\n");
+}
+
+function formatGradeValue(value: number) {
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) return "-";
+  return Number.isInteger(numericValue) ? String(numericValue) : numericValue.toFixed(1);
 }
 
 function calculateAttendanceStats(attendance: { status: string }[]) {

@@ -202,9 +202,13 @@ export function getClassDisplayName(
 }
 
 export function getSectionDisplayName(
-  section: Pick<SectionListItem, "name" | "className">,
+  section: Pick<SectionListItem, "name"> & {
+    className?: string | null;
+    class?: Pick<SchoolClass, "name"> | null;
+  },
 ): string {
-  return `${section.className} / شعبة ${section.name}`;
+  const className = section.className ?? section.class?.name ?? "صف غير محدد";
+  return `${className} / شعبة ${section.name}`;
 }
 
 export function getClassDeleteAssociations(input: {
