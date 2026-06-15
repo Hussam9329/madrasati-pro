@@ -52,6 +52,50 @@ type GradesPageProps = {
   }>;
 };
 
+type GradeCounts = Awaited<ReturnType<typeof getGradesCount>>;
+
+function asArray<T = any>(value: unknown): T[] {
+  return Array.isArray(value) ? value as T[] : [];
+}
+
+function emptyGradeCounts(): GradeCounts {
+  return {
+    total: 0,
+    excellent: 0,
+    passed: 0,
+    failed: 0,
+    averagePercentage: 0,
+  };
+}
+
+function normalizeGradeCounts(value: unknown): GradeCounts {
+  const counts = (value && typeof value === "object" ? value : {}) as Partial<GradeCounts>;
+  return {
+    total: safeNumber(counts.total),
+    excellent: safeNumber(counts.excellent),
+    passed: safeNumber(counts.passed),
+    failed: safeNumber(counts.failed),
+    averagePercentage: Math.min(100, Math.max(0, safeNumber(counts.averagePercentage))),
+  };
+}
+
+function safeNumber(value: unknown, fallback = 0) {
+  const numericValue = Number(value);
+  return Number.isFinite(numericValue) ? numericValue : fallback;
+}
+
+function formatSafeShortDate(value: unknown): string {
+  if (!value) return "غير محدد";
+  const date = value instanceof Date ? value : new Date(String(value));
+  if (Number.isNaN(date.getTime())) return "غير محدد";
+
+  try {
+    return formatGradeShortDate(date);
+  } catch {
+    return "غير محدد";
+  }
+}
+
 export default async function GradesPage({ searchParams }: GradesPageProps) {
   await requireAdmin();
   const resolvedSearchParams = await searchParams;
@@ -62,7 +106,7 @@ export default async function GradesPage({ searchParams }: GradesPageProps) {
   const subjectId = resolvedSearchParams?.subjectId?.trim() ?? "";
   const teacherId = resolvedSearchParams?.teacherId?.trim() ?? "";
 
-  const [exams, grades, counts, sections, subjects, teachers] = await Promise.all([
+  const [rawExams, rawGrades, rawCounts, rawSections, rawSubjects, rawTeachers] = await Promise.all([
     safeQuery(
       () => getExams({
         sectionId: sectionId || undefined,
@@ -82,18 +126,18 @@ export default async function GradesPage({ searchParams }: GradesPageProps) {
       }),
       [],
     ),
-    safeQuery(() => getGradesCount(), {
-      total: 0,
-      excellent: 0,
-      passed: 0,
-      failed: 0,
-      averagePercentage: 0,
-    }),
+    safeQuery(() => getGradesCount(), emptyGradeCounts()),
     safeQuery(() => getSections(), []),
     safeQuery(() => getActiveSubjects(), []),
     safeQuery(() => getActiveTeachers(), []),
   ]);
 
+  const exams = asArray(rawExams);
+  const grades = asArray(rawGrades) as GradeListItem[];
+  const counts = normalizeGradeCounts(rawCounts);
+  const sections = asArray(rawSections);
+  const subjects = asArray(rawSubjects);
+  const teachers = asArray(rawTeachers);
   const selectedFiltersCount = [sectionId, subjectId, teacherId, examType].filter(Boolean).length;
 
   return (
@@ -117,9 +161,9 @@ export default async function GradesPage({ searchParams }: GradesPageProps) {
 
         <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
           <GradeExamFilterForm
-            sections={sections}
-            subjects={subjects}
-            teachers={teachers}
+            sections={sections as Awaited<ReturnType<typeof getSections>>}
+            subjects={subjects as Awaited<ReturnType<typeof getActiveSubjects>>}
+            teachers={teachers as Awaited<ReturnType<typeof getActiveTeachers>>}
             sectionId={sectionId}
             subjectId={subjectId}
             teacherId={teacherId}
@@ -323,25 +367,26 @@ function MatchingExams({ exams, selectedFiltersCount }: { exams: any[]; selected
       ) : (
         <div className="grid gap-4 p-6 lg:grid-cols-2">
           {exams.map((exam) => {
-            const studentsCount = exam.section?.students?.filter((student: any) => student.status !== "inactive").length;
-            const savedCount = exam._count?.grades ?? exam.grades?.length ?? 0;
+            const sectionStudents = Array.isArray(exam.section?.students) ? exam.section.students : [];
+            const studentsCount = sectionStudents.filter((student: any) => student?.status !== "inactive").length;
+            const savedCount = safeNumber(exam._count?.grades ?? (Array.isArray(exam.grades) ? exam.grades.length : 0));
             return (
               <article key={exam.id} className="rounded-3xl border border-[var(--app-border-soft)] bg-white p-5 shadow-sm">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
-                    <h4 className="text-lg font-extrabold text-[var(--app-text)]">{exam.name}</h4>
+                    <h4 className="text-lg font-extrabold text-[var(--app-text)]">{exam.name ?? "امتحان بدون اسم"}</h4>
                     <p className="mt-1 text-sm leading-7 text-[var(--app-text-muted)]">
                       {exam.subject?.name ?? "مادة غير محددة"} — {exam.teacher?.fullName ?? "مدرس غير محدد"}
                     </p>
                   </div>
-                  <span className="badge badge-info">{EXAM_TYPES.find((type) => type.value === exam.type)?.label ?? exam.type}</span>
+                  <span className="badge badge-info">{EXAM_TYPES.find((type) => type.value === exam.type)?.label ?? exam.type ?? "امتحان"}</span>
                 </div>
 
                 <div className="mt-4 grid gap-2 text-sm text-[var(--app-text-muted)] sm:grid-cols-2">
                   <p><Layers size={14} className="ml-1 inline-block" /> {exam.section ? getSectionDisplayName(exam.section) : "صف غير محدد"}</p>
-                  <p><Award size={14} className="ml-1 inline-block" /> الدرجة {exam.maxScore} / النجاح {exam.passScore}</p>
+                  <p><Award size={14} className="ml-1 inline-block" /> الدرجة {safeNumber(exam.maxScore, 100)} / النجاح {safeNumber(exam.passScore, 50)}</p>
                   <p><BarChart3 size={14} className="ml-1 inline-block" /> محفوظ: {savedCount}{studentsCount ? ` من ${studentsCount}` : ""}</p>
-                  <p>التاريخ: {exam.date ? formatGradeShortDate(new Date(exam.date)) : "غير محدد"}</p>
+                  <p>التاريخ: {formatSafeShortDate(exam.date)}</p>
                 </div>
 
                 <div className="mt-5 flex flex-wrap gap-2">
@@ -456,7 +501,7 @@ function GradeRow({ grade }: { grade: GradeListItem }) {
             <p>الدرجة: <span className="font-bold text-[var(--app-text)]">{grade.score} / {grade.maxScore}</span></p>
             <p>النسبة: <span className="font-bold text-[var(--app-text)]">{percentage}%</span></p>
             <p>التقويم: <span className="font-bold text-[var(--app-text)]">{getGradeLevelLabel(percentage)}</span></p>
-            <p>التاريخ: <span className="font-bold text-[var(--app-text)]">{formatGradeShortDate(grade.date)}</span></p>
+            <p>التاريخ: <span className="font-bold text-[var(--app-text)]">{formatSafeShortDate(grade.date)}</span></p>
           </div>
 
           {warningMessage && percentage < 60 && <div className="mt-3 flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-sm"><AlertTriangle size={16} className="mt-0.5 shrink-0 text-amber-600" /><span className="text-amber-800">{warningMessage}</span></div>}

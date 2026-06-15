@@ -9,6 +9,15 @@ export type ExamServiceResult<T> = {
   errors?: Record<string, string>;
 };
 
+async function safeExamQuery<T>(label: string, fn: () => Promise<T>, fallback: T): Promise<T> {
+  try {
+    return await fn();
+  } catch (error) {
+    console.error(`[exam-service:${label}] Error:`, error);
+    return fallback;
+  }
+}
+
 export async function createExam(input: {
   name: string;
   type: string;
@@ -70,57 +79,66 @@ export async function saveExamGrades(
   examId: string,
   grades: { studentId: string; score: number; notes?: string }[],
 ): Promise<ExamServiceResult<{ created: number; updated: number }>> {
-  // Get exam with passScore
-  const exam = await db.exam.findUnique({ where: { id: examId } });
-  if (!exam) return { ok: false, message: "الامتحان غير موجود." };
-
-  let created = 0;
-  let updated = 0;
-
-  for (const grade of grades) {
-    if (!Number.isFinite(grade.score) || grade.score < 0 || grade.score > exam.maxScore) {
-      return { ok: false, message: "توجد درجة غير صحيحة أو أكبر من الدرجة الكلية." };
-    }
-
-    const existing = await db.grade.findFirst({
-      where: { examId, studentId: grade.studentId },
-    });
-
-    if (existing) {
-      await db.grade.update({
-        where: { id: existing.id },
-        data: {
-          score: grade.score,
-          maxScore: exam.maxScore,
-          notes: grade.notes?.trim() || null,
-        },
-      });
-      updated++;
-    } else {
-      await db.grade.create({
-        data: {
-          title: exam.name,
-          score: grade.score,
-          maxScore: exam.maxScore,
-          examType: exam.type,
-          subjectId: exam.subjectId,
-          teacherId: (exam as any).teacherId ?? null,
-          term: exam.type === "midyear" ? "first" : exam.type === "final" ? "annual" : "first",
-          date: exam.date ?? new Date(),
-          studentId: grade.studentId,
-          examId: examId,
-          notes: grade.notes?.trim() || null,
-        },
-      });
-      created++;
-    }
+  if (!examId.trim()) {
+    return { ok: false, message: "معرّف الامتحان مفقود." };
   }
 
-  return {
-    ok: true,
-    data: { created, updated },
-    message: `تم حفظ الدرجات: ${created} جديد، ${updated} محدّث.`,
-  };
+  try {
+    const exam = await db.exam.findUnique({ where: { id: examId } });
+    if (!exam) return { ok: false, message: "الامتحان غير موجود." };
+
+    const maxScore = Number(exam.maxScore) || 100;
+    let created = 0;
+    let updated = 0;
+
+    for (const grade of grades) {
+      if (!grade.studentId || !Number.isFinite(grade.score) || grade.score < 0 || grade.score > maxScore) {
+        return { ok: false, message: "توجد درجة غير صحيحة أو أكبر من الدرجة الكلية." };
+      }
+
+      const existing = await db.grade.findFirst({
+        where: { examId, studentId: grade.studentId },
+      });
+
+      if (existing) {
+        await db.grade.update({
+          where: { id: existing.id },
+          data: {
+            score: grade.score,
+            maxScore,
+            notes: grade.notes?.trim() || null,
+          },
+        });
+        updated++;
+      } else {
+        await db.grade.create({
+          data: {
+            title: exam.name || "درجة امتحان",
+            score: grade.score,
+            maxScore,
+            examType: exam.type || "monthly",
+            subjectId: exam.subjectId,
+            teacherId: (exam as any).teacherId ?? null,
+            term: exam.type === "midyear" ? "first" : exam.type === "final" ? "annual" : "first",
+            date: exam.date ?? new Date(),
+            studentId: grade.studentId,
+            examId,
+            notes: grade.notes?.trim() || null,
+          },
+        });
+        created++;
+      }
+    }
+
+    return {
+      ok: true,
+      data: { created, updated },
+      message: `تم حفظ الدرجات: ${created} جديد، ${updated} محدّث.`,
+    };
+  } catch (error) {
+    console.error("[saveExamGrades] Error:", error);
+    return { ok: false, message: "حدث خطأ أثناء حفظ درجات الامتحان." };
+  }
 }
 
 export async function getExams(filter?: { subjectId?: string; sectionId?: string; teacherId?: string; type?: string }) {
@@ -130,7 +148,7 @@ export async function getExams(filter?: { subjectId?: string; sectionId?: string
   if (filter?.teacherId) (where as any).teacherId = filter.teacherId;
   if (filter?.type) where.type = filter.type;
 
-  return db.exam.findMany({
+  return safeExamQuery("getExams", () => db.exam.findMany({
     where,
     include: {
       subject: true,
@@ -139,51 +157,48 @@ export async function getExams(filter?: { subjectId?: string; sectionId?: string
       _count: { select: { grades: true } },
     },
     orderBy: { createdAt: "desc" },
-  });
+  }), []);
 }
 
 export async function getExamById(id: string) {
-  try {
-    const exam = await db.exam.findUnique({ where: { id } });
-    if (!exam) return null;
+  if (!id.trim()) return null;
 
-    const [subject, teacher, section, grades] = await Promise.all([
-      exam.subjectId ? db.subject.findUnique({ where: { id: exam.subjectId } }) : Promise.resolve(null),
-      exam.teacherId ? db.teacher.findUnique({ where: { id: exam.teacherId } }) : Promise.resolve(null),
-      exam.sectionId ? db.section.findUnique({ where: { id: exam.sectionId } }) : Promise.resolve(null),
-      db.grade.findMany({
-        where: { examId: id },
-        orderBy: { createdAt: "asc" },
-      }),
-    ]);
+  const exam = await safeExamQuery("getExamById.exam", () => db.exam.findUnique({ where: { id } }), null);
+  if (!exam) return null;
 
-    const [schoolClass, students] = await Promise.all([
-      section?.classId ? db.schoolClass.findUnique({ where: { id: section.classId } }) : Promise.resolve(null),
-      exam.sectionId
-        ? db.student.findMany({
-            where: { sectionId: exam.sectionId, status: "active" },
-            orderBy: { fullName: "asc" },
-          })
-        : Promise.resolve([]),
-    ]);
+  const [subject, teacher, section, grades] = await Promise.all([
+    exam.subjectId ? safeExamQuery("getExamById.subject", () => db.subject.findUnique({ where: { id: exam.subjectId } }), null) : Promise.resolve(null),
+    exam.teacherId ? safeExamQuery("getExamById.teacher", () => db.teacher.findUnique({ where: { id: exam.teacherId } }), null) : Promise.resolve(null),
+    exam.sectionId ? safeExamQuery("getExamById.section", () => db.section.findUnique({ where: { id: exam.sectionId } }), null) : Promise.resolve(null),
+    safeExamQuery("getExamById.grades", () => db.grade.findMany({
+      where: { examId: id },
+      orderBy: { createdAt: "asc" },
+    }), []),
+  ]);
 
-    return {
-      ...exam,
-      subject,
-      teacher,
-      section: section
-        ? {
-            ...section,
-            class: schoolClass,
-            students,
-          }
-        : null,
-      grades,
-    };
-  } catch (error) {
-    console.error("[getExamById] Error:", error);
-    return null;
-  }
+  const [schoolClass, students] = await Promise.all([
+    section?.classId ? safeExamQuery("getExamById.class", () => db.schoolClass.findUnique({ where: { id: section.classId } }), null) : Promise.resolve(null),
+    exam.sectionId
+      ? safeExamQuery("getExamById.students", () => db.student.findMany({
+          where: { sectionId: exam.sectionId, status: "active" },
+          orderBy: { fullName: "asc" },
+        }), [])
+      : Promise.resolve([]),
+  ]);
+
+  return {
+    ...exam,
+    subject,
+    teacher,
+    section: section
+      ? {
+          ...section,
+          class: schoolClass,
+          students,
+        }
+      : null,
+    grades,
+  };
 }
 
 export async function deleteExam(id: string): Promise<ExamServiceResult<null>> {

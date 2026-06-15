@@ -1,6 +1,6 @@
 
 import { revalidatePath } from "next/cache";
-import { redirect, notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import { ArrowRight, BookOpen, GraduationCap, Layers } from "lucide-react";
 import { requireAdmin } from "@/lib/auth";
 import { safeQuery } from "@/lib/db";
@@ -25,17 +25,21 @@ export default async function ExamGradesPage({ params, searchParams }: ExamGrade
   const resolvedSearchParams = await searchParams;
   const exam = await safeQuery(() => getExamById(id), null);
 
-  if (!exam) notFound();
+  if (!exam) {
+    return <ExamGradesLoadError examId={id} />;
+  }
 
-  const gradeByStudentId = new Map((exam.grades ?? []).map((grade: any) => [grade.studentId, grade]));
-  const students = ((exam.section?.students ?? []) as any[])
-    .filter((student) => student.status !== "inactive")
-    .sort((a, b) => String(a.fullName).localeCompare(String(b.fullName), "ar"))
+  const examGrades = Array.isArray(exam.grades) ? exam.grades : [];
+  const sectionStudents = Array.isArray(exam.section?.students) ? exam.section.students : [];
+  const gradeByStudentId = new Map(examGrades.map((grade: any) => [grade.studentId, grade]));
+  const students = sectionStudents
+    .filter((student: any) => student?.status !== "inactive")
+    .sort((a: any, b: any) => String(a?.fullName ?? "").localeCompare(String(b?.fullName ?? ""), "ar"))
     .map((student) => {
       const existing = gradeByStudentId.get(student.id) as any;
       return {
         id: student.id,
-        fullName: student.fullName,
+        fullName: student.fullName ?? "طالب غير معروف",
         studentCode: student.studentCode ?? null,
         existingScore: existing?.score ?? null,
         existingNotes: existing?.notes ?? null,
@@ -44,7 +48,7 @@ export default async function ExamGradesPage({ params, searchParams }: ExamGrade
 
   const savedGradesCount = students.filter((student) => student.existingScore !== null && student.existingScore !== "").length;
   const sectionName = exam.section ? getSectionDisplayName(exam.section as any) : "صف غير محدد";
-  const examTypeLabel = EXAM_TYPES.find((type) => type.value === exam.type)?.label ?? exam.type;
+  const examTypeLabel = EXAM_TYPES.find((type) => type.value === exam.type)?.label ?? exam.type ?? "امتحان";
 
   return (
     <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-6">
@@ -83,6 +87,30 @@ export default async function ExamGradesPage({ params, searchParams }: ExamGrade
   );
 }
 
+function ExamGradesLoadError({ examId }: { examId: string }) {
+  return (
+    <div className="mx-auto flex w-full max-w-[900px] flex-col gap-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <a href="/grades" className="inline-flex items-center gap-2 text-sm font-extrabold text-[var(--app-text-muted)] hover:text-[var(--app-primary)]">
+          <ArrowRight size={16} /> العودة إلى الدرجات
+        </a>
+        <a href="/exams" className="btn btn-secondary">إدارة الامتحانات</a>
+      </div>
+
+      <SmartAlert
+        tone="warning"
+        title="تعذر فتح صفحة درجات هذا الامتحان"
+        description="لم يتم العثور على الامتحان أو تعذر تحميل بياناته من قاعدة البيانات. تأكد من وجود الامتحان وتطبيق تحديثات قاعدة البيانات الخاصة بالامتحانات والدرجات."
+      />
+
+      <div className="app-card p-5 text-sm leading-7 text-[var(--app-text-muted)]">
+        <p>معرّف الامتحان: <span dir="ltr" className="font-bold text-[var(--app-text)]">{examId}</span></p>
+        <p className="mt-2">بعد تطبيق ملفات SQL الموجودة داخل مجلد database أعد فتح صفحة الامتحانات ثم اضغط إدخال الدرجات مرة ثانية.</p>
+      </div>
+    </div>
+  );
+}
+
 function InfoCard({ icon, label, value, hint }: { icon?: React.ReactNode; label: string; value: string; hint?: string }) {
   return (
     <div className="app-card p-5">
@@ -110,7 +138,14 @@ async function saveExamGradesAction(formData: FormData) {
     }))
     .filter((grade) => Number.isFinite(grade.score));
 
-  const result = await saveExamGrades(examId, grades);
+  let result;
+  try {
+    result = await saveExamGrades(examId, grades);
+  } catch (error) {
+    console.error("[saveExamGradesAction] Error:", error);
+    redirect(`/exams/${examId}/grades?error=1`);
+  }
+
   if (!result.ok) redirect(`/exams/${examId}/grades?error=1`);
 
   revalidatePath(`/exams/${examId}/grades`);

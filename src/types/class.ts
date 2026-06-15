@@ -207,8 +207,9 @@ export function getSectionDisplayName(
     class?: Pick<SchoolClass, "name"> | null;
   },
 ): string {
-  const className = section.className ?? section.class?.name ?? "صف غير محدد";
-  return `${className} / شعبة ${section.name}`;
+  const className = section.className?.trim() || section.class?.name?.trim() || "صف غير محدد";
+  const sectionName = section.name?.trim() || "غير محددة";
+  return `${className} / شعبة ${sectionName}`;
 }
 
 export function getClassDeleteAssociations(input: {
