@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { CalendarDays, CheckSquare, MessageCircle, Printer, Square } from "lucide-react";
 import type { ReportPeriod } from "@/types/report";
-import { getTelegramDesktopUrl } from "@/lib/contact-links";
+import { getTelegramDesktopUrl, getWhatsappUrl } from "@/lib/contact-links";
 
 const REPORT_SECTIONS = [
   { key: "summary", label: "الملخص العام" },
@@ -25,18 +25,6 @@ const REPORT_PERIODS: { value: ReportPeriod; label: string }[] = [
 ];
 
 type ReportSectionKey = (typeof REPORT_SECTIONS)[number]["key"];
-
-function getWhatsappUrl(phone?: string | null, message?: string) {
-  if (!phone) return null;
-  const digits = phone.replace(/\D/g, "");
-  if (!digits) return null;
-  const normalized = digits.startsWith("964")
-    ? digits
-    : digits.startsWith("0")
-      ? `964${digits.slice(1)}`
-      : digits;
-  return `https://wa.me/${normalized}${message ? `?text=${encodeURIComponent(message)}` : ""}`;
-}
 
 type StudentReportActionsProps = {
   studentName: string;

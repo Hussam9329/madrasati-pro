@@ -5,7 +5,7 @@ import type { ElementType, ReactNode } from "react";
 import { ArrowRight, Award, Banknote, CalendarDays, FileText, GraduationCap, UserRound } from "lucide-react";
 import { requireAdmin } from "@/lib/auth";
 import { safeQuery } from "@/lib/db";
-import { getTelegramDesktopUrl } from "@/lib/contact-links";
+import { getTelegramDesktopUrl, getWhatsappUrl } from "@/lib/contact-links";
 import { PageHeader } from "@/components/layout/page-header";
 import { StudentReportActions } from "@/components/students/student-report-actions";
 import { getStudentDetails } from "@/services/student-service";
@@ -119,8 +119,8 @@ export default async function StudentProfilePage({ params, searchParams }: Stude
           <div className="grid gap-3 text-sm leading-7 md:grid-cols-2">
             <InfoRow label="اسم الطالب" value={student.fullName} />
             <InfoRow label="رمز الطالب" value={student.studentCode || "غير مضاف"} />
-            <InfoRow label="هاتف الطالب" value={student.phone || "غير مضاف"} />
-            <InfoRow label="هاتف ولي الأمر" value={student.guardianPhone || "غير مضاف"} />
+            <InfoRow label="هاتف الطالب" value={<WhatsappPhoneLink phone={student.phone} />} />
+            <InfoRow label="هاتف ولي الأمر" value={<WhatsappPhoneLink phone={student.guardianPhone} />} />
             <InfoRow
               label="تليكرام ولي الأمر"
               value={
@@ -317,6 +317,27 @@ function SummaryCard({ title, value, icon: Icon }: { title: string; value: strin
         </div>
       </div>
     </div>
+  );
+}
+
+function WhatsappPhoneLink({ phone }: { phone?: string | null }) {
+  const whatsappUrl = getWhatsappUrl(phone);
+
+  if (!phone || !whatsappUrl) {
+    return <span className="font-extrabold text-[var(--app-text)]" dir="ltr">غير مضاف</span>;
+  }
+
+  return (
+    <a
+      href={whatsappUrl}
+      target="_blank"
+      rel="noreferrer"
+      className="font-extrabold text-[var(--app-primary)] underline-offset-4 hover:underline"
+      dir="ltr"
+      title="فتح محادثة واتساب"
+    >
+      {phone}
+    </a>
   );
 }
 

@@ -18,7 +18,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { SmartAlert } from "@/components/shared/smart-alert";
 import { safeQuery } from "@/lib/db";
-import { getTelegramDesktopUrl } from "@/lib/contact-links";
+import { getTelegramDesktopUrl, getWhatsappUrl } from "@/lib/contact-links";
 import {
   getClasses,
   getOrCreateDefaultSectionForClass,
@@ -811,6 +811,27 @@ type StudentRowProps = {
   classGroups: StudentClassGroup[];
 };
 
+function WhatsappPhoneLink({ phone }: { phone?: string | null }) {
+  const whatsappUrl = getWhatsappUrl(phone);
+
+  if (!phone || !whatsappUrl) {
+    return <span className="font-bold text-[var(--app-text)]" dir="ltr">غير مضاف</span>;
+  }
+
+  return (
+    <a
+      href={whatsappUrl}
+      target="_blank"
+      rel="noreferrer"
+      className="font-bold text-[var(--app-primary)] underline-offset-4 hover:underline"
+      dir="ltr"
+      title="فتح محادثة واتساب"
+    >
+      {phone}
+    </a>
+  );
+}
+
 function StudentSectionEditForm({
   student,
   classGroups,
@@ -876,18 +897,6 @@ function StudentSectionEditForm({
   );
 }
 
-function getWhatsappUrl(phone?: string | null) {
-  if (!phone) return null;
-  const digits = phone.replace(/\D/g, "");
-  if (!digits) return null;
-  const normalized = digits.startsWith("964")
-    ? digits
-    : digits.startsWith("0")
-      ? `964${digits.slice(1)}`
-      : digits;
-  return `https://wa.me/${normalized}`;
-}
-
 function StudentRow({ student, classGroups }: StudentRowProps) {
   const age = calculateAge(student.birthDate);
   const statusClass = getStudentStatusBadgeClass(student.status);
@@ -947,16 +956,12 @@ function StudentRow({ student, classGroups }: StudentRowProps) {
           <div className="mt-3 grid gap-2 text-sm leading-6 text-[var(--app-text-muted)] md:grid-cols-2">
             <p>
               هاتف الطالب:{" "}
-              <span className="font-bold text-[var(--app-text)]" dir="ltr">
-                {student.phone || "غير مضاف"}
-              </span>
+              <WhatsappPhoneLink phone={student.phone} />
             </p>
 
             <p>
               هاتف ولي الأمر:{" "}
-              <span className="font-bold text-[var(--app-text)]" dir="ltr">
-                {student.guardianPhone || "غير مضاف"}
-              </span>
+              <WhatsappPhoneLink phone={student.guardianPhone} />
             </p>
 
             <p>
@@ -1038,7 +1043,7 @@ function StudentRow({ student, classGroups }: StudentRowProps) {
           ].join(" ")}
         >
           <MessageCircle size={17} />
-          تواصل مع ولي الأمر على واتساب
+          تواصل واتساب مع ولي الأمر
         </a>
 
         <a
@@ -1050,7 +1055,7 @@ function StudentRow({ student, classGroups }: StudentRowProps) {
           title={!guardianTelegramUrl ? "لا يوجد معرف تليكرام لولي الأمر" : "فتح المحادثة في Telegram Desktop"}
         >
           <MessageCircle size={17} />
-          تواصل مع ولي الأمر على تليكرام
+          تواصل تليكرام مع ولي الأمر
         </a>
 
         <DeleteConfirmButton

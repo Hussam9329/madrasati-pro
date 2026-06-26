@@ -35,6 +35,7 @@ import {
 import type { Subject } from "@/types/subject";
 import type { SectionListItem } from "@/types/class";
 import { DeleteConfirmButton } from "@/components/shared/delete-confirm-button";
+import { getWhatsappUrl } from "@/lib/contact-links";
 
 export const dynamic = "force-dynamic";
 
@@ -635,6 +636,26 @@ type TeacherRowProps = {
   teacher: TeacherListItem;
 };
 
+function WhatsappPhoneBadge({ phone }: { phone?: string | null }) {
+  const whatsappUrl = getWhatsappUrl(phone);
+
+  if (!phone || !whatsappUrl) return null;
+
+  return (
+    <a
+      href={whatsappUrl}
+      target="_blank"
+      rel="noreferrer"
+      className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 font-bold text-[var(--app-primary)] underline-offset-4 hover:underline"
+      dir="ltr"
+      title="فتح محادثة واتساب"
+    >
+      <Phone size={14} />
+      {phone}
+    </a>
+  );
+}
+
 function TeacherRow({ teacher }: TeacherRowProps) {
   const status: TeacherStatus = teacher.isActive ? "active" : "inactive";
   const statusLabel = getTeacherStatusLabel(status);
@@ -660,10 +681,7 @@ function TeacherRow({ teacher }: TeacherRowProps) {
 
           <div className="mt-2 flex flex-wrap gap-2 text-sm text-[var(--app-text-muted)]">
             {teacher.phone ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 font-bold" dir="ltr">
-                <Phone size={14} />
-                {teacher.phone}
-              </span>
+              <WhatsappPhoneBadge phone={teacher.phone} />
             ) : null}
           </div>
 
