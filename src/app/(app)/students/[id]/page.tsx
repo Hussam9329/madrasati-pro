@@ -93,6 +93,7 @@ export default async function StudentProfilePage({ params, searchParams }: Stude
         <StudentReportActions
           studentName={student.fullName}
           guardianPhone={student.guardianPhone || student.phone}
+          guardianTelegram={student.guardianTelegram}
           classDisplay={classDisplay}
           averageLabel={averageLabel}
           gradeSummary={gradeSummary}
@@ -119,6 +120,7 @@ export default async function StudentProfilePage({ params, searchParams }: Stude
             <InfoRow label="رمز الطالب" value={student.studentCode || "غير مضاف"} />
             <InfoRow label="هاتف الطالب" value={student.phone || "غير مضاف"} />
             <InfoRow label="هاتف ولي الأمر" value={student.guardianPhone || "غير مضاف"} />
+            <InfoRow label="تليكرام ولي الأمر" value={student.guardianTelegram || "غير مضاف"} />
             <InfoRow label="الصف والشعبة" value={classDisplay} />
             <InfoRow label="تاريخ التسجيل" value={new Date(student.enrollmentDate).toLocaleDateString("ar-IQ")} />
             <InfoRow label="فترة التقرير" value={reportDateRange.label} />

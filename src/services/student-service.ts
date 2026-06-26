@@ -142,6 +142,7 @@ export async function getStudentDetails(
     phone: student.phone,
     guardianName: student.guardianName,
     guardianPhone: student.guardianPhone,
+    guardianTelegram: student.guardianTelegram ?? null,
     address: student.address,
     enrollmentDate: student.enrollmentDate,
     status: student.status,
@@ -237,6 +238,7 @@ export async function createStudent(
             phone: data.phone ?? null,
             guardianName: null,
             guardianPhone: data.guardianPhone ?? null,
+            guardianTelegram: data.guardianTelegram || null,
             address: null,
             enrollmentDate: new Date(),
             status: "active",
@@ -351,6 +353,7 @@ export async function updateStudent(
         birthDate: parseOptionalDate(data.birthDate) ?? null,
         phone: data.phone ?? null,
         guardianPhone: data.guardianPhone ?? null,
+        guardianTelegram: data.guardianTelegram || null,
         sectionId: data.sectionId || null,
       },
     });
@@ -647,6 +650,11 @@ function buildStudentWhere(filter: StudentsFilter): Prisma.StudentWhereInput {
           contains: query,
         },
       },
+      {
+        guardianTelegram: {
+          contains: query,
+        },
+      },
     ];
   }
 
@@ -725,6 +733,7 @@ function toStudentListItem(student: StudentWithRelations): StudentListItem {
     phone: student.phone,
     guardianName: student.guardianName,
     guardianPhone: student.guardianPhone,
+    guardianTelegram: student.guardianTelegram ?? null,
     status: student.status,
     sectionId: student.sectionId,
     sectionName: student.section?.name ?? null,

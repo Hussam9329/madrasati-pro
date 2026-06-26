@@ -144,6 +144,8 @@ export type AttendanceScanInput = {
   source?: AttendanceScanSource;
   /** ISO string of the client's local time — used instead of server time for checkInAt/checkOutAt */
   clientTime?: string;
+  /** Optional daily note saved on the attendance record. */
+  notes?: string;
 };
 
 export type AttendanceScanResult = {
@@ -155,6 +157,7 @@ export type AttendanceScanResult = {
   checkInAt: Date | null;
   checkOutAt: Date | null;
   message: string;
+  notes?: string | null;
 };
 
 export const ATTENDANCE_STATUSES: {

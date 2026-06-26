@@ -9,6 +9,7 @@ export type Student = {
   phone: string | null;
   guardianName: string | null;
   guardianPhone: string | null;
+  guardianTelegram: string | null;
   address: string | null;
   enrollmentDate: Date;
   status: string;
@@ -22,6 +23,7 @@ export type StudentFormInput = {
   fullName: string;
   phone: string;
   guardianPhone: string;
+  guardianTelegram: string;
   birthDate: string | Date;
   sectionId: string;
 };
@@ -39,6 +41,7 @@ export type StudentListItem = {
   phone: string | null;
   guardianName: string | null;
   guardianPhone: string | null;
+  guardianTelegram: string | null;
   status: string;
   sectionId: string | null;
   sectionName: string | null;
@@ -79,9 +82,21 @@ export function getEmptyStudentForm(): StudentFormInput {
     fullName: "",
     phone: "",
     guardianPhone: "",
+    guardianTelegram: "",
     birthDate: "",
     sectionId: "",
   };
+}
+
+
+function normalizeTelegramUsername(value?: string): string {
+  const trimmed = value?.trim() || "";
+
+  if (!trimmed) {
+    return "";
+  }
+
+  return trimmed.replace(/^https?:\/\/(t\.me|telegram\.me)\//i, "@").replace(/^@+/, "@");
 }
 
 export function normalizeStudentInput(
@@ -91,6 +106,7 @@ export function normalizeStudentInput(
     fullName: input.fullName.trim(),
     phone: input.phone?.trim() || "",
     guardianPhone: input.guardianPhone?.trim() || "",
+    guardianTelegram: normalizeTelegramUsername(input.guardianTelegram),
     birthDate: input.birthDate || "",
     sectionId: input.sectionId?.trim() || "",
   };
@@ -118,6 +134,10 @@ export function validateStudentInput(
     errors.guardianPhone = "رقم هاتف ولي الأمر يجب أن يتكون من 11 رقم ويبدأ بـ 07.";
   } else if (!IRAQI_PHONE_REGEX.test(normalized.guardianPhone)) {
     errors.guardianPhone = "رقم هاتف ولي الأمر يجب أن يتكون من 11 رقم ويبدأ بـ 07.";
+  }
+
+  if (normalized.guardianTelegram && !/^@?[A-Za-z0-9_]{5,32}$/.test(normalized.guardianTelegram)) {
+    errors.guardianTelegram = "معرّف تليكرام ولي الأمر غير صحيح.";
   }
 
   if (!normalized.birthDate) {

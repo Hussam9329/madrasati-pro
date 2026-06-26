@@ -32,6 +32,7 @@ import {
   getDailyAttendanceSummary,
   hasAttendanceRecords,
   summarizeAttendanceRecords,
+  updateAttendanceNotes,
 } from "@/services/attendance-service";
 import {
   ATTENDANCE_STATUSES,
@@ -64,6 +65,7 @@ type AttendancePageProps = {
     missingCheckOut?: string;
     saved?: string;
     deleted?: string;
+    notesUpdated?: string;
     error?: string;
     reason?: string;
     view?: string;
@@ -165,6 +167,7 @@ export default async function AttendancePage({
         <AttendanceFeedback
           saved={resolvedSearchParams?.saved}
           deleted={resolvedSearchParams?.deleted}
+          notesUpdated={resolvedSearchParams?.notesUpdated}
           error={resolvedSearchParams?.error}
           reason={resolvedSearchParams?.reason}
         />
@@ -270,16 +273,40 @@ async function deleteAttendanceAction(formData: FormData): Promise<{ ok: boolean
   redirect("/attendance?deleted=1");
 }
 
+async function updateAttendanceNotesAction(formData: FormData) {
+  "use server";
+
+  const id = String(formData.get("id") ?? "");
+  const notes = String(formData.get("notes") ?? "");
+
+  if (!id) {
+    redirect("/attendance?view=all&error=missing-id");
+  }
+
+  const result = await updateAttendanceNotes(id, notes);
+
+  if (!result.ok) {
+    redirect(`/attendance?view=all&error=notes&reason=${encodeURIComponent(result.message)}`);
+  }
+
+  revalidatePath("/");
+  revalidatePath("/attendance");
+  revalidatePath("/reports");
+  revalidatePath(`/students/${result.data?.studentId ?? ""}`);
+  redirect("/attendance?view=all&notesUpdated=1");
+}
+
 // ─── Feedback ────────────────────────────────────────────────────
 
 type AttendanceFeedbackProps = {
   saved?: string;
   deleted?: string;
+  notesUpdated?: string;
   error?: string;
   reason?: string;
 };
 
-function AttendanceFeedback({ saved, deleted, error, reason }: AttendanceFeedbackProps) {
+function AttendanceFeedback({ saved, deleted, notesUpdated, error, reason }: AttendanceFeedbackProps) {
   if (saved === "1") {
     return (
       <SmartAlert
@@ -300,6 +327,16 @@ function AttendanceFeedback({ saved, deleted, error, reason }: AttendanceFeedbac
     );
   }
 
+  if (notesUpdated === "1") {
+    return (
+      <SmartAlert
+        tone="success"
+        title="تم حفظ ملاحظة الحضور"
+        description="تم تحديث ملاحظة هذا اليوم داخل سجل حضور الطالب."
+      />
+    );
+  }
+
   if (error) {
     let description: string;
     if (error === "delete" && reason) {
@@ -308,6 +345,8 @@ function AttendanceFeedback({ saved, deleted, error, reason }: AttendanceFeedbac
       description = "لا يمكن حذف سجل الحضور. حاول مرة أخرى.";
     } else if (error === "missing-id") {
       description = "معرّف سجل الحضور مطلوب.";
+    } else if (error === "notes" && reason) {
+      description = decodeURIComponent(reason);
     } else {
       description = "تأكد من إدخال البيانات بشكل صحيح، وأن الطالب مسجل في النظام.";
     }
@@ -946,6 +985,28 @@ function AttendanceRow({ record }: AttendanceRowProps) {
             <p className="mt-2 text-sm leading-6 text-[var(--app-text-muted)]">
               ملاحظات: <span className="font-bold text-[var(--app-text)]">{record.notes}</span>
             </p>
+          ) : null}
+
+          {!record.isComputedAbsence ? (
+            <details className="mt-3 rounded-2xl border border-[var(--app-border-soft)] bg-white/80 p-3">
+              <summary className="cursor-pointer list-none text-sm font-extrabold text-[var(--app-primary)]">
+                إضافة / تعديل ملاحظة هذا اليوم
+              </summary>
+              <form action={updateAttendanceNotesAction} className="mt-3 grid gap-3">
+                <input type="hidden" name="id" value={record.id} />
+                <textarea
+                  name="notes"
+                  defaultValue={record.notes ?? ""}
+                  maxLength={500}
+                  rows={2}
+                  placeholder="اكتب ملاحظة خاصة بحضور هذا الطالب في هذا اليوم..."
+                  className="input min-h-[72px] resize-y text-sm"
+                />
+                <button type="submit" className="btn btn-secondary h-10 justify-center text-sm">
+                  حفظ الملاحظة
+                </button>
+              </form>
+            </details>
           ) : null}
         </div>
       </div>

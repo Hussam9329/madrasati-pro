@@ -5,7 +5,8 @@ import type { AttendanceScanInput } from "@/types/attendance";
 
 export const POST = withApiAuth(async (request: NextRequest) => {
   const body = await request.json();
-  const { studentCode, studentId, mode, source, clientTime } = body;
+  const { studentCode, studentId, mode, source, clientTime, notes } = body;
+  const attendanceNotes = typeof notes === "string" ? notes.trim() : undefined;
 
   // Support both studentCode (from QR/manual code) and studentId (from name search)
   if (studentId) {
@@ -21,6 +22,7 @@ export const POST = withApiAuth(async (request: NextRequest) => {
       mode,
       source: source || "manual-name",
       clientTime: clientTime || undefined,
+      notes: attendanceNotes,
     });
 
     return NextResponse.json(result);
@@ -33,7 +35,7 @@ export const POST = withApiAuth(async (request: NextRequest) => {
     );
   }
 
-  const input: AttendanceScanInput = { studentCode, mode, source: source || "qr", clientTime: clientTime || undefined };
+  const input: AttendanceScanInput = { studentCode, mode, source: source || "qr", clientTime: clientTime || undefined, notes: attendanceNotes };
   const result = await scanAttendanceByStudentCode(input);
 
   return NextResponse.json(result);

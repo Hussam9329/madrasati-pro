@@ -702,6 +702,66 @@ export async function deleteAttendanceRecord(
   };
 }
 
+export async function updateAttendanceNotes(
+  id: string,
+  notes: string,
+): Promise<AttendanceServiceResult<AttendanceRecord>> {
+  const normalizedNotes = notes.trim();
+
+  if (normalizedNotes.length > 500) {
+    return {
+      ok: false,
+      message: "الملاحظات يجب ألا تتجاوز 500 حرف.",
+      errors: { notes: "الملاحظات يجب ألا تتجاوز 500 حرف." },
+    };
+  }
+
+  const existing = await db.attendanceRecord.findUnique({
+    where: { id },
+  });
+
+  if (!existing) {
+    return {
+      ok: false,
+      message: "لم يتم العثور على سجل الحضور.",
+    };
+  }
+
+  try {
+    const record = await db.attendanceRecord.update({
+      where: { id },
+      data: {
+        notes: normalizedNotes || null,
+      },
+    });
+
+    return {
+      ok: true,
+      data: {
+        id: record.id,
+        date: record.date,
+        mode: record.mode,
+        status: record.status,
+        notes: record.notes,
+        checkInAt: record.checkInAt,
+        checkOutAt: record.checkOutAt,
+        source: record.source,
+        studentId: record.studentId,
+        scheduleId: record.scheduleId,
+        createdAt: record.createdAt,
+        updatedAt: record.updatedAt,
+      },
+      message: "تم حفظ ملاحظة الحضور بنجاح.",
+    };
+  } catch (error) {
+    console.error("[updateAttendanceNotes] Error:", error);
+    return {
+      ok: false,
+      message: "حدث خطأ أثناء حفظ ملاحظة الحضور.",
+    };
+  }
+}
+
 // ─── Batch Operations ────────────────────────────────────────────
 
 export async function markAttendanceBatch(
@@ -826,8 +886,10 @@ async function registerDailyStudentAttendance(input: {
   source: "qr" | "manual-code" | "manual-name";
   /** ISO string from the client's device clock */
   clientTime?: string;
+  notes?: string;
 }): Promise<AttendanceScanResult> {
   const { student, mode, source, clientTime } = input;
+  const attendanceNotes = input.notes?.trim() || null;
   const studentCode = student.studentCode ?? "";
 
   if (student.status !== "active") {
@@ -909,6 +971,7 @@ async function registerDailyStudentAttendance(input: {
           checkInAt: now,
           status: "present",
           source,
+          ...(attendanceNotes ? { notes: attendanceNotes } : {}),
         },
       });
 
@@ -920,6 +983,7 @@ async function registerDailyStudentAttendance(input: {
         status: updated.status,
         checkInAt: updated.checkInAt,
         checkOutAt: updated.checkOutAt,
+        notes: updated.notes ?? null,
         message: `تم تسجيل دخول الطالب بنجاح.${previousAttendanceMessage}`,
       };
     }
@@ -932,6 +996,7 @@ async function registerDailyStudentAttendance(input: {
         mode: "check-in",
         checkInAt: now,
         source,
+        notes: attendanceNotes,
         scheduleId: null,
       },
     });
@@ -944,6 +1009,7 @@ async function registerDailyStudentAttendance(input: {
       status: created.status,
       checkInAt: created.checkInAt,
       checkOutAt: created.checkOutAt,
+      notes: created.notes ?? null,
       message: `تم تسجيل دخول الطالب بنجاح.${previousAttendanceMessage}`,
     };
   }
@@ -966,6 +1032,7 @@ async function registerDailyStudentAttendance(input: {
     mode: "check-out",
     source,
     status: existingRecord?.status || "present",
+    ...(attendanceNotes ? { notes: attendanceNotes } : {}),
   };
 
   const updated = existingRecord
@@ -990,6 +1057,7 @@ async function registerDailyStudentAttendance(input: {
     status: updated.status,
     checkInAt: updated.checkInAt,
     checkOutAt: updated.checkOutAt,
+    notes: updated.notes ?? null,
     message: existingRecord?.checkInAt
       ? "تم تسجيل انصراف الطالب بنجاح."
       : "تم تسجيل انصراف الطالب بدون تسجيل دخول صباحي لهذا اليوم.",
@@ -1038,6 +1106,7 @@ export async function scanAttendanceByStudentCode(
     mode,
     source,
     clientTime: input.clientTime,
+    notes: input.notes,
   });
 }
 
@@ -1047,8 +1116,9 @@ export async function scanAttendanceByStudentId(input: {
   source: "manual-name";
   /** ISO string from the client's device clock */
   clientTime?: string;
+  notes?: string;
 }): Promise<AttendanceScanResult> {
-  const { studentId, mode, source, clientTime } = input;
+  const { studentId, mode, source, clientTime, notes } = input;
 
   const student = await db.student.findUnique({
     where: { id: studentId },
@@ -1072,6 +1142,7 @@ export async function scanAttendanceByStudentId(input: {
     mode,
     source,
     clientTime,
+    notes,
   });
 }
 
@@ -1502,6 +1573,7 @@ export async function findStudentForAttendance(query: string) {
         { fullName: { contains: trimmed } },
         { studentCode: { contains: trimmed } },
         { guardianPhone: { contains: trimmed } },
+        { guardianTelegram: { contains: trimmed } },
       ],
     },
     include: {

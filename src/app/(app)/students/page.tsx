@@ -179,6 +179,7 @@ async function createStudentAction(formData: FormData) {
     fullName: String(formData.get("fullName") ?? ""),
     phone: String(formData.get("phone") ?? ""),
     guardianPhone: String(formData.get("guardianPhone") ?? ""),
+    guardianTelegram: String(formData.get("guardianTelegram") ?? ""),
     birthDate: String(formData.get("birthDate") ?? ""),
     sectionId,
   };
@@ -441,7 +442,7 @@ function StudentCreateForm({ classGroups }: StudentCreateFormProps) {
           <p className="mt-1 text-xs text-[var(--app-text-muted)]">الاسم لا يجب أن يحتوي على أرقام</p>
         </div>
 
-        <div className="grid gap-5 md:grid-cols-2">
+        <div className="grid gap-5 md:grid-cols-3">
           <div>
             <label
               htmlFor="phone"
@@ -484,6 +485,26 @@ function StudentCreateForm({ classGroups }: StudentCreateFormProps) {
               dir="ltr"
             />
             <p className="mt-1 text-xs text-[var(--app-text-muted)]">11 رقم ويبدأ بـ 07</p>
+          </div>
+
+          <div>
+            <label
+              htmlFor="guardianTelegram"
+              className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
+            >
+              تليكرام ولي الأمر
+            </label>
+            <input
+              id="guardianTelegram"
+              name="guardianTelegram"
+              type="text"
+              autoComplete="off"
+              maxLength={64}
+              placeholder="مثال: @parent_user"
+              className="input"
+              dir="ltr"
+            />
+            <p className="mt-1 text-xs text-[var(--app-text-muted)]">اختياري للتواصل عبر تليكرام</p>
           </div>
         </div>
 
@@ -854,6 +875,12 @@ function StudentSectionEditForm({
   );
 }
 
+function getTelegramUrl(username?: string | null) {
+  const handle = username?.trim().replace(/^https?:\/\/(t\.me|telegram\.me)\//i, "").replace(/^@+/, "");
+  if (!handle) return null;
+  return `https://t.me/${handle}`;
+}
+
 function getWhatsappUrl(phone?: string | null) {
   if (!phone) return null;
   const digits = phone.replace(/\D/g, "");
@@ -935,6 +962,13 @@ function StudentRow({ student, classGroups }: StudentRowProps) {
                 {student.guardianPhone || "غير مضاف"}
               </span>
             </p>
+
+            <p>
+              تليكرام ولي الأمر:{" "}
+              <span className="font-bold text-[var(--app-text)]" dir="ltr">
+                {student.guardianTelegram || "غير مضاف"}
+              </span>
+            </p>
           </div>
 
           <div className="mt-3 flex flex-wrap gap-2">
@@ -998,6 +1032,21 @@ function StudentRow({ student, classGroups }: StudentRowProps) {
         >
           <MessageCircle size={17} />
           تواصل مع ولي الأمر على واتساب
+        </a>
+
+        <a
+          href={getTelegramUrl(student.guardianTelegram)}
+          target="_blank"
+          rel="noreferrer"
+          className={[
+            "btn btn-secondary w-full",
+            !getTelegramUrl(student.guardianTelegram)
+              ? "pointer-events-none opacity-60"
+              : "",
+          ].join(" ")}
+        >
+          <MessageCircle size={17} />
+          تواصل مع ولي الأمر على تليكرام
         </a>
 
         <DeleteConfirmButton

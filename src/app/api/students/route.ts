@@ -48,6 +48,7 @@ export const POST = withApiAuth(async (request: NextRequest) => {
       fullName: body.fullName ?? "",
       phone: body.phone ?? "",
       guardianPhone: body.guardianPhone ?? "",
+      guardianTelegram: body.guardianTelegram ?? "",
       birthDate: body.birthDate ?? "",
       sectionId: body.sectionId ?? "",
     });
@@ -89,6 +90,7 @@ export const PUT = withApiAuth(async (request: NextRequest) => {
       fullName: body.fullName ?? "",
       phone: body.phone ?? "",
       guardianPhone: body.guardianPhone ?? "",
+      guardianTelegram: body.guardianTelegram ?? "",
       birthDate: body.birthDate ?? "",
       sectionId: body.sectionId ?? "",
     });

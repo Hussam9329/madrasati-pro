@@ -25,6 +25,12 @@ const REPORT_PERIODS: { value: ReportPeriod; label: string }[] = [
 
 type ReportSectionKey = (typeof REPORT_SECTIONS)[number]["key"];
 
+function getTelegramUrl(username?: string | null) {
+  const handle = username?.trim().replace(/^https?:\/\/(t\.me|telegram\.me)\//i, "").replace(/^@+/, "");
+  if (!handle) return null;
+  return `https://t.me/${handle}`;
+}
+
 function getWhatsappUrl(phone?: string | null, message?: string) {
   if (!phone) return null;
   const digits = phone.replace(/\D/g, "");
@@ -40,6 +46,7 @@ function getWhatsappUrl(phone?: string | null, message?: string) {
 type StudentReportActionsProps = {
   studentName: string;
   guardianPhone?: string | null;
+  guardianTelegram?: string | null;
   classDisplay: string;
   averageLabel: string;
   gradeSummary: string;
@@ -54,6 +61,7 @@ type StudentReportActionsProps = {
 export function StudentReportActions({
   studentName,
   guardianPhone,
+  guardianTelegram,
   classDisplay,
   averageLabel,
   gradeSummary,
@@ -89,6 +97,7 @@ export function StudentReportActions({
   }, [attendanceSummary, averageLabel, classDisplay, financialSummary, gradeSummary, reportRangeLabel, studentName]);
 
   const whatsappUrl = getWhatsappUrl(guardianPhone, whatsappMessage);
+  const telegramUrl = getTelegramUrl(guardianTelegram);
 
   function toggleSection(section: ReportSectionKey) {
     setSelectedSections((current) => {
@@ -190,6 +199,16 @@ export function StudentReportActions({
           >
             <MessageCircle size={18} />
             إرسال ملخص لولي الأمر عبر واتساب
+          </a>
+          <a
+            href={telegramUrl ?? undefined}
+            target="_blank"
+            rel="noreferrer"
+            className={["btn btn-secondary", !telegramUrl ? "pointer-events-none opacity-60" : ""].join(" ")}
+            title={!telegramUrl ? "لا يوجد معرف تليكرام لولي الأمر" : undefined}
+          >
+            <MessageCircle size={18} />
+            فتح تليكرام ولي الأمر
           </a>
         </div>
       </div>
