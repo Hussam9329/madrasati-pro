@@ -2,6 +2,11 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  productionBrowserSourceMaps: false,
+
+  experimental: {
+    optimizePackageImports: ["lucide-react", "@zxing/browser"],
+  },
 
   // Enable gzip compression for responses
   compress: true,

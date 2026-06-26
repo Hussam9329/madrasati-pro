@@ -91,6 +91,7 @@ export function QuickCodeAttendance({ qrAvailable, checkoutWarningTime }: QuickC
       // Search by name or code only — no classId/sectionId filters
       const res = await fetch(`/api/attendance/students?q=${encodeURIComponent(trimmed)}`, {
         signal: abortController.signal,
+        headers: { Accept: "application/json" },
       });
       const data = await res.json();
 
@@ -99,7 +100,11 @@ export function QuickCodeAttendance({ qrAvailable, checkoutWarningTime }: QuickC
           (s: StudentSearchResult) => s.status === "active"
         );
         const results = activeStudents.slice(0, 15);
-        // Cache results
+        // Cache results locally so repeated searches feel instant
+        if (searchCacheRef.current.size > 40) {
+          const firstKey = searchCacheRef.current.keys().next().value;
+          if (firstKey) searchCacheRef.current.delete(firstKey);
+        }
         searchCacheRef.current.set(cacheKey, results);
         setSearchResults(results);
         setShowDropdown(results.length > 0);
@@ -475,7 +480,7 @@ export function QuickCodeAttendance({ qrAvailable, checkoutWarningTime }: QuickC
               {showDropdown && searchResults.length > 0 && !selectedStudent && (
                 <div
                   ref={dropdownRef}
-                  className="absolute right-0 left-0 top-full z-50 mt-1 max-h-[280px] overflow-y-auto rounded-xl border border-[var(--app-border)] bg-white shadow-xl animate-rise"
+                  className="absolute right-0 left-0 top-full z-50 mt-1 max-h-[280px] overflow-y-auto rounded-xl border border-[var(--app-border)] bg-[var(--app-card)] shadow-xl animate-rise"
                 >
                   {searchResults.map((student) => (
                     <button

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTransition } from "react";
 
 type CascadingSelectProps = {
   name: string;
@@ -26,6 +27,7 @@ export function CascadingSelect({
   className,
 }: CascadingSelectProps) {
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newValue = e.target.value;
@@ -48,7 +50,9 @@ export function CascadingSelect({
     }
 
     const queryString = params.toString();
-    router.push(queryString ? `/grades?${queryString}` : "/grades");
+    const target = queryString ? `/grades?${queryString}` : "/grades";
+    router.prefetch(target);
+    startTransition(() => router.push(target));
   };
 
   return (
@@ -57,7 +61,7 @@ export function CascadingSelect({
       name={name}
       value={value}
       onChange={handleChange}
-      disabled={disabled}
+      disabled={disabled || isPending}
       className={className ?? "input"}
       autoComplete="off"
     >

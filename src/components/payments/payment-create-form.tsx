@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 import { CheckCircle2, CreditCard, Search, Shirt, WalletCards } from "lucide-react";
 import type { StudentFeePlan } from "@/services/class-fee-service";
 import { PAYMENT_METHODS, formatMoney, getCurrentAcademicYear } from "@/types/payment";
@@ -18,6 +18,7 @@ export function PaymentCreateForm({ students, action }: PaymentCreateFormProps) 
   const [feeType, setFeeType] = useState<"tuition" | "uniform">("tuition");
   const [paymentMode, setPaymentMode] = useState<"full" | "installment">("full");
   const [installmentAmount, setInstallmentAmount] = useState("");
+  const deferredQuery = useDeferredValue(query);
 
   const selectedStudent = useMemo(
     () => students.find((student) => student.studentId === studentId) ?? null,
@@ -25,12 +26,12 @@ export function PaymentCreateForm({ students, action }: PaymentCreateFormProps) 
   );
 
   const filteredStudents = useMemo(() => {
-    const value = query.trim().toLowerCase();
+    const value = deferredQuery.trim().toLowerCase();
     if (!value) return students.slice(0, 8);
     return students
       .filter((student) => student.studentName.toLowerCase().includes(value))
       .slice(0, 10);
-  }, [query, students]);
+  }, [deferredQuery, students]);
 
   const targetAmount = selectedStudent
     ? feeType === "uniform"
@@ -114,7 +115,7 @@ export function PaymentCreateForm({ students, action }: PaymentCreateFormProps) 
           />
 
           {query && !studentId && filteredStudents.length > 0 && (
-            <div className="absolute z-20 mt-2 max-h-64 w-full overflow-y-auto rounded-2xl border border-[var(--app-border-soft)] bg-white p-2 shadow-xl">
+            <div className="absolute z-20 mt-2 max-h-64 w-full overflow-y-auto rounded-2xl border border-[var(--app-border-soft)] bg-[var(--app-card)] p-2 shadow-xl">
               {filteredStudents.map((student) => (
                 <button
                   key={student.studentId}

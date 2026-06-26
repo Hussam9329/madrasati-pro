@@ -22,11 +22,11 @@ type CacheEntry = {
 
 const queryCache = new Map<string, CacheEntry>();
 
-/** Default TTL for cached reads (15 seconds — balances freshness with performance) */
-const DEFAULT_CACHE_TTL_MS = 15_000;
+/** Default TTL for cached reads (45 seconds — faster page switching while still refreshing frequently) */
+const DEFAULT_CACHE_TTL_MS = 45_000;
 
 /** Maximum cache entries to prevent unbounded memory growth */
-const MAX_CACHE_ENTRIES = 200;
+const MAX_CACHE_ENTRIES = 500;
 
 function getCacheKey(table: string, method: string, args: Record<string, any>): string {
   try {
@@ -86,6 +86,59 @@ function invalidateTableCache(table: string): void {
   }
 }
 
+const RELATED_CACHE_TABLES: Record<string, string[]> = {
+  students: [
+    "students",
+    "sections",
+    "school_classes",
+    "attendance_records",
+    "grades",
+    "payments",
+  ],
+  attendance_records: [
+    "attendance_records",
+    "students",
+    "schedules",
+    "sections",
+    "school_classes",
+  ],
+  grades: ["grades", "students", "exams", "subjects", "teachers"],
+  payments: ["payments", "students", "class_fee_settings"],
+  sections: [
+    "sections",
+    "students",
+    "schedules",
+    "teacher_sections",
+    "school_classes",
+    "exams",
+  ],
+  school_classes: [
+    "school_classes",
+    "sections",
+    "class_subjects",
+    "class_fee_settings",
+    "students",
+    "schedules",
+  ],
+  teachers: ["teachers", "teacher_subjects", "teacher_sections", "schedules", "exams", "grades"],
+  subjects: ["subjects", "teacher_subjects", "class_subjects", "schedules", "exams", "grades"],
+  schedules: ["schedules", "attendance_records", "sections", "teachers", "subjects"],
+  exams: ["exams", "grades", "students", "subjects", "teachers", "sections"],
+  class_fee_settings: ["class_fee_settings", "school_classes", "students", "payments"],
+  teacher_subjects: ["teacher_subjects", "teachers", "subjects"],
+  teacher_sections: ["teacher_sections", "teachers", "sections", "schedules"],
+  class_subjects: ["class_subjects", "school_classes", "subjects"],
+  school_settings: ["school_settings"],
+  admins: ["admins"],
+};
+
+function invalidateRelatedTableCache(table: string): void {
+  const tables = new Set([table, ...(RELATED_CACHE_TABLES[table] ?? [])]);
+  for (const relatedTable of tables) {
+    invalidateTableCache(relatedTable);
+  }
+}
+
 // Tables with data that rarely changes — can use longer TTL
 const LONG_CACHE_TABLES = new Set([
   "school_settings",
@@ -93,7 +146,7 @@ const LONG_CACHE_TABLES = new Set([
   "subjects",
   "sections",
 ]);
-const LONG_CACHE_TTL_MS = 60_000; // 60 seconds
+const LONG_CACHE_TTL_MS = 120_000; // 2 minutes for mostly-static setup data
 
 function getCacheTtlForTable(table: string): number {
   return LONG_CACHE_TABLES.has(table) ? LONG_CACHE_TTL_MS : DEFAULT_CACHE_TTL_MS;
@@ -861,7 +914,7 @@ class SupabaseModelHandler {
     }
 
     // Invalidate cache before write
-    invalidateTableCache(this.table);
+    invalidateRelatedTableCache(this.table);
 
     const { data: result, error } = await this.getClient()
       .from(this.table)
@@ -892,7 +945,7 @@ class SupabaseModelHandler {
     }
 
     // Invalidate cache before write
-    invalidateTableCache(this.table);
+    invalidateRelatedTableCache(this.table);
 
     const now = new Date().toISOString();
     const rows = args.data.map((d) =>
@@ -929,7 +982,7 @@ class SupabaseModelHandler {
 
   async update(args: { where: Record<string, any>; data: Record<string, any>; include?: Record<string, any> }): Promise<any> {
     // Invalidate cache before write
-    invalidateTableCache(this.table);
+    invalidateRelatedTableCache(this.table);
 
     const where = args.where;
     const { scalarData, nestedCreates } = this.splitNestedWrites({ ...args.data });
@@ -977,7 +1030,7 @@ class SupabaseModelHandler {
 
   async delete(args: { where: Record<string, any> }): Promise<any> {
     // Invalidate cache before write
-    invalidateTableCache(this.table);
+    invalidateRelatedTableCache(this.table);
 
     const where = args.where;
     let query = this.getClient()
@@ -1012,7 +1065,7 @@ class SupabaseModelHandler {
 
   async deleteMany(args: { where?: Record<string, any> } = {}): Promise<{ count: number }> {
     // Invalidate cache before write
-    invalidateTableCache(this.table);
+    invalidateRelatedTableCache(this.table);
 
     let query = this.getClient()
       .from(this.table)

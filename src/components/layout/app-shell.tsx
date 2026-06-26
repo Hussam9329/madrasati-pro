@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   BarChart3,
   BookOpen,
@@ -24,7 +24,7 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import {
   navigationGroups,
   orderedNavigationItems,
@@ -64,6 +64,7 @@ const groupOrder: NavigationGroup[] = [
 
 export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const currentPage = useMemo(() => {
@@ -81,6 +82,27 @@ export function AppShell({ children }: AppShellProps) {
   const closeMobileSidebar = useCallback(() => {
     setIsMobileSidebarOpen(false);
   }, []);
+
+  useEffect(() => {
+    const prefetchRoutes = () => {
+      for (const item of orderedNavigationItems) {
+        router.prefetch(item.href);
+      }
+    };
+
+    const idleWindow = window as Window & {
+      requestIdleCallback?: (callback: () => void, options?: { timeout?: number }) => number;
+      cancelIdleCallback?: (handle: number) => void;
+    };
+
+    if (idleWindow.requestIdleCallback) {
+      const handle = idleWindow.requestIdleCallback(prefetchRoutes, { timeout: 1200 });
+      return () => idleWindow.cancelIdleCallback?.(handle);
+    }
+
+    const timeout = window.setTimeout(prefetchRoutes, 250);
+    return () => window.clearTimeout(timeout);
+  }, [router]);
 
   return (
     <div className="min-h-screen bg-transparent">
@@ -315,6 +337,8 @@ const TopbarSearch = memo(function TopbarSearch() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<GlobalSearchResult[]>([]);
   const [open, setOpen] = useState(false);
+  const [, startTransition] = useTransition();
+  const cacheRef = useRef<Map<string, GlobalSearchResult[]>>(new Map());
 
   useEffect(() => {
     const trimmed = query.trim();
@@ -324,26 +348,46 @@ const TopbarSearch = memo(function TopbarSearch() {
       return;
     }
 
+    const cached = cacheRef.current.get(trimmed);
+    if (cached) {
+      setResults(cached);
+      setOpen(true);
+      return;
+    }
+
     const controller = new AbortController();
     const timeout = window.setTimeout(async () => {
       try {
-        const response = await fetch(`/api/search?q=${encodeURIComponent(trimmed)}`, { signal: controller.signal });
+        const response = await fetch(`/api/search?q=${encodeURIComponent(trimmed)}`, {
+          signal: controller.signal,
+          headers: { Accept: "application/json" },
+        });
         const payload = await response.json();
-        setResults(payload.ok ? payload.data ?? [] : []);
-        setOpen(true);
+        const nextResults = payload.ok ? payload.data ?? [] : [];
+
+        if (cacheRef.current.size > 35) {
+          const firstKey = cacheRef.current.keys().next().value;
+          if (firstKey) cacheRef.current.delete(firstKey);
+        }
+        cacheRef.current.set(trimmed, nextResults);
+
+        startTransition(() => {
+          setResults(nextResults);
+          setOpen(true);
+        });
       } catch {
         if (!controller.signal.aborted) setResults([]);
       }
-    }, 300); // Slightly increased debounce for less API calls
+    }, 140);
 
     return () => {
       controller.abort();
       window.clearTimeout(timeout);
     };
-  }, [query]);
+  }, [query, startTransition]);
 
   return (
-    <div className="relative hidden min-w-[320px] items-center gap-2 rounded-2xl border border-[var(--app-border)] bg-white/80 px-3 py-2 backdrop-blur-sm xl:flex">
+    <div className="relative hidden min-w-[320px] items-center gap-2 rounded-2xl border border-[var(--app-border)] bg-[var(--app-card)]/90 px-3 py-2 backdrop-blur-sm xl:flex">
       <Search size={18} className="text-[var(--app-text-soft)]" />
 
       <input
@@ -364,7 +408,7 @@ const TopbarSearch = memo(function TopbarSearch() {
       </span>
 
       {open && (
-        <div className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-2xl border border-[var(--app-border-soft)] bg-white shadow-xl">
+        <div className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-2xl border border-[var(--app-border-soft)] bg-[var(--app-card)] shadow-xl">
           {results.length === 0 ? (
             <div className="p-4 text-sm font-bold text-[var(--app-text-muted)]">لا توجد نتائج سريعة.</div>
           ) : (
@@ -372,6 +416,7 @@ const TopbarSearch = memo(function TopbarSearch() {
               <Link
                 key={`${result.href}-${index}`}
                 href={result.href}
+                prefetch={true}
                 className="block border-b border-[var(--app-border-soft)] px-4 py-3 text-sm transition last:border-0 hover:bg-indigo-50"
               >
                 <div className="flex items-center justify-between gap-3">

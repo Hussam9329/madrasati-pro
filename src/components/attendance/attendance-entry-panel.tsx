@@ -20,11 +20,8 @@ import { QuickCodeAttendance } from "./quick-code-attendance";
  */
 export function AttendanceEntryPanel({ checkoutWarningTime }: { checkoutWarningTime: string }) {
   const [isMobile, setIsMobile] = useState(false);
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
-
     const checkMobile = () => {
       const ua = navigator.userAgent;
       const isMobileDevice =
@@ -37,26 +34,6 @@ export function AttendanceEntryPanel({ checkoutWarningTime }: { checkoutWarningT
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
-
-  // Avoid hydration mismatch — render a placeholder until mounted
-  if (!mounted) {
-    return (
-      <div className="grid gap-6 lg:grid-cols-2">
-        <div className="app-card flex min-h-[300px] items-center justify-center p-6">
-          <div className="text-center text-[var(--app-text-muted)]">
-            <div className="mx-auto mb-3 h-10 w-10 animate-pulse-soft rounded-full bg-slate-100" />
-            <p className="text-sm font-bold">جارٍ تحميل واجهة الحضور...</p>
-          </div>
-        </div>
-        <div className="app-card flex min-h-[300px] items-center justify-center p-6">
-          <div className="text-center text-[var(--app-text-muted)]">
-            <div className="mx-auto mb-3 h-10 w-10 animate-pulse-soft rounded-full bg-slate-100" />
-            <p className="text-sm font-bold">جارٍ تحميل واجهة الحضور...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div>
