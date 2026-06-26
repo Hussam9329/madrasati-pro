@@ -18,6 +18,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { SmartAlert } from "@/components/shared/smart-alert";
 import { safeQuery } from "@/lib/db";
+import { getTelegramDesktopUrl } from "@/lib/contact-links";
 import {
   getClasses,
   getOrCreateDefaultSectionForClass,
@@ -875,12 +876,6 @@ function StudentSectionEditForm({
   );
 }
 
-function getTelegramUrl(username?: string | null) {
-  const handle = username?.trim().replace(/^https?:\/\/(t\.me|telegram\.me)\//i, "").replace(/^@+/, "");
-  if (!handle) return null;
-  return `https://t.me/${handle}`;
-}
-
 function getWhatsappUrl(phone?: string | null) {
   if (!phone) return null;
   const digits = phone.replace(/\D/g, "");
@@ -896,6 +891,7 @@ function getWhatsappUrl(phone?: string | null) {
 function StudentRow({ student, classGroups }: StudentRowProps) {
   const age = calculateAge(student.birthDate);
   const statusClass = getStudentStatusBadgeClass(student.status);
+  const guardianTelegramUrl = getTelegramDesktopUrl(student.guardianTelegram);
 
   return (
     <article className="grid gap-4 p-5 transition hover:bg-indigo-50/40 xl:grid-cols-[1fr_auto] xl:items-center">
@@ -965,9 +961,20 @@ function StudentRow({ student, classGroups }: StudentRowProps) {
 
             <p>
               تليكرام ولي الأمر:{" "}
-              <span className="font-bold text-[var(--app-text)]" dir="ltr">
-                {student.guardianTelegram || "غير مضاف"}
-              </span>
+              {guardianTelegramUrl ? (
+                <a
+                  href={guardianTelegramUrl}
+                  className="font-bold text-[var(--app-primary)] underline-offset-4 hover:underline"
+                  dir="ltr"
+                  title="فتح المحادثة في Telegram Desktop"
+                >
+                  {student.guardianTelegram}
+                </a>
+              ) : (
+                <span className="font-bold text-[var(--app-text)]" dir="ltr">
+                  غير مضاف
+                </span>
+              )}
             </p>
           </div>
 
@@ -1035,15 +1042,12 @@ function StudentRow({ student, classGroups }: StudentRowProps) {
         </a>
 
         <a
-          href={getTelegramUrl(student.guardianTelegram)}
-          target="_blank"
-          rel="noreferrer"
+          href={guardianTelegramUrl ?? undefined}
           className={[
             "btn btn-secondary w-full",
-            !getTelegramUrl(student.guardianTelegram)
-              ? "pointer-events-none opacity-60"
-              : "",
+            !guardianTelegramUrl ? "pointer-events-none opacity-60" : "",
           ].join(" ")}
+          title={!guardianTelegramUrl ? "لا يوجد معرف تليكرام لولي الأمر" : "فتح المحادثة في Telegram Desktop"}
         >
           <MessageCircle size={17} />
           تواصل مع ولي الأمر على تليكرام

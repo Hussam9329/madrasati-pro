@@ -5,6 +5,7 @@ import type { ElementType, ReactNode } from "react";
 import { ArrowRight, Award, Banknote, CalendarDays, FileText, GraduationCap, UserRound } from "lucide-react";
 import { requireAdmin } from "@/lib/auth";
 import { safeQuery } from "@/lib/db";
+import { getTelegramDesktopUrl } from "@/lib/contact-links";
 import { PageHeader } from "@/components/layout/page-header";
 import { StudentReportActions } from "@/components/students/student-report-actions";
 import { getStudentDetails } from "@/services/student-service";
@@ -120,7 +121,12 @@ export default async function StudentProfilePage({ params, searchParams }: Stude
             <InfoRow label="رمز الطالب" value={student.studentCode || "غير مضاف"} />
             <InfoRow label="هاتف الطالب" value={student.phone || "غير مضاف"} />
             <InfoRow label="هاتف ولي الأمر" value={student.guardianPhone || "غير مضاف"} />
-            <InfoRow label="تليكرام ولي الأمر" value={student.guardianTelegram || "غير مضاف"} />
+            <InfoRow
+              label="تليكرام ولي الأمر"
+              value={
+                <TelegramDesktopLink username={student.guardianTelegram} />
+              }
+            />
             <InfoRow label="الصف والشعبة" value={classDisplay} />
             <InfoRow label="تاريخ التسجيل" value={new Date(student.enrollmentDate).toLocaleDateString("ar-IQ")} />
             <InfoRow label="فترة التقرير" value={reportDateRange.label} />
@@ -314,8 +320,27 @@ function SummaryCard({ title, value, icon: Icon }: { title: string; value: strin
   );
 }
 
-function InfoRow({ label, value }: { label: string; value: string }) {
-  return <p><span className="font-bold text-[var(--app-text-muted)]">{label}: </span><span className="font-extrabold text-[var(--app-text)]">{value}</span></p>;
+function TelegramDesktopLink({ username }: { username?: string | null }) {
+  const telegramUrl = getTelegramDesktopUrl(username);
+
+  if (!telegramUrl) {
+    return <span className="font-extrabold text-[var(--app-text)]">غير مضاف</span>;
+  }
+
+  return (
+    <a
+      href={telegramUrl}
+      className="font-extrabold text-[var(--app-primary)] underline-offset-4 hover:underline"
+      dir="ltr"
+      title="فتح المحادثة في Telegram Desktop"
+    >
+      {username}
+    </a>
+  );
+}
+
+function InfoRow({ label, value }: { label: string; value: ReactNode }) {
+  return <p><span className="font-bold text-[var(--app-text-muted)]">{label}: </span>{typeof value === "string" ? <span className="font-extrabold text-[var(--app-text)]">{value}</span> : value}</p>;
 }
 
 function ReportTable({ title, empty, headers, children }: { title: string; empty: string; headers: string[]; children: ReactNode }) {

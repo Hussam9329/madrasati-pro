@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { CalendarDays, CheckSquare, MessageCircle, Printer, Square } from "lucide-react";
 import type { ReportPeriod } from "@/types/report";
+import { getTelegramDesktopUrl } from "@/lib/contact-links";
 
 const REPORT_SECTIONS = [
   { key: "summary", label: "الملخص العام" },
@@ -24,12 +25,6 @@ const REPORT_PERIODS: { value: ReportPeriod; label: string }[] = [
 ];
 
 type ReportSectionKey = (typeof REPORT_SECTIONS)[number]["key"];
-
-function getTelegramUrl(username?: string | null) {
-  const handle = username?.trim().replace(/^https?:\/\/(t\.me|telegram\.me)\//i, "").replace(/^@+/, "");
-  if (!handle) return null;
-  return `https://t.me/${handle}`;
-}
 
 function getWhatsappUrl(phone?: string | null, message?: string) {
   if (!phone) return null;
@@ -97,7 +92,7 @@ export function StudentReportActions({
   }, [attendanceSummary, averageLabel, classDisplay, financialSummary, gradeSummary, reportRangeLabel, studentName]);
 
   const whatsappUrl = getWhatsappUrl(guardianPhone, whatsappMessage);
-  const telegramUrl = getTelegramUrl(guardianTelegram);
+  const telegramUrl = getTelegramDesktopUrl(guardianTelegram);
 
   function toggleSection(section: ReportSectionKey) {
     setSelectedSections((current) => {
@@ -202,10 +197,8 @@ export function StudentReportActions({
           </a>
           <a
             href={telegramUrl ?? undefined}
-            target="_blank"
-            rel="noreferrer"
             className={["btn btn-secondary", !telegramUrl ? "pointer-events-none opacity-60" : ""].join(" ")}
-            title={!telegramUrl ? "لا يوجد معرف تليكرام لولي الأمر" : undefined}
+            title={!telegramUrl ? "لا يوجد معرف تليكرام لولي الأمر" : "فتح المحادثة في Telegram Desktop"}
           >
             <MessageCircle size={18} />
             فتح تليكرام ولي الأمر
