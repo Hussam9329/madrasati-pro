@@ -6,6 +6,7 @@ import {
   Clock,
   ClipboardList,
   FileText,
+  MessageSquareText,
   LogIn,
   LogOut,
   Search,
@@ -139,6 +140,7 @@ export default async function AttendancePage({
   const hasAnyRecords = hasAnyStoredRecords || records.length > 0;
   const today = todayStr;
   const reportsHref = buildReportsHref(filter);
+  const attendanceReturnHref = buildAttendanceReturnHref(filter, showAllRequested);
   const todayAbsentCount = todaySummary.absent;
   const todayLateCount = todaySummary.late;
   const todayPresentCount = todaySummary.present;
@@ -236,7 +238,7 @@ export default async function AttendancePage({
                 actionHref="/attendance?view=all"
               />
             ) : (
-              <AttendanceList records={records} />
+              <AttendanceList records={records} returnTo={attendanceReturnHref} />
             )}
           </>
         ) : (
@@ -278,22 +280,28 @@ async function updateAttendanceNotesAction(formData: FormData) {
 
   const id = String(formData.get("id") ?? "");
   const notes = String(formData.get("notes") ?? "");
+  const returnTo = sanitizeAttendanceReturnHref(String(formData.get("returnTo") ?? ""));
 
   if (!id) {
-    redirect("/attendance?view=all&error=missing-id");
+    redirect(addAttendanceReturnNotice(returnTo, { error: "missing-id" }));
   }
 
   const result = await updateAttendanceNotes(id, notes);
 
   if (!result.ok) {
-    redirect(`/attendance?view=all&error=notes&reason=${encodeURIComponent(result.message)}`);
+    redirect(
+      addAttendanceReturnNotice(returnTo, {
+        error: "notes",
+        reason: result.message,
+      }),
+    );
   }
 
   revalidatePath("/");
   revalidatePath("/attendance");
   revalidatePath("/reports");
   revalidatePath(`/students/${result.data?.studentId ?? ""}`);
-  redirect("/attendance?view=all&notesUpdated=1");
+  redirect(addAttendanceReturnNotice(returnTo, { notesUpdated: "1" }));
 }
 
 // ─── Feedback ────────────────────────────────────────────────────
@@ -332,7 +340,7 @@ function AttendanceFeedback({ saved, deleted, notesUpdated, error, reason }: Att
       <SmartAlert
         tone="success"
         title="تم حفظ ملاحظة الحضور"
-        description="تم تحديث ملاحظة هذا اليوم داخل سجل حضور الطالب."
+        description="تم تحديث ملاحظة الطالب داخل نفس سجل الحضور المعروض."
       />
     );
   }
@@ -848,9 +856,10 @@ function StudentTotalsReport({ rows }: StudentTotalsReportProps) {
 
 type AttendanceListProps = {
   records: AttendanceListItem[];
+  returnTo: string;
 };
 
-function AttendanceList({ records }: AttendanceListProps) {
+function AttendanceList({ records, returnTo }: AttendanceListProps) {
   return (
     <section className="app-card overflow-hidden">
       <div className="flex flex-col gap-2 border-b border-[var(--app-border-soft)] p-6 sm:flex-row sm:items-center sm:justify-between">
@@ -860,7 +869,7 @@ function AttendanceList({ records }: AttendanceListProps) {
           </h3>
 
           <p className="mt-1 text-sm leading-6 text-[var(--app-text-muted)]">
-            السجلات التفصيلية المطابقة للفلاتر الحالية مع وقت الدخول والانصراف ومصدر التسجيل.
+            السجلات التفصيلية المطابقة للفلاتر الحالية مع وقت الدخول والانصراف، ويمكن إضافة ملاحظة مباشرة لكل طالب من نفس السطر.
           </p>
         </div>
 
@@ -871,7 +880,7 @@ function AttendanceList({ records }: AttendanceListProps) {
 
       <div className="divide-y divide-[var(--app-border-soft)]">
         {records.map((record) => (
-          <AttendanceRow key={record.id} record={record} />
+          <AttendanceRow key={record.id} record={record} returnTo={returnTo} />
         ))}
       </div>
     </section>
@@ -880,9 +889,10 @@ function AttendanceList({ records }: AttendanceListProps) {
 
 type AttendanceRowProps = {
   record: AttendanceListItem;
+  returnTo: string;
 };
 
-function AttendanceRow({ record }: AttendanceRowProps) {
+function AttendanceRow({ record, returnTo }: AttendanceRowProps) {
   const statusClass = getAttendanceStatusBadgeClass(record.status);
   const sourceLabel = getAttendanceSourceLabel(record.source);
 
@@ -981,32 +991,38 @@ function AttendanceRow({ record }: AttendanceRowProps) {
             ) : null}
           </div>
 
-          {record.notes ? (
-            <p className="mt-2 text-sm leading-6 text-[var(--app-text-muted)]">
-              ملاحظات: <span className="font-bold text-[var(--app-text)]">{record.notes}</span>
-            </p>
-          ) : null}
-
           {!record.isComputedAbsence ? (
-            <details className="mt-3 rounded-2xl border border-[var(--app-border-soft)] bg-white/80 p-3">
-              <summary className="cursor-pointer list-none text-sm font-extrabold text-[var(--app-primary)]">
-                إضافة / تعديل ملاحظة هذا اليوم
-              </summary>
-              <form action={updateAttendanceNotesAction} className="mt-3 grid gap-3">
-                <input type="hidden" name="id" value={record.id} />
-                <textarea
-                  name="notes"
-                  defaultValue={record.notes ?? ""}
-                  maxLength={500}
-                  rows={2}
-                  placeholder="اكتب ملاحظة خاصة بحضور هذا الطالب في هذا اليوم..."
-                  className="input min-h-[72px] resize-y text-sm"
-                />
-                <button type="submit" className="btn btn-secondary h-10 justify-center text-sm">
-                  حفظ الملاحظة
-                </button>
-              </form>
-            </details>
+            <form
+              action={updateAttendanceNotesAction}
+              className="mt-4 grid gap-3 rounded-2xl border border-[var(--app-border-soft)] bg-[var(--app-card-soft)] p-3 md:grid-cols-[auto_1fr_auto] md:items-center"
+            >
+              <input type="hidden" name="id" value={record.id} />
+              <input type="hidden" name="returnTo" value={returnTo} />
+
+              <div className="flex items-center gap-2 text-sm font-extrabold text-[var(--app-text)]">
+                <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[var(--app-primary-soft)] text-[var(--app-primary)]">
+                  <MessageSquareText size={17} />
+                </span>
+                <span>ملاحظة حضور الطالب</span>
+              </div>
+
+              <textarea
+                name="notes"
+                defaultValue={record.notes ?? ""}
+                maxLength={500}
+                rows={1}
+                placeholder="مثال: حضر متأخر، خرج مبكراً، بدون دفتر..."
+                className="input min-h-[44px] resize-y text-sm"
+              />
+
+              <button type="submit" className="btn btn-secondary h-11 justify-center text-sm md:w-[130px]">
+                حفظ
+              </button>
+            </form>
+          ) : record.notes ? (
+            <p className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-bold leading-6 text-amber-800">
+              ملاحظة الغياب المحسوب: {record.notes}
+            </p>
           ) : null}
         </div>
       </div>
@@ -1052,6 +1068,66 @@ function getAttendanceSourceLabel(source: string | null): string {
   if (source === "manual-name") return "باسم الطالب";
   if (source === "manual") return "يدوي";
   return "غير محدد";
+}
+
+function buildAttendanceReturnHref(filter: AttendanceFilter, showAllRequested: boolean): string {
+  const params = new URLSearchParams();
+
+  if (showAllRequested) params.set("view", "all");
+
+  const entries: [string, string | undefined][] = [
+    ["q", filter.query],
+    ["status", filter.status],
+    ["date", filter.date],
+    ["fromDate", filter.fromDate],
+    ["toDate", filter.toDate],
+    ["classId", filter.classId],
+    ["sectionId", filter.sectionId],
+    ["source", filter.source],
+    ["hasCheckIn", filter.hasCheckIn],
+    ["hasCheckOut", filter.hasCheckOut],
+    ["missingCheckOut", filter.missingCheckOut],
+    ["studentId", filter.studentId],
+    ["scheduleId", filter.scheduleId],
+    ["subjectId", filter.subjectId],
+    ["teacherId", filter.teacherId],
+  ];
+
+  for (const [key, value] of entries) {
+    if (value) params.set(key, value);
+  }
+
+  const query = params.toString();
+  return query ? `/attendance?${query}` : "/attendance";
+}
+
+function sanitizeAttendanceReturnHref(value: string): string {
+  const href = value.trim();
+
+  if (!href || href.startsWith("//") || !href.startsWith("/attendance")) {
+    return "/attendance?view=all";
+  }
+
+  return href;
+}
+
+function addAttendanceReturnNotice(
+  href: string,
+  notice: { notesUpdated?: string; error?: string; reason?: string },
+): string {
+  const [path, query = ""] = href.split("?");
+  const params = new URLSearchParams(query);
+
+  params.delete("notesUpdated");
+  params.delete("error");
+  params.delete("reason");
+
+  if (notice.notesUpdated) params.set("notesUpdated", notice.notesUpdated);
+  if (notice.error) params.set("error", notice.error);
+  if (notice.reason) params.set("reason", notice.reason);
+
+  const nextQuery = params.toString();
+  return nextQuery ? `${path}?${nextQuery}` : path;
 }
 
 function getDateInputValue(date: Date): string {
