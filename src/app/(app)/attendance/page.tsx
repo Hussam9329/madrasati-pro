@@ -29,7 +29,6 @@ import { getClasses, getSections } from "@/services/class-service";
 import {
   deleteAttendanceRecord,
   getAttendanceRecords,
-  getAttendanceStudentTotals,
   getDailyAttendanceSummary,
   hasAttendanceRecords,
   summarizeAttendanceRecords,
@@ -43,7 +42,6 @@ import {
   getAttendanceStatusBadgeClass,
   type AttendanceFilter,
   type AttendanceListItem,
-  type AttendanceStudentTotal,
   type AttendanceSummary,
 } from "@/types/attendance";
 import { getSchoolSettings } from "@/services/school-settings-service";
@@ -129,12 +127,9 @@ export default async function AttendancePage({
 
   let records: AttendanceListItem[] = [];
   let summary: AttendanceSummary = todaySummary;
-  let studentTotals: AttendanceStudentTotal[] = [];
-
   if (shouldLoadDetailedAttendance) {
     records = await safeQuery(() => getAttendanceRecords(filter), []);
     summary = summarizeAttendanceRecords(records);
-    studentTotals = await safeQuery(() => getAttendanceStudentTotals(filter, records), []);
   }
 
   const hasAnyRecords = hasAnyStoredRecords || records.length > 0;
@@ -218,8 +213,6 @@ export default async function AttendancePage({
               todayAbsentCount={isTodayAbsentRequest(filter) ? summary.absent : todayAbsentCount}
               todayAbsentStudents={todayAbsentStudents}
             />
-
-            <StudentTotalsReport rows={studentTotals} />
 
             {!hasAnyRecords ? (
               <EmptyState
@@ -760,94 +753,6 @@ function AttendancePeriodReport({ summary, recordsCount, filter, todayAbsentCoun
           );
         })}
       </div>
-    </section>
-  );
-}
-
-// ─── Student Totals Report ───────────────────────────────────────
-
-type StudentTotalsReportProps = {
-  rows: AttendanceStudentTotal[];
-};
-
-function StudentTotalsReport({ rows }: StudentTotalsReportProps) {
-  return (
-    <section className="app-card overflow-hidden">
-      <div className="flex flex-col gap-2 border-b border-[var(--app-border-soft)] p-6 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h3 className="text-xl font-extrabold text-[var(--app-text)]">
-            تقرير إجماليات الطلاب
-          </h3>
-          <p className="mt-1 text-sm leading-6 text-[var(--app-text-muted)]">
-            يعرض لكل طالب عدد الحضور، الغياب، التأخير، الإجازات، الدخول، الانصراف، وآخر حالة ضمن الفلاتر الحالية.
-          </p>
-        </div>
-
-        <span className="badge badge-info">{rows.length} طالب</span>
-      </div>
-
-      {rows.length === 0 ? (
-        <div className="p-8 text-center text-sm font-bold text-[var(--app-text-muted)]">
-          لا توجد بيانات طلاب مطابقة للفلاتر الحالية.
-        </div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[1050px] text-sm">
-            <thead>
-              <tr className="border-b border-[var(--app-border-soft)] bg-gradient-to-l from-indigo-50/60 to-amber-50/40">
-                <th className="px-5 py-3 text-right font-extrabold text-[var(--app-text-muted)]">الطالب</th>
-                <th className="px-5 py-3 text-right font-extrabold text-[var(--app-text-muted)]">الصف / الشعبة</th>
-                <th className="px-5 py-3 text-center font-extrabold text-[var(--app-text-muted)]">الكل</th>
-                <th className="px-5 py-3 text-center font-extrabold text-[var(--app-text-muted)]">حاضر</th>
-                <th className="px-5 py-3 text-center font-extrabold text-[var(--app-text-muted)]">غائب</th>
-                <th className="px-5 py-3 text-center font-extrabold text-[var(--app-text-muted)]">متأخر</th>
-                <th className="px-5 py-3 text-center font-extrabold text-[var(--app-text-muted)]">مجاز</th>
-                <th className="px-5 py-3 text-center font-extrabold text-[var(--app-text-muted)]">دخول</th>
-                <th className="px-5 py-3 text-center font-extrabold text-[var(--app-text-muted)]">انصراف</th>
-                <th className="px-5 py-3 text-center font-extrabold text-[var(--app-text-muted)]">لم ينصرف</th>
-                <th className="px-5 py-3 text-center font-extrabold text-[var(--app-text-muted)]">النسبة</th>
-                <th className="px-5 py-3 text-center font-extrabold text-[var(--app-text-muted)]">آخر حالة</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[var(--app-border-soft)]">
-              {rows.map((row) => (
-                <tr key={row.studentId} className="transition hover:bg-indigo-50/40">
-                  <td className="px-5 py-3">
-                    <p className="font-extrabold text-[var(--app-text)]">{row.studentName}</p>
-                    <p className="text-xs text-[var(--app-text-soft)]">{row.studentCode ?? "بدون رمز"}</p>
-                  </td>
-                  <td className="px-5 py-3 text-[var(--app-text-muted)]">
-                    {row.className ?? "—"}{row.sectionName ? ` / ${row.sectionName}` : ""}
-                  </td>
-                  <td className="px-5 py-3 text-center font-bold text-[var(--app-text)]">{row.totalRecords}</td>
-                  <td className="px-5 py-3 text-center font-bold text-emerald-600">{row.present}</td>
-                  <td className="px-5 py-3 text-center font-bold text-red-600">{row.absent}</td>
-                  <td className="px-5 py-3 text-center font-bold text-amber-600">{row.late}</td>
-                  <td className="px-5 py-3 text-center font-bold text-sky-600">{row.excused}</td>
-                  <td className="px-5 py-3 text-center font-bold text-emerald-700">{row.checkedIn}</td>
-                  <td className="px-5 py-3 text-center font-bold text-amber-700">{row.checkedOut}</td>
-                  <td className="px-5 py-3 text-center font-bold text-rose-600">{row.missingCheckOut}</td>
-                  <td className="px-5 py-3 text-center font-extrabold text-[var(--app-text)]">{row.attendanceRate}%</td>
-                  <td className="px-5 py-3 text-center">
-                    {row.lastStatus ? (
-                      <span className={["badge", getAttendanceStatusBadgeClass(row.lastStatus)].join(" ")}>
-                        {row.lastStatusLabel}
-                      </span>
-                    ) : (
-                      <span className="text-[var(--app-text-soft)]">—</span>
-                    )}
-                    {row.lastDate ? (
-                      <p className="mt-1 text-xs text-[var(--app-text-soft)]">
-                        {formatAttendanceShortDate(new Date(row.lastDate))}
-                      </p>
-                    ) : null}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
     </section>
   );
 }
