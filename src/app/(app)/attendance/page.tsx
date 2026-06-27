@@ -869,7 +869,7 @@ function AttendanceList({ records, returnTo }: AttendanceListProps) {
           </h3>
 
           <p className="mt-1 text-sm leading-6 text-[var(--app-text-muted)]">
-            السجلات التفصيلية المطابقة للفلاتر الحالية مع وقت الدخول والانصراف، ويمكن إضافة ملاحظة مباشرة لكل طالب من نفس السطر.
+            السجلات التفصيلية المطابقة للفلاتر الحالية مع وقت الدخول والانصراف، وكل سجل يحتوي مكانًا مخصصًا لعرض ملاحظات حضور الطالب وإضافتها أو تعديلها.
           </p>
         </div>
 
@@ -895,6 +895,7 @@ type AttendanceRowProps = {
 function AttendanceRow({ record, returnTo }: AttendanceRowProps) {
   const statusClass = getAttendanceStatusBadgeClass(record.status);
   const sourceLabel = getAttendanceSourceLabel(record.source);
+  const hasAttendanceNotes = Boolean(record.notes?.trim());
 
   return (
     <article className="grid gap-4 p-5 transition hover:bg-indigo-50/40 xl:grid-cols-[1fr_auto] xl:items-center">
@@ -991,39 +992,53 @@ function AttendanceRow({ record, returnTo }: AttendanceRowProps) {
             ) : null}
           </div>
 
-          {!record.isComputedAbsence ? (
-            <form
-              action={updateAttendanceNotesAction}
-              className="mt-4 grid gap-3 rounded-2xl border border-[var(--app-border-soft)] bg-[var(--app-card-soft)] p-3 md:grid-cols-[auto_1fr_auto] md:items-center"
-            >
-              <input type="hidden" name="id" value={record.id} />
-              <input type="hidden" name="returnTo" value={returnTo} />
-
+          <div className="mt-4 overflow-hidden rounded-3xl border border-[var(--app-border-soft)] bg-[var(--app-card-soft)]">
+            <div className="grid gap-3 border-b border-[var(--app-border-soft)] bg-[var(--app-card)] p-4 md:grid-cols-[auto_1fr] md:items-start">
               <div className="flex items-center gap-2 text-sm font-extrabold text-[var(--app-text)]">
-                <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[var(--app-primary-soft)] text-[var(--app-primary)]">
-                  <MessageSquareText size={17} />
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[var(--app-primary-soft)] text-[var(--app-primary)]">
+                  <MessageSquareText size={18} />
                 </span>
-                <span>ملاحظة حضور الطالب</span>
+                <span>ملاحظات الحضور</span>
               </div>
 
-              <textarea
-                name="notes"
-                defaultValue={record.notes ?? ""}
-                maxLength={500}
-                rows={1}
-                placeholder="مثال: حضر متأخر، خرج مبكراً، بدون دفتر..."
-                className="input min-h-[44px] resize-y text-sm"
-              />
+              <div className="rounded-2xl border border-[var(--app-border-soft)] bg-[var(--app-card-soft)] px-4 py-3">
+                {hasAttendanceNotes ? (
+                  <p className="whitespace-pre-wrap text-sm font-bold leading-7 text-[var(--app-text)]">
+                    {record.notes}
+                  </p>
+                ) : (
+                  <p className="text-sm font-bold leading-7 text-[var(--app-text-soft)]">
+                    لا توجد ملاحظات مسجلة لهذا الطالب في هذا السجل.
+                  </p>
+                )}
+              </div>
+            </div>
 
-              <button type="submit" className="btn btn-secondary h-11 justify-center text-sm md:w-[130px]">
-                حفظ
-              </button>
-            </form>
-          ) : record.notes ? (
-            <p className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-bold leading-6 text-amber-800">
-              ملاحظة الغياب المحسوب: {record.notes}
-            </p>
-          ) : null}
+            {!record.isComputedAbsence ? (
+              <form action={updateAttendanceNotesAction} className="grid gap-3 p-4 md:grid-cols-[1fr_auto] md:items-end">
+                <input type="hidden" name="id" value={record.id} />
+                <input type="hidden" name="returnTo" value={returnTo} />
+
+                <label className="block">
+                  <span className="mb-2 block text-xs font-extrabold text-[var(--app-text-muted)]">
+                    إضافة / تعديل ملاحظة هذا السجل
+                  </span>
+                  <textarea
+                    name="notes"
+                    defaultValue={record.notes ?? ""}
+                    maxLength={500}
+                    rows={2}
+                    placeholder="اكتب ملاحظة مرتبطة بسجل حضور هذا الطالب فقط..."
+                    className="input min-h-[76px] resize-y text-sm"
+                  />
+                </label>
+
+                <button type="submit" className="btn btn-secondary h-11 justify-center text-sm md:w-[150px]">
+                  حفظ الملاحظة
+                </button>
+              </form>
+            ) : null}
+          </div>
         </div>
       </div>
 

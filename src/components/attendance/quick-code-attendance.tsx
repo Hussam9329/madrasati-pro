@@ -44,7 +44,6 @@ export function QuickCodeAttendance({ qrAvailable, checkoutWarningTime }: QuickC
   const [, startRefreshTransition] = useTransition();
   const [mode, setMode] = useState<"check-in" | "check-out">("check-in");
   const [searchQuery, setSearchQuery] = useState("");
-  const [attendanceNote, setAttendanceNote] = useState("");
   const [searchResults, setSearchResults] = useState<StudentSearchResult[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<StudentSearchResult | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -188,7 +187,6 @@ export function QuickCodeAttendance({ qrAvailable, checkoutWarningTime }: QuickC
             mode,
             source: "manual-name",
             clientTime: getLocalTimeISO(),
-            notes: attendanceNote,
           }),
         });
 
@@ -212,7 +210,6 @@ export function QuickCodeAttendance({ qrAvailable, checkoutWarningTime }: QuickC
           setSearchQuery("");
           setSelectedStudent(null);
           setSearchResults([]);
-          setAttendanceNote("");
           startRefreshTransition(() => router.refresh());
         }
       } catch {
@@ -222,7 +219,7 @@ export function QuickCodeAttendance({ qrAvailable, checkoutWarningTime }: QuickC
         inputRef.current?.focus();
       }
     },
-    [attendanceNote, confirmEarlyCheckout, mode, router, startRefreshTransition],
+    [confirmEarlyCheckout, mode, router, startRefreshTransition],
   );
 
   // Submit attendance for direct code entry
@@ -246,7 +243,6 @@ export function QuickCodeAttendance({ qrAvailable, checkoutWarningTime }: QuickC
               mode,
               source: "manual-name",
               clientTime: getLocalTimeISO(),
-              notes: attendanceNote,
             }),
           });
 
@@ -269,7 +265,6 @@ export function QuickCodeAttendance({ qrAvailable, checkoutWarningTime }: QuickC
             setSearchQuery("");
             setSelectedStudent(null);
             setSearchResults([]);
-            setAttendanceNote("");
             startRefreshTransition(() => router.refresh());
           }
         } catch {
@@ -288,7 +283,7 @@ export function QuickCodeAttendance({ qrAvailable, checkoutWarningTime }: QuickC
           const res = await fetch("/api/attendance/scan", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ studentCode: code, mode, source: "manual-code", clientTime: getLocalTimeISO(), notes: attendanceNote }),
+            body: JSON.stringify({ studentCode: code, mode, source: "manual-code", clientTime: getLocalTimeISO() }),
           });
 
           const data: AttendanceScanResult = await res.json();
@@ -310,7 +305,6 @@ export function QuickCodeAttendance({ qrAvailable, checkoutWarningTime }: QuickC
             setSearchQuery("");
             setSelectedStudent(null);
             setSearchResults([]);
-            setAttendanceNote("");
             startRefreshTransition(() => router.refresh());
           }
         } catch {
@@ -321,7 +315,7 @@ export function QuickCodeAttendance({ qrAvailable, checkoutWarningTime }: QuickC
         }
       }
     },
-    [attendanceNote, searchQuery, selectedStudent, mode, router, confirmEarlyCheckout, startRefreshTransition],
+    [searchQuery, selectedStudent, mode, router, confirmEarlyCheckout, startRefreshTransition],
   );
 
   const handleModeSwitch = useCallback((newMode: "check-in" | "check-out") => {
@@ -406,25 +400,6 @@ export function QuickCodeAttendance({ qrAvailable, checkoutWarningTime }: QuickC
             <UserX size={18} />
             تسجيل انصراف
           </button>
-        </div>
-
-        <div className="mb-4">
-          <label htmlFor="attendance-note-input" className="mb-2 block text-sm font-extrabold text-[var(--app-text)]">
-            ملاحظة هذا اليوم للطالب
-          </label>
-          <textarea
-            id="attendance-note-input"
-            value={attendanceNote}
-            onChange={(e) => setAttendanceNote(e.target.value)}
-            maxLength={500}
-            rows={2}
-            placeholder="مثال: حضر متأخرًا، نسي الواجب، خرج بإذن ولي الأمر..."
-            className="input min-h-[72px] resize-y"
-            disabled={loading}
-          />
-          <p className="mt-1 text-xs text-[var(--app-text-soft)]">
-            تترك فارغة إذا لا توجد ملاحظة. تحفظ داخل سجل حضور هذا اليوم.
-          </p>
         </div>
 
         {/* Search Input Form */}
