@@ -120,10 +120,10 @@ export default async function StudentsPage({
           actionHref="/classes"
         />
 
-        <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+        <section className="flex flex-col gap-6">
           <StudentCreateForm classGroups={classGroups} />
 
-          <div className="flex flex-col gap-6">
+          <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr] xl:items-start">
             <StudentsStats
               total={counts.total}
               active={counts.active}
@@ -398,247 +398,203 @@ type StudentCreateFormProps = {
 };
 
 function StudentCreateForm({ classGroups }: StudentCreateFormProps) {
+  const hasClasses = classGroups.length > 0;
+
   return (
     <form
       id="student-form"
       action={createStudentAction}
       className="app-card overflow-hidden"
     >
-      <div className="border-b border-[var(--app-border-soft)] bg-gradient-to-l to-indigo-50/40 to-amber-50/20 p-6">
-        <div className="flex items-start gap-3">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700">
-            <UserRound size={24} />
-          </div>
-
-          <div>
-            <h3 className="text-xl font-extrabold text-[var(--app-text)]">
-              إضافة طالب
-            </h3>
-
-            <p className="mt-1 text-sm leading-7 text-[var(--app-text-muted)]">
-              أدخل بيانات الطالب الأساسية المطلوبة فقط.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid gap-5 p-6">
-        {/* Smart Alert */}
-        <div className="rounded-2xl border border-indigo-200 bg-gradient-to-l to-indigo-50/80 from-amber-50/50 p-4">
+      <div className="border-b border-[var(--app-border-soft)] bg-gradient-to-l from-indigo-50/70 to-amber-50/30 p-5 sm:p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-3">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700">
-              <AlertTriangle size={16} />
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700">
+              <UserRound size={24} />
             </div>
-            <p className="text-sm leading-7 text-indigo-800">
-              اختر الصف مباشرة. إذا كان الصف لا يحتوي على شعبة، سيتم إنشاء شعبة عامة تلقائيًا عند حفظ الطالب.
-            </p>
+
+            <div>
+              <h3 className="text-xl font-extrabold text-[var(--app-text)]">
+                إضافة طالب جديد
+              </h3>
+
+              <p className="mt-1 text-sm leading-7 text-[var(--app-text-muted)]">
+                البيانات مرتبة بخطوات واضحة: معلومات الطالب، التواصل، ثم الصف أو الشعبة.
+              </p>
+            </div>
           </div>
+
+          <span className="badge badge-info w-fit">إدخال يدوي</span>
+        </div>
+      </div>
+
+      <div className="grid gap-6 p-5 sm:p-6">
+        <div className="rounded-2xl border border-indigo-100 bg-indigo-50/70 p-4 text-sm font-bold leading-7 text-indigo-800">
+          اختر الصف أو الشعبة من قائمة واحدة واضحة بدل الكارتات الضيقة. إذا اخترت الصف فقط، ينشئ النظام شعبة عامة تلقائياً عند الحفظ.
         </div>
 
-        <div>
-          <label
-            htmlFor="fullName"
-            className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
-          >
-            الاسم الكامل <span className="text-red-600">*</span>
-          </label>
+        <div className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr] xl:items-start">
+          <div className="grid gap-5">
+            <div>
+              <label
+                htmlFor="fullName"
+                className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
+              >
+                الاسم الكامل <span className="text-red-600">*</span>
+              </label>
 
-          <input
-            id="fullName"
-            name="fullName"
-            autoComplete="off"
-            required
-            maxLength={120}
-            placeholder="مثال: أحمد أو زهراء علي حسين كاظم"
-            className="input"
-          />
-          <p className="mt-1 text-xs text-[var(--app-text-muted)]">الاسم لا يجب أن يحتوي على أرقام</p>
-        </div>
+              <input
+                id="fullName"
+                name="fullName"
+                autoComplete="off"
+                required
+                maxLength={120}
+                placeholder="مثال: أحمد أو زهراء علي حسين كاظم"
+                className="input"
+              />
+              <p className="mt-1 text-xs leading-6 text-[var(--app-text-muted)]">الاسم لا يجب أن يحتوي على أرقام.</p>
+            </div>
 
-        <div className="grid gap-5 md:grid-cols-3">
-          <div>
-            <label
-              htmlFor="phone"
-              className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
-            >
-              رقم هاتف الطالب <span className="text-red-600">*</span>
-            </label>
-            <input
-              id="phone"
-              name="phone"
-              type="tel"
-              autoComplete="off"
-              required
-              pattern="07\d{9}"
-              maxLength={11}
-              placeholder="مثال: 07701234567"
-              className="input"
-              dir="ltr"
-            />
-            <p className="mt-1 text-xs text-[var(--app-text-muted)]">11 رقم ويبدأ بـ 07</p>
-          </div>
-
-          <div>
-            <label
-              htmlFor="guardianPhone"
-              className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
-            >
-              رقم هاتف ولي الأمر <span className="text-red-600">*</span>
-            </label>
-            <input
-              id="guardianPhone"
-              name="guardianPhone"
-              type="tel"
-              autoComplete="off"
-              required
-              pattern="07\d{9}"
-              maxLength={11}
-              placeholder="مثال: 07801234567"
-              className="input"
-              dir="ltr"
-            />
-            <p className="mt-1 text-xs text-[var(--app-text-muted)]">11 رقم ويبدأ بـ 07</p>
-          </div>
-
-          <div>
-            <label
-              htmlFor="guardianTelegram"
-              className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
-            >
-              تليكرام ولي الأمر
-            </label>
-            <input
-              id="guardianTelegram"
-              name="guardianTelegram"
-              type="text"
-              autoComplete="off"
-              maxLength={64}
-              placeholder="مثال: @parent_user"
-              className="input"
-              dir="ltr"
-            />
-            <p className="mt-1 text-xs text-[var(--app-text-muted)]">اختياري للتواصل عبر تليكرام</p>
-          </div>
-        </div>
-
-        <div className="grid gap-5 md:grid-cols-2">
-          <div>
-            <label
-              htmlFor="birthDate"
-              className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
-            >
-              تاريخ الميلاد <span className="text-red-600">*</span>
-            </label>
-            <input
-              id="birthDate"
-              name="birthDate"
-              type="date"
-              autoComplete="off"
-              required
-              className="input"
-            />
-          </div>
-
-          <div>
-            <span className="mb-2 block text-sm font-extrabold text-[var(--app-text)]">
-              الصف / الشعبة <span className="text-red-600">*</span>
-            </span>
-
-            {classGroups.length === 0 ? (
-              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-7 text-amber-800">
-                لا توجد صفوف مضافة حاليًا. أضف الصف من صفحة إدارة الصفوف أولًا.
+            <div className="grid gap-5 lg:grid-cols-3">
+              <div>
+                <label
+                  htmlFor="phone"
+                  className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
+                >
+                  رقم هاتف الطالب <span className="text-red-600">*</span>
+                </label>
+                <input
+                  id="phone"
+                  name="phone"
+                  type="tel"
+                  autoComplete="off"
+                  required
+                  pattern="07\d{9}"
+                  maxLength={11}
+                  placeholder="07701234567"
+                  className="input text-left"
+                  dir="ltr"
+                />
+                <p className="mt-1 text-xs leading-6 text-[var(--app-text-muted)]">11 رقم ويبدأ بـ 07.</p>
               </div>
-            ) : (
-              <div className="max-h-80 overflow-y-auto rounded-2xl border border-[var(--app-border-soft)] bg-white/70 p-3">
-                <div className="space-y-4">
+
+              <div>
+                <label
+                  htmlFor="guardianPhone"
+                  className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
+                >
+                  رقم هاتف ولي الأمر <span className="text-red-600">*</span>
+                </label>
+                <input
+                  id="guardianPhone"
+                  name="guardianPhone"
+                  type="tel"
+                  autoComplete="off"
+                  required
+                  pattern="07\d{9}"
+                  maxLength={11}
+                  placeholder="07801234567"
+                  className="input text-left"
+                  dir="ltr"
+                />
+                <p className="mt-1 text-xs leading-6 text-[var(--app-text-muted)]">يستخدم للتواصل عبر واتساب.</p>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="guardianTelegram"
+                  className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
+                >
+                  تليكرام ولي الأمر
+                </label>
+                <input
+                  id="guardianTelegram"
+                  name="guardianTelegram"
+                  type="text"
+                  autoComplete="off"
+                  maxLength={64}
+                  placeholder="@parent_user"
+                  className="input text-left"
+                  dir="ltr"
+                />
+                <p className="mt-1 text-xs leading-6 text-[var(--app-text-muted)]">اختياري للتواصل عبر تليكرام.</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-5 rounded-3xl border border-[var(--app-border-soft)] bg-[var(--app-card-soft)]/70 p-4">
+            <div>
+              <label
+                htmlFor="birthDate"
+                className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
+              >
+                تاريخ الميلاد <span className="text-red-600">*</span>
+              </label>
+              <input
+                id="birthDate"
+                name="birthDate"
+                type="date"
+                autoComplete="off"
+                required
+                className="input"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="placementId"
+                className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
+              >
+                الصف / الشعبة <span className="text-red-600">*</span>
+              </label>
+
+              {hasClasses ? (
+                <select
+                  id="placementId"
+                  name="placementId"
+                  required
+                  defaultValue=""
+                  className="input h-12 py-0"
+                >
+                  <option value="" disabled>اختر الصف أو الشعبة</option>
                   {classGroups.map((group) => (
-                    <fieldset key={group.classId} className="rounded-2xl border border-[var(--app-border-soft)] bg-slate-50/60 p-3">
-                      <legend className="px-2 text-sm font-extrabold text-[var(--app-text)]">
-                        {group.className}
-                      </legend>
+                    <optgroup key={group.classId} label={group.className}>
+                      <option value={`class:${group.classId}`}>
+                        {group.className} — اختيار الصف فقط
+                      </option>
+                      {group.sections.map((section) => {
+                        const studentLabel = section.studentsCount === 1 ? "طالب واحد" : `${section.studentsCount} طالب`;
+                        const capacityLabel = section.capacity ? ` / السعة ${section.capacity}` : "";
 
-                      {group.sections.length === 0 ? (
-                        <label
-                          htmlFor={`class-${group.classId}`}
-                          className="mt-2 block cursor-pointer rounded-2xl border border-amber-200 bg-amber-50/80 p-3 transition hover:border-blue-300 hover:bg-blue-50/60 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 has-[:checked]:shadow-sm"
-                        >
-                          <span className="flex items-start gap-3">
-                            <input
-                              id={`class-${group.classId}`}
-                              name="placementId"
-                              type="radio"
-                              value={`class:${group.classId}`}
-                              required
-                              className="mt-1 h-4 w-4 shrink-0 accent-blue-600"
-                            />
-
-                            <span className="min-w-0">
-                              <span className="block font-extrabold text-[var(--app-text)]">
-                                اختيار الصف
-                              </span>
-
-                              <span className="mt-1 block text-xs leading-6 text-amber-800">
-                                لا توجد شعبة داخل هذا الصف؛ سيتم إنشاء شعبة عامة تلقائيًا عند الحفظ.
-                              </span>
-                            </span>
-                          </span>
-                        </label>
-                      ) : (
-                        <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                          {group.sections.map((section) => {
-                            const studentLabel = section.studentsCount === 1 ? "طالب واحد" : `${section.studentsCount} طالب`;
-                            const capacityLabel = section.capacity ? ` / السعة ${section.capacity}` : "";
-
-                            return (
-                              <label
-                                key={section.id}
-                                htmlFor={`section-${section.id}`}
-                                className="group cursor-pointer rounded-2xl border border-[var(--app-border-soft)] bg-white p-3 transition hover:border-blue-300 hover:bg-blue-50/60 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 has-[:checked]:shadow-sm"
-                              >
-                                <span className="flex items-start gap-3">
-                                  <input
-                                    id={`section-${section.id}`}
-                                    name="placementId"
-                                    type="radio"
-                                    value={`section:${section.id}`}
-                                    required
-                                    className="mt-1 h-4 w-4 shrink-0 accent-blue-600"
-                                  />
-
-                                  <span className="min-w-0">
-                                    <span className="block font-extrabold text-[var(--app-text)]">
-                                      شعبة {section.name}
-                                    </span>
-
-                                    <span className="mt-1 block text-xs leading-6 text-[var(--app-text-muted)]">
-                                      {studentLabel}{capacityLabel}
-                                    </span>
-                                  </span>
-                                </span>
-                              </label>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </fieldset>
+                        return (
+                          <option key={section.id} value={`section:${section.id}`}>
+                            {group.className} / شعبة {section.name} — {studentLabel}{capacityLabel}
+                          </option>
+                        );
+                      })}
+                    </optgroup>
                   ))}
+                </select>
+              ) : (
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-7 text-amber-800">
+                  لا توجد صفوف مضافة حاليًا. أضف الصف من صفحة إدارة الصفوف أولًا.
                 </div>
-              </div>
-            )}
+              )}
 
-            <p className="mt-2 text-xs leading-6 text-[var(--app-text-muted)]">
-              تستطيع اختيار الصف مباشرة، أو اختيار شعبة محددة إذا كانت موجودة.
-            </p>
+              <p className="mt-2 text-xs leading-6 text-[var(--app-text-muted)]">
+                القائمة تمنع تضارب النصوص والكارتات داخل المساحات الضيقة.
+              </p>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 border-t border-[var(--app-border-soft)] bg-gradient-to-l to-indigo-50/30 to-amber-50/20 p-6 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 border-t border-[var(--app-border-soft)] bg-[var(--app-card-soft)]/60 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
         <p className="text-sm leading-7 text-[var(--app-text-muted)]">
-          بعد إضافة الطلاب، يمكن استخدامهم في الحضور والدرجات والأقساط.
+          بعد حفظ الطالب، يظهر مباشرة في سجل الطلاب ويمكن استخدامه في الحضور والدرجات والأقساط.
         </p>
 
-        <button type="submit" className="btn btn-primary">
+        <button type="submit" className="btn btn-primary min-w-[170px]">
           <CheckCircle2 size={18} />
           حفظ الطالب
         </button>
@@ -752,69 +708,97 @@ function StudentSearchForm({
   sectionId,
   classGroups,
 }: StudentSearchFormProps) {
+  const hasActiveFilters = Boolean(query || status || classId || sectionId);
+
   return (
-    <form action="/students" className="app-card p-5">
-      <label
-        htmlFor="q"
-        className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
-      >
-        البحث والتصفية
-      </label>
+    <form action="/students" className="app-card overflow-hidden">
+      <div className="border-b border-[var(--app-border-soft)] p-5">
+        <h3 className="text-base font-extrabold text-[var(--app-text)]">
+          البحث والتصفية
+        </h3>
+        <p className="mt-1 text-xs font-bold leading-6 text-[var(--app-text-muted)]">
+          كل فلتر يأخذ مساحة واضحة حتى لا تتداخل الخانات أو تختفي الأزرار.
+        </p>
+      </div>
 
-      <div className="grid gap-3 xl:grid-cols-[1.4fr_180px_220px_220px_auto]">
-        <div className="relative">
-          <Search
-            size={18}
-            className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[var(--app-text-soft)]"
-          />
+      <div className="grid gap-3 p-5 lg:grid-cols-2 xl:grid-cols-[minmax(260px,1fr)_170px_190px_220px_auto] xl:items-end">
+        <div className="lg:col-span-2 xl:col-span-1">
+          <label htmlFor="q" className="mb-2 block text-xs font-extrabold text-[var(--app-text-muted)]">
+            كلمة البحث
+          </label>
+          <div className="relative">
+            <Search
+              size={18}
+              className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[var(--app-text-soft)]"
+            />
 
-          <input
-            id="q"
-            name="q"
-            autoComplete="off"
-            defaultValue={query}
-            placeholder="اسم الطالب، الرقم، الهاتف، ولي الأمر، التليكرام..."
-            className="input pr-11"
-          />
+            <input
+              id="q"
+              name="q"
+              autoComplete="off"
+              defaultValue={query}
+              placeholder="اسم الطالب، الرقم، الهاتف، ولي الأمر، التليكرام..."
+              className="input pr-11"
+            />
+          </div>
         </div>
 
-        <select id="student-status-filter" name="status" autoComplete="off" defaultValue={status} className="input">
-          <option value="">كل الحالات</option>
-          <option value="active">مستمر</option>
-          <option value="inactive">متوقف</option>
-          <option value="graduated">متخرج</option>
-          <option value="transferred">منقول</option>
-        </select>
+        <div>
+          <label htmlFor="student-status-filter" className="mb-2 block text-xs font-extrabold text-[var(--app-text-muted)]">
+            الحالة
+          </label>
+          <select id="student-status-filter" name="status" autoComplete="off" defaultValue={status} className="input h-11 py-0">
+            <option value="">كل الحالات</option>
+            <option value="active">مستمر</option>
+            <option value="inactive">متوقف</option>
+            <option value="graduated">متخرج</option>
+            <option value="transferred">منقول</option>
+          </select>
+        </div>
 
-        <select id="student-class-filter" name="classId" autoComplete="off" defaultValue={classId} className="input">
-          <option value="">كل الصفوف</option>
-          {classGroups.map((group) => (
-            <option key={group.classId} value={group.classId}>
-              {group.className}
-            </option>
-          ))}
-        </select>
-
-        <select id="student-section-filter" name="sectionId" autoComplete="off" defaultValue={sectionId} className="input">
-          <option value="">كل الشعب</option>
-          {classGroups.map((group) =>
-            group.sections.map((section) => (
-              <option key={section.id} value={section.id}>
-                {group.className} / شعبة {section.name}
+        <div>
+          <label htmlFor="student-class-filter" className="mb-2 block text-xs font-extrabold text-[var(--app-text-muted)]">
+            الصف
+          </label>
+          <select id="student-class-filter" name="classId" autoComplete="off" defaultValue={classId} className="input h-11 py-0">
+            <option value="">كل الصفوف</option>
+            {classGroups.map((group) => (
+              <option key={group.classId} value={group.classId}>
+                {group.className}
               </option>
-            )),
-          )}
-        </select>
+            ))}
+          </select>
+        </div>
 
-        <div className="flex flex-wrap gap-2">
-          <button type="submit" className="btn btn-secondary min-w-[88px] justify-center">
+        <div>
+          <label htmlFor="student-section-filter" className="mb-2 block text-xs font-extrabold text-[var(--app-text-muted)]">
+            الشعبة
+          </label>
+          <select id="student-section-filter" name="sectionId" autoComplete="off" defaultValue={sectionId} className="input h-11 py-0">
+            <option value="">كل الشعب</option>
+            {classGroups.map((group) =>
+              group.sections.map((section) => (
+                <option key={section.id} value={section.id}>
+                  {group.className} / شعبة {section.name}
+                </option>
+              )),
+            )}
+          </select>
+        </div>
+
+        <div className="flex gap-2 lg:col-span-2 xl:col-span-1">
+          <button type="submit" className="btn btn-secondary h-11 min-w-[88px] flex-1 justify-center xl:flex-none">
             بحث
           </button>
-          {(query || status || classId || sectionId) ? (
-            <a href="/students" className="btn btn-soft min-w-[88px] justify-center">
-              مسح
-            </a>
-          ) : null}
+          <a
+            href="/students"
+            className={[
+              "btn btn-soft h-11 min-w-[88px] flex-1 justify-center xl:flex-none",
+              hasActiveFilters ? "" : "pointer-events-none opacity-50",
+            ].join(" ")}
+          >
+            مسح
+          </a>
         </div>
       </div>
     </form>

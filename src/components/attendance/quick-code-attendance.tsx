@@ -654,17 +654,24 @@ export function QuickCodeAttendance({
           </p>
         </form>
 
-        <details className="mb-5 rounded-2xl border border-[var(--app-border-soft)] bg-[var(--app-card-soft)] p-4">
-          <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-extrabold text-[var(--app-text)]">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-100 text-blue-700">
-              <UserPlus size={17} />
+        <details className="mb-5 overflow-hidden rounded-2xl border border-[var(--app-border-soft)] bg-[var(--app-card-soft)]">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4 text-sm font-extrabold text-[var(--app-text)]">
+            <span className="flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-700">
+                <UserPlus size={17} />
+              </span>
+              <span>
+                <span className="block">إضافة طالب يدويًا من تبويبة الحضور</span>
+                <span className="mt-1 block text-xs font-bold text-[var(--app-text-muted)]">
+                  يستخدم عند حضور طالب غير موجود بالقائمة، وبعد الحفظ يتم تسجيل الحركة مباشرة.
+                </span>
+              </span>
             </span>
-            إضافة طالب يدويًا من تبويبة الحضور
           </summary>
 
-          <form onSubmit={handleManualStudentCreate} className="mt-4 grid gap-3">
-            <div className="grid gap-3 md:grid-cols-2">
-              <label className="grid gap-1 text-xs font-extrabold text-[var(--app-text-muted)]">
+          <form onSubmit={handleManualStudentCreate} className="grid gap-4 border-t border-[var(--app-border-soft)] p-4">
+            <div className="grid gap-4 lg:grid-cols-2">
+              <label className="grid gap-2 text-xs font-extrabold text-[var(--app-text-muted)]">
                 اسم الطالب
                 <input
                   value={manualStudent.fullName}
@@ -677,35 +684,34 @@ export function QuickCodeAttendance({
                 />
               </label>
 
-              <label className="grid gap-1 text-xs font-extrabold text-[var(--app-text-muted)]">
+              <label className="grid gap-2 text-xs font-extrabold text-[var(--app-text-muted)]">
                 الصف / الشعبة
                 <select
                   value={manualStudent.placementId}
                   onChange={(event) => handleManualStudentChange("placementId", event.target.value)}
                   required
                   disabled={!hasPlacementOptions}
-                  className="input h-11 text-sm"
+                  className="input h-11 py-0 text-sm"
                 >
                   <option value="">اختر الصف أو الشعبة</option>
-                  {classGroups.map((group) =>
-                    group.sections.length > 0 ? (
-                      <optgroup key={group.classId} label={group.className}>
-                        {group.sections.map((section) => (
-                          <option key={section.id} value={`section:${section.id}`}>
-                            {group.className} / شعبة {section.name}
-                          </option>
-                        ))}
-                      </optgroup>
-                    ) : (
-                      <option key={group.classId} value={`class:${group.classId}`}>
-                        {group.className} / إنشاء شعبة عامة تلقائيًا
+                  {classGroups.map((group) => (
+                    <optgroup key={group.classId} label={group.className}>
+                      <option value={`class:${group.classId}`}>
+                        {group.className} — اختيار الصف فقط
                       </option>
-                    ),
-                  )}
+                      {group.sections.map((section) => (
+                        <option key={section.id} value={`section:${section.id}`}>
+                          {group.className} / شعبة {section.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
                 </select>
               </label>
+            </div>
 
-              <label className="grid gap-1 text-xs font-extrabold text-[var(--app-text-muted)]">
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              <label className="grid gap-2 text-xs font-extrabold text-[var(--app-text-muted)]">
                 هاتف الطالب
                 <input
                   value={manualStudent.phone}
@@ -714,13 +720,13 @@ export function QuickCodeAttendance({
                   pattern="07\d{9}"
                   maxLength={11}
                   placeholder="07701234567"
-                  className="input h-11 text-sm"
+                  className="input h-11 text-left text-sm"
                   dir="ltr"
                   autoComplete="off"
                 />
               </label>
 
-              <label className="grid gap-1 text-xs font-extrabold text-[var(--app-text-muted)]">
+              <label className="grid gap-2 text-xs font-extrabold text-[var(--app-text-muted)]">
                 هاتف ولي الأمر
                 <input
                   value={manualStudent.guardianPhone}
@@ -729,13 +735,13 @@ export function QuickCodeAttendance({
                   pattern="07\d{9}"
                   maxLength={11}
                   placeholder="07801234567"
-                  className="input h-11 text-sm"
+                  className="input h-11 text-left text-sm"
                   dir="ltr"
                   autoComplete="off"
                 />
               </label>
 
-              <label className="grid gap-1 text-xs font-extrabold text-[var(--app-text-muted)]">
+              <label className="grid gap-2 text-xs font-extrabold text-[var(--app-text-muted)]">
                 تاريخ الميلاد
                 <input
                   value={manualStudent.birthDate}
@@ -746,14 +752,14 @@ export function QuickCodeAttendance({
                 />
               </label>
 
-              <label className="grid gap-1 text-xs font-extrabold text-[var(--app-text-muted)]">
+              <label className="grid gap-2 text-xs font-extrabold text-[var(--app-text-muted)]">
                 تليكرام ولي الأمر
                 <input
                   value={manualStudent.guardianTelegram}
                   onChange={(event) => handleManualStudentChange("guardianTelegram", event.target.value)}
                   maxLength={64}
                   placeholder="@parent_user"
-                  className="input h-11 text-sm"
+                  className="input h-11 text-left text-sm"
                   dir="ltr"
                   autoComplete="off"
                 />
@@ -766,18 +772,24 @@ export function QuickCodeAttendance({
               </p>
             ) : null}
 
-            <button
-              type="submit"
-              disabled={creatingStudent || !hasPlacementOptions}
-              className="btn btn-secondary justify-center"
-            >
-              {creatingStudent ? (
-                <RefreshCw size={17} className="animate-spin" />
-              ) : (
-                <UserPlus size={17} />
-              )}
-              إضافة الطالب وتسجيل {mode === "check-in" ? "الحضور" : "الانصراف"}
-            </button>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-xs font-bold leading-6 text-[var(--app-text-muted)]">
+                الحفظ هنا يضيف الطالب إلى النظام ثم يسجل له {mode === "check-in" ? "حضور" : "انصراف"} بنفس العملية.
+              </p>
+
+              <button
+                type="submit"
+                disabled={creatingStudent || !hasPlacementOptions}
+                className="btn btn-secondary min-w-[220px] justify-center"
+              >
+                {creatingStudent ? (
+                  <RefreshCw size={17} className="animate-spin" />
+                ) : (
+                  <UserPlus size={17} />
+                )}
+                إضافة الطالب وتسجيل {mode === "check-in" ? "الحضور" : "الانصراف"}
+              </button>
+            </div>
           </form>
         </details>
 
