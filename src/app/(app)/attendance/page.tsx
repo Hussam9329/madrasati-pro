@@ -231,7 +231,13 @@ export default async function AttendancePage({
                 actionHref="/attendance?view=all"
               />
             ) : (
-              <AttendanceList records={records} returnTo={attendanceReturnHref} />
+              <AttendanceList
+                records={records}
+                returnTo={attendanceReturnHref}
+                filter={filter}
+                showAllRequested={showAllRequested}
+                today={today}
+              />
             )}
           </>
         ) : (
@@ -762,15 +768,34 @@ function AttendancePeriodReport({ summary, recordsCount, filter, todayAbsentCoun
 type AttendanceListProps = {
   records: AttendanceListItem[];
   returnTo: string;
+  filter: AttendanceFilter;
+  showAllRequested: boolean;
+  today: string;
 };
 
-function AttendanceList({ records, returnTo }: AttendanceListProps) {
+function AttendanceList({
+  records,
+  returnTo,
+  filter,
+  showAllRequested,
+  today,
+}: AttendanceListProps) {
+  const scopeLabel = getAttendanceListScopeLabel(filter, showAllRequested, today);
+  const hiddenFields = getAttendanceListSearchHiddenFields(filter, showAllRequested);
+  const clearSearchHref = buildAttendanceReturnHref(
+    {
+      ...filter,
+      query: undefined,
+    },
+    showAllRequested,
+  );
+
   return (
     <section className="app-card overflow-hidden">
       <div className="flex flex-col gap-2 border-b border-[var(--app-border-soft)] p-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-xl font-extrabold text-[var(--app-text)]">
-            جدول سجلات الحضور والانصراف
+            {scopeLabel}
           </h3>
 
           <p className="mt-1 text-sm leading-6 text-[var(--app-text-muted)]">
@@ -782,6 +807,52 @@ function AttendanceList({ records, returnTo }: AttendanceListProps) {
           <span className="badge badge-info">{records.length} سجل</span>
         </div>
       </div>
+
+      <form
+        action="/attendance"
+        className="border-b border-[var(--app-border-soft)] bg-[var(--app-card-soft)] p-4"
+      >
+        {hiddenFields.map((field) => (
+          <input key={field.name} type="hidden" name={field.name} value={field.value} />
+        ))}
+
+        <div className="grid gap-3 lg:grid-cols-[1fr_auto] lg:items-end">
+          <div>
+            <label
+              htmlFor="attendance-list-search"
+              className="text-sm font-extrabold text-[var(--app-text)]"
+            >
+              بحث داخل {scopeLabel}
+            </label>
+            <div className="relative mt-2">
+              <Search
+                size={18}
+                className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[var(--app-text-soft)]"
+              />
+              <input
+                id="attendance-list-search"
+                name="q"
+                defaultValue={filter.query ?? ""}
+                placeholder="اكتب اسم الطالب، الرمز، الصف، الشعبة، المادة، المدرس، أو الملاحظة..."
+                autoComplete="off"
+                className="input pr-11"
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <button type="submit" className="btn btn-primary min-w-[120px] justify-center">
+              <Search size={17} />
+              بحث
+            </button>
+            {filter.query ? (
+              <a href={clearSearchHref} className="btn btn-secondary min-w-[120px] justify-center">
+                مسح البحث
+              </a>
+            ) : null}
+          </div>
+        </div>
+      </form>
 
       <div className="divide-y divide-[var(--app-border-soft)]">
         {records.map((record) => (
@@ -988,6 +1059,61 @@ function getAttendanceSourceLabel(source: string | null): string {
   if (source === "manual-name") return "باسم الطالب";
   if (source === "manual") return "يدوي";
   return "غير محدد";
+}
+
+function getAttendanceListScopeLabel(
+  filter: AttendanceFilter,
+  showAllRequested: boolean,
+  today: string,
+): string {
+  if (showAllRequested) return "كل سجلات الحضور والانصراف";
+
+  const isToday = filter.date === today;
+
+  if (isToday && filter.missingCheckOut === "yes") {
+    return "الذين لم ينصرفوا اليوم";
+  }
+
+  if (isToday && filter.status === "present") {
+    return "الحاضرون اليوم";
+  }
+
+  if (isToday && filter.status === "absent") {
+    return "الغائبون اليوم";
+  }
+
+  if (isToday && filter.status === "late") {
+    return "المتأخرون اليوم";
+  }
+
+  return "سجلات الحضور والانصراف";
+}
+
+function getAttendanceListSearchHiddenFields(
+  filter: AttendanceFilter,
+  showAllRequested: boolean,
+): { name: string; value: string }[] {
+  const entries: [string, string | undefined][] = [
+    ["view", showAllRequested ? "all" : undefined],
+    ["status", filter.status],
+    ["date", filter.date],
+    ["fromDate", filter.fromDate],
+    ["toDate", filter.toDate],
+    ["classId", filter.classId],
+    ["sectionId", filter.sectionId],
+    ["source", filter.source],
+    ["hasCheckIn", filter.hasCheckIn],
+    ["hasCheckOut", filter.hasCheckOut],
+    ["missingCheckOut", filter.missingCheckOut],
+    ["studentId", filter.studentId],
+    ["scheduleId", filter.scheduleId],
+    ["subjectId", filter.subjectId],
+    ["teacherId", filter.teacherId],
+  ];
+
+  return entries
+    .filter((entry): entry is [string, string] => Boolean(entry[1]))
+    .map(([name, value]) => ({ name, value }));
 }
 
 function buildAttendanceReturnHref(filter: AttendanceFilter, showAllRequested: boolean): string {
