@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ensureDatabase } from "@/lib/db";
 import { withApiAuth } from "@/lib/api-auth";
+import { getOrCreateDefaultSectionForClass } from "@/services/class-service";
 import {
   createStudent,
   deleteStudent,
@@ -42,7 +43,22 @@ export const GET = withApiAuth(async (request: NextRequest) => {
 export const POST = withApiAuth(async (request: NextRequest) => {
   await ensureDatabase();
   try {
-    const body = (await request.json()) as Partial<StudentFormInput>;
+    const body = (await request.json()) as Partial<StudentFormInput> & {
+      classId?: string;
+    };
+
+    let sectionId = body.sectionId?.trim() ?? "";
+    const classId = body.classId?.trim() ?? "";
+
+    if (!sectionId && classId) {
+      const defaultSectionResult = await getOrCreateDefaultSectionForClass(classId);
+
+      if (!defaultSectionResult.ok || !defaultSectionResult.data) {
+        return NextResponse.json(defaultSectionResult, { status: 400 });
+      }
+
+      sectionId = defaultSectionResult.data.id;
+    }
 
     const result = await createStudent({
       fullName: body.fullName ?? "",
@@ -50,7 +66,7 @@ export const POST = withApiAuth(async (request: NextRequest) => {
       guardianPhone: body.guardianPhone ?? "",
       guardianTelegram: body.guardianTelegram ?? "",
       birthDate: body.birthDate ?? "",
-      sectionId: body.sectionId ?? "",
+      sectionId,
     });
 
     if (!result.ok) {

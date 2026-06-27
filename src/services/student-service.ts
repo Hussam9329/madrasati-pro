@@ -2,6 +2,7 @@ import { Prisma } from "@/lib/prisma-types";
 import { db } from "@/lib/db";
 import { getSupabaseConfigErrorMessage, hasSupabaseConfig } from "@/lib/supabase-client";
 import {
+  getStudentClassDisplay,
   getStudentDeleteAssociations,
   normalizeStudentInput,
   parseOptionalDate,
@@ -49,17 +50,7 @@ export type StudentServiceResult<T> = {
 export async function getStudents(
   filter: StudentsFilter = {},
 ): Promise<StudentListItem[]> {
-  const where = buildStudentWhere(filter);
-
-  // Handle classId filter by pre-fetching sectionIds for that class
-  if (filter.classId) {
-    const sections = await db.section.findMany({
-      where: { classId: filter.classId },
-      select: { id: true },
-    });
-    const sectionIds = sections.map((s: any) => s.id);
-    where.sectionId = { in: sectionIds };
-  }
+  const where = await buildStudentWhere(filter);
 
   const students = await db.student.findMany({
     where,
@@ -87,7 +78,8 @@ export async function getStudents(
     },
   });
 
-  return students.map((student) => toStudentListItem(student));
+  const items = students.map((student) => toStudentListItem(student));
+  return filterStudentListItems(items, filter.query);
 }
 
 export async function searchStudents(
@@ -618,57 +610,73 @@ export async function hasStudents(): Promise<boolean> {
   return count > 0;
 }
 
-function buildStudentWhere(filter: StudentsFilter): Prisma.StudentWhereInput {
-  const query = filter.query?.trim();
-
+async function buildStudentWhere(filter: StudentsFilter): Promise<Prisma.StudentWhereInput> {
   const where: Prisma.StudentWhereInput = {};
-
-  if (query) {
-    where.OR = [
-      {
-        fullName: {
-          contains: query,
-        },
-      },
-      {
-        studentCode: {
-          contains: query,
-        },
-      },
-      {
-        phone: {
-          contains: query,
-        },
-      },
-      {
-        guardianName: {
-          contains: query,
-        },
-      },
-      {
-        guardianPhone: {
-          contains: query,
-        },
-      },
-      {
-        guardianTelegram: {
-          contains: query,
-        },
-      },
-    ];
-  }
-
-  if (filter.sectionId) {
-    where.sectionId = filter.sectionId;
-  }
-
-  // Note: classId filter handled in getStudents() via pre-fetching sectionIds
 
   if (filter.status) {
     where.status = filter.status;
   }
 
+  if (filter.sectionId) {
+    where.sectionId = filter.sectionId;
+    return where;
+  }
+
+  if (filter.classId) {
+    const sections = await db.section.findMany({
+      where: { classId: filter.classId },
+      select: { id: true },
+    });
+
+    const sectionIds = sections.map((section: { id: string }) => section.id);
+
+    where.sectionId = {
+      in: sectionIds.length > 0 ? sectionIds : ["__no_matching_section__"],
+    };
+  }
+
   return where;
+}
+
+function normalizeStudentSearchText(value: unknown): string {
+  return String(value ?? "")
+    .trim()
+    .replace(/^@+/, "")
+    .toLowerCase();
+}
+
+function filterStudentListItems(
+  students: StudentListItem[],
+  query?: string,
+): StudentListItem[] {
+  const normalizedQuery = normalizeStudentSearchText(query);
+
+  if (!normalizedQuery) {
+    return students;
+  }
+
+  return students.filter((student) => {
+    const haystack = [
+      student.fullName,
+      student.studentCode,
+      student.phone,
+      student.guardianName,
+      student.guardianPhone,
+      student.guardianTelegram,
+      student.className,
+      student.classLevel,
+      student.sectionName,
+      getStudentClassDisplay({
+        className: student.className,
+        classLevel: student.classLevel,
+        sectionName: student.sectionName,
+      }),
+    ]
+      .map(normalizeStudentSearchText)
+      .join(" ");
+
+    return haystack.includes(normalizedQuery);
+  });
 }
 
 async function validateSectionIfProvided(

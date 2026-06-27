@@ -57,6 +57,8 @@ type StudentsPageProps = {
   searchParams?: Promise<{
     q?: string;
     status?: string;
+    classId?: string;
+    sectionId?: string;
     saved?: string;
     deleted?: string;
     statusUpdated?: string;
@@ -74,11 +76,15 @@ export default async function StudentsPage({
 
   const query = resolvedSearchParams?.q?.trim() ?? "";
   const status = resolvedSearchParams?.status?.trim() ?? "";
+  const classId = resolvedSearchParams?.classId?.trim() ?? "";
+  const sectionId = resolvedSearchParams?.sectionId?.trim() ?? "";
 
   const [students, classes, sections, counts] = await Promise.all([
     safeQuery(() => getStudents({
       query,
       status,
+      classId,
+      sectionId,
     }), []),
     safeQuery(() => getClasses(), []),
     safeQuery(() => getSections(), []),
@@ -127,7 +133,13 @@ export default async function StudentsPage({
               withoutSection={counts.withoutSection}
             />
 
-            <StudentSearchForm query={query} status={status} />
+            <StudentSearchForm
+              query={query}
+              status={status}
+              classId={classId}
+              sectionId={sectionId}
+              classGroups={classGroups}
+            />
           </div>
         </section>
 
@@ -728,9 +740,18 @@ function StudentsStats({
 type StudentSearchFormProps = {
   query: string;
   status: string;
+  classId: string;
+  sectionId: string;
+  classGroups: StudentClassGroup[];
 };
 
-function StudentSearchForm({ query, status }: StudentSearchFormProps) {
+function StudentSearchForm({
+  query,
+  status,
+  classId,
+  sectionId,
+  classGroups,
+}: StudentSearchFormProps) {
   return (
     <form action="/students" className="app-card p-5">
       <label
@@ -740,7 +761,7 @@ function StudentSearchForm({ query, status }: StudentSearchFormProps) {
         البحث والتصفية
       </label>
 
-      <div className="grid gap-3 md:grid-cols-[1fr_180px_auto]">
+      <div className="grid gap-3 xl:grid-cols-[1.4fr_180px_220px_220px_auto]">
         <div className="relative">
           <Search
             size={18}
@@ -752,7 +773,7 @@ function StudentSearchForm({ query, status }: StudentSearchFormProps) {
             name="q"
             autoComplete="off"
             defaultValue={query}
-            placeholder="اسم الطالب، الرقم، الهاتف، ولي الأمر..."
+            placeholder="اسم الطالب، الرقم، الهاتف، ولي الأمر، التليكرام..."
             className="input pr-11"
           />
         </div>
@@ -765,9 +786,36 @@ function StudentSearchForm({ query, status }: StudentSearchFormProps) {
           <option value="transferred">منقول</option>
         </select>
 
-        <button type="submit" className="btn btn-secondary">
-          بحث
-        </button>
+        <select id="student-class-filter" name="classId" autoComplete="off" defaultValue={classId} className="input">
+          <option value="">كل الصفوف</option>
+          {classGroups.map((group) => (
+            <option key={group.classId} value={group.classId}>
+              {group.className}
+            </option>
+          ))}
+        </select>
+
+        <select id="student-section-filter" name="sectionId" autoComplete="off" defaultValue={sectionId} className="input">
+          <option value="">كل الشعب</option>
+          {classGroups.map((group) =>
+            group.sections.map((section) => (
+              <option key={section.id} value={section.id}>
+                {group.className} / شعبة {section.name}
+              </option>
+            )),
+          )}
+        </select>
+
+        <div className="flex flex-wrap gap-2">
+          <button type="submit" className="btn btn-secondary min-w-[88px] justify-center">
+            بحث
+          </button>
+          {(query || status || classId || sectionId) ? (
+            <a href="/students" className="btn btn-soft min-w-[88px] justify-center">
+              مسح
+            </a>
+          ) : null}
+        </div>
       </div>
     </form>
   );

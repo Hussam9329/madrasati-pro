@@ -9,7 +9,7 @@ const QrAttendanceScanner = dynamic(
   () => import("./qr-attendance-scanner").then((mod) => ({ default: mod.QrAttendanceScanner })),
   { ssr: false },
 );
-import { QuickCodeAttendance } from "./quick-code-attendance";
+import { QuickCodeAttendance, type AttendanceStudentPlacementGroup } from "./quick-code-attendance";
 
 /**
  * AttendanceEntryPanel — Smart wrapper that detects the device type
@@ -18,7 +18,13 @@ import { QuickCodeAttendance } from "./quick-code-attendance";
  * - Phone/Tablet: QR camera scanner + Quick manual code entry
  * - Desktop: Quick manual code entry only
  */
-export function AttendanceEntryPanel({ checkoutWarningTime }: { checkoutWarningTime: string }) {
+export function AttendanceEntryPanel({
+  checkoutWarningTime,
+  classGroups,
+}: {
+  checkoutWarningTime: string;
+  classGroups: AttendanceStudentPlacementGroup[];
+}) {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -72,12 +78,20 @@ export function AttendanceEntryPanel({ checkoutWarningTime }: { checkoutWarningT
           </div>
 
           {/* Right column: Quick Code Entry */}
-          <QuickCodeAttendance qrAvailable checkoutWarningTime={checkoutWarningTime} />
+          <QuickCodeAttendance
+            qrAvailable
+            checkoutWarningTime={checkoutWarningTime}
+            classGroups={classGroups}
+          />
         </div>
       ) : (
         /* ── Desktop Layout: Quick Code Entry Only ── */
         <div className="mx-auto max-w-[700px]">
-          <QuickCodeAttendance qrAvailable={false} checkoutWarningTime={checkoutWarningTime} />
+          <QuickCodeAttendance
+            qrAvailable={false}
+            checkoutWarningTime={checkoutWarningTime}
+            classGroups={classGroups}
+          />
 
           {/* Hint about mobile QR */}
           <div className="mt-4 flex items-start gap-3 rounded-xl border border-blue-100 bg-blue-50/50 p-4">

@@ -27,6 +27,11 @@ import { DeleteConfirmButton } from "@/components/shared/delete-confirm-button";
 import { PrintButton } from "@/components/reports/print-button";
 import { getClasses, getSections } from "@/services/class-service";
 import {
+  getClassDisplayName,
+  type ClassListItem,
+  type SectionListItem,
+} from "@/types/class";
+import {
   deleteAttendanceRecord,
   getAttendanceRecords,
   getDailyAttendanceSummary,
@@ -48,6 +53,35 @@ import { getSchoolSettings } from "@/services/school-settings-service";
 import { getSchoolDayLabel } from "@/types/settings";
 
 export const dynamic = "force-dynamic";
+
+type AttendanceClassGroup = {
+  classId: string;
+  className: string;
+  sections: SectionListItem[];
+};
+
+function buildAttendanceClassGroups(
+  classes: ClassListItem[],
+  sections: SectionListItem[],
+): AttendanceClassGroup[] {
+  const sectionsByClassId = sections.reduce<Record<string, SectionListItem[]>>(
+    (groups, section) => {
+      if (!groups[section.classId]) {
+        groups[section.classId] = [];
+      }
+
+      groups[section.classId].push(section);
+      return groups;
+    },
+    {},
+  );
+
+  return classes.map((schoolClass) => ({
+    classId: schoolClass.id,
+    className: getClassDisplayName(schoolClass),
+    sections: sectionsByClassId[schoolClass.id] ?? [],
+  }));
+}
 
 type AttendancePageProps = {
   searchParams?: Promise<{
@@ -133,6 +167,7 @@ export default async function AttendancePage({
   }
 
   const hasAnyRecords = hasAnyStoredRecords || records.length > 0;
+  const classGroups = buildAttendanceClassGroups(classes, sections);
   const today = todayStr;
   const reportsHref = buildReportsHref(filter);
   const attendanceReturnHref = buildAttendanceReturnHref(filter, showAllRequested);
@@ -178,7 +213,10 @@ export default async function AttendancePage({
         />
 
         <section>
-          <AttendanceEntryPanel checkoutWarningTime={schoolSettings.checkoutWarningTime} />
+          <AttendanceEntryPanel
+            checkoutWarningTime={schoolSettings.checkoutWarningTime}
+            classGroups={classGroups}
+          />
         </section>
 
         <section className="flex flex-col gap-6">

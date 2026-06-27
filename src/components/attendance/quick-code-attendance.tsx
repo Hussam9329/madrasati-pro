@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import {
   CheckCircle2,
@@ -12,15 +12,29 @@ import {
   History,
   Search,
   User,
+  UserPlus,
 } from "lucide-react";
 import type { AttendanceScanResult } from "@/types/attendance";
 import { getLocalTimeISO, formatAttendanceTime } from "@/types/attendance";
+
+export type AttendanceStudentPlacementGroup = {
+  classId: string;
+  className: string;
+  sections: Array<{
+    id: string;
+    name: string;
+    capacity: number | null;
+    studentsCount: number;
+  }>;
+};
 
 type QuickCodeAttendanceProps = {
   /** Whether QR camera scanner is also available on this device */
   qrAvailable: boolean;
   /** Time after which checkout is considered normal, HH:mm. */
   checkoutWarningTime: string;
+  /** Class/section options used for quick manual student creation from attendance. */
+  classGroups: AttendanceStudentPlacementGroup[];
 };
 
 type StudentSearchResult = {
@@ -39,7 +53,11 @@ type ScanHistoryEntry = {
   timestamp: Date;
 };
 
-export function QuickCodeAttendance({ qrAvailable, checkoutWarningTime }: QuickCodeAttendanceProps) {
+export function QuickCodeAttendance({
+  qrAvailable,
+  checkoutWarningTime,
+  classGroups,
+}: QuickCodeAttendanceProps) {
   const router = useRouter();
   const [, startRefreshTransition] = useTransition();
   const [mode, setMode] = useState<"check-in" | "check-out">("check-in");
@@ -59,6 +77,17 @@ export function QuickCodeAttendance({ qrAvailable, checkoutWarningTime }: QuickC
 
   const searchAbortRef = useRef<AbortController | null>(null);
   const searchCacheRef = useRef<Map<string, StudentSearchResult[]>>(new Map());
+  const [manualStudent, setManualStudent] = useState({
+    fullName: "",
+    phone: "",
+    guardianPhone: "",
+    guardianTelegram: "",
+    birthDate: "",
+    placementId: "",
+  });
+  const [creatingStudent, setCreatingStudent] = useState(false);
+  const [manualStudentMessage, setManualStudentMessage] = useState<string | null>(null);
+  const hasPlacementOptions = classGroups.length > 0;
 
   // Search students by name or code only (no class/section filters)
   const searchStudents = useCallback(async (query: string) => {
@@ -224,7 +253,7 @@ export function QuickCodeAttendance({ qrAvailable, checkoutWarningTime }: QuickC
 
   // Submit attendance for direct code entry
   const handleSubmit = useCallback(
-    async (e?: React.FormEvent) => {
+    async (e?: FormEvent) => {
       if (e) e.preventDefault();
       if (!confirmEarlyCheckout()) return;
 
@@ -324,6 +353,120 @@ export function QuickCodeAttendance({ qrAvailable, checkoutWarningTime }: QuickC
     setError(null);
     inputRef.current?.focus();
   }, []);
+
+  const handleManualStudentChange = useCallback(
+    (field: keyof typeof manualStudent, value: string) => {
+      setManualStudent((prev) => ({ ...prev, [field]: value }));
+      setManualStudentMessage(null);
+    },
+    [],
+  );
+
+  const handleManualStudentCreate = useCallback(
+    async (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+
+      if (!hasPlacementOptions) {
+        setManualStudentMessage("أضف صفًا أو شعبة أولًا حتى يمكن ربط الطالب بالحضور.");
+        return;
+      }
+
+      if (!confirmEarlyCheckout()) return;
+
+      const [placementType, placementValue] = manualStudent.placementId.split(":");
+      if (!placementValue || !["class", "section"].includes(placementType)) {
+        setManualStudentMessage("اختر صفًا أو شعبة للطالب قبل الحفظ.");
+        return;
+      }
+
+      setCreatingStudent(true);
+      setResult(null);
+      setError(null);
+      setManualStudentMessage(null);
+
+      try {
+        const createRes = await fetch("/api/students", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            fullName: manualStudent.fullName,
+            phone: manualStudent.phone,
+            guardianPhone: manualStudent.guardianPhone,
+            guardianTelegram: manualStudent.guardianTelegram,
+            birthDate: manualStudent.birthDate,
+            ...(placementType === "section"
+              ? { sectionId: placementValue }
+              : { classId: placementValue }),
+          }),
+        });
+
+        const createData = await createRes.json();
+
+        if (!createData.ok || !createData.data?.id) {
+          setManualStudentMessage(createData.message || "تعذر إضافة الطالب.");
+          return;
+        }
+
+        const scanRes = await fetch("/api/attendance/scan", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            studentId: createData.data.id,
+            mode,
+            source: "manual-name",
+            clientTime: getLocalTimeISO(),
+          }),
+        });
+
+        const scanData: AttendanceScanResult = await scanRes.json();
+        setResult(scanData);
+
+        if (!scanData.ok) {
+          setError(scanData.message);
+          setManualStudentMessage("تمت إضافة الطالب، لكن لم يكتمل تسجيل الحضور. جرّب تسجيله من البحث أعلاه.");
+          return;
+        }
+
+        historyIdRef.current += 1;
+        setHistory((prev) => [
+          {
+            id: historyIdRef.current,
+            result: scanData,
+            mode,
+            timestamp: new Date(),
+          },
+          ...prev.slice(0, 9),
+        ]);
+
+        setManualStudent({
+          fullName: "",
+          phone: "",
+          guardianPhone: "",
+          guardianTelegram: "",
+          birthDate: "",
+          placementId: "",
+        });
+        setSearchQuery("");
+        setSelectedStudent(null);
+        setSearchResults([]);
+        setManualStudentMessage("تمت إضافة الطالب وتسجيل الحركة بنجاح.");
+        startRefreshTransition(() => router.refresh());
+      } catch {
+        setManualStudentMessage("حدث خطأ في الاتصال أثناء إضافة الطالب.");
+      } finally {
+        setCreatingStudent(false);
+        inputRef.current?.focus();
+      }
+    },
+    [
+      confirmEarlyCheckout,
+      hasPlacementOptions,
+      manualStudent,
+      mode,
+      router,
+      startRefreshTransition,
+    ],
+  );
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -510,6 +653,133 @@ export function QuickCodeAttendance({ qrAvailable, checkoutWarningTime }: QuickC
             اكتب اسم الطالب واختره من القائمة لتسجيل الحضور فورًا، أو أدخل رمزه مباشرة ثم اضغط Enter
           </p>
         </form>
+
+        <details className="mb-5 rounded-2xl border border-[var(--app-border-soft)] bg-[var(--app-card-soft)] p-4">
+          <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-extrabold text-[var(--app-text)]">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-100 text-blue-700">
+              <UserPlus size={17} />
+            </span>
+            إضافة طالب يدويًا من تبويبة الحضور
+          </summary>
+
+          <form onSubmit={handleManualStudentCreate} className="mt-4 grid gap-3">
+            <div className="grid gap-3 md:grid-cols-2">
+              <label className="grid gap-1 text-xs font-extrabold text-[var(--app-text-muted)]">
+                اسم الطالب
+                <input
+                  value={manualStudent.fullName}
+                  onChange={(event) => handleManualStudentChange("fullName", event.target.value)}
+                  required
+                  maxLength={120}
+                  placeholder="الاسم الكامل"
+                  className="input h-11 text-sm"
+                  autoComplete="off"
+                />
+              </label>
+
+              <label className="grid gap-1 text-xs font-extrabold text-[var(--app-text-muted)]">
+                الصف / الشعبة
+                <select
+                  value={manualStudent.placementId}
+                  onChange={(event) => handleManualStudentChange("placementId", event.target.value)}
+                  required
+                  disabled={!hasPlacementOptions}
+                  className="input h-11 text-sm"
+                >
+                  <option value="">اختر الصف أو الشعبة</option>
+                  {classGroups.map((group) =>
+                    group.sections.length > 0 ? (
+                      <optgroup key={group.classId} label={group.className}>
+                        {group.sections.map((section) => (
+                          <option key={section.id} value={`section:${section.id}`}>
+                            {group.className} / شعبة {section.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ) : (
+                      <option key={group.classId} value={`class:${group.classId}`}>
+                        {group.className} / إنشاء شعبة عامة تلقائيًا
+                      </option>
+                    ),
+                  )}
+                </select>
+              </label>
+
+              <label className="grid gap-1 text-xs font-extrabold text-[var(--app-text-muted)]">
+                هاتف الطالب
+                <input
+                  value={manualStudent.phone}
+                  onChange={(event) => handleManualStudentChange("phone", event.target.value)}
+                  required
+                  pattern="07\d{9}"
+                  maxLength={11}
+                  placeholder="07701234567"
+                  className="input h-11 text-sm"
+                  dir="ltr"
+                  autoComplete="off"
+                />
+              </label>
+
+              <label className="grid gap-1 text-xs font-extrabold text-[var(--app-text-muted)]">
+                هاتف ولي الأمر
+                <input
+                  value={manualStudent.guardianPhone}
+                  onChange={(event) => handleManualStudentChange("guardianPhone", event.target.value)}
+                  required
+                  pattern="07\d{9}"
+                  maxLength={11}
+                  placeholder="07801234567"
+                  className="input h-11 text-sm"
+                  dir="ltr"
+                  autoComplete="off"
+                />
+              </label>
+
+              <label className="grid gap-1 text-xs font-extrabold text-[var(--app-text-muted)]">
+                تاريخ الميلاد
+                <input
+                  value={manualStudent.birthDate}
+                  onChange={(event) => handleManualStudentChange("birthDate", event.target.value)}
+                  required
+                  type="date"
+                  className="input h-11 text-sm"
+                />
+              </label>
+
+              <label className="grid gap-1 text-xs font-extrabold text-[var(--app-text-muted)]">
+                تليكرام ولي الأمر
+                <input
+                  value={manualStudent.guardianTelegram}
+                  onChange={(event) => handleManualStudentChange("guardianTelegram", event.target.value)}
+                  maxLength={64}
+                  placeholder="@parent_user"
+                  className="input h-11 text-sm"
+                  dir="ltr"
+                  autoComplete="off"
+                />
+              </label>
+            </div>
+
+            {manualStudentMessage ? (
+              <p className="rounded-xl border border-[var(--app-border-soft)] bg-[var(--app-card)] px-3 py-2 text-sm font-bold leading-6 text-[var(--app-text-muted)]">
+                {manualStudentMessage}
+              </p>
+            ) : null}
+
+            <button
+              type="submit"
+              disabled={creatingStudent || !hasPlacementOptions}
+              className="btn btn-secondary justify-center"
+            >
+              {creatingStudent ? (
+                <RefreshCw size={17} className="animate-spin" />
+              ) : (
+                <UserPlus size={17} />
+              )}
+              إضافة الطالب وتسجيل {mode === "check-in" ? "الحضور" : "الانصراف"}
+            </button>
+          </form>
+        </details>
 
         {/* Result Display */}
         {result && (

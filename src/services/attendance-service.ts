@@ -1566,15 +1566,11 @@ export async function findStudentForAttendance(query: string) {
   const trimmed = query.trim();
   if (!trimmed) return [];
 
+  const normalizedQuery = normalizeSearchText(trimmed).replace(/^@+/, "");
+
   const students = await db.student.findMany({
     where: {
       status: "active",
-      OR: [
-        { fullName: { contains: trimmed } },
-        { studentCode: { contains: trimmed } },
-        { guardianPhone: { contains: trimmed } },
-        { guardianTelegram: { contains: trimmed } },
-      ],
     },
     include: {
       section: {
@@ -1583,16 +1579,32 @@ export async function findStudentForAttendance(query: string) {
         },
       },
     },
-    take: 20,
     orderBy: { fullName: "asc" },
   });
 
-  return students.map((s) => ({
-    id: s.id,
-    fullName: s.fullName,
-    studentCode: s.studentCode,
-    sectionName: s.section?.name ?? null,
-    className: s.section?.class?.name ?? null,
-    status: s.status,
-  }));
+  return students
+    .filter((student) => {
+      const haystack = [
+        student.fullName,
+        student.studentCode,
+        student.phone,
+        student.guardianPhone,
+        student.guardianTelegram,
+        student.section?.name,
+        student.section?.class?.name,
+      ]
+        .map((value) => normalizeSearchText(value).replace(/^@+/, ""))
+        .join(" ");
+
+      return haystack.includes(normalizedQuery);
+    })
+    .slice(0, 20)
+    .map((s) => ({
+      id: s.id,
+      fullName: s.fullName,
+      studentCode: s.studentCode,
+      sectionName: s.section?.name ?? null,
+      className: s.section?.class?.name ?? null,
+      status: s.status,
+    }));
 }
