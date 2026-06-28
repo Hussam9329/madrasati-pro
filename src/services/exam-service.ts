@@ -75,6 +75,104 @@ export async function createExam(input: {
   }
 }
 
+export async function updateExam(input: {
+  id: string;
+  name: string;
+  type: string;
+  date?: string | Date;
+  maxScore?: number;
+  passScore?: number;
+  failScore?: number;
+  notes?: string;
+  subjectId: string;
+  sectionId: string;
+  teacherId?: string;
+}): Promise<ExamServiceResult<Prisma.ExamGetPayload<{ include: { subject: true; section: { include: { class: true } } } }>>> {
+  if (!hasSupabaseConfig()) {
+    return {
+      ok: false,
+      message: getSupabaseConfigErrorMessage(),
+    };
+  }
+
+  const id = input.id.trim();
+  if (!id) return { ok: false, message: "معرّف الامتحان مفقود." };
+
+  const name = input.name.trim();
+  if (name.length < 2) return { ok: false, message: "اسم الامتحان مطلوب." };
+
+  const maxScore = Number(input.maxScore ?? 100);
+  const passScore = Number(input.passScore ?? 50);
+  if (!Number.isFinite(maxScore) || maxScore <= 0) {
+    return { ok: false, message: "الدرجة الكلية غير صحيحة." };
+  }
+  if (!Number.isFinite(passScore) || passScore < 0 || passScore > maxScore) {
+    return { ok: false, message: "درجة النجاح يجب أن تكون بين 0 والدرجة الكلية." };
+  }
+
+  const existing = await db.exam.findUnique({ where: { id } });
+  if (!existing) return { ok: false, message: "الامتحان غير موجود." };
+
+  const subject = await db.subject.findUnique({ where: { id: input.subjectId } });
+  if (!subject) return { ok: false, message: "المادة غير موجودة." };
+
+  const section = await db.section.findUnique({ where: { id: input.sectionId } });
+  if (!section) return { ok: false, message: "الشعبة غير موجودة." };
+
+  if (input.teacherId) {
+    const teacher = await db.teacher.findUnique({ where: { id: input.teacherId } });
+    if (!teacher) return { ok: false, message: "المدرس غير موجود." };
+  }
+
+  const examDate = input.date ? new Date(input.date) : existing.date ?? new Date();
+
+  try {
+    const exam = await db.exam.update({
+      where: { id },
+      data: {
+        name,
+        type: input.type || existing.type || "daily",
+        date: examDate,
+        maxScore,
+        passScore,
+        failScore: input.failScore,
+        notes: input.notes?.trim() || null,
+        subjectId: input.subjectId,
+        sectionId: input.sectionId,
+        teacherId: input.teacherId || null,
+      },
+      include: {
+        subject: true,
+        section: { include: { class: true } },
+      },
+    });
+
+    const existingGrades = await db.grade.findMany({
+      where: { examId: id },
+      select: { id: true },
+    });
+
+    for (const grade of existingGrades) {
+      await db.grade.update({
+        where: { id: grade.id },
+        data: {
+          title: name,
+          maxScore,
+          examType: input.type || existing.type || "daily",
+          subjectId: input.subjectId,
+          teacherId: input.teacherId || null,
+          date: examDate,
+        },
+      });
+    }
+
+    return { ok: true, data: exam, message: "تم تحديث الامتحان بنجاح." };
+  } catch (error) {
+    console.error("[updateExam] Error:", error);
+    return { ok: false, message: "حدث خطأ أثناء تحديث الامتحان." };
+  }
+}
+
 export async function saveExamGrades(
   examId: string,
   grades: { studentId: string; score: number; notes?: string }[],

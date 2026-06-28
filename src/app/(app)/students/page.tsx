@@ -461,21 +461,20 @@ function StudentCreateForm({ classGroups }: StudentCreateFormProps) {
                   htmlFor="phone"
                   className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
                 >
-                  رقم هاتف الطالب <span className="text-red-600">*</span>
+                  رقم هاتف الطالب <span className="text-xs text-[var(--app-text-muted)]">(اختياري)</span>
                 </label>
                 <input
                   id="phone"
                   name="phone"
                   type="tel"
                   autoComplete="off"
-                  required
                   pattern="07\d{9}"
                   maxLength={11}
                   placeholder="07701234567"
                   className="input text-left"
                   dir="ltr"
                 />
-                <p className="mt-1 text-xs leading-6 text-[var(--app-text-muted)]">11 رقم ويبدأ بـ 07.</p>
+                <p className="mt-1 text-xs leading-6 text-[var(--app-text-muted)]">اتركه فارغًا إذا لم يتوفر الآن، أو اكتب 11 رقم ويبدأ بـ 07.</p>
               </div>
 
               <div>
@@ -483,21 +482,20 @@ function StudentCreateForm({ classGroups }: StudentCreateFormProps) {
                   htmlFor="guardianPhone"
                   className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
                 >
-                  رقم هاتف ولي الأمر <span className="text-red-600">*</span>
+                  رقم هاتف ولي الأمر <span className="text-xs text-[var(--app-text-muted)]">(اختياري)</span>
                 </label>
                 <input
                   id="guardianPhone"
                   name="guardianPhone"
                   type="tel"
                   autoComplete="off"
-                  required
                   pattern="07\d{9}"
                   maxLength={11}
                   placeholder="07801234567"
                   className="input text-left"
                   dir="ltr"
                 />
-                <p className="mt-1 text-xs leading-6 text-[var(--app-text-muted)]">يستخدم للتواصل عبر واتساب.</p>
+                <p className="mt-1 text-xs leading-6 text-[var(--app-text-muted)]">يستخدم للتواصل عبر واتساب عند توفره.</p>
               </div>
 
               <div>
@@ -528,14 +526,13 @@ function StudentCreateForm({ classGroups }: StudentCreateFormProps) {
                 htmlFor="birthDate"
                 className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
               >
-                تاريخ الميلاد <span className="text-red-600">*</span>
+                تاريخ الميلاد <span className="text-xs text-[var(--app-text-muted)]">(اختياري)</span>
               </label>
               <input
                 id="birthDate"
                 name="birthDate"
                 type="date"
                 autoComplete="off"
-                required
                 className="input"
               />
             </div>

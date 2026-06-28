@@ -124,24 +124,16 @@ export function validateStudentInput(
     errors.fullName = "الاسم لا يجب أن يحتوي على أرقام.";
   }
 
-  if (!normalized.phone) {
-    errors.phone = "رقم هاتف الطالب يجب أن يتكون من 11 رقم ويبدأ بـ 07.";
-  } else if (!IRAQI_PHONE_REGEX.test(normalized.phone)) {
+  if (normalized.phone && !IRAQI_PHONE_REGEX.test(normalized.phone)) {
     errors.phone = "رقم هاتف الطالب يجب أن يتكون من 11 رقم ويبدأ بـ 07.";
   }
 
-  if (!normalized.guardianPhone) {
-    errors.guardianPhone = "رقم هاتف ولي الأمر يجب أن يتكون من 11 رقم ويبدأ بـ 07.";
-  } else if (!IRAQI_PHONE_REGEX.test(normalized.guardianPhone)) {
+  if (normalized.guardianPhone && !IRAQI_PHONE_REGEX.test(normalized.guardianPhone)) {
     errors.guardianPhone = "رقم هاتف ولي الأمر يجب أن يتكون من 11 رقم ويبدأ بـ 07.";
   }
 
   if (normalized.guardianTelegram && !/^@?[A-Za-z0-9_]{5,32}$/.test(normalized.guardianTelegram)) {
     errors.guardianTelegram = "معرّف تليكرام ولي الأمر غير صحيح.";
-  }
-
-  if (!normalized.birthDate) {
-    errors.birthDate = "تاريخ الميلاد مطلوب.";
   }
 
   if (!normalized.sectionId) {

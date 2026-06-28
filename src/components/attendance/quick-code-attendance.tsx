@@ -712,11 +712,10 @@ export function QuickCodeAttendance({
 
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               <label className="grid gap-2 text-xs font-extrabold text-[var(--app-text-muted)]">
-                هاتف الطالب
+                هاتف الطالب <span className="font-bold text-[var(--app-text-soft)]">(اختياري)</span>
                 <input
                   value={manualStudent.phone}
                   onChange={(event) => handleManualStudentChange("phone", event.target.value)}
-                  required
                   pattern="07\d{9}"
                   maxLength={11}
                   placeholder="07701234567"
@@ -727,11 +726,10 @@ export function QuickCodeAttendance({
               </label>
 
               <label className="grid gap-2 text-xs font-extrabold text-[var(--app-text-muted)]">
-                هاتف ولي الأمر
+                هاتف ولي الأمر <span className="font-bold text-[var(--app-text-soft)]">(اختياري)</span>
                 <input
                   value={manualStudent.guardianPhone}
                   onChange={(event) => handleManualStudentChange("guardianPhone", event.target.value)}
-                  required
                   pattern="07\d{9}"
                   maxLength={11}
                   placeholder="07801234567"
@@ -742,11 +740,10 @@ export function QuickCodeAttendance({
               </label>
 
               <label className="grid gap-2 text-xs font-extrabold text-[var(--app-text-muted)]">
-                تاريخ الميلاد
+                تاريخ الميلاد <span className="font-bold text-[var(--app-text-soft)]">(اختياري)</span>
                 <input
                   value={manualStudent.birthDate}
                   onChange={(event) => handleManualStudentChange("birthDate", event.target.value)}
-                  required
                   type="date"
                   className="input h-11 text-sm"
                 />
@@ -774,7 +771,7 @@ export function QuickCodeAttendance({
 
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-xs font-bold leading-6 text-[var(--app-text-muted)]">
-                الحفظ هنا يضيف الطالب إلى النظام ثم يسجل له {mode === "check-in" ? "حضور" : "انصراف"} بنفس العملية.
+                الحفظ السريع يحتاج الاسم والصف/الشعبة فقط. أرقام الهاتف وتاريخ الميلاد يمكن إكمالها لاحقًا من ملف الطالب.
               </p>
 
               <button
