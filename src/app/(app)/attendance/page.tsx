@@ -19,6 +19,7 @@ import { safeQuery } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
+import { InstantFilterForm } from "@/components/shared/instant-filter-form";
 import { SmartAlert } from "@/components/shared/smart-alert";
 import { AttendanceEntryPanel } from "@/components/attendance/attendance-entry-panel";
 import { AttendanceQuickActions } from "@/components/attendance/attendance-quick-actions";
@@ -540,7 +541,7 @@ function AttendanceSearchForm({
   reportsHref,
 }: AttendanceSearchFormProps) {
   return (
-    <form action="/attendance" className="app-card p-5">
+    <InstantFilterForm action="/attendance" className="app-card p-5">
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <label
@@ -714,7 +715,7 @@ function AttendanceSearchForm({
           مسح الكل
         </a>
       </div>
-    </form>
+    </InstantFilterForm>
   );
 }
 
@@ -846,7 +847,7 @@ function AttendanceList({
         </div>
       </div>
 
-      <form
+      <InstantFilterForm
         action="/attendance"
         className="border-b border-[var(--app-border-soft)] bg-[var(--app-card-soft)] p-4"
       >
@@ -890,7 +891,7 @@ function AttendanceList({
             ) : null}
           </div>
         </div>
-      </form>
+      </InstantFilterForm>
 
       <div className="divide-y divide-[var(--app-border-soft)]">
         {records.map((record) => (

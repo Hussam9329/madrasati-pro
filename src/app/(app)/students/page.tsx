@@ -16,6 +16,7 @@ import {
 import { requireAdmin } from "@/lib/auth";
 import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
+import { InstantFilterForm } from "@/components/shared/instant-filter-form";
 import { SmartAlert } from "@/components/shared/smart-alert";
 import { safeQuery } from "@/lib/db";
 import { getTelegramDesktopUrl, getWhatsappUrl } from "@/lib/contact-links";
@@ -708,7 +709,7 @@ function StudentSearchForm({
   const hasActiveFilters = Boolean(query || status || classId || sectionId);
 
   return (
-    <form action="/students" className="app-card overflow-hidden">
+    <InstantFilterForm action="/students" className="app-card overflow-hidden">
       <div className="border-b border-[var(--app-border-soft)] p-5">
         <h3 className="text-base font-extrabold text-[var(--app-text)]">
           البحث والتصفية
@@ -798,7 +799,7 @@ function StudentSearchForm({
           </a>
         </div>
       </div>
-    </form>
+    </InstantFilterForm>
   );
 }
 

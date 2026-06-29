@@ -12,6 +12,7 @@ import { safeQuery } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
+import { InstantFilterForm } from "@/components/shared/instant-filter-form";
 import { SmartAlert } from "@/components/shared/smart-alert";
 import {
   createSubject,
@@ -348,7 +349,7 @@ type SubjectSearchFormProps = {
 
 function SubjectSearchForm({ query }: SubjectSearchFormProps) {
   return (
-    <form action="/subjects" className="app-card p-5">
+    <InstantFilterForm action="/subjects" className="app-card p-5">
       <label
         htmlFor="q"
         className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
@@ -377,7 +378,7 @@ function SubjectSearchForm({ query }: SubjectSearchFormProps) {
           بحث
         </button>
       </div>
-    </form>
+    </InstantFilterForm>
   );
 }
 

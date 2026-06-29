@@ -14,6 +14,7 @@ import { safeQuery } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
+import { InstantFilterForm } from "@/components/shared/instant-filter-form";
 import { SmartAlert } from "@/components/shared/smart-alert";
 import {
   assignSubjectsToClass,
@@ -652,7 +653,7 @@ type ClassSearchFormProps = {
 
 function ClassSearchForm({ query }: ClassSearchFormProps) {
   return (
-    <form action="/classes" className="app-card p-5">
+    <InstantFilterForm action="/classes" className="app-card p-5">
       <label
         htmlFor="q"
         className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
@@ -681,7 +682,7 @@ function ClassSearchForm({ query }: ClassSearchFormProps) {
           بحث
         </button>
       </div>
-    </form>
+    </InstantFilterForm>
   );
 }
 

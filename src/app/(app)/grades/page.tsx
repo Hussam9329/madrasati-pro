@@ -20,6 +20,7 @@ import { safeQuery } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
+import { InstantFilterForm } from "@/components/shared/instant-filter-form";
 import { SmartAlert } from "@/components/shared/smart-alert";
 import { DeleteConfirmButton } from "@/components/shared/delete-confirm-button";
 import { getExams } from "@/services/exam-service";
@@ -254,7 +255,7 @@ type GradeExamFilterFormProps = {
 
 function GradeExamFilterForm({ sections, subjects, teachers, sectionId, subjectId, teacherId, examType, query }: GradeExamFilterFormProps) {
   return (
-    <form action="/grades" className="app-card overflow-hidden">
+    <InstantFilterForm action="/grades" className="app-card overflow-hidden">
       <div className="border-b border-[var(--app-border-soft)] bg-gradient-to-l to-indigo-50/40 to-amber-50/20 p-6">
         <div className="flex items-start gap-3">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700">
@@ -318,7 +319,7 @@ function GradeExamFilterForm({ sections, subjects, teachers, sectionId, subjectI
           <button type="submit" className="btn btn-primary">عرض الامتحانات</button>
         </div>
       </div>
-    </form>
+    </InstantFilterForm>
   );
 }
 
@@ -330,7 +331,7 @@ function GradeSearchForm({ query, sectionId, subjectId, teacherId, examType }: {
   examType: string;
 }) {
   return (
-    <form action="/grades" className="app-card p-5">
+    <InstantFilterForm action="/grades" className="app-card p-5">
       <label htmlFor="q" className="mb-2 block text-sm font-extrabold text-[var(--app-text)]">بحث داخل الدرجات المحفوظة</label>
       <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
         <div className="relative">
@@ -343,7 +344,7 @@ function GradeSearchForm({ query, sectionId, subjectId, teacherId, examType }: {
       {subjectId && <input type="hidden" name="subjectId" value={subjectId} />}
       {teacherId && <input type="hidden" name="teacherId" value={teacherId} />}
       {examType && <input type="hidden" name="examType" value={examType} />}
-    </form>
+    </InstantFilterForm>
   );
 }
 

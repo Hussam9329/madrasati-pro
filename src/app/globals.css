@@ -76,6 +76,8 @@
   --app-border-soft: var(--color-app-border-soft);
   --primary: var(--color-primary);
   --primary-soft: var(--color-primary-soft);
+  --app-primary: var(--color-primary);
+  --app-primary-soft: var(--color-primary-soft);
   --success: var(--color-success);
   --success-soft: var(--color-success-soft);
   --warning: var(--color-warning);
@@ -415,6 +417,7 @@ html.dark input[type="time"]::-webkit-calendar-picker-indicator {
   html {
     scroll-behavior: smooth;
     text-size-adjust: 100%;
+    font-size: clamp(14px, 0.26vw + 12.8px, 16px);
   }
 
   body {
@@ -427,6 +430,7 @@ html.dark input[type="time"]::-webkit-calendar-picker-indicator {
       linear-gradient(180deg, #f8fafc 0%, var(--color-app-bg) 40%, #f1f5f9 100%);
     color: var(--color-app-text);
     direction: rtl;
+    overflow-x: hidden;
   }
 
   html.dark body {
@@ -441,10 +445,50 @@ html.dark input[type="time"]::-webkit-calendar-picker-indicator {
   textarea,
   select {
     font: inherit;
+    max-width: 100%;
+  }
+
+  main,
+  section,
+  article,
+  aside,
+  header,
+  footer,
+  nav,
+  form,
+  fieldset,
+  div {
+    min-width: 0;
+  }
+
+  p,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  a,
+  span,
+  label {
+    overflow-wrap: anywhere;
   }
 
   button {
     cursor: pointer;
+  }
+
+  input[type="checkbox"],
+  input[type="radio"] {
+    accent-color: var(--color-primary);
+  }
+
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--color-app-text);
+    box-shadow: 0 0 0 1000px var(--color-app-card-soft) inset;
+    transition: background-color 9999s ease-out 0s;
   }
 
   button:disabled,
@@ -529,7 +573,7 @@ html.dark input[type="time"]::-webkit-calendar-picker-indicator {
     width: 100%;
     max-width: 1440px;
     margin-inline: auto;
-    padding-inline: 24px;
+    padding-inline: clamp(14px, 2vw, 32px);
   }
 
   .app-card {
@@ -561,7 +605,7 @@ html.dark input[type="time"]::-webkit-calendar-picker-indicator {
   }
 
   .app-title {
-    font-size: 28px;
+    font-size: clamp(1.35rem, 1rem + 0.9vw, 1.85rem);
     line-height: 1.25;
     font-weight: 800;
     letter-spacing: -0.02em;
@@ -569,7 +613,7 @@ html.dark input[type="time"]::-webkit-calendar-picker-indicator {
   }
 
   .app-subtitle {
-    font-size: 15px;
+    font-size: clamp(0.88rem, 0.82rem + 0.18vw, 0.98rem);
     line-height: 1.8;
     color: var(--color-app-text-muted);
   }
@@ -580,11 +624,14 @@ html.dark input[type="time"]::-webkit-calendar-picker-indicator {
     justify-content: center;
     gap: 8px;
     min-height: 42px;
-    padding: 10px 16px;
+    min-width: 0;
+    padding: 10px clamp(12px, 1.5vw, 16px);
     border-radius: var(--radius-md);
     border: 1px solid transparent;
     font-weight: 700;
-    line-height: 1;
+    line-height: 1.25;
+    text-align: center;
+    white-space: normal;
     transition:
       background-color 180ms ease,
       color 180ms ease,
@@ -664,6 +711,7 @@ html.dark input[type="time"]::-webkit-calendar-picker-indicator {
     border-radius: var(--radius-md);
     border: 1px solid var(--color-app-border);
     background: #ffffff;
+    min-width: 0;
     padding: 10px 14px;
     color: var(--color-app-text);
     transition:
@@ -728,6 +776,26 @@ html.dark input[type="time"]::-webkit-calendar-picker-indicator {
     color: #1e3a8a;
   }
 
+  html.dark .badge-success {
+    background: rgba(16, 185, 129, 0.16);
+    color: #34d399;
+  }
+
+  html.dark .badge-warning {
+    background: rgba(245, 158, 11, 0.16);
+    color: #fbbf24;
+  }
+
+  html.dark .badge-danger {
+    background: rgba(244, 63, 94, 0.16);
+    color: #fb7185;
+  }
+
+  html.dark .badge-info {
+    background: rgba(99, 102, 241, 0.16);
+    color: #c7d2fe;
+  }
+
   .smart-alert {
     display: flex;
     gap: 12px;
@@ -767,6 +835,26 @@ html.dark input[type="time"]::-webkit-calendar-picker-indicator {
     background: linear-gradient(135deg, #ffffff 0%, var(--color-danger-soft) 100%);
   }
 
+  html.dark .smart-alert-info {
+    border-color: rgba(34, 211, 238, 0.22);
+    background: linear-gradient(135deg, var(--color-app-card) 0%, rgba(8, 145, 178, 0.18) 100%);
+  }
+
+  html.dark .smart-alert-success {
+    border-color: rgba(52, 211, 153, 0.24);
+    background: linear-gradient(135deg, var(--color-app-card) 0%, rgba(5, 150, 105, 0.18) 100%);
+  }
+
+  html.dark .smart-alert-warning {
+    border-color: rgba(251, 191, 36, 0.24);
+    background: linear-gradient(135deg, var(--color-app-card) 0%, rgba(234, 88, 12, 0.18) 100%);
+  }
+
+  html.dark .smart-alert-danger {
+    border-color: rgba(251, 113, 133, 0.26);
+    background: linear-gradient(135deg, var(--color-app-card) 0%, rgba(225, 29, 72, 0.18) 100%);
+  }
+
   .page-grid {
     display: grid;
     gap: 18px;
@@ -774,13 +862,13 @@ html.dark input[type="time"]::-webkit-calendar-picker-indicator {
 
   .stat-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
     gap: 16px;
   }
 
   .quick-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
     gap: 14px;
   }
 
@@ -833,6 +921,18 @@ html.dark input[type="time"]::-webkit-calendar-picker-indicator {
 
   .no-scrollbar {
     scrollbar-width: none;
+  }
+
+  .table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .table-responsive > table,
+  table {
+    width: 100%;
+    max-width: 100%;
   }
 
   .glass {
@@ -915,12 +1015,15 @@ html.dark input[type="time"]::-webkit-calendar-picker-indicator {
 
 /* ===== Responsive ===== */
 @media (max-width: 1180px) {
-  .stat-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 920px) {
+  .app-card {
+    border-radius: var(--radius-md);
   }
 
-  .quick-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .btn {
+    width: auto;
   }
 }
 
@@ -930,12 +1033,12 @@ html.dark input[type="time"]::-webkit-calendar-picker-indicator {
   }
 
   .app-title {
-    font-size: 23px;
+    font-size: clamp(1.28rem, 1.05rem + 1vw, 1.55rem);
   }
 
-  .stat-grid,
-  .quick-grid {
-    grid-template-columns: 1fr;
+  .btn,
+  .input {
+    min-height: 42px;
   }
 }
 

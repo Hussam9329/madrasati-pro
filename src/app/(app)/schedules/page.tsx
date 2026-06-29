@@ -18,6 +18,7 @@ import { safeQuery } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
+import { InstantFilterForm } from "@/components/shared/instant-filter-form";
 import { SmartAlert } from "@/components/shared/smart-alert";
 import { DeleteConfirmButton } from "@/components/shared/delete-confirm-button";
 import { getSections } from "@/services/class-service";
@@ -620,7 +621,7 @@ type ScheduleSearchFormProps = {
 
 function ScheduleSearchForm({ query, dayOfWeek }: ScheduleSearchFormProps) {
   return (
-    <form action="/schedules" className="app-card p-5">
+    <InstantFilterForm action="/schedules" className="app-card p-5">
       <label
         htmlFor="q"
         className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"
@@ -665,7 +666,7 @@ function ScheduleSearchForm({ query, dayOfWeek }: ScheduleSearchFormProps) {
           بحث
         </button>
       </div>
-    </form>
+    </InstantFilterForm>
   );
 }
 
