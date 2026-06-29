@@ -251,6 +251,7 @@ export async function createStudent(
             errors: { studentCode: "رقم الطالب مستخدم مسبقًا." },
           };
         }
+        console.error("[createStudent] db.student.create failed:", error);
         return {
           ok: false,
           message: "حدث خطأ أثناء إضافة الطالب.",
@@ -274,6 +275,7 @@ export async function createStudent(
       };
     }
 
+    console.error("[createStudent] Unexpected error:", error);
     return {
       ok: false,
       message: "حدث خطأ أثناء إضافة الطالب.",

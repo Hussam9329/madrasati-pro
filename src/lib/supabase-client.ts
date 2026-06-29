@@ -860,6 +860,27 @@ class SupabaseModelHandler {
     );
   }
 
+  /**
+   * Build a copy of `data` with all null values removed.
+   *
+   * Used as a fallback when an insert/update fails because the database schema
+   * is missing a nullable column (e.g. a migration like `guardianTelegram`
+   * wasn't applied). By dropping null fields we let the database apply its
+   * own column defaults (which are NULL for nullable columns) instead of
+   * failing the whole write.
+   *
+   * Non-null values are always kept — if a real value was supplied for a
+   * missing column, the retry will still fail and surface a meaningful error.
+   */
+  private stripNullFields(data: Record<string, any>): Record<string, any> {
+    const filtered: Record<string, any> = {};
+    for (const [key, value] of Object.entries(data)) {
+      if (value === null) continue;
+      filtered[key] = value;
+    }
+    return filtered;
+  }
+
   private async rollbackNestedCreate(
     parent: Record<string, any>,
     nestedCreates: Array<{
@@ -916,11 +937,32 @@ class SupabaseModelHandler {
     // Invalidate cache before write
     invalidateRelatedTableCache(this.table);
 
-    const { data: result, error } = await this.getClient()
+    let { data: result, error } = await this.getClient()
       .from(this.table)
       .insert(data)
       .select()
       .single();
+
+    // Resilience fallback: if the table is missing a nullable column (e.g. a
+    // migration like `guardianTelegram` was not yet applied to the live
+    // Supabase project), retry the insert with all null fields stripped. The
+    // database will apply its own default (NULL) for the missing column
+    // instead of rejecting the whole write. This keeps "add new student"
+    // working even when the DB schema lags behind the code.
+    if (error && this.isMissingAutoColumnError(error)) {
+      const fallbackData = this.stripNullFields(data);
+      // Only retry if stripping nulls actually changed something — otherwise
+      // we'd just hit the same error again.
+      if (Object.keys(fallbackData).length !== Object.keys(data).length) {
+        const retry = await this.getClient()
+          .from(this.table)
+          .insert(fallbackData)
+          .select()
+          .single();
+        result = retry.data;
+        error = retry.error;
+      }
+    }
 
     if (error) {
       console.error(`[SupabaseModel.create] Error on ${this.table}:`, error);
@@ -991,26 +1033,42 @@ class SupabaseModelHandler {
       ...scalarData,
       updatedAt: new Date().toISOString(),
     });
-    let query = this.getClient()
-      .from(this.table)
-      .update(updateData);
 
-    if (where.id) {
-      query = query.eq("id", where.id);
-    } else if (where.username) {
-      query = query.eq("username", where.username);
-    } else if (where.studentCode) {
-      query = query.eq("studentCode", where.studentCode);
-    } else {
-      // Apply generic where conditions
-      for (const [key, value] of Object.entries(where)) {
-        if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
-          query = query.eq(key, value);
+    const buildQuery = (payload: Record<string, any>) => {
+      let query = this.getClient()
+        .from(this.table)
+        .update(payload);
+
+      if (where.id) {
+        query = query.eq("id", where.id);
+      } else if (where.username) {
+        query = query.eq("username", where.username);
+      } else if (where.studentCode) {
+        query = query.eq("studentCode", where.studentCode);
+      } else {
+        // Apply generic where conditions
+        for (const [key, value] of Object.entries(where)) {
+          if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+            query = query.eq(key, value);
+          }
         }
       }
-    }
+      return query;
+    };
 
-    const { data: result, error } = await query.select().single();
+    let { data: result, error } = await buildQuery(updateData).select().single();
+
+    // Same resilience fallback as create(): if the table is missing a nullable
+    // column, retry the update with null fields stripped so the database can
+    // apply its own defaults.
+    if (error && this.isMissingAutoColumnError(error)) {
+      const fallbackData = this.stripNullFields(updateData);
+      if (Object.keys(fallbackData).length !== Object.keys(updateData).length) {
+        const retry = await buildQuery(fallbackData).select().single();
+        result = retry.data;
+        error = retry.error;
+      }
+    }
 
     if (error) {
       console.error(`[SupabaseModel.update] Error on ${this.table}:`, error);
