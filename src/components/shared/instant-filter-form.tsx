@@ -196,10 +196,20 @@ function restoreFocus(form: HTMLFormElement | null, snapshot: ScrollSnapshot) {
     snapshot.selectionStart !== null &&
     snapshot.selectionEnd !== null
   ) {
+    // احفظ موضع التمرير قبل setSelectionRange لأن بعض المتصفحات
+    // تقوم بالتمرير لإظهار الحقل داخل العرض بعد تغيير المؤشر.
+    const scrollX = window.scrollX;
+    const scrollY = window.scrollY;
+
     try {
       field.setSelectionRange(snapshot.selectionStart, snapshot.selectionEnd);
     } catch {
       // بعض أنواع الحقول لا تدعم تحديد المؤشر.
+    }
+
+    // أعد ضبط موضع التمرير في حال تغيّر بسبب setSelectionRange.
+    if (window.scrollX !== scrollX || window.scrollY !== scrollY) {
+      window.scrollTo(scrollX, scrollY);
     }
   }
 }
@@ -305,6 +315,14 @@ export function InstantFilterForm({
       });
     }, delay);
   }, [buildHref, restoreScroll, router]);
+
+  useEffect(() => {
+    // أخبر المتصفح ألا يحاول استعادة موضع التمرير تلقائيًا
+    // لأننا ندير ذلك يدويًا أثناء تحديث الفلاتر الفورية.
+    if (typeof window !== "undefined" && "scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
+    }
+  }, []);
 
   useEffect(() => {
     lastUrlRef.current = currentHref;
