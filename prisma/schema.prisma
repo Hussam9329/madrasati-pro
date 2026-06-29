@@ -20,7 +20,7 @@ datasource db {
 // ─── Admins ─────────────────────────────────────────────────────────────
 
 model Admin {
-  id           String   @id
+  id            String  @id @default(cuid())
   username     String   @unique
   passwordHash String
   isRoot       Boolean? @default(false)
@@ -35,7 +35,7 @@ model Admin {
 // ─── Admin Sessions (revocable JWT sessions) ────────────────────────────
 
 model AdminSession {
-  id        String    @id
+  id            String  @id @default(cuid())
   adminId   String
   jti       String    @unique
   createdAt DateTime  @default(now())
@@ -54,7 +54,7 @@ model AdminSession {
 // ─── School Classes ─────────────────────────────────────────────────────
 
 model SchoolClass {
-  id          String   @id
+  id            String  @id @default(cuid())
   name        String
   level       String?
   description String?
@@ -72,7 +72,7 @@ model SchoolClass {
 // ─── Subjects ───────────────────────────────────────────────────────────
 
 model Subject {
-  id          String   @id
+  id            String  @id @default(cuid())
   name        String
   description String?
   isActive    Boolean  @default(true)
@@ -91,7 +91,7 @@ model Subject {
 // ─── Sections (within a class) ──────────────────────────────────────────
 
 model Section {
-  id          String   @id
+  id            String  @id @default(cuid())
   name        String
   capacity    Int?
   description String?
@@ -112,7 +112,7 @@ model Section {
 // ─── Class ↔ Subject join ───────────────────────────────────────────────
 
 model ClassSubject {
-  id        String   @id
+  id            String  @id @default(cuid())
   classId   String
   subjectId String
   createdAt DateTime @default(now())
@@ -127,7 +127,7 @@ model ClassSubject {
 // ─── Teachers ───────────────────────────────────────────────────────────
 
 model Teacher {
-  id        String   @id
+  id            String  @id @default(cuid())
   fullName  String
   phone     String?
   email     String?
@@ -151,7 +151,7 @@ model Teacher {
 // ─── Teacher ↔ Subject join ─────────────────────────────────────────────
 
 model TeacherSubject {
-  id        String   @id
+  id            String  @id @default(cuid())
   teacherId String
   subjectId String
   createdAt DateTime @default(now())
@@ -166,7 +166,7 @@ model TeacherSubject {
 // ─── Teacher ↔ Section join ─────────────────────────────────────────────
 
 model TeacherSection {
-  id        String   @id
+  id            String  @id @default(cuid())
   teacherId String
   sectionId String
   createdAt DateTime @default(now())
@@ -181,7 +181,7 @@ model TeacherSection {
 // ─── Students ───────────────────────────────────────────────────────────
 
 model Student {
-  id                String   @id
+  id            String  @id @default(cuid())
   fullName          String
   studentCode       String?  @unique
   gender            String?
@@ -212,7 +212,7 @@ model Student {
 // ─── Schedules ──────────────────────────────────────────────────────────
 
 model Schedule {
-  id        String    @id
+  id            String  @id @default(cuid())
   sectionId String
   subjectId String?
   teacherId String?
@@ -235,7 +235,7 @@ model Schedule {
 // ─── Attendance Records ─────────────────────────────────────────────────
 
 model AttendanceRecord {
-  id         String    @id
+  id            String  @id @default(cuid())
   date       DateTime
   mode       String?
   status     String
@@ -259,7 +259,7 @@ model AttendanceRecord {
 // ─── Exams ──────────────────────────────────────────────────────────────
 
 model Exam {
-  id         String    @id
+  id            String  @id @default(cuid())
   name       String
   type       String    @default("daily")
   date       DateTime  @default(now())
@@ -286,7 +286,7 @@ model Exam {
 // ─── Grades ─────────────────────────────────────────────────────────────
 
 model Grade {
-  id              String    @id
+  id            String  @id @default(cuid())
   title           String?
   score           Decimal   @default(0) @db.Decimal(8, 2)
   maxScore        Decimal   @default(100) @db.Decimal(8, 2)
@@ -319,7 +319,7 @@ model Grade {
 // ─── Class Fee Settings ─────────────────────────────────────────────────
 
 model ClassFeeSetting {
-  id            String   @id
+  id            String  @id @default(cuid())
   classId       String
   amount        Decimal  @default(0) @db.Decimal(12, 2)
   uniformAmount Decimal  @default(0) @db.Decimal(12, 2)
@@ -337,7 +337,7 @@ model ClassFeeSetting {
 // ─── Payments ───────────────────────────────────────────────────────────
 
 model Payment {
-  id              String    @id
+  id            String  @id @default(cuid())
   feeTitle        String?
   feeType         String    @default("tuition")
   amount          Decimal   @default(0) @db.Decimal(12, 2)
