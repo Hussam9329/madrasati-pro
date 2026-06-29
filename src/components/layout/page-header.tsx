@@ -6,6 +6,7 @@ import {
   CheckSquare,
   ClipboardList,
   CreditCard,
+  Database,
   FileText,
   GraduationCap,
   Landmark,
@@ -44,6 +45,7 @@ const iconMap: Record<NavigationIcon, React.ElementType> = {
   reports: FileText,
   settings: Settings,
   permissions: ShieldCheck,
+  database: Database,
 };
 
 export function PageHeader({

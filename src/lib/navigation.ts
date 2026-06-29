@@ -29,7 +29,8 @@ export type NavigationIcon =
   | "payments"
   | "reports"
   | "settings"
-  | "permissions";
+  | "permissions"
+  | "database";
 
 export const navigationGroups: Record<
   NavigationGroup,
@@ -176,6 +177,14 @@ export const navigationItems: NavigationItem[] = [
     icon: "permissions",
     description: "تحكم بأدوار النظام ومستخدمي لوحة الإدارة.",
     priority: 12,
+    group: "system",
+  },
+  {
+    title: "قاعدة البيانات",
+    href: "/database",
+    icon: "database",
+    description: "صدّر كل البيانات أو استوردها لنقلها بين قواعد البيانات.",
+    priority: 13,
     group: "system",
   },
 ];

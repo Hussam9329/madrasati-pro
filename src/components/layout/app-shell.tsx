@@ -8,6 +8,7 @@ import {
   CalendarDays,
   CheckSquare,
   ClipboardList,
+  Database,
   GraduationCap,
   Home,
   Landmark,
@@ -51,6 +52,7 @@ const iconMap: Record<NavigationIcon, React.ElementType> = {
   reports: BarChart3,
   settings: ShieldCheck,
   permissions: ShieldCheck,
+  database: Database,
 };
 
 const groupOrder: NavigationGroup[] = [
