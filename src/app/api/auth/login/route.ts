@@ -17,6 +17,7 @@ export async function POST(request: Request) {
       );
     }
 
+    // Ensure database is initialized (especially on Vercel)
     await ensureDatabase();
 
     const admin = await db.admin.findUnique({ where: { username } });
@@ -27,16 +28,7 @@ export async function POST(request: Request) {
       );
     }
 
-    let isValid = false;
-    try {
-      isValid = await bcrypt.compare(password, admin.passwordHash);
-    } catch (bcryptError: any) {
-      return NextResponse.json(
-        { error: `bcrypt error: ${bcryptError.message}` },
-        { status: 500 }
-      );
-    }
-
+    const isValid = await bcrypt.compare(password, admin.passwordHash);
     if (!isValid) {
       return NextResponse.json(
         { error: "اسم المستخدم أو كلمة المرور غير صحيحة." },
@@ -44,19 +36,14 @@ export async function POST(request: Request) {
       );
     }
 
-    try {
-      await createSession(admin.id, Boolean(rememberMe));
-    } catch (sessionError: any) {
-      return NextResponse.json(
-        { error: `session error: ${sessionError.message}` },
-        { status: 500 }
-      );
-    }
+    // Create session with jti-based revocation support
+    await createSession(admin.id, Boolean(rememberMe));
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
+  } catch (error) {
+    console.error("[login] Error:", error);
     return NextResponse.json(
-      { error: `outer error: ${error.message}` },
+      { error: "حدث خطأ أثناء تسجيل الدخول." },
       { status: 500 }
     );
   }
