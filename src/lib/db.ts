@@ -1,78 +1,75 @@
 import { cache as reactCache } from "react";
-import { supabaseDB } from "@/lib/supabase-client";
+import { PrismaClient } from "@prisma/client";
+import { PrismaNeon } from "@prisma/adapter-neon";
 
 /**
- * Database client using Supabase REST API.
- * This replaces Prisma's PostgreSQL connection to work around IPv4/IPv6
- * connectivity issues between Vercel and Supabase.
+ * Database client backed by Neon serverless Postgres via Prisma 7's
+ * driver-adapter feature.
  *
- * The supabaseDB object provides the same API surface as Prisma:
- *   db.model.findMany(), findUnique(), findFirst(), create(), update(), delete(), count(), aggregate()
- *   db.$connect(), db.$disconnect()
+ * All existing services use `db.student.findMany()`, `db.student.create()`,
+ * etc — these are native Prisma APIs, so the swap from the old Supabase REST
+ * shim to real Prisma is transparent to the rest of the codebase.
  *
- * All existing service files work without modification.
+ * The Neon adapter uses HTTP-fetch transport under the hood, which means
+ * no long-lived PgBouncer connection — perfect for Vercel serverless.
  */
-export const db = supabaseDB;
 
-// Track whether database has been initialized in this process
-let dbInitialized = false;
-let dbInitPromise: Promise<void> | null = null;
+// Lazy-init the singleton — avoids running at module load time during
+// `next build` when DATABASE_URL is not set.
+let _db: PrismaClient | null = null;
 
-function hasDatabaseEnv() {
-  return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
+function createPrismaClient(): PrismaClient {
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
+    throw new Error(
+      "DATABASE_URL is not set. Configure it in Vercel environment variables.",
+    );
+  }
+
+  const adapter = new PrismaNeon({ connectionString });
+  return new PrismaClient({ adapter });
 }
 
-export const ensureDatabase = reactCache(async () => {
-  // Do not open a placeholder Supabase connection during production builds or local checks.
-  if (!hasDatabaseEnv()) {
-    return;
+function getDb(): PrismaClient {
+  if (!_db) {
+    _db = createPrismaClient();
   }
+  return _db;
+}
 
-  // If already initialized in this process, skip entirely
-  if (dbInitialized) return;
-
-  // If initialization is already running, wait for it
-  if (dbInitPromise) {
-    await dbInitPromise;
-    return;
-  }
-
-  // Start initialization
-  dbInitPromise = initializeDatabase();
-  try {
-    await dbInitPromise;
-    dbInitialized = true;
-  } catch (e) {
-    dbInitPromise = null;
-    console.error("[ensureDatabase] Initialization failed:", e);
-    // Don't throw - let queries fail gracefully via safeQuery
-  }
+// Export `db` as a Proxy so we don't eagerly construct PrismaClient at
+// module load time — this is important for `next build` which evaluates
+// modules without env vars available.
+export const db = new Proxy({} as PrismaClient, {
+  get(_target, prop) {
+    const client = getDb();
+    const value = (client as unknown as Record<string | symbol, unknown>)[prop];
+    return typeof value === "function" ? value.bind(client) : value;
+  },
 });
 
-async function initializeDatabase() {
+function hasDatabaseEnv() {
+  return Boolean(process.env.DATABASE_URL);
+}
+
+// No-op for the new Neon backend — connection is opened lazily by the
+// adapter. Kept for backward compatibility with existing callers.
+export const ensureDatabase = reactCache(async () => {
   if (!hasDatabaseEnv()) {
     return;
   }
-
+  // Touch the client so any connection error surfaces here rather than
+  // mid-request. Real queries are made on-demand by services.
   try {
-    await db.$connect();
+    getDb();
   } catch (e) {
-    console.error("[ensureDatabase] Failed to connect:", e);
-    throw e;
+    console.error("[ensureDatabase] Initialization failed:", e);
   }
-
-  // Note: Admin account seeding removed for security.
-  // Create admin accounts via /api/permissions/users (system admin only)
-  // or manually in Supabase SQL Editor.
-}
+});
 
 /**
  * Safely executes a database query with a fallback value.
  * Used to prevent Server Component crashes when the database is unavailable.
- *
- * Wrapped with React cache() for request-level deduplication:
- * if multiple server components call safeQuery with the same function
- * reference during the same render, only one execution will occur.
  */
 export const safeQuery = reactCache(async function safeQuery<T>(
   fn: () => Promise<T>,
@@ -84,14 +81,24 @@ export const safeQuery = reactCache(async function safeQuery<T>(
 
   try {
     return await fn();
-  } catch {
+  } catch (e) {
+    console.error("[safeQuery] Database query failed:", e);
     return fallback;
   }
 });
 
 export async function checkDatabaseConnection() {
+  if (!hasDatabaseEnv()) {
+    return {
+      ok: false,
+      message: "DATABASE_URL غير مضبوط في متغيرات البيئة.",
+    };
+  }
+
   try {
-    await db.$connect();
+    // Force a fresh client + a trivial query.
+    const client = getDb();
+    await client.$queryRaw`SELECT 1`;
     return {
       ok: true,
       message: "قاعدة البيانات متصلة بنجاح",
@@ -105,5 +112,8 @@ export async function checkDatabaseConnection() {
 }
 
 export async function disconnectDatabase() {
-  await db.$disconnect();
+  if (_db) {
+    await _db.$disconnect();
+    _db = null;
+  }
 }

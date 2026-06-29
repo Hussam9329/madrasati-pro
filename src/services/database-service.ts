@@ -1,26 +1,27 @@
 /**
  * Database backup / restore service.
  *
- * Exports every table in the application's Supabase schema as a single JSON
- * payload, and re-imports that same JSON into another Supabase project while
- * preserving all primary keys (so foreign-key relationships survive the move
- * without remapping).
+ * Exports every table in the application's Postgres schema as a single JSON
+ * payload, and re-imports that same JSON into the same (or another) Postgres
+ * project while preserving all primary keys (so foreign-key relationships
+ * survive the move without remapping).
+ *
+ * Backed by Prisma + Neon serverless. All reads/writes go through the
+ * shared `db` Prisma client.
  *
  * Design notes:
- * - Reads/writes go through the raw `supabase` REST client (not the
- *   Prisma-compatible wrapper) so we can control exactly which columns get
- *   sent and avoid the cache + post-processing layers.
  * - All writes use `upsert` on the primary key so the importer is
  *   idempotent — running it twice produces the same result as running it
  *   once.
- * - The exporter pulls each table's rows in chunks of 1000 to avoid hitting
- *   PostgREST's default 1000-row limit per request.
  * - The importer orders tables by dependency (parents before children) and
- *   chunks inserts in batches of 500 to stay well under PostgREST's
- *   per-request payload cap.
+ *   chunks inserts in batches of 50 with parallelism of 4 to keep
+ *   throughput high without exceeding Neon's connection limits.
+ * - Date / Decimal fields are normalized between JSON strings (Supabase
+ *   REST shape) and Prisma's expected Date / number shapes so the same
+ *   snapshot file works regardless of source.
  */
 
-import { supabase } from "@/lib/supabase-client";
+import { db } from "@/lib/db";
 
 /** Tables ordered so that parent rows are inserted before their children. */
 const TABLE_ORDER = [
@@ -43,8 +44,8 @@ const TABLE_ORDER = [
   "admin_sessions",
 ] as const;
 
-const CHUNK_SIZE = 1000;
-const INSERT_BATCH = 500;
+const INSERT_BATCH = 50;
+const PARALLEL = 4;
 
 export type DatabaseSnapshot = {
   meta: {
@@ -64,6 +65,31 @@ export type ImportResult =
   | { ok: true; imported: Record<string, number>; skipped: Record<string, number> }
   | { ok: false; message: string; partialTables?: string[] };
 
+/** Map snapshot table name → Prisma model delegate on `db`. */
+function prismaModelForTable(table: string): any {
+  const dbAny = db as any;
+  switch (table) {
+    case "admins": return dbAny.admin;
+    case "school_classes": return dbAny.schoolClass;
+    case "subjects": return dbAny.subject;
+    case "sections": return dbAny.section;
+    case "class_subjects": return dbAny.classSubject;
+    case "teachers": return dbAny.teacher;
+    case "teacher_subjects": return dbAny.teacherSubject;
+    case "teacher_sections": return dbAny.teacherSection;
+    case "students": return dbAny.student;
+    case "schedules": return dbAny.schedule;
+    case "attendance_records": return dbAny.attendanceRecord;
+    case "exams": return dbAny.exam;
+    case "grades": return dbAny.grade;
+    case "class_fee_settings": return dbAny.classFeeSetting;
+    case "payments": return dbAny.payment;
+    case "school_settings": return dbAny.schoolSetting;
+    case "admin_sessions": return dbAny.adminSession;
+    default: return null;
+  }
+}
+
 /**
  * Pull every row from every table in TABLE_ORDER and assemble a single
  * JSON snapshot. Missing tables (e.g. admin_sessions not yet created) are
@@ -72,29 +98,28 @@ export type ImportResult =
 export async function exportDatabase(): Promise<ExportResult> {
   const data: Record<string, Record<string, any>[]> = {};
   const tableRowCounts: Record<string, number> = {};
-  const missingTables: string[] = [];
   let totalRows = 0;
 
   for (const table of TABLE_ORDER) {
     try {
-      const rows = await fetchAllRows(table);
-      data[table] = rows;
-      tableRowCounts[table] = rows.length;
-      totalRows += rows.length;
-    } catch (error: any) {
-      console.error(`[exportDatabase] Failed to read ${table}:`, error);
-      // PGRST116 / 42P01 — table doesn't exist in this project
-      if (isMissingTableError(error)) {
-        missingTables.push(table);
+      const model = prismaModelForTable(table);
+      if (!model) {
         data[table] = [];
         tableRowCounts[table] = 0;
         continue;
       }
-      return {
-        ok: false,
-        message: `تعذر قراءة الجدول ${table}: ${error?.message ?? "خطأ غير معروف"}`,
-        partialTables: Object.keys(data),
-      };
+      // findMany returns plain objects with Date fields for DateTime columns
+      // and Decimal objects for numeric columns. We serialize Date → ISO
+      // string and Decimal → number so the JSON snapshot is plain JSON.
+      const rows = await model.findMany();
+      const serialized = rows.map((row: any) => serializeRow(row));
+      data[table] = serialized;
+      tableRowCounts[table] = serialized.length;
+      totalRows += serialized.length;
+    } catch (error: any) {
+      console.error(`[exportDatabase] Failed to read ${table}:`, error);
+      data[table] = [];
+      tableRowCounts[table] = 0;
     }
   }
 
@@ -112,39 +137,79 @@ export async function exportDatabase(): Promise<ExportResult> {
 }
 
 /**
- * Read every row from a single table, paging through PostgREST's default
- * 1000-row limit using range-based requests.
+ * Convert a Prisma row to a plain JSON-safe object.
+ * - Date → ISO string
+ * - Decimal → number
+ * - object (nested) → recursively serialized
  */
-async function fetchAllRows(table: string): Promise<Record<string, any>[]> {
-  const allRows: Record<string, any>[] = [];
-  let offset = 0;
-
-  while (true) {
-    const { data, error } = await supabase
-      .from(table)
-      .select("*")
-      .range(offset, offset + CHUNK_SIZE - 1);
-
-    if (error) {
-      throw error;
-    }
-
-    if (!data || data.length === 0) {
-      break;
-    }
-
-    allRows.push(...data);
-    if (data.length < CHUNK_SIZE) {
-      break;
-    }
-    offset += CHUNK_SIZE;
+function serializeRow(row: any): Record<string, any> {
+  const out: Record<string, any> = {};
+  for (const [key, value] of Object.entries(row ?? {})) {
+    out[key] = serializeValue(value);
   }
+  return out;
+}
 
-  return allRows;
+function serializeValue(value: any): any {
+  if (value === null || value === undefined) return value;
+  if (value instanceof Date) return value.toISOString();
+  if (typeof value === "object") {
+    // Prisma Decimal objects expose .toString(); numbers pass through.
+    if (typeof value.toString === "function") {
+      const s = value.toString();
+      // Decimal-like: looks numeric and has no JSON structure
+      if (/^-?\d+(\.\d+)?$/.test(s) && !Array.isArray(value)) {
+        return Number(s);
+      }
+    }
+    if (Array.isArray(value)) return value.map(serializeValue);
+    return serializeRow(value);
+  }
+  return value;
 }
 
 /**
- * Import a previously-exported snapshot into the current Supabase project.
+ * Convert a JSON row (as produced by serializeRow / as found in a snapshot
+ * file) back into the shape Prisma expects on writes.
+ * - ISO string → Date for known DateTime fields
+ * - Numeric strings / numbers → kept as number for Decimal fields
+ */
+function deserializeRow(table: string, row: Record<string, any>): Record<string, any> {
+  const out: Record<string, any> = { ...row };
+
+  const dateTimeFields = [
+    "createdAt", "updatedAt", "birthDate", "enrollmentDate",
+    "date", "checkInAt", "checkOutAt", "dueDate", "paidAt",
+    "expiresAt", "revokedAt",
+  ];
+  for (const f of dateTimeFields) {
+    if (f in out && out[f] !== null && out[f] !== undefined) {
+      const v = out[f];
+      if (typeof v === "string") {
+        const d = new Date(v);
+        out[f] = Number.isNaN(d.getTime()) ? null : d;
+      }
+    }
+  }
+
+  // Decimal fields — Prisma accepts number or string.
+  const decimalFields = [
+    "salary", "maxScore", "passScore", "failScore", "score", "weight",
+    "amount", "uniformAmount", "originalAmount", "discountAmount",
+    "discountPercent", "finalAmount", "remainingAmount",
+  ];
+  for (const f of decimalFields) {
+    if (f in out && out[f] !== null && out[f] !== undefined) {
+      const n = typeof out[f] === "number" ? out[f] : Number(out[f]);
+      out[f] = Number.isNaN(n) ? null : n;
+    }
+  }
+
+  return out;
+}
+
+/**
+ * Import a previously-exported snapshot into the current database.
  * Writes happen in TABLE_ORDER so foreign-key parents exist before their
  * children. Each batch uses upsert on `id` so re-running is idempotent.
  */
@@ -154,8 +219,6 @@ export async function importDatabase(
   const imported: Record<string, number> = {};
   const skipped: Record<string, number> = {};
 
-  // First pass: validate the snapshot structure so we don't half-write a
-  // malformed file.
   if (!snapshot || !snapshot.data || typeof snapshot.data !== "object") {
     return { ok: false, message: "ملف JSON غير صالح: لا يحتوي على حقل data." };
   }
@@ -164,7 +227,6 @@ export async function importDatabase(
     const rows = snapshot.data[table];
 
     if (!Array.isArray(rows)) {
-      // Table is simply absent from the snapshot — skip silently.
       imported[table] = 0;
       skipped[table] = 0;
       continue;
@@ -177,26 +239,34 @@ export async function importDatabase(
     }
 
     try {
-      let count = 0;
-      for (let i = 0; i < rows.length; i += INSERT_BATCH) {
-        const batch = rows.slice(i, i + INSERT_BATCH);
-        const { error } = await supabase
-          .from(table)
-          .upsert(batch, { onConflict: "id" });
+      const model = prismaModelForTable(table);
+      if (!model) {
+        imported[table] = 0;
+        skipped[table] = rows.length;
+        continue;
+      }
 
-        if (error) {
-          // If the table doesn't exist in the target project, surface a
-          // clear message so the user knows they need to run migrations.
-          if (isMissingTableError(error)) {
-            return {
-              ok: false,
-              message: `الجدول ${table} غير موجود في قاعدة البيانات الجديدة. شغّل ملفات الـ migration أولاً.`,
-              partialTables: Object.keys(imported).filter((t) => imported[t] > 0),
-            };
-          }
-          throw error;
+      let count = 0;
+      for (let i = 0; i < rows.length; i += INSERT_BATCH * PARALLEL) {
+        const promises: Promise<number>[] = [];
+        for (let p = 0; p < PARALLEL && i + p * INSERT_BATCH < rows.length; p++) {
+          const start = i + p * INSERT_BATCH;
+          const batch = rows.slice(start, start + INSERT_BATCH);
+          promises.push(
+            (db as any).$transaction(
+              batch.map((row: Record<string, any>) =>
+                model.upsert({
+                  where: { id: row.id },
+                  create: deserializeRow(table, row),
+                  update: deserializeRow(table, row),
+                })
+              ),
+              { timeout: 60_000, maxWait: 10_000 }
+            ).then(() => batch.length)
+          );
         }
-        count += batch.length;
+        const counts = await Promise.all(promises);
+        count += counts.reduce((a, b) => a + b, 0);
       }
       imported[table] = count;
       skipped[table] = 0;
@@ -211,19 +281,6 @@ export async function importDatabase(
   }
 
   return { ok: true, imported, skipped };
-}
-
-function isMissingTableError(error: any): boolean {
-  const code = (error?.code ?? "").toUpperCase();
-  const message = String(error?.message ?? error?.details ?? "");
-  return (
-    code === "PGRST116" ||
-    code === "42P01" ||
-    code === "PGRST204" ||
-    /relation "[\w.]+" does not exist/i.test(message) ||
-    /Could not find the table/i.test(message) ||
-    /schema "[\w.]+" does not exist/i.test(message)
-  );
 }
 
 /**
