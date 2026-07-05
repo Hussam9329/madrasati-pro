@@ -49,6 +49,8 @@ export default async function ExamsPage({ searchParams }: ExamsPageProps) {
         description="أنشئ امتحانًا مربوطًا بمادة ومدرس وصف، ثم أدخل درجات جميع طلاب الصف من شاشة واحدة."
         icon="grades"
         badge="تعريف الامتحانات"
+        actionLabel="دفتر الدرجات بالأعمدة"
+        actionHref="/exams/matrix"
       />
 
       {resolvedSearchParams?.saved === "1" && (
@@ -174,7 +176,8 @@ export default async function ExamsPage({ searchParams }: ExamsPageProps) {
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-2 md:justify-end">
-                      <a href={`/exams/${exam.id}/grades`} className="btn btn-primary justify-center">إدخال الدرجات</a>
+                      <a href={`/exams/matrix?sectionId=${exam.sectionId ?? ""}&subjectId=${exam.subjectId ?? ""}&visibleCount=4`} className="btn btn-primary justify-center">دفتر الأعمدة</a>
+                      <a href={`/exams/${exam.id}/grades`} className="btn btn-secondary justify-center">إدخال مفرد</a>
                       <DeleteConfirmButton
                         action={deleteExamAction}
                         itemId={exam.id}

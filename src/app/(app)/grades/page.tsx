@@ -155,9 +155,9 @@ export default async function GradesPage({ searchParams }: GradesPageProps) {
         <SmartAlert
           tone="info"
           title="تم تغيير آلية الدرجات"
-          description="إدخال الدرجات الفردي تم إلغاؤه من هذه التبويبة. الآن تُنشئ الامتحان أولًا، ثم تدخل درجات كل طلاب الصف دفعة واحدة."
-          actionLabel="إضافة امتحان"
-          actionHref="/exams"
+          description="إدخال الدرجات الفردي تم إلغاؤه من هذه التبويبة. الآن تستطيع فتح دفتر الأعمدة: كل امتحان عمود، وكل طالب صف، والحفظ يتم دفعة واحدة."
+          actionLabel="فتح دفتر الأعمدة"
+          actionHref="/exams/matrix"
         />
 
         <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
@@ -358,7 +358,10 @@ function MatchingExams({ exams, selectedFiltersCount }: { exams: any[]; selected
             {selectedFiltersCount > 0 ? "هذه نتيجة الفلاتر المختارة." : "تظهر أحدث الامتحانات. استخدم الفلاتر للوصول السريع."}
           </p>
         </div>
-        <a href="/exams" className="btn btn-secondary">إضافة امتحان</a>
+        <div className="flex flex-wrap gap-2">
+          <a href="/exams/matrix" className="btn btn-primary">دفتر الأعمدة</a>
+          <a href="/exams" className="btn btn-secondary">إضافة امتحان</a>
+        </div>
       </div>
 
       {exams.length === 0 ? (
@@ -391,7 +394,8 @@ function MatchingExams({ exams, selectedFiltersCount }: { exams: any[]; selected
                 </div>
 
                 <div className="mt-5 flex flex-wrap gap-2">
-                  <a href={`/exams/${exam.id}/grades`} className="btn btn-primary">إدخال الدرجات <ArrowLeft size={16} /></a>
+                  <a href={`/exams/matrix?sectionId=${exam.sectionId ?? ""}&subjectId=${exam.subjectId ?? ""}&visibleCount=4`} className="btn btn-primary">دفتر الأعمدة <ArrowLeft size={16} /></a>
+                  <a href={`/exams/${exam.id}/grades`} className="btn btn-secondary">إدخال مفرد</a>
                   <a href="/exams" className="btn btn-secondary">تفاصيل الامتحانات</a>
                 </div>
               </article>
