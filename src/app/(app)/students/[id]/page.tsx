@@ -67,7 +67,7 @@ export default async function StudentProfilePage({ params, searchParams }: Stude
 
   const gradeStats = calculateGradeStats(reportGrades);
   const attendanceStats = calculateAttendanceStats(reportAttendance);
-  const financialStats = calculateFinancialStats(payments, paymentSummary.totalPaid);
+  const financialStats = calculateFinancialStats(payments, paymentSummary.totalPaid, paymentSummary.totalPending);
   const averageLabel = gradeStats.average == null ? "لا توجد درجات" : `${gradeStats.average}%`;
   const attendanceSummary = `${attendanceStats.presentCount} حضور / ${attendanceStats.absentCount} غياب / ${attendanceStats.lateCount} تأخير`;
   const financialSummary = `مدفوع ${formatMoney(financialStats.totalPaid)} — متبقّي ${formatMoney(financialStats.totalRemaining)} — الزي ${financialStats.uniformPaid ? "مدفوع" : "غير مدفوع"}`;
@@ -457,10 +457,19 @@ function calculateAttendanceStats(attendance: { status: string }[]) {
   );
 }
 
-function calculateFinancialStats(payments: { amount: number; remainingAmount: number; isUniformPaid: boolean }[], summaryPaid: number) {
+function calculateFinancialStats(
+  payments: { amount: number; remainingAmount: number; isUniformPaid: boolean }[],
+  summaryPaid: number,
+  summaryPending: number,
+) {
+  // Use the summary's totalPending (computed correctly by
+  // getStudentPaymentSummary as sum of (fee - totalPaidForFee) across
+  // all the student's fees). DO NOT sum per-payment remainingAmount —
+  // that double-counts installments for the same fee and produces a
+  // number larger than the actual fee.
   return {
     totalPaid: summaryPaid,
-    totalRemaining: payments.reduce((sum, payment) => sum + Number(payment.remainingAmount || 0), 0),
+    totalRemaining: summaryPending,
     uniformPaid: payments.some((payment) => payment.isUniformPaid),
   };
 }
