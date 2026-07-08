@@ -375,11 +375,11 @@ export function getLocalTimeISO(): string {
 export function formatAttendanceTime(dateValue: string | Date | null): string {
   if (!dateValue) return "";
   const date = typeof dateValue === "string" ? new Date(dateValue) : dateValue;
-  return date.toLocaleTimeString("ar-IQ");
+  return date.toLocaleTimeString("ar-IQ-u-nu-latn");
 }
 
 export function formatAttendanceDate(date: Date): string {
-  return new Intl.DateTimeFormat("ar-IQ", {
+  return new Intl.DateTimeFormat("ar-IQ-u-nu-latn", {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -387,7 +387,7 @@ export function formatAttendanceDate(date: Date): string {
 }
 
 export function formatAttendanceShortDate(date: Date): string {
-  return new Intl.DateTimeFormat("ar-IQ", {
+  return new Intl.DateTimeFormat("ar-IQ-u-nu-latn", {
     month: "2-digit",
     day: "2-digit",
     year: "numeric",

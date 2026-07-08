@@ -153,7 +153,7 @@ export function formatTeacherSalary(salary?: number | null): string {
     return "غير محدد";
   }
 
-  return new Intl.NumberFormat("ar-IQ").format(salary);
+  return new Intl.NumberFormat("ar-IQ-u-nu-latn").format(salary);
 }
 
 export function formatTeacherSubjects(

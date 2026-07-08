@@ -342,7 +342,7 @@ export function getTermLabel(term: string): string {
 }
 
 export function formatGradeDate(date: Date): string {
-  return new Intl.DateTimeFormat("ar-IQ", {
+  return new Intl.DateTimeFormat("ar-IQ-u-nu-latn", {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -350,7 +350,7 @@ export function formatGradeDate(date: Date): string {
 }
 
 export function formatGradeShortDate(date: Date): string {
-  return new Intl.DateTimeFormat("ar-IQ", {
+  return new Intl.DateTimeFormat("ar-IQ-u-nu-latn", {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",

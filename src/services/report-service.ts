@@ -754,7 +754,7 @@ function getDateRangeFromFilter(
       return {
         from,
         to,
-        label: `من ${from.toLocaleDateString("ar-IQ")} إلى ${parsedTo.toLocaleDateString("ar-IQ")}`,
+        label: `من ${from.toLocaleDateString("ar-IQ-u-nu-latn")} إلى ${parsedTo.toLocaleDateString("ar-IQ-u-nu-latn")}`,
       };
     }
   }
@@ -962,7 +962,7 @@ async function getMonthlyAttendance(): Promise<ChartPoint[]> {
     });
 
     months.push({
-      label: new Intl.DateTimeFormat("ar-IQ", {
+      label: new Intl.DateTimeFormat("ar-IQ-u-nu-latn", {
         month: "short",
       }).format(monthDate),
       value: count,

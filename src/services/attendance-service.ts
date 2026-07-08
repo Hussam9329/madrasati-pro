@@ -864,7 +864,7 @@ async function getPreviousAttendanceMessage(studentId: string, today: Date): Pro
     },
   });
 
-  const formattedDay = previousDay.toLocaleDateString("ar-IQ");
+  const formattedDay = previousDay.toLocaleDateString("ar-IQ-u-nu-latn");
 
   if (!previousRecord || previousRecord.status === "absent") {
     return ` تنبيه: الطالب محسوب غائبًا في آخر يوم دوام سابق (${formattedDay}).`;

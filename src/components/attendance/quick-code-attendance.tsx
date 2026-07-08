@@ -896,7 +896,7 @@ export function QuickCodeAttendance({
                   </div>
                   <div className="text-left">
                     <p className="text-xs text-[var(--app-text-muted)]">
-                      {entry.timestamp.toLocaleTimeString("ar-IQ")}
+                      {entry.timestamp.toLocaleTimeString("ar-IQ-u-nu-latn")}
                     </p>
                   </div>
                 </div>

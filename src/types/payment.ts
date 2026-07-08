@@ -560,7 +560,7 @@ export function getPaymentMethodLabel(method: string): string {
 }
 
 export function formatMoney(amount: number): string {
-  return new Intl.NumberFormat("ar-IQ", {
+  return new Intl.NumberFormat("ar-IQ-u-nu-latn", {
     style: "currency",
     currency: "IQD",
     maximumFractionDigits: 0,
@@ -568,7 +568,7 @@ export function formatMoney(amount: number): string {
 }
 
 export function formatPaymentDate(date: Date): string {
-  return new Intl.DateTimeFormat("ar-IQ", {
+  return new Intl.DateTimeFormat("ar-IQ-u-nu-latn", {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -576,7 +576,7 @@ export function formatPaymentDate(date: Date): string {
 }
 
 export function formatPaymentShortDate(date: Date): string {
-  return new Intl.DateTimeFormat("ar-IQ", {
+  return new Intl.DateTimeFormat("ar-IQ-u-nu-latn", {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",

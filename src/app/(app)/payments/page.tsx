@@ -674,7 +674,7 @@ function PaymentRow({ payment }: PaymentRowProps) {
               <p>
                 الاستحقاق:{" "}
                 <span className={overdue ? "font-bold text-red-600" : "font-bold text-[var(--app-text)]"}>
-                  {new Date(payment.dueDate).toLocaleDateString("ar-IQ")}
+                  {new Date(payment.dueDate).toLocaleDateString("ar-IQ-u-nu-latn")}
                 </span>
               </p>
             )}
@@ -683,7 +683,7 @@ function PaymentRow({ payment }: PaymentRowProps) {
               <p>
                 تاريخ الدفع:{" "}
                 <span className="font-bold text-[var(--app-text)]">
-                  {new Date(payment.paidAt).toLocaleDateString("ar-IQ")}
+                  {new Date(payment.paidAt).toLocaleDateString("ar-IQ-u-nu-latn")}
                 </span>
               </p>
             )}

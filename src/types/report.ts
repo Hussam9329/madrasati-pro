@@ -249,7 +249,7 @@ export function getReportDateRange(period: ReportPeriod): ReportDateRange {
       return {
         from,
         to,
-        label: new Intl.DateTimeFormat("ar-IQ", {
+        label: new Intl.DateTimeFormat("ar-IQ-u-nu-latn", {
           year: "numeric",
           month: "long",
         }).format(from),
@@ -346,7 +346,7 @@ export function getReportRating(percentage: number): string {
 }
 
 export function formatReportDate(date: Date): string {
-  return new Intl.DateTimeFormat("ar-IQ", {
+  return new Intl.DateTimeFormat("ar-IQ-u-nu-latn", {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -354,17 +354,17 @@ export function formatReportDate(date: Date): string {
 }
 
 export function formatReportNumber(value: number): string {
-  return new Intl.NumberFormat("ar-IQ").format(value);
+  return new Intl.NumberFormat("ar-IQ-u-nu-latn").format(value);
 }
 
 export function formatReportPercent(value: number): string {
-  return new Intl.NumberFormat("ar-IQ", {
+  return new Intl.NumberFormat("ar-IQ-u-nu-latn", {
     maximumFractionDigits: 1,
   }).format(value) + "%";
 }
 
 export function formatReportMoney(amount: number): string {
-  return new Intl.NumberFormat("ar-IQ", {
+  return new Intl.NumberFormat("ar-IQ-u-nu-latn", {
     style: "currency",
     currency: "IQD",
     maximumFractionDigits: 0,

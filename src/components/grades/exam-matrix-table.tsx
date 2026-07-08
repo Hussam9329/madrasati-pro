@@ -22,7 +22,7 @@ function formatShortDate(value: string | null) {
   if (!value) return "بدون تاريخ";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "بدون تاريخ";
-  return date.toLocaleDateString("ar-IQ", { month: "2-digit", day: "2-digit" });
+  return date.toLocaleDateString("ar-IQ-u-nu-latn", { month: "2-digit", day: "2-digit" });
 }
 
 export function ExamMatrixTable({

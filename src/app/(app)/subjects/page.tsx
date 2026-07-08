@@ -483,7 +483,7 @@ function SubjectRow({ subject }: SubjectRowProps) {
 }
 
 function formatDate(date: Date | string): string {
-  return new Intl.DateTimeFormat("ar-IQ", {
+  return new Intl.DateTimeFormat("ar-IQ-u-nu-latn", {
     year: "numeric",
     month: "short",
     day: "numeric",

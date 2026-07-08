@@ -55,7 +55,7 @@ function formatFullDate(value?: string | null) {
   if (!value) return "بدون تاريخ";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "بدون تاريخ";
-  return date.toLocaleDateString("ar-IQ", { year: "numeric", month: "long", day: "numeric" });
+  return date.toLocaleDateString("ar-IQ-u-nu-latn", { year: "numeric", month: "long", day: "numeric" });
 }
 
 export default async function ExamMatrixPage({ searchParams }: ExamMatrixPageProps) {

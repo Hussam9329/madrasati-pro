@@ -48,7 +48,7 @@ const themeScript = `
 
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html lang="ar" dir="rtl" suppressHydrationWarning>
+    <html lang="ar-IQ-u-nu-latn" dir="rtl" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>

@@ -560,7 +560,7 @@ function ReportCover({ filter, summary }: ReportCoverProps) {
           </h2>
           <p className="mt-2 text-lg font-bold text-[var(--app-text-muted)]">
             {periodLabel} —{" "}
-            {new Intl.DateTimeFormat("ar-IQ", {
+            {new Intl.DateTimeFormat("ar-IQ-u-nu-latn", {
               year: "numeric",
               month: "long",
               day: "numeric",
@@ -614,7 +614,7 @@ function getReportFilterDisplayLabel(filter: ReportFilter) {
     const to = new Date(filter.toDate);
 
     if (!Number.isNaN(from.getTime()) && !Number.isNaN(to.getTime())) {
-      return `مخصص — من ${from.toLocaleDateString("ar-IQ")} إلى ${to.toLocaleDateString("ar-IQ")}`;
+      return `مخصص — من ${from.toLocaleDateString("ar-IQ-u-nu-latn")} إلى ${to.toLocaleDateString("ar-IQ-u-nu-latn")}`;
     }
   }
 
@@ -1107,7 +1107,7 @@ function AttendanceTable({ rows }: AttendanceTableProps) {
                   </span>
                   {row.lastDate ? (
                     <p className="mt-1 text-xs text-[var(--app-text-soft)]">
-                      {new Date(row.lastDate).toLocaleDateString("ar-IQ")}
+                      {new Date(row.lastDate).toLocaleDateString("ar-IQ-u-nu-latn")}
                     </p>
                   ) : null}
                 </td>

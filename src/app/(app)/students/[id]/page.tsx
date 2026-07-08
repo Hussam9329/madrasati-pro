@@ -128,7 +128,7 @@ export default async function StudentProfilePage({ params, searchParams }: Stude
               }
             />
             <InfoRow label="الصف والشعبة" value={classDisplay} />
-            <InfoRow label="تاريخ التسجيل" value={new Date(student.enrollmentDate).toLocaleDateString("ar-IQ")} />
+            <InfoRow label="تاريخ التسجيل" value={new Date(student.enrollmentDate).toLocaleDateString("ar-IQ-u-nu-latn")} />
             <InfoRow label="فترة التقرير" value={reportDateRange.label} />
           </div>
         </section>
@@ -142,7 +142,7 @@ export default async function StudentProfilePage({ params, searchParams }: Stude
                 <td>{grade.title}</td>
                 <td>{grade.score} / {grade.maxScore}</td>
                 <td>{grade.percentage}%</td>
-                <td>{new Date(grade.date).toLocaleDateString("ar-IQ")}</td>
+                <td>{new Date(grade.date).toLocaleDateString("ar-IQ-u-nu-latn")}</td>
               </tr>
             ))}
           </ReportTable>
@@ -152,7 +152,7 @@ export default async function StudentProfilePage({ params, searchParams }: Stude
           <ReportTable title={`الحضور خلال ${reportDateRange.label}`} empty="لا توجد سجلات حضور خلال الفترة المحددة" headers={["التاريخ", "الحالة", "دخول", "انصراف"]}>
             {reportAttendance.slice(0, 30).map((record) => (
               <tr key={record.id}>
-                <td>{new Date(record.date).toLocaleDateString("ar-IQ")}</td>
+                <td>{new Date(record.date).toLocaleDateString("ar-IQ-u-nu-latn")}</td>
                 <td>{record.statusLabel}</td>
                 <td>{record.checkInAt ? formatAttendanceTime(record.checkInAt) : "-"}</td>
                 <td>{record.checkOutAt ? formatAttendanceTime(record.checkOutAt) : "-"}</td>
@@ -189,7 +189,7 @@ export default async function StudentProfilePage({ params, searchParams }: Stude
                     <td className="p-3">{payment.formattedAmount}</td>
                     <td className="p-3">{payment.formattedRemainingAmount}</td>
                     <td className="p-3">{payment.isUniformPaid ? "صح" : "غلط"}</td>
-                    <td className="p-3">{new Date(payment.createdAt).toLocaleDateString("ar-IQ")}</td>
+                    <td className="p-3">{new Date(payment.createdAt).toLocaleDateString("ar-IQ-u-nu-latn")}</td>
                   </tr>
                 ))}
               </tbody>

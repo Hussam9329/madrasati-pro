@@ -23,9 +23,9 @@ export function generatePaymentReceiptHtml(
   schoolInfo: { name: string; logo?: string },
 ) {
   const formatMoney = (n: number) =>
-    new Intl.NumberFormat("ar-IQ").format(n);
+    new Intl.NumberFormat("ar-IQ-u-nu-latn").format(n);
   const formatDate = (d: Date) =>
-    new Intl.DateTimeFormat("ar-IQ", {
+    new Intl.DateTimeFormat("ar-IQ-u-nu-latn", {
       year: "numeric",
       month: "long",
       day: "numeric",
@@ -36,7 +36,7 @@ export function generatePaymentReceiptHtml(
     payment.amount;
 
   return `<!DOCTYPE html>
-<html dir="rtl" lang="ar">
+<html dir="rtl" lang="ar-IQ-u-nu-latn">
 <head>
 <meta charset="UTF-8">
 <title>فاتورة قسط</title>
