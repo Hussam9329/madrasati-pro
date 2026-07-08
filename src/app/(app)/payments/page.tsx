@@ -150,7 +150,7 @@ export default async function PaymentsPage({
             actionHref="/payments"
           />
         ) : (
-          <PaymentsList payments={payments} />
+          <PaymentsList payments={payments} studentFeePlans={studentFeePlans} />
         )}
       </div>
   );
@@ -520,35 +520,182 @@ function PaymentSearchForm({
 
 type PaymentsListProps = {
   payments: PaymentListItem[];
+  studentFeePlans: ReturnType<typeof getStudentFeePlans> extends Promise<infer T> ? T : never;
 };
 
-function PaymentsList({ payments }: PaymentsListProps) {
+type StudentFeePlan = PaymentsListProps["studentFeePlans"][number];
+
+/**
+ * Group payments by studentId so each student appears as a single
+ * expandable card with a summary row (total / paid / remaining) and the
+ * individual payment rows nested beneath.
+ */
+function PaymentsList({ payments, studentFeePlans }: PaymentsListProps) {
+  // Build a lookup: studentId → fee plan (so we can show the canonical
+  // tuitionAmount / uniformAmount for each student).
+  const feePlanByStudent = new Map<string, StudentFeePlan>();
+  for (const plan of studentFeePlans) {
+    feePlanByStudent.set(plan.studentId, plan);
+  }
+
+  // Group payments by studentId, preserving first-occurrence order
+  // (payments arrive sorted by createdAt desc, so the most recent
+  // payment's student appears first).
+  const studentsInOrder: string[] = [];
+  const paymentsByStudent = new Map<string, PaymentListItem[]>();
+  for (const p of payments) {
+    if (!paymentsByStudent.has(p.studentId)) {
+      paymentsByStudent.set(p.studentId, []);
+      studentsInOrder.push(p.studentId);
+    }
+    paymentsByStudent.get(p.studentId)!.push(p);
+  }
+
   return (
     <section className="app-card overflow-hidden">
       <div className="flex flex-col gap-2 border-b border-[var(--app-border-soft)] p-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-xl font-extrabold text-[var(--app-text)]">
-            قائمة المدفوعات
+            قائمة المدفوعات حسب الطالب
           </h3>
-
           <p className="mt-1 text-sm leading-6 text-[var(--app-text-muted)]">
-            تابع المدفوعات وحالاتها والمبالغ المرتبطة بكل طالب.
+            لكل طالب: المبلغ الكلي، المدفوع، والمتبقي — مع تفاصيل كل دفعة بالأسفل.
           </p>
         </div>
-
         <div className="flex items-center gap-3">
           <span className="badge badge-info">
-            {payments.length} دفعة
+            {studentsInOrder.length} طالب — {payments.length} دفعة
           </span>
         </div>
       </div>
 
       <div className="divide-y divide-[var(--app-border-soft)]">
+        {studentsInOrder.map((studentId) => (
+          <StudentPaymentsGroup
+            key={studentId}
+            studentId={studentId}
+            payments={paymentsByStudent.get(studentId) ?? []}
+            feePlan={feePlanByStudent.get(studentId) ?? null}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+type StudentPaymentsGroupProps = {
+  studentId: string;
+  payments: PaymentListItem[];
+  feePlan: StudentFeePlan | null;
+};
+
+function StudentPaymentsGroup({ studentId, payments, feePlan }: StudentPaymentsGroupProps) {
+  if (payments.length === 0) return null;
+
+  const first = payments[0];
+  const studentName = first.studentName;
+  const studentCode = first.studentCode;
+  const classDisplay = getStudentClassDisplay({
+    className: first.className,
+    classLevel: first.classLevel,
+    sectionName: first.sectionName,
+  }) || "غير محدد";
+
+  // ─── Compute per-student totals ───────────────────────────────────
+  // Use the StudentFeePlan as the canonical source for the tuition +
+  // uniform amounts. If the plan is missing (e.g., student has no
+  // active class fee setting), fall back to summing the payment rows.
+  const tuitionAmount = feePlan ? feePlan.tuitionAmount : 0;
+  const uniformAmount = feePlan ? feePlan.uniformAmount : 0;
+
+  // Total fee this student owes (tuition + uniform) for the academic year.
+  const totalFee = tuitionAmount + uniformAmount;
+
+  // Sum of all PAID + PARTIAL payment amounts (actual cash received).
+  const totalPaid = payments
+    .filter((p) => p.status === "paid" || p.status === "partial")
+    .reduce((sum, p) => sum + Number(p.amount ?? 0), 0);
+
+  // Remaining = total fee - total paid. If we don't have a fee plan,
+  // fall back to the last payment's remainingAmount (best effort).
+  const totalRemaining = feePlan
+    ? Math.max(0, totalFee - totalPaid)
+    : Math.max(0, (first.remainingAmount ?? 0));
+
+  // Count installments (partial payments) for this student.
+  const installmentsCount = payments.filter((p) => p.status === "partial").length;
+  const paidCount = payments.filter((p) => p.status === "paid").length;
+
+  const isFullyPaid = totalFee > 0 && totalPaid >= totalFee;
+
+  return (
+    <details className="group" open>
+      <summary className="flex cursor-pointer flex-col gap-3 p-5 transition hover:bg-indigo-50/40 lg:flex-row lg:items-center lg:justify-between">
+        {/* Student identity */}
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700">
+            <Wallet size={22} />
+          </div>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h4 className="text-base font-extrabold text-[var(--app-text)]">
+                {studentName}
+              </h4>
+              {studentCode && (
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-700" dir="ltr">
+                  {studentCode}
+                </span>
+              )}
+              {isFullyPaid ? (
+                <span className="badge bg-emerald-100 text-emerald-700">
+                  <CheckCircle2 size={12} className="ml-1" />
+                  مسدّد بالكامل
+                </span>
+              ) : (
+                <span className="badge bg-amber-100 text-amber-700">
+                  <Clock size={12} className="ml-1" />
+                  عليه متبقٍ
+                </span>
+              )}
+            </div>
+            <p className="mt-1 text-xs font-bold text-[var(--app-text-muted)]">
+              {classDisplay} — {payments.length} دفعة
+              {installmentsCount > 0 && ` (${installmentsCount} قسط)`}
+              {paidCount > 0 && ` (${paidCount} مدفوع)`}
+            </p>
+          </div>
+        </div>
+
+        {/* Summary stats: الكلي / المدفوع / المتبقي */}
+        <div className="grid grid-cols-3 gap-2 sm:gap-3 lg:flex lg:items-center">
+          <div className="flex flex-col items-center rounded-2xl bg-blue-50 px-3 py-2 text-center lg:w-[140px]">
+            <span className="text-[11px] font-bold text-blue-700">المبلغ الكلي</span>
+            <span className="mt-0.5 text-sm font-extrabold text-blue-900" dir="ltr">
+              {formatMoney(totalFee)}
+            </span>
+          </div>
+          <div className="flex flex-col items-center rounded-2xl bg-emerald-50 px-3 py-2 text-center lg:w-[140px]">
+            <span className="text-[11px] font-bold text-emerald-700">المدفوع</span>
+            <span className="mt-0.5 text-sm font-extrabold text-emerald-900" dir="ltr">
+              {formatMoney(totalPaid)}
+            </span>
+          </div>
+          <div className={`flex flex-col items-center rounded-2xl px-3 py-2 text-center lg:w-[140px] ${totalRemaining > 0 ? "bg-red-50" : "bg-slate-50"}`}>
+            <span className={`text-[11px] font-bold ${totalRemaining > 0 ? "text-red-700" : "text-slate-600"}`}>المتبقي</span>
+            <span className={`mt-0.5 text-sm font-extrabold ${totalRemaining > 0 ? "text-red-900" : "text-slate-700"}`} dir="ltr">
+              {formatMoney(totalRemaining)}
+            </span>
+          </div>
+        </div>
+      </summary>
+
+      {/* Per-payment rows */}
+      <div className="border-t border-[var(--app-border-soft)] bg-[var(--app-card-soft)]/40">
         {payments.map((payment) => (
           <PaymentRow key={payment.id} payment={payment} />
         ))}
       </div>
-    </section>
+    </details>
   );
 }
 
