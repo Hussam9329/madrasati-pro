@@ -1,9 +1,9 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { buildErrorRedirect } from "@/lib/redirect-message";
 import {
   AlertTriangle,
   Banknote,
+  CalendarDays,
   CheckCircle2,
   Clock,
   Receipt,
@@ -41,7 +41,7 @@ import {
 import { getStudentClassDisplay } from "@/types/student";
 import { DeleteConfirmButton } from "@/components/shared/delete-confirm-button";
 import { PaymentCreateForm } from "@/components/payments/payment-create-form";
-import { getStudentFeePlans } from "@/services/class-fee-service";
+import { getStudentFeePlans, getActiveAcademicYear, getAcademicYearOptions } from "@/services/class-fee-service";
 
 export const dynamic = "force-dynamic";
 
@@ -53,6 +53,7 @@ type PaymentsPageProps = {
     feeType?: string;
     status?: string;
     overdueOnly?: string;
+    academicYear?: string;
     saved?: string;
     deleted?: string;
     error?: string;
@@ -71,18 +72,40 @@ export default async function PaymentsPage({
   const status = resolvedSearchParams?.status?.trim() ?? "";
   const overdueOnly = resolvedSearchParams?.overdueOnly === "1";
 
+  // The whole page (form + list + stats + fee plans) operates on ONE
+  // academic year so the numbers never mix across years. It defaults to
+  // the "active" year — the newest year that actually has class fee
+  // settings — instead of the raw calendar-derived year, so recording
+  // installments keeps working right after the September rollover and
+  // before the school configures the new year's fees.
+  const [academicYear, yearOptions] = await Promise.all([
+    resolvedSearchParams?.academicYear?.trim()
+      ? Promise.resolve(resolvedSearchParams.academicYear.trim())
+      : safeQuery(() => getActiveAcademicYear(), getCurrentAcademicYear()),
+    safeQuery(() => getAcademicYearOptions(), [getCurrentAcademicYear()]),
+  ]);
+
   const [payments, studentFeePlans, counts] = await Promise.all([
     safeQuery(() => getPayments({
       query,
       feeType,
       status,
       overdueOnly,
+      academicYear,
     }), []),
-    safeQuery(() => getStudentFeePlans(getCurrentAcademicYear()), []),
-    safeQuery(() => getPaymentsCount(), { total: 0, paid: 0, partial: 0, pending: 0, refunded: 0, overdue: 0, totalPaid: 0, totalPending: 0, totalRefunded: 0 }),
+    safeQuery(() => getStudentFeePlans(academicYear), []),
+    safeQuery(() => getPaymentsCount(academicYear), { total: 0, paid: 0, partial: 0, pending: 0, refunded: 0, overdue: 0, totalPaid: 0, totalPending: 0, totalRefunded: 0 }),
   ]);
 
   const hasPayments = counts.total > 0;
+
+  // Do fee settings exist for the year being viewed? If not, the create
+  // form cannot resolve amounts and the stats' pending figure is an
+  // estimate — surface a clear, actionable warning instead of a silently
+  // dead form.
+  const yearHasFeeSettings = studentFeePlans.some(
+    (plan) => plan.tuitionAmount > 0 || plan.uniformAmount > 0,
+  );
 
   return (
     <div className="mx-auto flex w-full max-w-[1350px] flex-col gap-6">
@@ -100,16 +123,28 @@ export default async function PaymentsPage({
           reason={resolvedSearchParams?.reason}
         />
 
-        <SmartAlert
-          tone="info"
-          title="المدفوعات تعتمد على الطلاب"
-          description="يجب إضافة الطلاب أولًا حتى تتمكن من تسجيل المدفوعات والأقساط المرتبطة بهم."
-          actionLabel="إدارة الطلاب"
-          actionHref="/students"
+        {!yearHasFeeSettings && (
+          <SmartAlert
+            tone="warning"
+            title={`لا توجد رسوم محددة للسنة ${academicYear}`}
+            description="حدّد الرسوم الدراسية وسعر الزي لكل صف في صفحة إدارة الأقساط لهذه السنة حتى تتمكن من تسجيل الدفعات والأقساط."
+            actionLabel="إدارة الأقساط والرسوم"
+            actionHref="/fees"
+          />
+        )}
+
+        <AcademicYearSwitcher
+          academicYear={academicYear}
+          yearOptions={yearOptions}
+          activeCount={payments.length}
         />
 
         <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-          <PaymentCreateForm students={studentFeePlans} action={createPaymentAction} />
+          <PaymentCreateForm
+            students={studentFeePlans}
+            academicYear={academicYear}
+            action={createPaymentAction}
+          />
 
           <div className="flex flex-col gap-6">
             <PaymentsStats
@@ -127,6 +162,7 @@ export default async function PaymentsPage({
               feeType={feeType}
               status={status}
               overdueOnly={overdueOnly}
+              academicYear={academicYear}
             />
           </div>
         </section>
@@ -134,12 +170,12 @@ export default async function PaymentsPage({
         {!hasPayments ? (
           <EmptyState
             icon="fees"
-            title="لا توجد مدفوعات بعد"
-            description="ابدأ بتسجيل أول دفعة بعد إضافة الطلاب. يمكنك متابعة المدفوعات والمتبقي لكل طالب."
+            title={`لا توجد مدفوعات في السنة ${academicYear}`}
+            description="ابدأ بتسجيل أول دفعة لهذه السنة الدراسية بعد تحديد رسوم الصفوف. يمكنك متابعة المدفوعات والمتبقي لكل طالب."
             actionLabel="تسجيل أول دفعة"
             actionHref="#payment-form"
-            secondaryLabel="إدارة الطلاب"
-            secondaryHref="/students"
+            secondaryLabel="إدارة الأقساط والرسوم"
+            secondaryHref="/fees"
           />
         ) : payments.length === 0 ? (
           <EmptyState
@@ -147,7 +183,7 @@ export default async function PaymentsPage({
             title="لا توجد نتائج مطابقة"
             description="جرّب البحث بعنوان الرسم أو اسم الطالب، أو غيّر فلتر النوع أو الحالة."
             actionLabel="عرض كل المدفوعات"
-            actionHref="/payments"
+            actionHref={`/payments?academicYear=${encodeURIComponent(academicYear)}`}
           />
         ) : (
           <PaymentsList payments={payments} studentFeePlans={studentFeePlans} />
@@ -158,6 +194,16 @@ export default async function PaymentsPage({
 
 async function createPaymentAction(formData: FormData) {
   "use server";
+
+  // The form's year field is read-only and defaults to the active
+  // academic year. As defense-in-depth, validate the submitted year's
+  // format ("YYYY" or "YYYY-YYYY"): anything else — an empty value, a
+  // stray note typed into the field, arbitrary text — falls back to
+  // the active year so the payment is never orphaned from its fee plan
+  // by a malformed year string.
+  const formYear = String(formData.get("academicYear") ?? "").trim();
+  const isYearFormat = /^\d{4}(-\d{4})?$/.test(formYear);
+  const academicYear = isYearFormat ? formYear : await getActiveAcademicYear();
 
   const rawInput: PaymentFormInput = {
     feeTitle: String(formData.get("feeTitle") ?? ""),
@@ -170,7 +216,7 @@ async function createPaymentAction(formData: FormData) {
     finalAmount: "",
     status: String(formData.get("status") ?? "paid"),
     method: String(formData.get("method") ?? "cash"),
-    academicYear: String(formData.get("academicYear") ?? ""),
+    academicYear,
     dueDate: String(formData.get("dueDate") ?? ""),
     paidAt: String(formData.get("paidAt") ?? ""),
     notes: String(formData.get("notes") ?? ""),
@@ -208,14 +254,15 @@ async function createPaymentAction(formData: FormData) {
   const result = await createPayment(input);
 
   if (!result.ok) {
-    redirect(buildErrorRedirect("/payments", "create", result.message));
+    const reason = encodeURIComponent(result.message);
+    redirect(`/payments?academicYear=${encodeURIComponent(academicYear)}&error=create&reason=${reason}`);
   }
 
   revalidatePath("/");
   revalidatePath("/payments");
   revalidatePath("/fees");
   revalidatePath("/reports");
-  redirect("/payments?saved=1");
+  redirect(`/payments?saved=1&academicYear=${encodeURIComponent(academicYear)}`);
 }
 
 async function deletePaymentAction(formData: FormData): Promise<{ ok: boolean; message?: string }> {
@@ -244,6 +291,41 @@ async function deletePaymentAction(formData: FormData): Promise<{ ok: boolean; m
   revalidatePath("/fees");
   revalidatePath("/reports");
   redirect("/payments?deleted=1");
+}
+
+type AcademicYearSwitcherProps = {
+  academicYear: string;
+  yearOptions: string[];
+  activeCount: number;
+};
+
+function AcademicYearSwitcher({ academicYear, yearOptions, activeCount }: AcademicYearSwitcherProps) {
+  return (
+    <div className="app-card flex flex-wrap items-center justify-between gap-3 p-4">
+      <div className="flex items-center gap-2 text-sm font-extrabold text-[var(--app-text)]">
+        <CalendarDays size={18} className="text-indigo-600" />
+        السنة الدراسية المعروضة:
+        <span className="rounded-lg bg-indigo-100 px-3 py-1 text-indigo-800" dir="ltr">{academicYear}</span>
+        <span className="text-xs font-bold text-[var(--app-text-muted)]">({activeCount} دفعة)</span>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        {yearOptions.map((year) => (
+          <a
+            key={year}
+            href={`/payments?academicYear=${encodeURIComponent(year)}`}
+            className={
+              year === academicYear
+                ? "btn btn-primary px-4 py-1.5 text-xs"
+                : "btn btn-secondary px-4 py-1.5 text-xs"
+            }
+            dir="ltr"
+          >
+            {year}
+          </a>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 type PaymentsFeedbackProps = {
@@ -439,6 +521,7 @@ type PaymentSearchFormProps = {
   feeType: string;
   status: string;
   overdueOnly: boolean;
+  academicYear: string;
 };
 
 function PaymentSearchForm({
@@ -446,9 +529,14 @@ function PaymentSearchForm({
   feeType,
   status,
   overdueOnly,
+  academicYear,
 }: PaymentSearchFormProps) {
   return (
     <InstantFilterForm action="/payments" className="app-card p-5">
+      {/* Keep the year context when filtering — without this, every
+          search reset the page to the default year. */}
+      <input type="hidden" name="academicYear" value={academicYear} />
+
       <label
         htmlFor="q"
         className="mb-2 block text-sm font-extrabold text-[var(--app-text)]"

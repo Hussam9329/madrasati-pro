@@ -1,18 +1,19 @@
 "use client";
 
 import { useDeferredValue, useMemo, useState } from "react";
-import { CheckCircle2, CreditCard, Search, Shirt, WalletCards } from "lucide-react";
+import { AlertTriangle, BadgeCheck, CheckCircle2, CreditCard, Search, Shirt, WalletCards } from "lucide-react";
 import type { StudentFeePlan } from "@/services/class-fee-service";
-import { PAYMENT_METHODS, formatMoney, getCurrentAcademicYear } from "@/types/payment";
+import { PAYMENT_METHODS, formatMoney } from "@/types/payment";
 import { getStudentClassDisplay } from "@/types/student";
 
 type PaymentCreateFormProps = {
   students: StudentFeePlan[];
+  /** The academic year this form operates on (the page's active year). */
+  academicYear: string;
   action: (formData: FormData) => void;
 };
 
-export function PaymentCreateForm({ students, action }: PaymentCreateFormProps) {
-  const academicYear = getCurrentAcademicYear();
+export function PaymentCreateForm({ students, academicYear, action }: PaymentCreateFormProps) {
   const [query, setQuery] = useState("");
   const [studentId, setStudentId] = useState("");
   const [feeType, setFeeType] = useState<"tuition" | "uniform">("tuition");
@@ -33,10 +34,27 @@ export function PaymentCreateForm({ students, action }: PaymentCreateFormProps) 
       .slice(0, 10);
   }, [deferredQuery, students]);
 
+  // ─── Fee state guards ───────────────────────────────────────────────
+  // A class with no fee setting for this year can't be charged; a fully
+  // paid fee must not be charged again (the old form silently fell back
+  // from remaining=0 to the full fee and allowed double-charging).
+  const tuitionFeeMissing =
+    selectedStudent != null && selectedStudent.tuitionAmount <= 0;
+  const tuitionComplete =
+    selectedStudent != null &&
+    selectedStudent.tuitionAmount > 0 &&
+    selectedStudent.tuitionRemaining <= 0;
+  const uniformFeeMissing =
+    selectedStudent != null && selectedStudent.uniformAmount <= 0;
+  const uniformComplete =
+    selectedStudent != null &&
+    selectedStudent.uniformAmount > 0 &&
+    selectedStudent.uniformPaid;
+
   const targetAmount = selectedStudent
     ? feeType === "uniform"
       ? selectedStudent.uniformAmount
-      : selectedStudent.tuitionRemaining || selectedStudent.tuitionAmount
+      : selectedStudent.tuitionRemaining
     : 0;
 
   const paidAmount = feeType === "uniform"
@@ -54,6 +72,18 @@ export function PaymentCreateForm({ students, action }: PaymentCreateFormProps) 
       ? `زي مدرسي - ${selectedStudent.studentName}`
       : `رسوم دراسية - ${selectedStudent.studentName}`
     : "";
+
+  // The submit is blocked when the fee for this student+type can't be
+  // resolved or is already settled — with a visible reason in the UI.
+  const feeBlocked =
+    !selectedStudent ||
+    (feeType === "uniform"
+      ? uniformFeeMissing || uniformComplete
+      : tuitionFeeMissing || tuitionComplete) ||
+    targetAmount <= 0 ||
+    (feeType === "tuition" &&
+      paymentMode === "installment" &&
+      Number(installmentAmount || 0) <= 0);
 
   function pickStudent(student: StudentFeePlan) {
     setStudentId(student.studentId);
@@ -144,6 +174,34 @@ export function PaymentCreateForm({ students, action }: PaymentCreateFormProps) 
           </div>
         )}
 
+        {selectedStudent && feeType === "tuition" && tuitionFeeMissing && (
+          <div className="flex items-start gap-2 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-bold leading-7 text-amber-900">
+            <AlertTriangle size={18} className="mt-1 shrink-0" />
+            <p>لا توجد رسوم دراسية محددة لصف هذا الطالب في السنة <span dir="ltr">{academicYear}</span> — حدّدها أولًا من صفحة «إدارة الأقساط».</p>
+          </div>
+        )}
+
+        {selectedStudent && feeType === "tuition" && tuitionComplete && (
+          <div className="flex items-start gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold leading-7 text-emerald-900">
+            <BadgeCheck size={18} className="mt-1 shrink-0" />
+            <p>تم تسديد كامل الرسوم الدراسية لهذا الطالب في السنة <span dir="ltr">{academicYear}</span> — لا يمكن تسجيل دفعة إضافية.</p>
+          </div>
+        )}
+
+        {selectedStudent && feeType === "uniform" && uniformFeeMissing && (
+          <div className="flex items-start gap-2 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-bold leading-7 text-amber-900">
+            <AlertTriangle size={18} className="mt-1 shrink-0" />
+            <p>لم يُحدَّد سعر الزي المدرسي لصف هذا الطالب في السنة <span dir="ltr">{academicYear}</span> — حدّده أولًا من صفحة «إدارة الأقساط».</p>
+          </div>
+        )}
+
+        {selectedStudent && feeType === "uniform" && uniformComplete && (
+          <div className="flex items-start gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold leading-7 text-emerald-900">
+            <BadgeCheck size={18} className="mt-1 shrink-0" />
+            <p>الزي المدرسي مدفوع بالكامل لهذا الطالب في السنة <span dir="ltr">{academicYear}</span> — لا يمكن تسجيل دفعة إضافية.</p>
+          </div>
+        )}
+
         <div className="grid gap-5 md:grid-cols-2">
           <div>
             <label htmlFor="feeType" className="mb-2 block text-sm font-extrabold text-[var(--app-text)]">نوع الرسوم</label>
@@ -197,7 +255,20 @@ export function PaymentCreateForm({ students, action }: PaymentCreateFormProps) 
         <div className="grid gap-5 md:grid-cols-3">
           <div>
             <label htmlFor="academicYear" className="mb-2 block text-sm font-extrabold text-[var(--app-text)]">السنة الدراسية</label>
-            <input id="academicYear" name="academicYear" maxLength={20} className="input" defaultValue={academicYear} />
+            <input
+              id="academicYear"
+              name="academicYear"
+              maxLength={20}
+              className="input bg-[var(--app-card-soft)]"
+              defaultValue={academicYear}
+              dir="ltr"
+              readOnly
+              aria-readonly="true"
+              title="لتسجيل دفعة لسنة أخرى، بدّل السنة الدراسية من أعلى الصفحة"
+            />
+            <p className="mt-1.5 text-xs leading-5 text-[var(--app-text-muted)]">
+              للقراءة فقط — بدّلها من شريط السنوات أعلى الصفحة، وتُربط الدفعة بخطة رسوم سنتها تلقائيًا.
+            </p>
           </div>
 
           <div>
@@ -223,8 +294,10 @@ export function PaymentCreateForm({ students, action }: PaymentCreateFormProps) 
       </div>
 
       <div className="flex flex-col gap-3 border-t border-[var(--app-border-soft)] bg-gradient-to-l to-indigo-50/30 to-amber-50/20 p-6 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm leading-7 text-[var(--app-text-muted)]">لا تُعرض رموز الطلاب أو التفاصيل الزائدة في قائمة الاختيار؛ التفاصيل تظهر بعد اختيار الطالب فقط.</p>
-        <button type="submit" className="btn btn-primary" disabled={!selectedStudent || targetAmount <= 0 || (feeType === "tuition" && paymentMode === "installment" && Number(installmentAmount || 0) <= 0)}>
+        <p className="text-sm leading-7 text-[var(--app-text-muted)]">
+          تُحفظ الدفعة على السنة <span className="font-extrabold" dir="ltr">{academicYear}</span> — نفس سنة رسوم الصف المعروضة أعلاه حتى تبقى حسابات المتبقي متطابقة.
+        </p>
+        <button type="submit" className="btn btn-primary" disabled={feeBlocked}>
           <CheckCircle2 size={18} />
           حفظ الدفعة
         </button>

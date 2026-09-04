@@ -1,14 +1,14 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { Banknote, CheckCircle2, Settings, Shirt } from "lucide-react";
+import { Banknote, CalendarDays, CheckCircle2, Settings, Shirt } from "lucide-react";
 import { requireAdmin } from "@/lib/auth";
 import { safeQuery } from "@/lib/db";
 import { PageHeader } from "@/components/layout/page-header";
 import { SmartAlert } from "@/components/shared/smart-alert";
 import { EmptyState } from "@/components/shared/empty-state";
 import { getActiveClasses } from "@/services/class-service";
-import { getClassFeeSettings, upsertClassFeeSetting } from "@/services/class-fee-service";
+import { getClassFeeSettings, getActiveAcademicYear, getAcademicYearOptions, upsertClassFeeSetting } from "@/services/class-fee-service";
 import { formatMoney, getCurrentAcademicYear } from "@/types/payment";
 
 export const dynamic = "force-dynamic";
@@ -25,7 +25,18 @@ type FeesPageProps = {
 export default async function FeesPage({ searchParams }: FeesPageProps) {
   await requireAdmin();
   const resolvedSearchParams = await searchParams;
-  const academicYear = resolvedSearchParams?.academicYear?.trim() || getCurrentAcademicYear();
+
+  // Default the year to the ACTIVE academic year (the newest year that
+  // actually has fee settings) rather than the raw calendar-derived year,
+  // so the school sees its existing fee grid on arrival instead of an
+  // empty one after the September rollover. The admin can still switch
+  // to any year (or type a brand-new one) to set up next year's fees.
+  const [academicYear, yearOptions] = await Promise.all([
+    resolvedSearchParams?.academicYear?.trim()
+      ? Promise.resolve(resolvedSearchParams.academicYear.trim())
+      : safeQuery(() => getActiveAcademicYear(), getCurrentAcademicYear()),
+    safeQuery(() => getAcademicYearOptions(), [getCurrentAcademicYear()]),
+  ]);
 
   const [classes, settings] = await Promise.all([
     safeQuery(() => getActiveClasses(), []),
@@ -54,9 +65,34 @@ export default async function FeesPage({ searchParams }: FeesPageProps) {
         <form action="/fees" className="app-card p-5">
           <label htmlFor="academicYear" className="mb-2 block text-sm font-extrabold text-[var(--app-text)]">السنة الدراسية</label>
           <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
-            <input id="academicYear" name="academicYear" className="input" defaultValue={academicYear} maxLength={20} />
+            <input id="academicYear" name="academicYear" className="input" defaultValue={academicYear} maxLength={20} dir="ltr" />
             <button className="btn btn-secondary" type="submit">عرض السنة</button>
           </div>
+          {yearOptions.length > 1 && (
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <span className="flex items-center gap-1 text-xs font-extrabold text-[var(--app-text-muted)]">
+                <CalendarDays size={14} />
+                سنوات مسجّلة:
+              </span>
+              {yearOptions.map((year) => (
+                <a
+                  key={year}
+                  href={`/fees?academicYear=${encodeURIComponent(year)}`}
+                  className={
+                    year === academicYear
+                      ? "btn btn-primary px-3 py-1 text-xs"
+                      : "btn btn-secondary px-3 py-1 text-xs"
+                  }
+                  dir="ltr"
+                >
+                  {year}
+                </a>
+              ))}
+            </div>
+          )}
+          <p className="mt-2 text-xs leading-5 text-[var(--app-text-muted)]">
+            لإعداد رسوم سنة جديدة اكتبها في الحقل أعلاه (مثل <span dir="ltr">{getCurrentAcademicYear()}</span>) واحفظ المبالغ — ستنتقل صفحة الدفعات إليها تلقائيًا بمجرد توفر رسومها.
+          </p>
         </form>
 
         {classes.length === 0 ? (

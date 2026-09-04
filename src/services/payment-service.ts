@@ -1,6 +1,7 @@
 import { Prisma } from "@/lib/prisma-types";
 import { db } from "@/lib/db";
 import { getSupabaseConfigErrorMessage, hasSupabaseConfig } from "@/lib/supabase-client";
+import { getActiveAcademicYear } from "@/services/class-fee-service";
 import {
   canDeletePayment,
   normalizePaymentDate,
@@ -591,6 +592,15 @@ export async function createPayment(
   }
 
   try {
+    // A payment with a blank academic year becomes invisible to every
+    // fee-remaining calculation (they all group by year). Normalize the
+    // year here — the single choke point for both the server action and
+    // the REST API: a well-formed year ("YYYY" or "YYYY-YYYY") passes
+    // through; anything malformed falls back to the active year.
+    const rawYear = data.academicYear?.trim() ?? "";
+    const isYearFormat = /^\d{4}(-\d{4})?$/.test(rawYear);
+    const academicYear = isYearFormat ? rawYear : await getActiveAcademicYear();
+
     const payment = await db.payment.create({
       data: {
         feeTitle: data.feeTitle,
@@ -603,7 +613,7 @@ export async function createPayment(
         finalAmount: data.finalAmount != null ? Number(data.finalAmount) : null,
         status: data.status ?? "paid",
         method: data.method ?? "cash",
-        academicYear: data.academicYear ?? null,
+        academicYear,
         dueDate: normalizePaymentDate(data.dueDate),
         paidAt: normalizePaymentDate(data.paidAt),
         notes: data.notes ?? null,
@@ -623,6 +633,8 @@ export async function createPayment(
         message: "توجد دفعة مكررة.",
       };
     }
+
+    console.error("[createPayment] Error:", error);
 
     return {
       ok: false,
@@ -676,6 +688,10 @@ export async function updatePayment(
   }
 
   try {
+    const rawYear = data.academicYear?.trim() ?? "";
+    const isYearFormat = /^\d{4}(-\d{4})?$/.test(rawYear);
+    const academicYear = isYearFormat ? rawYear : await getActiveAcademicYear();
+
     const payment = await db.payment.update({
       where: {
         id,
@@ -691,7 +707,7 @@ export async function updatePayment(
         finalAmount: data.finalAmount != null ? Number(data.finalAmount) : null,
         status: data.status ?? "paid",
         method: data.method ?? "cash",
-        academicYear: data.academicYear ?? null,
+        academicYear,
         dueDate: normalizePaymentDate(data.dueDate),
         paidAt: normalizePaymentDate(data.paidAt),
         notes: data.notes ?? null,
@@ -765,7 +781,7 @@ export async function deletePayment(
   };
 }
 
-export async function getPaymentsCount(): Promise<{
+export async function getPaymentsCount(academicYear?: string): Promise<{
   total: number;
   paid: number;
   partial: number;
@@ -776,12 +792,18 @@ export async function getPaymentsCount(): Promise<{
   totalPending: number;
   totalRefunded: number;
 }> {
+  // Optional year scope: when provided, every stat below is computed for
+  // that academic year only, so the payments page stats match the year
+  // the user is viewing. Without it, stats are school-wide (dashboard).
+  const year = academicYear?.trim() || null;
+  const yearWhere = year ? { academicYear: year } : {};
+
   const [total, paid, partial, pending, refunded] = await Promise.all([
-    db.payment.count(),
-    db.payment.count({ where: { status: "paid" } }),
-    db.payment.count({ where: { status: "partial" } }),
-    db.payment.count({ where: { status: "pending" } }),
-    db.payment.count({ where: { status: "refunded" } }),
+    db.payment.count({ where: yearWhere }),
+    db.payment.count({ where: { ...yearWhere, status: "paid" } }),
+    db.payment.count({ where: { ...yearWhere, status: "partial" } }),
+    db.payment.count({ where: { ...yearWhere, status: "pending" } }),
+    db.payment.count({ where: { ...yearWhere, status: "refunded" } }),
   ]);
 
   const today = new Date();
@@ -789,6 +811,7 @@ export async function getPaymentsCount(): Promise<{
 
   const overdue = await db.payment.count({
     where: {
+      ...yearWhere,
       status: { in: ["pending", "partial"] },
       dueDate: { lt: today },
     },
@@ -798,7 +821,7 @@ export async function getPaymentsCount(): Promise<{
   // Sum of all payment amounts with status "paid" or "partial".
   // This is the actual cash collected.
   const allPaidPayments = await db.payment.findMany({
-    where: { status: { in: ["paid", "partial"] } },
+    where: { ...yearWhere, status: { in: ["paid", "partial"] } },
     select: { amount: true, status: true },
   });
   const totalPaid = allPaidPayments.reduce(
@@ -816,7 +839,7 @@ export async function getPaymentsCount(): Promise<{
   // partial/pending payment row, which double-counted installments
   // for the same fee and produced totals higher than the actual fees.
   const allPartialPayments = await db.payment.findMany({
-    where: { status: { in: ["pending", "partial"] } },
+    where: { ...yearWhere, status: { in: ["pending", "partial"] } },
     select: {
       studentId: true,
       feeType: true,
@@ -854,7 +877,7 @@ export async function getPaymentsCount(): Promise<{
   if (allPaidPayments.length > 0 && allPartialPayments.length > 0) {
     // Need to re-fetch with full fields since allPaidPayments only had amount+status
     const allPaidForSum = await db.payment.findMany({
-      where: { status: "paid" },
+      where: { ...yearWhere, status: "paid" },
       select: {
         studentId: true,
         feeType: true,
@@ -928,7 +951,7 @@ export async function getPaymentsCount(): Promise<{
 
   // ─── Total refunded ───────────────────────────────────────────────
   const allRefunded = await db.payment.findMany({
-    where: { status: "refunded" },
+    where: { ...yearWhere, status: "refunded" },
     select: { amount: true },
   });
   const totalRefunded = allRefunded.reduce(

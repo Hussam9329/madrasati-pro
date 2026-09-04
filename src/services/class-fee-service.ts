@@ -36,6 +36,87 @@ function normalizeYear(academicYear?: string | null) {
   return academicYear?.trim() || getCurrentAcademicYear();
 }
 
+/**
+ * The "active" academic year the payments module should operate on.
+ *
+ * Rule (in priority order):
+ *  1. If the calendar-derived current year (see getCurrentAcademicYear)
+ *     has class fee settings configured → it is the active year.
+ *  2. Otherwise → the NEWEST configured year that is older than the
+ *     current year (the school year that just ended but whose fees are
+ *     still being collected — e.g. in September, before the school sets
+ *     up fees for the new year).
+ *  3. Otherwise → the calendar-derived current year (nothing configured).
+ *
+ * Why this matters: every payment form/fee-plan lookup used to be keyed
+ * on getCurrentAcademicYear() alone. The moment the calendar rolled into
+ * September, the system started looking up fee plans for a year with no
+ * configured fees — every amount came back 0, the save button disabled
+ * itself, and installments could no longer be recorded at all. Falling
+ * back to the latest year that actually HAS fees keeps the payments
+ * module alive until the school configures the new year's fees, at
+ * which point the active year flips to it automatically.
+ */
+export async function getActiveAcademicYear(): Promise<string> {
+  const currentYear = getCurrentAcademicYear();
+
+  let configuredYears: string[] = [];
+  try {
+    const rows = await db.classFeeSetting.findMany({
+      distinct: ["academicYear"],
+      select: { academicYear: true },
+    });
+    configuredYears = Array.from(
+      new Set(rows.map((row) => (row.academicYear ?? "").trim()).filter(Boolean)),
+    ).sort(); // ascending; "YYYY-YYYY" strings sort chronologically
+  } catch {
+    // DB unavailable — safest fallback is the computed year.
+    return currentYear;
+  }
+
+  if (configuredYears.length === 0) return currentYear;
+  if (configuredYears.includes(currentYear)) return currentYear;
+
+  const newestPastYear = [...configuredYears].reverse().find((year) => year < currentYear);
+  return newestPastYear ?? currentYear;
+}
+
+/**
+ * All academic years worth showing in a year switcher:
+ * union of (years with fee settings) ∪ (years with recorded payments) ∪
+ * (the computed current year), sorted newest-first.
+ */
+export async function getAcademicYearOptions(): Promise<string[]> {
+  const currentYear = getCurrentAcademicYear();
+  const years = new Set<string>([currentYear]);
+
+  try {
+    const [feeYears, paymentYears] = await Promise.all([
+      db.classFeeSetting.findMany({
+        distinct: ["academicYear"],
+        select: { academicYear: true },
+      }),
+      db.payment.findMany({
+        distinct: ["academicYear"],
+        select: { academicYear: true },
+      }),
+    ]);
+
+    for (const row of feeYears) {
+      const year = (row.academicYear ?? "").trim();
+      if (year) years.add(year);
+    }
+    for (const row of paymentYears) {
+      const year = (row.academicYear ?? "").trim();
+      if (year) years.add(year);
+    }
+  } catch {
+    // Ignore — the current year is always in the set as fallback.
+  }
+
+  return Array.from(years).sort().reverse();
+}
+
 export async function getClassFeeSettings(academicYear?: string) {
   const year = academicYear?.trim();
   const where: Prisma.ClassFeeSettingWhereInput = {};
