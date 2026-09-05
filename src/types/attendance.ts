@@ -371,10 +371,22 @@ export function getLocalTimeISO(): string {
  * Handles both strings with and without timezone info:
  *   - "2026-06-08T13:29:22"        → treated as local time → correct
  *   - "2026-06-08T10:29:22.000Z"   → treated as UTC → converted to local → correct
+ *
+ * Pass `withSeconds: false` for compact output (e.g. WhatsApp messages)
+ * where seconds are unnecessary noise.
  */
-export function formatAttendanceTime(dateValue: string | Date | null): string {
+export function formatAttendanceTime(
+  dateValue: string | Date | null,
+  options?: { withSeconds?: boolean },
+): string {
   if (!dateValue) return "";
   const date = typeof dateValue === "string" ? new Date(dateValue) : dateValue;
+  if (options?.withSeconds === false) {
+    return date.toLocaleTimeString("ar-IQ-u-nu-latn", {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  }
   return date.toLocaleTimeString("ar-IQ-u-nu-latn");
 }
 

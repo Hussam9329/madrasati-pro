@@ -14,7 +14,7 @@ import { getAttendanceByStudentId } from "@/services/attendance-service";
 import { getPaymentsByStudentId, getStudentPaymentSummary } from "@/services/payment-service";
 import { formatMoney } from "@/types/payment";
 import { getStudentClassDisplay, getStudentStatusLabel } from "@/types/student";
-import { formatAttendanceTime } from "@/types/attendance";
+import { formatAttendanceShortDate, formatAttendanceTime } from "@/types/attendance";
 import {
   formatReportDate,
   getReportDateRange,
@@ -70,6 +70,7 @@ export default async function StudentProfilePage({ params, searchParams }: Stude
   const financialStats = calculateFinancialStats(payments, paymentSummary.totalPaid, paymentSummary.totalPending);
   const averageLabel = gradeStats.average == null ? "لا توجد درجات" : `${gradeStats.average}%`;
   const attendanceSummary = `${attendanceStats.presentCount} حضور / ${attendanceStats.absentCount} غياب / ${attendanceStats.lateCount} تأخير`;
+  const attendanceDetailSummary = buildAttendanceWhatsappSummary(reportAttendance);
   const financialSummary = `مدفوع ${formatMoney(financialStats.totalPaid)} — متبقّي ${formatMoney(financialStats.totalRemaining)} — الزي ${financialStats.uniformPaid ? "مدفوع" : "غير مدفوع"}`;
   const gradeSummary = buildGradeWhatsappSummary(reportGrades);
   const reportFromDate = formatDateInputValue(reportDateRange.from);
@@ -99,6 +100,7 @@ export default async function StudentProfilePage({ params, searchParams }: Stude
           averageLabel={averageLabel}
           gradeSummary={gradeSummary}
           attendanceSummary={attendanceSummary}
+          attendanceDetailSummary={attendanceDetailSummary}
           financialSummary={financialSummary}
           reportPeriod={reportPeriod}
           reportFromDate={reportFromDate}
@@ -442,6 +444,44 @@ function formatGradeValue(value: number) {
   const numericValue = Number(value);
   if (!Number.isFinite(numericValue)) return "-";
   return Number.isInteger(numericValue) ? String(numericValue) : numericValue.toFixed(1);
+}
+
+type WhatsappAttendanceSummaryItem = {
+  date: Date;
+  status: string;
+  statusLabel: string;
+  checkInAt: Date | null;
+  checkOutAt: Date | null;
+  isComputedAbsence?: boolean;
+};
+
+/**
+ * Builds the per-day attendance lines (status + check-in/check-out times)
+ * used inside the WhatsApp summary sent to the guardian.
+ * Times come straight from the attendance record so the parent sees the
+ * student's daily entry and exit times without needing the PDF file.
+ */
+function buildAttendanceWhatsappSummary(attendance: WhatsappAttendanceSummaryItem[]) {
+  if (attendance.length === 0) {
+    return "لا توجد سجلات حضور مسجلة خلال الفترة.";
+  }
+
+  // Oldest → newest so the guardian reads the days chronologically.
+  const sorted = [...attendance].sort(
+    (first, second) => first.date.getTime() - second.date.getTime(),
+  );
+
+  return sorted
+    .slice(0, 30)
+    .map((record) => {
+      const dateLabel = formatAttendanceShortDate(record.date);
+      const statusLabel = record.statusLabel || "غير محدد";
+      const checkInLabel = record.checkInAt ? `دخول ${formatAttendanceTime(record.checkInAt, { withSeconds: false })}` : "بدون تسجيل دخول";
+      const checkOutLabel = record.checkOutAt ? `انصراف ${formatAttendanceTime(record.checkOutAt, { withSeconds: false })}` : "بدون تسجيل انصراف";
+
+      return `• ${dateLabel} — ${statusLabel} — ${checkInLabel} — ${checkOutLabel}`;
+    })
+    .join("\n");
 }
 
 function calculateAttendanceStats(attendance: { status: string }[]) {

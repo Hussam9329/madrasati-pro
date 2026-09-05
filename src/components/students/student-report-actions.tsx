@@ -34,6 +34,8 @@ type StudentReportActionsProps = {
   averageLabel: string;
   gradeSummary: string;
   attendanceSummary: string;
+  /** Per-day attendance lines with check-in/check-out times for the WhatsApp message. */
+  attendanceDetailSummary: string;
   financialSummary: string;
   reportPeriod: ReportPeriod;
   reportFromDate: string;
@@ -49,6 +51,7 @@ export function StudentReportActions({
   averageLabel,
   gradeSummary,
   attendanceSummary,
+  attendanceDetailSummary,
   financialSummary,
   reportPeriod,
   reportFromDate,
@@ -74,10 +77,12 @@ export function StudentReportActions({
       "درجات المواد خلال الفترة:",
       gradeSummary,
       `الحضور خلال الفترة: ${attendanceSummary}`,
+      "أوقات الدخول والانصراف خلال الفترة:",
+      attendanceDetailSummary,
       `الجانب المالي الحالي: ${financialSummary}`,
       "يمكن حفظ التقرير PDF من زر طباعة / حفظ PDF داخل ملف الطالب في النظام.",
     ].join("\n");
-  }, [attendanceSummary, averageLabel, classDisplay, financialSummary, gradeSummary, reportRangeLabel, studentName]);
+  }, [attendanceDetailSummary, attendanceSummary, averageLabel, classDisplay, financialSummary, gradeSummary, reportRangeLabel, studentName]);
 
   const whatsappUrl = getWhatsappUrl(guardianPhone, whatsappMessage);
   const telegramUrl = getTelegramDesktopUrl(guardianTelegram);
