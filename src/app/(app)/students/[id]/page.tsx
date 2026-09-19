@@ -10,7 +10,10 @@ import { PageHeader } from "@/components/layout/page-header";
 import { StudentReportActions } from "@/components/students/student-report-actions";
 import { getStudentDetails } from "@/services/student-service";
 import { getGradesByStudentId } from "@/services/grade-service";
-import { getAttendanceByStudentId } from "@/services/attendance-service";
+import {
+  getAttendanceByStudentId,
+  getStudentComputedAbsences,
+} from "@/services/attendance-service";
 import { getPaymentsByStudentId, getStudentPaymentSummary } from "@/services/payment-service";
 import { formatMoney } from "@/types/payment";
 import { getStudentClassDisplay, getStudentStatusLabel } from "@/types/student";
@@ -49,15 +52,21 @@ export default async function StudentProfilePage({ params, searchParams }: Stude
   const student = await getStudentDetails(id);
   if (!student) notFound();
 
-  const [grades, attendance, payments, paymentSummary] = await Promise.all([
+  const [grades, attendance, payments, paymentSummary, computedAbsences] = await Promise.all([
     safeQuery(() => getGradesByStudentId(id), []),
     safeQuery(() => getAttendanceByStudentId(id), []),
     safeQuery(() => getPaymentsByStudentId(id), []),
     safeQuery(() => getStudentPaymentSummary(id), { totalPaid: 0, totalPending: 0, totalRefunded: 0, paymentsCount: 0 }),
+    // School days in the report range where the student has no attendance
+    // record — counted as absent, same as the attendance page.
+    safeQuery(() => getStudentComputedAbsences(id, reportDateRange, student.enrollmentDate), []),
   ]);
 
   const reportGrades = filterItemsByReportRange(grades, (grade) => grade.date, reportDateRange);
-  const reportAttendance = filterItemsByReportRange(attendance, (record) => record.date, reportDateRange);
+  const reportAttendance = mergeReportAttendance(
+    filterItemsByReportRange(attendance, (record) => record.date, reportDateRange),
+    filterItemsByReportRange(computedAbsences, (record) => record.date, reportDateRange),
+  );
 
   const classDisplay = getStudentClassDisplay({
     className: student.className,
@@ -482,6 +491,38 @@ function buildAttendanceWhatsappSummary(attendance: WhatsappAttendanceSummaryIte
       return `• ${dateLabel} — ${statusLabel} — ${checkInLabel} — ${checkOutLabel}`;
     })
     .join("\n");
+}
+
+type ReportAttendanceItem = {
+  id: string;
+  date: Date;
+  status: string;
+  statusLabel: string;
+  checkInAt: Date | null;
+  checkOutAt: Date | null;
+  isComputedAbsence?: boolean;
+};
+
+/**
+ * Merge explicit attendance records with computed absences for the report.
+ * A computed absence is dropped if the student already has a record that day
+ * (defensive — the service already skips those days), and the merged list is
+ * sorted newest-first to match the existing table order.
+ */
+function mergeReportAttendance(
+  explicit: ReportAttendanceItem[],
+  computed: ReportAttendanceItem[],
+) {
+  const explicitDays = new Set(explicit.map((record) => getReportDayKey(record.date)));
+  const extras = computed.filter((record) => !explicitDays.has(getReportDayKey(record.date)));
+
+  return [...explicit, ...extras].sort(
+    (first, second) => second.date.getTime() - first.date.getTime(),
+  );
+}
+
+function getReportDayKey(date: Date) {
+  return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
 }
 
 function calculateAttendanceStats(attendance: { status: string }[]) {

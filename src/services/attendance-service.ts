@@ -1,7 +1,11 @@
 import { Prisma } from "@/lib/prisma-types";
 import { db } from "@/lib/db";
 import { getSupabaseConfigErrorMessage, hasSupabaseConfig } from "@/lib/supabase-client";
-import { getPreviousConfiguredSchoolDay } from "@/services/school-settings-service";
+import {
+  getPreviousConfiguredSchoolDay,
+  getSchoolSettings,
+  isConfiguredHoliday,
+} from "@/services/school-settings-service";
 import {
   ATTENDANCE_STATUSES,
   canDeleteAttendanceRecord,
@@ -1352,6 +1356,79 @@ export async function getAttendanceByStudentId(
   });
 }
 
+/**
+ * Computed absences for ONE student inside a report date range.
+ *
+ * A student who never scanned/registered on a school day has no DB record —
+ * the attendance page already shows that day as "غائب" (computed absence).
+ * This brings the same logic to the student profile report and the guardian
+ * WhatsApp summary so absences no longer show as 0.
+ *
+ * Rules:
+ * - Only school days count (configured weekends/holidays are skipped).
+ * - Future days never count (the report period may extend past today).
+ * - Days before the student's enrollment date never count.
+ * - Only active students get computed absences (same as the attendance page).
+ */
+export async function getStudentComputedAbsences(
+  studentId: string,
+  range: { from: Date; to: Date },
+  enrollmentDate?: Date | string | null,
+): Promise<AttendanceListItem[]> {
+  // `range.to` is an EXCLUSIVE bound (start of the next day).
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const todayEnd = new Date(todayStart);
+  todayEnd.setDate(todayEnd.getDate() + 1);
+
+  // Never count days that haven't happened yet.
+  let start = new Date(range.from.getTime());
+  const end = new Date(Math.min(range.to.getTime(), todayEnd.getTime()));
+
+  // Never count days before the student enrolled.
+  if (enrollmentDate) {
+    const parsedEnrollment =
+      enrollmentDate instanceof Date ? enrollmentDate : new Date(enrollmentDate);
+    if (!Number.isNaN(parsedEnrollment.getTime())) {
+      const enrollmentStart = new Date(
+        parsedEnrollment.getFullYear(),
+        parsedEnrollment.getMonth(),
+        parsedEnrollment.getDate(),
+      );
+      if (enrollmentStart.getTime() > start.getTime()) {
+        start = enrollmentStart;
+      }
+    }
+  }
+
+  if (start.getTime() >= end.getTime()) {
+    return [];
+  }
+
+  // Inclusive last day inside the effective range.
+  const lastDay = new Date(end.getTime() - 1);
+
+  const records = await getAttendanceRecords({
+    studentId,
+    fromDate: toLocalDateTimeInputString(start),
+    toDate: toLocalDateTimeInputString(lastDay),
+  });
+
+  return records.filter((record) => record.isComputedAbsence === true);
+}
+
+/**
+ * Format a Date as "YYYY-MM-DDT00:00:00" (no timezone suffix) so that
+ * `new Date(...)` parses it as LOCAL time on any server. Plain "YYYY-MM-DD"
+ * strings are parsed as UTC and shift back one day on UTC+ servers.
+ */
+function toLocalDateTimeInputString(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}T00:00:00`;
+}
+
 export async function getAttendanceByScheduleId(
   scheduleId: string,
 ): Promise<AttendanceListItem[]> {
@@ -1434,15 +1511,25 @@ async function computeAbsentStudents(
     if (from && to) {
       const current = new Date(from.getFullYear(), from.getMonth(), from.getDate());
       const toMidnight = new Date(to.getFullYear(), to.getMonth(), to.getDate());
-      // Cap at 31 days to avoid huge ranges
+      // Cap the range to avoid huge computations. Single-student queries are
+      // cheap, so allow up to a full year (quarterly/semester/annual student
+      // reports need it); school-wide queries stay capped at 31 days.
+      const maxDays = filter.studentId ? 370 : 31;
       let safety = 0;
-      while (current <= toMidnight && safety < 31) {
+      while (current <= toMidnight && safety < maxDays) {
         dates.push(new Date(current));
         current.setDate(current.getDate() + 1);
         safety++;
       }
     }
   }
+
+  if (dates.length === 0) return [];
+
+  // A student with no record on a weekend/holiday is NOT absent — skip
+  // configured non-school days so reports match the school calendar.
+  const schoolSettings = await getSchoolSettings();
+  dates = dates.filter((date) => !isConfiguredHoliday(date, schoolSettings));
 
   if (dates.length === 0) return [];
 
