@@ -152,12 +152,21 @@ export async function getStudentDetails(
   };
 }
 
-async function findDuplicateStudentPhone(input: StudentFormInput, excludeId?: string) {
+function normalizeNameForCompare(name: string) {
+  return name.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+/**
+ * The same student registered twice: same name AND a shared phone number.
+ * Siblings share a guardian phone, so a shared number with a different
+ * name is allowed.
+ */
+async function findDuplicateStudent(input: StudentFormInput, excludeId?: string) {
   const data = normalizeStudentInput(input);
   const phones = [data.phone, data.guardianPhone].filter(Boolean);
   if (phones.length === 0) return null;
 
-  return db.student.findFirst({
+  const samePhone = await db.student.findMany({
     where: {
       ...(excludeId ? { id: { not: excludeId } } : {}),
       OR: [
@@ -167,8 +176,15 @@ async function findDuplicateStudentPhone(input: StudentFormInput, excludeId?: st
         data.guardianPhone ? { guardianPhone: data.guardianPhone } : undefined,
       ].filter(Boolean) as any,
     },
-    select: { id: true },
+    select: { id: true, fullName: true },
   });
+
+  const name = normalizeNameForCompare(data.fullName);
+  return samePhone.find((student) => normalizeNameForCompare(student.fullName) === name) ?? null;
+}
+
+function duplicateStudentMessage(fullName: string) {
+  return `الطالب «${fullName}» مسجل مسبقًا بنفس الاسم ونفس رقم الهاتف. الإخوة بأسماء مختلفة يمكن تسجيلهم بنفس رقم ولي الأمر.`;
 }
 
 export async function createStudent(
@@ -206,12 +222,13 @@ export async function createStudent(
     };
   }
 
-  const duplicatePhone = await findDuplicateStudentPhone(data);
-  if (duplicatePhone) {
+  const duplicate = await findDuplicateStudent(data);
+  if (duplicate) {
+    const message = duplicateStudentMessage(duplicate.fullName);
     return {
       ok: false,
-      message: "رقم الهاتف مستخدم مسبقًا لطالب آخر.",
-      errors: { phone: "رقم الهاتف مستخدم مسبقًا لطالب آخر." },
+      message,
+      errors: { phone: message },
     };
   }
 
@@ -328,12 +345,13 @@ export async function updateStudent(
     };
   }
 
-  const duplicatePhone = await findDuplicateStudentPhone(data, id);
-  if (duplicatePhone) {
+  const duplicate = await findDuplicateStudent(data, id);
+  if (duplicate) {
+    const message = duplicateStudentMessage(duplicate.fullName);
     return {
       ok: false,
-      message: "رقم الهاتف مستخدم مسبقًا لطالب آخر.",
-      errors: { phone: "رقم الهاتف مستخدم مسبقًا لطالب آخر." },
+      message,
+      errors: { phone: message },
     };
   }
 

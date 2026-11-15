@@ -1,3 +1,4 @@
+import { isSchoolDay, type SchoolDay } from "@/types/settings";
 import { type DeleteAssociation, type DeleteCheckResult } from "@/types/student";
 
 export type { DeleteAssociation, DeleteCheckResult };
@@ -27,6 +28,8 @@ export type ClassFormInput = {
   name: string;
   level?: string;
   description?: string;
+  /** Global weekend days that are school days for this class (e.g. ["saturday"]). Left unchanged on update when omitted. */
+  extraSchoolDays?: SchoolDay[];
 };
 
 export type SectionFormInput = {
@@ -47,6 +50,7 @@ export type ClassListItem = {
   subjectsCount: number;
   schedulesCount: number;
   subjectIds: string[];
+  extraSchoolDays: SchoolDay[];
   createdAt: Date;
 };
 
@@ -102,6 +106,9 @@ export function normalizeClassInput(input: ClassFormInput): ClassFormInput {
     name: input.name.trim(),
     level: input.level?.trim() || undefined,
     description: input.description?.trim() || undefined,
+    extraSchoolDays: input.extraSchoolDays
+      ? Array.from(new Set(input.extraSchoolDays.filter(isSchoolDay)))
+      : undefined,
   };
 }
 

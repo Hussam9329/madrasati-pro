@@ -34,12 +34,20 @@ function toArray(value: unknown): string[] {
   return [];
 }
 
+/**
+ * Safely reads a stored weekday list (Json column) into unique weekday keys,
+ * ignoring anything that is not a known weekday.
+ */
+export function parseSchoolDays(value: unknown): SchoolDay[] {
+  return Array.from(new Set(toArray(value).filter(isSchoolDay)));
+}
+
 function normalizeWeekendDays(value: unknown): SchoolDay[] {
   if (value === null || value === undefined) {
     return [...DEFAULT_SCHOOL_SETTINGS.weekendDays];
   }
 
-  return Array.from(new Set(toArray(value).filter(isSchoolDay)));
+  return parseSchoolDays(value);
 }
 
 function toSchoolSettings(record: any): SchoolSettings {
@@ -104,21 +112,42 @@ export function formatDateKey(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-export function isConfiguredHoliday(date: Date, settings: Pick<SchoolSettings, "weekendDays" | "customHolidayDates">): boolean {
-  const weekday = getWeekdayKey(date);
-  const dateKey = formatDateKey(date);
+/**
+ * Whether `date` is a school day for a class.
+ * - A custom holiday date is off for everyone.
+ * - A global weekend day is off unless the class has it in its extra school
+ *   days (e.g. Saturday for sixth-grade classes).
+ * - Students without a class pass no extra days and follow the global calendar.
+ */
+export function isSchoolDayForClass(
+  date: Date,
+  settings: Pick<SchoolSettings, "weekendDays" | "customHolidayDates">,
+  classExtraSchoolDays: readonly SchoolDay[] = [],
+): boolean {
+  if (settings.customHolidayDates.includes(formatDateKey(date))) {
+    return false;
+  }
 
-  return settings.weekendDays.includes(weekday) || settings.customHolidayDates.includes(dateKey);
+  const weekday = getWeekdayKey(date);
+  return !settings.weekendDays.includes(weekday) || classExtraSchoolDays.includes(weekday);
 }
 
-export async function getPreviousConfiguredSchoolDay(date: Date): Promise<Date> {
+/** Global calendar only (a day off for students who have no extra school days). */
+export function isConfiguredHoliday(date: Date, settings: Pick<SchoolSettings, "weekendDays" | "customHolidayDates">): boolean {
+  return !isSchoolDayForClass(date, settings);
+}
+
+export async function getPreviousConfiguredSchoolDay(
+  date: Date,
+  classExtraSchoolDays: readonly SchoolDay[] = [],
+): Promise<Date> {
   const settings = await getSchoolSettings();
   const previous = new Date(date);
   previous.setDate(previous.getDate() - 1);
   previous.setHours(0, 0, 0, 0);
 
   for (let i = 0; i < 370; i += 1) {
-    if (!isConfiguredHoliday(previous, settings)) {
+    if (isSchoolDayForClass(previous, settings, classExtraSchoolDays)) {
       return previous;
     }
     previous.setDate(previous.getDate() - 1);

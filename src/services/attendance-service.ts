@@ -2,9 +2,11 @@ import { Prisma } from "@/lib/prisma-types";
 import { db } from "@/lib/db";
 import { getSupabaseConfigErrorMessage, hasSupabaseConfig } from "@/lib/supabase-client";
 import {
+  formatDateKey,
   getPreviousConfiguredSchoolDay,
   getSchoolSettings,
-  isConfiguredHoliday,
+  isSchoolDayForClass,
+  parseSchoolDays,
 } from "@/services/school-settings-service";
 import {
   ATTENDANCE_STATUSES,
@@ -857,7 +859,14 @@ export async function markAttendanceBatch(
 
 
 async function getPreviousAttendanceMessage(studentId: string, today: Date): Promise<string> {
-  const previousDay = await getPreviousConfiguredSchoolDay(today);
+  const studentClass = await db.student.findUnique({
+    where: { id: studentId },
+    select: { section: { select: { class: { select: { extraSchoolDays: true } } } } },
+  });
+  const previousDay = await getPreviousConfiguredSchoolDay(
+    today,
+    parseSchoolDays(studentClass?.section?.class?.extraSchoolDays),
+  );
   const previousEnd = new Date(previousDay);
   previousEnd.setDate(previousEnd.getDate() + 1);
 
@@ -1190,7 +1199,7 @@ export async function getDailyAttendanceSummary(
   const dayEnd = new Date(dayStart);
   dayEnd.setDate(dayEnd.getDate() + 1);
 
-  const [records, activeStudents] = await Promise.all([
+  const [records, activeStudents, schoolSettings] = await Promise.all([
     db.attendanceRecord.findMany({
       where: {
         date: {
@@ -1207,15 +1216,33 @@ export async function getDailyAttendanceSummary(
     }),
     db.student.findMany({
       where: { status: "active" },
-      select: { id: true },
+      select: {
+        id: true,
+        section: { select: { class: { select: { id: true, extraSchoolDays: true } } } },
+      },
     }),
+    getSchoolSettings(),
   ]);
+
+  // A student without a record is absent only if today is a school day for
+  // their class (weekends/holidays are off; e.g. Saturday only for some classes).
+  const isSchoolDayByClass = new Map<string, boolean>();
+  const isSchoolDayForStudent = (schoolClass: { id: string; extraSchoolDays: unknown } | null | undefined) => {
+    const key = schoolClass?.id ?? "";
+    let isSchoolDay = isSchoolDayByClass.get(key);
+    if (isSchoolDay === undefined) {
+      isSchoolDay = isSchoolDayForClass(dayStart, schoolSettings, parseSchoolDays(schoolClass?.extraSchoolDays));
+      isSchoolDayByClass.set(key, isSchoolDay);
+    }
+    return isSchoolDay;
+  };
 
   const studentsWithRecord = new Set(
     records.map((record: { studentId: string }) => record.studentId),
   );
   const computedAbsent = activeStudents.filter(
-    (student: { id: string }) => !studentsWithRecord.has(student.id),
+    (student: { id: string; section: { class: { id: string; extraSchoolDays: unknown } | null } | null }) =>
+      !studentsWithRecord.has(student.id) && isSchoolDayForStudent(student.section?.class),
   ).length;
 
   const present = records.filter((record: { status: string }) => record.status === "present").length;
@@ -1526,10 +1553,11 @@ async function computeAbsentStudents(
 
   if (dates.length === 0) return [];
 
-  // A student with no record on a weekend/holiday is NOT absent — skip
-  // configured non-school days so reports match the school calendar.
+  // A student with no record on a weekend/holiday is NOT absent. Custom
+  // holidays are off for everyone, so drop them up front; weekend days are
+  // filtered per class below (a class may have school on a global weekend day).
   const schoolSettings = await getSchoolSettings();
-  dates = dates.filter((date) => !isConfiguredHoliday(date, schoolSettings));
+  dates = dates.filter((date) => !schoolSettings.customHolidayDates.includes(formatDateKey(date)));
 
   if (dates.length === 0) return [];
 
@@ -1592,11 +1620,25 @@ async function computeAbsentStudents(
   // Also track student IDs that have at least one record (for query text filtering)
   const studentsWithAnyRecord = new Set(allDateRecords.map((r: { studentId: string }) => r.studentId));
 
-  // For each student × date without a record, create a computed absence
+  // School days per class calendar, computed once per class (students without
+  // a class follow the global calendar).
+  const schoolDatesByClass = new Map<string, Date[]>();
+  const getSchoolDates = (schoolClass: { id: string; extraSchoolDays: unknown } | null | undefined) => {
+    const key = schoolClass?.id ?? "";
+    let schoolDates = schoolDatesByClass.get(key);
+    if (!schoolDates) {
+      const extraSchoolDays = parseSchoolDays(schoolClass?.extraSchoolDays);
+      schoolDates = dates.filter((date) => isSchoolDayForClass(date, schoolSettings, extraSchoolDays));
+      schoolDatesByClass.set(key, schoolDates);
+    }
+    return schoolDates;
+  };
+
+  // For each student × school day without a record, create a computed absence
   const computed: AttendanceListItem[] = [];
 
   for (const student of students) {
-    for (const date of dates) {
+    for (const date of getSchoolDates(student.section?.class)) {
       const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
       const key = `${student.id}|${dateStr}`;
 

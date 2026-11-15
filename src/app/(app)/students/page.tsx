@@ -1,4 +1,5 @@
 import { revalidatePath } from "next/cache";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { buildErrorRedirect } from "@/lib/redirect-message";
 import {
@@ -7,6 +8,7 @@ import {
   CheckCircle2,
   FileText,
   GraduationCap,
+  Link2,
   MessageCircle,
   Pencil,
   Search,
@@ -102,7 +104,12 @@ export default async function StudentsPage({
           description="أضف الطلاب واربط كل طالب بالشعبة المناسبة، مع متابعة الحالة والمعلومات الأساسية."
           icon="students"
           badge="الخطوة الرابعة"
-        />
+        >
+          <Link href="/students/guardian-links" className="btn btn-secondary">
+            <Link2 size={18} />
+            روابط أولياء الأمور
+          </Link>
+        </PageHeader>
 
         <StudentsFeedback
           saved={resolvedSearchParams?.saved}

@@ -17,6 +17,10 @@ const publicRoutes = ["/login"];
 // API routes that do NOT require authentication
 const publicApiRoutes = ["/api/auth/login"];
 
+// Public guardian report links: /p/<token>. Matched with the trailing slash
+// on purpose — a bare "/p" prefix would also open /payments and /permissions.
+const GUARDIAN_LINK_PREFIX = "/p/";
+
 // ─── JWT Verification Cache ─────────────────────────────────────
 // Avoids re-computing crypto.subtle.verify for the same token
 // within a short time window (useful for rapid navigation).
@@ -129,6 +133,17 @@ export async function middleware(request: NextRequest) {
   // Skip public page routes
   if (publicRoutes.some((route) => pathname.startsWith(route))) {
     return NextResponse.next();
+  }
+
+  // Guardian links are read-only and protected by their secret token (checked
+  // by the page itself). Keep the token out of Referer headers, search
+  // engines and shared caches.
+  if (pathname.startsWith(GUARDIAN_LINK_PREFIX)) {
+    const response = NextResponse.next();
+    response.headers.set("Referrer-Policy", "no-referrer");
+    response.headers.set("X-Robots-Tag", "noindex, nofollow");
+    response.headers.set("Cache-Control", "private, no-store");
+    return response;
   }
 
   // Handle API routes: check auth for protected API routes

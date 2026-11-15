@@ -1,7 +1,8 @@
 "use client";
 
 import { useDeferredValue, useMemo, useState } from "react";
-import { AlertTriangle, BadgeCheck, CheckCircle2, CreditCard, Search, Shirt, WalletCards } from "lucide-react";
+import { useFormStatus } from "react-dom";
+import { AlertTriangle, BadgeCheck, CheckCircle2, CreditCard, Loader2, Search, Shirt, WalletCards } from "lucide-react";
 import type { StudentFeePlan } from "@/services/class-fee-service";
 import { PAYMENT_METHODS, formatMoney } from "@/types/payment";
 import { getStudentClassDisplay } from "@/types/student";
@@ -17,7 +18,8 @@ export function PaymentCreateForm({ students, academicYear, action }: PaymentCre
   const [query, setQuery] = useState("");
   const [studentId, setStudentId] = useState("");
   const [feeType, setFeeType] = useState<"tuition" | "uniform">("tuition");
-  const [paymentMode, setPaymentMode] = useState<"full" | "installment">("full");
+  // «دفعات» by default: the amount is typed on purpose; «دفع كامل» is chosen explicitly.
+  const [paymentMode, setPaymentMode] = useState<"full" | "installment">("installment");
   const [installmentAmount, setInstallmentAmount] = useState("");
   const deferredQuery = useDeferredValue(query);
 
@@ -93,7 +95,7 @@ export function PaymentCreateForm({ students, academicYear, action }: PaymentCre
   function handleFeeTypeChange(value: "tuition" | "uniform") {
     setFeeType(value);
     if (value === "uniform") {
-      setPaymentMode("full");
+      setPaymentMode("installment");
       setInstallmentAmount("");
     }
   }
@@ -297,11 +299,19 @@ export function PaymentCreateForm({ students, academicYear, action }: PaymentCre
         <p className="text-sm leading-7 text-[var(--app-text-muted)]">
           تُحفظ الدفعة على السنة <span className="font-extrabold" dir="ltr">{academicYear}</span> — نفس سنة رسوم الصف المعروضة أعلاه حتى تبقى حسابات المتبقي متطابقة.
         </p>
-        <button type="submit" className="btn btn-primary" disabled={feeBlocked}>
-          <CheckCircle2 size={18} />
-          حفظ الدفعة
-        </button>
+        <SubmitPaymentButton blocked={feeBlocked} />
       </div>
     </form>
+  );
+}
+
+// Locked while the save is in flight so a double click can't record the payment twice.
+function SubmitPaymentButton({ blocked }: { blocked: boolean }) {
+  const { pending } = useFormStatus();
+  return (
+    <button type="submit" className="btn btn-primary" disabled={blocked || pending} aria-busy={pending}>
+      {pending ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle2 size={18} />}
+      {pending ? "جارٍ الحفظ..." : "حفظ الدفعة"}
+    </button>
   );
 }

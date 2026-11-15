@@ -1,6 +1,8 @@
 import { Prisma } from "@/lib/prisma-types";
 import { db } from "@/lib/db";
 import { getSupabaseConfigErrorMessage, hasSupabaseConfig } from "@/lib/supabase-client";
+import { parseSchoolDays } from "@/services/school-settings-service";
+import { isSchoolDay, type SchoolDay } from "@/types/settings";
 import {
   getClassDeleteAssociations,
   getSectionDeleteAssociations,
@@ -80,6 +82,7 @@ export async function getClasses(): Promise<ClassListItem[]> {
       subjectsCount: schoolClass._count.classSubjects,
       schedulesCount,
       subjectIds: schoolClass.classSubjects.map((cs: { subjectId: string }) => cs.subjectId),
+      extraSchoolDays: parseSchoolDays(schoolClass.extraSchoolDays),
       createdAt: schoolClass.createdAt,
     };
   });
@@ -204,6 +207,7 @@ export async function createClass(
         name: data.name,
         level: data.level ?? null,
         description: data.description ?? null,
+        extraSchoolDays: data.extraSchoolDays ?? [],
         isActive: true,
       },
     });
@@ -272,6 +276,7 @@ export async function updateClass(
         name: data.name,
         level: data.level ?? null,
         description: data.description ?? null,
+        ...(data.extraSchoolDays ? { extraSchoolDays: data.extraSchoolDays } : {}),
         isActive: true,
       },
     });
@@ -295,6 +300,59 @@ export async function updateClass(
     return {
       ok: false,
       message: "حدث خطأ أثناء تحديث الصف.",
+    };
+  }
+}
+
+export async function updateClassExtraSchoolDays(
+  id: string,
+  extraSchoolDays: SchoolDay[],
+): Promise<ClassServiceResult<SchoolClass>> {
+  const normalizedId = id.trim();
+
+  if (!normalizedId) {
+    return {
+      ok: false,
+      message: "معرّف الصف مفقود.",
+    };
+  }
+
+  if (!hasSupabaseConfig()) {
+    return {
+      ok: false,
+      message: getSupabaseConfigErrorMessage(),
+    };
+  }
+
+  const existingClass = await getClassById(normalizedId);
+
+  if (!existingClass) {
+    return {
+      ok: false,
+      message: "لم يتم العثور على الصف.",
+    };
+  }
+
+  try {
+    const schoolClass = await db.schoolClass.update({
+      where: {
+        id: normalizedId,
+      },
+      data: {
+        extraSchoolDays: Array.from(new Set(extraSchoolDays.filter(isSchoolDay))),
+      },
+    });
+
+    return {
+      ok: true,
+      data: schoolClass,
+      message: "تم حفظ أيام دوام الصف بنجاح.",
+    };
+  } catch (error) {
+    console.error("[updateClassExtraSchoolDays] Error:", error);
+    return {
+      ok: false,
+      message: "حدث خطأ أثناء حفظ أيام دوام الصف.",
     };
   }
 }
@@ -457,6 +515,7 @@ export async function searchClasses(query: string): Promise<ClassListItem[]> {
       subjectsCount: schoolClass._count.classSubjects,
       schedulesCount,
       subjectIds: schoolClass.classSubjects.map((cs: { subjectId: string }) => cs.subjectId),
+      extraSchoolDays: parseSchoolDays(schoolClass.extraSchoolDays),
       createdAt: schoolClass.createdAt,
     };
   });

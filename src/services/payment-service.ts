@@ -557,6 +557,41 @@ export async function getPaymentDetails(
   };
 }
 
+class PaymentLimitError extends Error {}
+
+/**
+ * What the student still owes for one fee (tuition or uniform) in one
+ * academic year: the class fee from `class_fee_settings` minus every
+ * paid/partial payment. Same definition as `buildFeeRemainingMap`.
+ * Returns null when the class has no fee for that year (nothing to cap by).
+ */
+async function getFeeRemaining(
+  tx: Prisma.TransactionClient,
+  studentId: string,
+  feeType: string,
+  academicYear: string,
+): Promise<number | null> {
+  const student = await tx.student.findUnique({
+    where: { id: studentId },
+    select: { section: { select: { classId: true } } },
+  });
+  const classId = student?.section?.classId;
+  if (!classId) return null;
+
+  const setting = await tx.classFeeSetting.findUnique({
+    where: { classId_academicYear: { classId, academicYear } },
+    select: { amount: true, uniformAmount: true },
+  });
+  const fee = Number((feeType === "uniform" ? setting?.uniformAmount : setting?.amount) ?? 0);
+  if (fee <= 0) return null;
+
+  const paid = await tx.payment.aggregate({
+    where: { studentId, feeType, academicYear, status: { in: ["paid", "partial"] } },
+    _sum: { amount: true },
+  });
+  return Math.max(0, fee - Number(paid._sum.amount ?? 0));
+}
+
 export async function createPayment(
   input: PaymentFormInput,
 ): Promise<PaymentServiceResult<Payment>> {
@@ -600,25 +635,50 @@ export async function createPayment(
     const rawYear = data.academicYear?.trim() ?? "";
     const isYearFormat = /^\d{4}(-\d{4})?$/.test(rawYear);
     const academicYear = isYearFormat ? rawYear : await getActiveAcademicYear();
+    const feeType = data.feeType ?? "tuition";
+    const amount = Number(data.amount);
 
-    const payment = await db.payment.create({
-      data: {
-        feeTitle: data.feeTitle,
-        feeType: data.feeType ?? "tuition",
-        amount: Number(data.amount),
-        originalAmount: data.originalAmount != null ? Number(data.originalAmount) : null,
-        discountAmount: data.discountAmount != null ? Number(data.discountAmount) : 0,
-        discountPercent: data.discountPercent != null ? Number(data.discountPercent) : null,
-        discountReason: data.discountReason ?? null,
-        finalAmount: data.finalAmount != null ? Number(data.finalAmount) : null,
-        status: data.status ?? "paid",
-        method: data.method ?? "cash",
-        academicYear,
-        dueDate: normalizePaymentDate(data.dueDate),
-        paidAt: normalizePaymentDate(data.paidAt),
-        notes: data.notes ?? null,
-        studentId: data.studentId,
-      },
+    // The remaining is re-read from the database inside a per-student lock,
+    // never taken from the browser: a double click, a re-submitted form or
+    // a stale page must not record more than the student still owes.
+    const payment = await db.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`payment:${data.studentId}`}))`;
+
+      const remaining = await getFeeRemaining(tx, data.studentId, feeType, academicYear);
+      if (remaining !== null) {
+        if (remaining <= 0) {
+          throw new PaymentLimitError(
+            feeType === "uniform"
+              ? "الزي المدرسي مدفوع بالكامل لهذا الطالب — لم تُسجَّل الدفعة."
+              : "الرسوم الدراسية مسدّدة بالكامل لهذا الطالب — لم تُسجَّل الدفعة.",
+          );
+        }
+        if (amount > remaining) {
+          throw new PaymentLimitError(
+            `مبلغ الدفعة (${formatMoney(amount)}) أكبر من المتبقي على الطالب (${formatMoney(remaining)}) — لم تُسجَّل الدفعة.`,
+          );
+        }
+      }
+
+      return tx.payment.create({
+        data: {
+          feeTitle: data.feeTitle,
+          feeType,
+          amount,
+          originalAmount: data.originalAmount != null ? Number(data.originalAmount) : null,
+          discountAmount: data.discountAmount != null ? Number(data.discountAmount) : 0,
+          discountPercent: data.discountPercent != null ? Number(data.discountPercent) : null,
+          discountReason: data.discountReason ?? null,
+          finalAmount: data.finalAmount != null ? Number(data.finalAmount) : null,
+          status: data.status ?? "paid",
+          method: data.method ?? "cash",
+          academicYear,
+          dueDate: normalizePaymentDate(data.dueDate),
+          paidAt: normalizePaymentDate(data.paidAt),
+          notes: data.notes ?? null,
+          studentId: data.studentId,
+        },
+      });
     });
 
     return {
@@ -627,6 +687,14 @@ export async function createPayment(
       message: "تمت إضافة الدفعة بنجاح.",
     };
   } catch (error) {
+    if (error instanceof PaymentLimitError) {
+      return {
+        ok: false,
+        message: error.message,
+        errors: { amount: error.message },
+      };
+    }
+
     if (isUniqueConstraintError(error)) {
       return {
         ok: false,

@@ -1,9 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { CalendarDays, CheckSquare, MessageCircle, Printer, Square } from "lucide-react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { CalendarDays, CheckCircle2, CheckSquare, Copy, Link2, MessageCircle, Printer, RefreshCw, Square } from "lucide-react";
 import type { ReportPeriod } from "@/types/report";
-import { getTelegramDesktopUrl, getWhatsappUrl } from "@/lib/contact-links";
+import {
+  buildGuardianLinkMessage,
+  buildGuardianLinkUrl,
+  copyTextToClipboard,
+  getTelegramDesktopUrl,
+  getWhatsappUrl,
+} from "@/lib/contact-links";
 
 const REPORT_SECTIONS = [
   { key: "summary", label: "الملخص العام" },
@@ -27,7 +33,10 @@ const REPORT_PERIODS: { value: ReportPeriod; label: string }[] = [
 type ReportSectionKey = (typeof REPORT_SECTIONS)[number]["key"];
 
 type StudentReportActionsProps = {
+  studentId: string;
   studentName: string;
+  /** Guardian links only work for active students. */
+  isActiveStudent: boolean;
   guardianPhone?: string | null;
   guardianTelegram?: string | null;
   classDisplay: string;
@@ -44,7 +53,9 @@ type StudentReportActionsProps = {
 };
 
 export function StudentReportActions({
+  studentId,
   studentName,
+  isActiveStudent,
   guardianPhone,
   guardianTelegram,
   classDisplay,
@@ -199,6 +210,13 @@ export function StudentReportActions({
         </div>
       </div>
 
+      <GuardianLinkActions
+        studentId={studentId}
+        studentName={studentName}
+        guardianPhone={guardianPhone}
+        isActiveStudent={isActiveStudent}
+      />
+
       <div className="mt-5 border-t border-[var(--app-border-soft)] pt-4">
         <div>
           <h3 className="text-base font-extrabold text-[var(--app-text)]">خيارات الطباعة</h3>
@@ -225,5 +243,159 @@ export function StudentReportActions({
         })}
       </div>
     </section>
+  );
+}
+
+type GuardianLinkActionsProps = {
+  studentId: string;
+  studentName: string;
+  guardianPhone?: string | null;
+  isActiveStudent: boolean;
+};
+
+type GuardianLinkResponse = {
+  ok: boolean;
+  message?: string;
+  data?: { token: string };
+};
+
+const GUARDIAN_LINK_ERROR = "تعذر تجهيز رابط ولي الأمر. حاول مرة أخرى.";
+const COPIED_FEEDBACK_MS = 2000;
+
+function subscribeToNothing() {
+  return () => {};
+}
+
+async function requestGuardianToken(studentId: string, method: "GET" | "POST") {
+  const response = await fetch(`/api/students/${encodeURIComponent(studentId)}/guardian-link`, {
+    method,
+    cache: "no-store",
+  });
+  const result = (await response.json().catch(() => null)) as GuardianLinkResponse | null;
+  if (!response.ok || !result?.ok || !result.data?.token) {
+    throw new Error(result?.message || GUARDIAN_LINK_ERROR);
+  }
+  return result.data.token;
+}
+
+/**
+ * The student's permanent guardian link (/p/<token>): copy it, send it by
+ * WhatsApp, or replace it with a new one (the old link stops working).
+ */
+function GuardianLinkActions({ studentId, studentName, guardianPhone, isActiveStudent }: GuardianLinkActionsProps) {
+  const origin = useSyncExternalStore(subscribeToNothing, () => window.location.origin, () => "");
+  const [token, setToken] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [confirmingRegenerate, setConfirmingRegenerate] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    requestGuardianToken(studentId, "GET")
+      .then((value) => {
+        if (!cancelled) setToken(value);
+      })
+      .catch((requestError: unknown) => {
+        if (!cancelled) setError(requestError instanceof Error ? requestError.message : GUARDIAN_LINK_ERROR);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [studentId]);
+
+  useEffect(() => {
+    if (!copied) return;
+    const timer = window.setTimeout(() => setCopied(false), COPIED_FEEDBACK_MS);
+    return () => window.clearTimeout(timer);
+  }, [copied]);
+
+  const linkUrl = token && origin ? buildGuardianLinkUrl(origin, token) : null;
+  const whatsappUrl = linkUrl
+    ? getWhatsappUrl(guardianPhone, buildGuardianLinkMessage([{ name: studentName, url: linkUrl }]))
+    : null;
+
+  async function copyLink() {
+    if (linkUrl && (await copyTextToClipboard(linkUrl))) setCopied(true);
+  }
+
+  async function regenerate() {
+    setRegenerating(true);
+    setError(null);
+    setNotice(null);
+    try {
+      setToken(await requestGuardianToken(studentId, "POST"));
+      setNotice("تم إنشاء رابط جديد. الرابط القديم لم يعد يعمل، أرسل الرابط الجديد لولي الأمر.");
+      setConfirmingRegenerate(false);
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : GUARDIAN_LINK_ERROR);
+    } finally {
+      setRegenerating(false);
+    }
+  }
+
+  return (
+    <div className="mt-5 border-t border-[var(--app-border-soft)] pt-4">
+      <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+        <div>
+          <h3 className="flex items-center gap-2 text-base font-extrabold text-[var(--app-text)]">
+            <Link2 size={18} className="text-[var(--app-primary)]" />
+            رابط ولي الأمر
+          </h3>
+          <p className="mt-1 text-sm font-semibold text-[var(--app-text-muted)]">
+            رابط ثابت يُرسل مرة واحدة، ويعرض لولي الأمر آخر الحضور والدرجات والأقساط في كل مرة يفتحه.
+          </p>
+          {!isActiveStudent ? (
+            <p className="mt-1 text-sm font-bold text-amber-700">الطالب غير فعّال، لذلك لن يعمل الرابط حتى تعود حالته إلى فعّال.</p>
+          ) : null}
+        </div>
+
+        <div className="flex flex-wrap gap-3 xl:justify-end">
+          <button type="button" onClick={copyLink} disabled={!linkUrl} className="btn btn-secondary disabled:opacity-60">
+            {copied ? <CheckCircle2 size={18} /> : <Copy size={18} />}
+            {copied ? "تم النسخ" : "نسخ رابط ولي الأمر"}
+          </button>
+          <a
+            href={whatsappUrl ?? undefined}
+            target="_blank"
+            rel="noreferrer"
+            className={["btn btn-secondary", !whatsappUrl ? "pointer-events-none opacity-60" : ""].join(" ")}
+            title={linkUrl && !whatsappUrl ? "لا يوجد رقم ولي أمر صالح" : undefined}
+          >
+            <MessageCircle size={18} />
+            إرسال الرابط بالواتساب
+          </a>
+          <button
+            type="button"
+            onClick={() => setConfirmingRegenerate(true)}
+            disabled={!token || regenerating}
+            className="btn btn-secondary disabled:opacity-60"
+          >
+            <RefreshCw size={18} />
+            رابط جديد
+          </button>
+        </div>
+      </div>
+
+      {confirmingRegenerate ? (
+        <div role="alertdialog" aria-label="تأكيد إنشاء رابط جديد" className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-500/30 dark:bg-amber-500/10">
+          <p className="text-sm font-bold leading-7 text-amber-800 dark:text-amber-200">
+            سيتوقف الرابط الحالي عن العمل فورًا، وسيحتاج ولي الأمر إلى الرابط الجديد. هل تريد المتابعة؟
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button type="button" onClick={regenerate} disabled={regenerating} className="btn btn-primary disabled:opacity-60">
+              {regenerating ? "جارٍ الإنشاء..." : "نعم، أنشئ رابطًا جديدًا"}
+            </button>
+            <button type="button" onClick={() => setConfirmingRegenerate(false)} disabled={regenerating} className="btn btn-secondary">
+              إلغاء
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {error ? <p role="alert" className="mt-3 text-sm font-bold text-rose-600">{error}</p> : null}
+      {notice ? <p role="status" className="mt-3 text-sm font-bold text-emerald-700">{notice}</p> : null}
+    </div>
   );
 }

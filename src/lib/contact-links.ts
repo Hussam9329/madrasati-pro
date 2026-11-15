@@ -47,3 +47,44 @@ export function getTelegramDesktopUrl(username?: string | null) {
   const handle = normalizeTelegramHandle(username);
   return handle ? `tg://resolve?domain=${encodeURIComponent(handle)}` : null;
 }
+
+/** Full public URL of a student's guardian link (/p/<token>). */
+export function buildGuardianLinkUrl(origin: string, token: string) {
+  return `${origin}/p/${token}`;
+}
+
+/**
+ * WhatsApp text that sends guardian links. Siblings sharing one guardian
+ * phone get a single message listing each child's name with its link.
+ */
+export function buildGuardianLinkMessage(children: { name: string; url: string }[]) {
+  const intro = children.length > 1
+    ? "روابط متابعة أبنائكم في ثانوية مارينا الأهلية (الحضور والدرجات والأقساط):"
+    : "رابط متابعة الطالب في ثانوية مارينا الأهلية (الحضور والدرجات والأقساط):";
+
+  return [
+    "السلام عليكم ولي الأمر الكريم،",
+    intro,
+    "",
+    ...children.flatMap((child) => [child.name, child.url, ""]),
+    "احفظ الرابط؛ يعرض آخر المعلومات في كل مرة تفتحه.",
+  ].join("\n");
+}
+
+/** Copies text in the browser, falling back to execCommand where the Clipboard API is blocked. */
+export async function copyTextToClipboard(text: string) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    document.body.appendChild(textarea);
+    textarea.select();
+    const copied = document.execCommand("copy");
+    document.body.removeChild(textarea);
+    return copied;
+  }
+}

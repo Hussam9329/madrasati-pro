@@ -4,27 +4,23 @@ import { notFound } from "next/navigation";
 import type { ElementType, ReactNode } from "react";
 import { ArrowRight, Award, Banknote, CalendarDays, FileText, GraduationCap, UserRound } from "lucide-react";
 import { requireAdmin } from "@/lib/auth";
-import { safeQuery } from "@/lib/db";
 import { getTelegramDesktopUrl, getWhatsappUrl } from "@/lib/contact-links";
 import { PageHeader } from "@/components/layout/page-header";
 import { StudentReportActions } from "@/components/students/student-report-actions";
 import { getStudentDetails } from "@/services/student-service";
-import { getGradesByStudentId } from "@/services/grade-service";
 import {
-  getAttendanceByStudentId,
-  getStudentComputedAbsences,
-} from "@/services/attendance-service";
-import { getPaymentsByStudentId, getStudentPaymentSummary } from "@/services/payment-service";
+  buildAttendanceWhatsappSummary,
+  buildGradeWhatsappSummary,
+  buildStudentRecommendation,
+  formatDateInputValue,
+  getInclusiveEndDate,
+  getStudentReport,
+  getStudentReportDateRange,
+  normalizeStudentReportPeriod,
+} from "@/services/student-report-service";
 import { formatMoney } from "@/types/payment";
 import { getStudentClassDisplay, getStudentStatusLabel } from "@/types/student";
-import { formatAttendanceShortDate, formatAttendanceTime } from "@/types/attendance";
-import {
-  formatReportDate,
-  getReportDateRange,
-  parseReportDate,
-  type ReportDateRange,
-  type ReportPeriod,
-} from "@/types/report";
+import { formatAttendanceTime } from "@/types/attendance";
 
 export const dynamic = "force-dynamic";
 
@@ -52,21 +48,14 @@ export default async function StudentProfilePage({ params, searchParams }: Stude
   const student = await getStudentDetails(id);
   if (!student) notFound();
 
-  const [grades, attendance, payments, paymentSummary, computedAbsences] = await Promise.all([
-    safeQuery(() => getGradesByStudentId(id), []),
-    safeQuery(() => getAttendanceByStudentId(id), []),
-    safeQuery(() => getPaymentsByStudentId(id), []),
-    safeQuery(() => getStudentPaymentSummary(id), { totalPaid: 0, totalPending: 0, totalRefunded: 0, paymentsCount: 0 }),
-    // School days in the report range where the student has no attendance
-    // record — counted as absent, same as the attendance page.
-    safeQuery(() => getStudentComputedAbsences(id, reportDateRange, student.enrollmentDate), []),
-  ]);
-
-  const reportGrades = filterItemsByReportRange(grades, (grade) => grade.date, reportDateRange);
-  const reportAttendance = mergeReportAttendance(
-    filterItemsByReportRange(attendance, (record) => record.date, reportDateRange),
-    filterItemsByReportRange(computedAbsences, (record) => record.date, reportDateRange),
-  );
+  const {
+    grades: reportGrades,
+    attendance: reportAttendance,
+    payments,
+    gradeStats,
+    attendanceStats,
+    financialStats,
+  } = await getStudentReport(student, reportDateRange);
 
   const classDisplay = getStudentClassDisplay({
     className: student.className,
@@ -74,9 +63,6 @@ export default async function StudentProfilePage({ params, searchParams }: Stude
     sectionName: student.sectionName,
   });
 
-  const gradeStats = calculateGradeStats(reportGrades);
-  const attendanceStats = calculateAttendanceStats(reportAttendance);
-  const financialStats = calculateFinancialStats(payments, paymentSummary.totalPaid, paymentSummary.totalPending);
   const averageLabel = gradeStats.average == null ? "لا توجد درجات" : `${gradeStats.average}%`;
   const attendanceSummary = `${attendanceStats.presentCount} حضور / ${attendanceStats.absentCount} غياب / ${attendanceStats.lateCount} تأخير`;
   const attendanceDetailSummary = buildAttendanceWhatsappSummary(reportAttendance);
@@ -102,7 +88,9 @@ export default async function StudentProfilePage({ params, searchParams }: Stude
         />
 
         <StudentReportActions
+          studentId={student.id}
           studentName={student.fullName}
+          isActiveStudent={student.status === "active"}
           guardianPhone={student.guardianPhone || student.phone}
           guardianTelegram={student.guardianTelegram}
           classDisplay={classDisplay}
@@ -225,96 +213,6 @@ export default async function StudentProfilePage({ params, searchParams }: Stude
   );
 }
 
-const STUDENT_REPORT_PERIODS: ReportPeriod[] = [
-  "daily",
-  "weekly",
-  "monthly",
-  "quarterly",
-  "semester",
-  "annual",
-  "custom",
-];
-
-function normalizeStudentReportPeriod(value?: string): ReportPeriod {
-  return STUDENT_REPORT_PERIODS.includes(value as ReportPeriod)
-    ? (value as ReportPeriod)
-    : "weekly";
-}
-
-function getStudentReportDateRange(
-  period: ReportPeriod,
-  fromDate?: string,
-  toDate?: string,
-): ReportDateRange {
-  if (period === "custom") {
-    const parsedFrom = parseReportDate(fromDate);
-    const parsedTo = parseReportDate(toDate);
-
-    if (parsedFrom && parsedTo) {
-      const from = new Date(
-        parsedFrom.getFullYear(),
-        parsedFrom.getMonth(),
-        parsedFrom.getDate(),
-        0,
-        0,
-        0,
-        0,
-      );
-      const to = new Date(
-        parsedTo.getFullYear(),
-        parsedTo.getMonth(),
-        parsedTo.getDate() + 1,
-        0,
-        0,
-        0,
-        0,
-      );
-
-      return {
-        from,
-        to,
-        label: `من ${formatReportDate(from)} إلى ${formatReportDate(parsedTo)}`,
-      };
-    }
-
-    return {
-      ...getReportDateRange("weekly"),
-      label: `${getReportDateRange("weekly").label} — حدد تاريخ البداية والنهاية للفترة المخصصة`,
-    };
-  }
-
-  return getReportDateRange(period);
-}
-
-function filterItemsByReportRange<T>(
-  items: T[],
-  getDate: (item: T) => Date | string | null | undefined,
-  range: ReportDateRange,
-): T[] {
-  return items.filter((item) => {
-    const value = getDate(item);
-    if (!value) return false;
-
-    const itemDate = value instanceof Date ? value : new Date(value);
-    if (Number.isNaN(itemDate.getTime())) return false;
-
-    return itemDate >= range.from && itemDate < range.to;
-  });
-}
-
-function getInclusiveEndDate(range: ReportDateRange) {
-  const date = new Date(range.to);
-  date.setDate(date.getDate() - 1);
-  return date;
-}
-
-function formatDateInputValue(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
 function SummaryCard({ title, value, icon: Icon }: { title: string; value: string; icon: ElementType }) {
   return (
     <div className="app-card p-5">
@@ -392,193 +290,4 @@ function ReportTable({ title, empty, headers, children }: { title: string; empty
       </div>
     </div>
   );
-}
-
-
-function calculateGradeStats(grades: { score: number; maxScore: number }[]) {
-  if (grades.length === 0) {
-    return { average: null as number | null, successCount: 0, failedCount: 0 };
-  }
-
-  const percentages = grades.map((grade) => (Number(grade.score) / Math.max(1, Number(grade.maxScore))) * 100);
-  const average = Math.round(percentages.reduce((sum, value) => sum + value, 0) / percentages.length);
-  const successCount = percentages.filter((value) => value >= 50).length;
-
-  return { average, successCount, failedCount: grades.length - successCount };
-}
-
-type WhatsappGradeSummaryItem = {
-  subjectName?: string | null;
-  title?: string | null;
-  score: number;
-  maxScore: number;
-  percentage?: number | null;
-};
-
-function buildGradeWhatsappSummary(grades: WhatsappGradeSummaryItem[]) {
-  if (grades.length === 0) {
-    return "لا توجد درجات مسجلة.";
-  }
-
-  const gradesBySubject = new Map<string, WhatsappGradeSummaryItem[]>();
-
-  for (const grade of grades) {
-    const subjectName = grade.subjectName?.trim() || "مادة غير محددة";
-    const current = gradesBySubject.get(subjectName) ?? [];
-    current.push(grade);
-    gradesBySubject.set(subjectName, current);
-  }
-
-  return Array.from(gradesBySubject.entries())
-    .map(([subjectName, subjectGrades]) => {
-      const entries = subjectGrades
-        .map((grade) => {
-          const title = grade.title?.trim() || "درجة";
-          const percentage = Number.isFinite(Number(grade.percentage))
-            ? ` (${Math.round(Number(grade.percentage))}%)`
-            : "";
-
-          return `${title}: ${formatGradeValue(grade.score)}/${formatGradeValue(grade.maxScore)}${percentage}`;
-        })
-        .join("، ");
-      const subjectAverage = calculateGradeStats(subjectGrades).average;
-      const averagePart = subjectGrades.length > 1 && subjectAverage != null ? ` — معدل المادة ${subjectAverage}%` : "";
-
-      return `• ${subjectName}: ${entries}${averagePart}`;
-    })
-    .join("\n");
-}
-
-function formatGradeValue(value: number) {
-  const numericValue = Number(value);
-  if (!Number.isFinite(numericValue)) return "-";
-  return Number.isInteger(numericValue) ? String(numericValue) : numericValue.toFixed(1);
-}
-
-type WhatsappAttendanceSummaryItem = {
-  date: Date;
-  status: string;
-  statusLabel: string;
-  checkInAt: Date | null;
-  checkOutAt: Date | null;
-  isComputedAbsence?: boolean;
-};
-
-/**
- * Builds the per-day attendance lines (status + check-in/check-out times)
- * used inside the WhatsApp summary sent to the guardian.
- * Times come straight from the attendance record so the parent sees the
- * student's daily entry and exit times without needing the PDF file.
- */
-function buildAttendanceWhatsappSummary(attendance: WhatsappAttendanceSummaryItem[]) {
-  if (attendance.length === 0) {
-    return "لا توجد سجلات حضور مسجلة خلال الفترة.";
-  }
-
-  // Oldest → newest so the guardian reads the days chronologically.
-  const sorted = [...attendance].sort(
-    (first, second) => first.date.getTime() - second.date.getTime(),
-  );
-
-  return sorted
-    .slice(0, 30)
-    .map((record) => {
-      const dateLabel = formatAttendanceShortDate(record.date);
-      const statusLabel = record.statusLabel || "غير محدد";
-      const checkInLabel = record.checkInAt ? `دخول ${formatAttendanceTime(record.checkInAt, { withSeconds: false })}` : "بدون تسجيل دخول";
-      const checkOutLabel = record.checkOutAt ? `انصراف ${formatAttendanceTime(record.checkOutAt, { withSeconds: false })}` : "بدون تسجيل انصراف";
-
-      return `• ${dateLabel} — ${statusLabel} — ${checkInLabel} — ${checkOutLabel}`;
-    })
-    .join("\n");
-}
-
-type ReportAttendanceItem = {
-  id: string;
-  date: Date;
-  status: string;
-  statusLabel: string;
-  checkInAt: Date | null;
-  checkOutAt: Date | null;
-  isComputedAbsence?: boolean;
-};
-
-/**
- * Merge explicit attendance records with computed absences for the report.
- * A computed absence is dropped if the student already has a record that day
- * (defensive — the service already skips those days), and the merged list is
- * sorted newest-first to match the existing table order.
- */
-function mergeReportAttendance(
-  explicit: ReportAttendanceItem[],
-  computed: ReportAttendanceItem[],
-) {
-  const explicitDays = new Set(explicit.map((record) => getReportDayKey(record.date)));
-  const extras = computed.filter((record) => !explicitDays.has(getReportDayKey(record.date)));
-
-  return [...explicit, ...extras].sort(
-    (first, second) => second.date.getTime() - first.date.getTime(),
-  );
-}
-
-function getReportDayKey(date: Date) {
-  return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
-}
-
-function calculateAttendanceStats(attendance: { status: string }[]) {
-  return attendance.reduce(
-    (stats, record) => {
-      if (record.status === "present") stats.presentCount += 1;
-      else if (record.status === "absent") stats.absentCount += 1;
-      else if (record.status === "late") stats.lateCount += 1;
-      else stats.otherCount += 1;
-      return stats;
-    },
-    { presentCount: 0, absentCount: 0, lateCount: 0, otherCount: 0 },
-  );
-}
-
-function calculateFinancialStats(
-  payments: { amount: number; remainingAmount: number; isUniformPaid: boolean }[],
-  summaryPaid: number,
-  summaryPending: number,
-) {
-  // Use the summary's totalPending (computed correctly by
-  // getStudentPaymentSummary as sum of (fee - totalPaidForFee) across
-  // all the student's fees). DO NOT sum per-payment remainingAmount —
-  // that double-counts installments for the same fee and produces a
-  // number larger than the actual fee.
-  return {
-    totalPaid: summaryPaid,
-    totalRemaining: summaryPending,
-    uniformPaid: payments.some((payment) => payment.isUniformPaid),
-  };
-}
-
-function buildStudentRecommendation(average: number | null, absentCount: number, remainingAmount: number) {
-  const recommendations: string[] = [];
-
-  if (average == null) {
-    recommendations.push("لا توجد درجات كافية لإصدار حكم دراسي نهائي، يفضّل استكمال إدخال نتائج الامتحانات.");
-  } else if (average >= 85) {
-    recommendations.push("الأداء الدراسي ممتاز ويُنصح بالاستمرار بنفس مستوى المتابعة.");
-  } else if (average >= 60) {
-    recommendations.push("الأداء الدراسي مقبول مع حاجة إلى متابعة المواد ذات الدرجات الأقل.");
-  } else {
-    recommendations.push("الأداء الدراسي يحتاج متابعة قريبة وخطة تقوية واضحة.");
-  }
-
-  if (absentCount > 0) {
-    recommendations.push(`يوجد ${absentCount} سجل غياب، لذلك يُنصح بمتابعة انتظام الحضور.`);
-  }
-
-  if (remainingAmount > 0) {
-    recommendations.push(`يوجد مبلغ مالي متبقٍ قدره ${formatMoney(remainingAmount)} ويُفضّل تسويته حسب نظام المدرسة.`);
-  }
-
-  if (recommendations.length === 0) {
-    return "لا توجد ملاحظات سلبية ظاهرة في البيانات الحالية.";
-  }
-
-  return recommendations.join(" ");
 }

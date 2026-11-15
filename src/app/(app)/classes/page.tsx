@@ -26,6 +26,7 @@ import {
   getClassesCount,
   getSections,
   searchClasses,
+  updateClassExtraSchoolDays,
   updateSectionCapacity,
 } from "@/services/class-service";
 import { getActiveSubjects } from "@/services/subject-service";
@@ -38,6 +39,7 @@ import {
   type SectionFormInput,
   type SectionListItem,
 } from "@/types/class";
+import { isSchoolDay } from "@/types/settings";
 import { DeleteConfirmButton } from "@/components/shared/delete-confirm-button";
 
 export const dynamic = "force-dynamic";
@@ -48,6 +50,7 @@ type ClassesPageProps = {
   searchParams?: Promise<{
     q?: string;
     classSaved?: string;
+    classUpdated?: string;
     sectionSaved?: string;
     capacityUpdated?: string;
     deleted?: string;
@@ -83,6 +86,7 @@ export default async function ClassesPage({ searchParams }: ClassesPageProps) {
 
         <ClassesFeedback
           classSaved={resolvedSearchParams?.classSaved}
+          classUpdated={resolvedSearchParams?.classUpdated}
           sectionSaved={resolvedSearchParams?.sectionSaved}
           capacityUpdated={resolvedSearchParams?.capacityUpdated}
           deleted={resolvedSearchParams?.deleted}
@@ -149,6 +153,7 @@ async function createClassAction(formData: FormData) {
     name: String(formData.get("name") ?? ""),
     level: String(formData.get("level") ?? ""),
     description: String(formData.get("description") ?? ""),
+    extraSchoolDays: formData.getAll("extraSchoolDays").map(String).filter(isSchoolDay),
   };
 
   const result = await createClass(input);
@@ -161,6 +166,23 @@ async function createClassAction(formData: FormData) {
   revalidatePath("/classes");
   revalidatePath("/reports");
   redirect("/classes?classSaved=1");
+}
+
+async function updateClassSchoolDaysAction(formData: FormData) {
+  "use server";
+
+  const id = String(formData.get("id") ?? "");
+  const extraSchoolDays = formData.getAll("extraSchoolDays").map(String).filter(isSchoolDay);
+
+  const result = await updateClassExtraSchoolDays(id, extraSchoolDays);
+
+  if (!result.ok) {
+    redirect(buildErrorRedirect("/classes", "update-class-school-days", result.message));
+  }
+
+  revalidatePath("/classes");
+  revalidatePath("/attendance");
+  redirect("/classes?classUpdated=1");
 }
 
 async function createSectionAction(formData: FormData) {
@@ -276,6 +298,7 @@ async function assignClassSubjectsAction(formData: FormData) {
 
 type ClassesFeedbackProps = {
   classSaved?: string;
+  classUpdated?: string;
   sectionSaved?: string;
   capacityUpdated?: string;
   deleted?: string;
@@ -285,6 +308,7 @@ type ClassesFeedbackProps = {
 
 function ClassesFeedback({
   classSaved,
+  classUpdated,
   sectionSaved,
   capacityUpdated,
   deleted,
@@ -297,6 +321,16 @@ function ClassesFeedback({
         tone="success"
         title="تمت إضافة الصف بنجاح"
         description="ممتاز، يمكنك الآن إضافة شعبة داخل هذا الصف."
+      />
+    );
+  }
+
+  if (classUpdated === "1") {
+    return (
+      <SmartAlert
+        tone="success"
+        title="تم حفظ دوام الصف"
+        description="سيُحتسب حضور وغياب طلاب هذا الصف حسب أيام دوامه."
       />
     );
   }
@@ -437,6 +471,8 @@ function ClassCreateForm() {
             className="input min-h-[110px] resize-y leading-7"
           />
         </div>
+
+        <SaturdaySchoolCheckbox id="class-saturday-school" />
       </div>
 
       <div className="flex flex-col gap-3 border-t border-[var(--app-border-soft)] bg-gradient-to-l to-indigo-50/30 to-amber-50/20 p-6 sm:flex-row sm:items-center sm:justify-between">
@@ -874,6 +910,10 @@ function ClassRow({ schoolClass, subjects }: ClassRowProps) {
             <h4 className="text-lg font-extrabold text-[var(--app-text)]">
               {getClassDisplayName(schoolClass)}
             </h4>
+
+            {schoolClass.extraSchoolDays.includes("saturday") ? (
+              <span className="badge badge-info">دوام السبت</span>
+            ) : null}
           </div>
 
           {schoolClass.description ? (
@@ -910,6 +950,26 @@ function ClassRow({ schoolClass, subjects }: ClassRowProps) {
       </div>
 
       <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
+        <details className="rounded-2xl border border-[var(--app-border-soft)] bg-white/80 p-3 shadow-sm">
+          <summary className="cursor-pointer text-sm font-extrabold text-[var(--primary)] hover:underline">
+            تعديل الدوام
+          </summary>
+
+          <form action={updateClassSchoolDaysAction} className="mt-3 grid gap-3">
+            <input type="hidden" name="id" value={schoolClass.id} />
+
+            <SaturdaySchoolCheckbox
+              id={`saturday-school-${schoolClass.id}`}
+              defaultChecked={schoolClass.extraSchoolDays.includes("saturday")}
+            />
+
+            <button type="submit" className="btn btn-secondary justify-center text-sm">
+              <CheckCircle2 size={16} />
+              حفظ الدوام
+            </button>
+          </form>
+        </details>
+
         <DeleteConfirmButton
           action={deleteClassAction}
           itemId={schoolClass.id}
@@ -953,5 +1013,29 @@ function ClassRow({ schoolClass, subjects }: ClassRowProps) {
         </form>
       </details>
     </article>
+  );
+}
+
+type SaturdaySchoolCheckboxProps = {
+  id: string;
+  defaultChecked?: boolean;
+};
+
+function SaturdaySchoolCheckbox({ id, defaultChecked = false }: SaturdaySchoolCheckboxProps) {
+  return (
+    <label
+      htmlFor={id}
+      className="flex cursor-pointer items-center gap-3 rounded-2xl border border-[var(--app-border-soft)] bg-white px-4 py-3 text-sm font-bold text-[var(--app-text)] transition hover:border-indigo-200 hover:bg-indigo-50/30"
+    >
+      <input
+        id={id}
+        type="checkbox"
+        name="extraSchoolDays"
+        value="saturday"
+        defaultChecked={defaultChecked}
+        className="h-4 w-4 accent-indigo-600"
+      />
+      دوام يوم السبت
+    </label>
   );
 }

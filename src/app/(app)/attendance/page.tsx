@@ -168,6 +168,16 @@ export default async function AttendancePage({
   }
 
   const hasAnyRecords = hasAnyStoredRecords || records.length > 0;
+  const classSchoolDaysNote = schoolSettings.weekendDays
+    .map((day) => {
+      const classNames = classes
+        .filter((schoolClass) => schoolClass.extraSchoolDays.includes(day))
+        .map(getClassDisplayName);
+      return classNames.length > 0
+        ? ` ${getSchoolDayLabel(day)} دوام لصفوف: ${classNames.join("، ")}.`
+        : "";
+    })
+    .join("");
   const classGroups = buildAttendanceClassGroups(classes, sections);
   const today = todayStr;
   const reportsHref = buildReportsHref(filter);
@@ -208,7 +218,7 @@ export default async function AttendancePage({
         <SmartAlert
           tone="info"
           title="الحضور يعتمد على إعدادات الدوام"
-          description={`كل طالب له سجل يومي واحد فقط. العطل الأسبوعية الحالية: ${schoolSettings.weekendDays.map(getSchoolDayLabel).join("، ") || "غير محددة"}. تنبيه الانصراف المبكر يظهر قبل الساعة ${schoolSettings.checkoutWarningTime}.`}
+          description={`كل طالب له سجل يومي واحد فقط. العطل الأسبوعية الحالية: ${schoolSettings.weekendDays.map(getSchoolDayLabel).join("، ") || "غير محددة"}.${classSchoolDaysNote} تنبيه الانصراف المبكر يظهر قبل الساعة ${schoolSettings.checkoutWarningTime}.`}
           actionLabel="تعديل الإعدادات"
           actionHref="/settings"
         />
