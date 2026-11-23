@@ -5,6 +5,12 @@ import { useRouter } from "next/navigation";
 import { Camera, CheckCircle2, XCircle, RefreshCw } from "lucide-react";
 import type { AttendanceScanResult } from "@/types/attendance";
 import { getLocalTimeISO, formatAttendanceTime } from "@/types/attendance";
+import {
+  getScanFeedbackKind,
+  MISSING_CHECK_IN_WARNING,
+  playScanFeedbackSound,
+  readScanResponse,
+} from "./scan-feedback";
 
 type QrAttendanceScannerProps = {
   mode: "check-in" | "check-out";
@@ -75,8 +81,10 @@ export function QrAttendanceScanner({
           body: JSON.stringify({ studentCode, mode, source: "qr", clientTime: getLocalTimeISO() }),
         });
 
-        const data: AttendanceScanResult = await res.json();
+        const data = await readScanResponse(res);
+        if (!data) throw new Error("invalid scan response");
         setResult(data);
+        playScanFeedbackSound(getScanFeedbackKind(data, mode));
 
         if (!data.ok) {
           setError(data.message);
@@ -84,7 +92,9 @@ export function QrAttendanceScanner({
           startRefreshTransition(() => router.refresh());
         }
       } catch {
-        setError("حدث خطأ في الاتصال بالخادم.");
+        setResult(null);
+        setError("تعذر الاتصال بالخادم — لم يُسجَّل. امسح الرمز مرة أخرى.");
+        playScanFeedbackSound("error");
       } finally {
         setLoading(false);
       }
@@ -226,18 +236,23 @@ export function QrAttendanceScanner({
         {result && (
           <div
             className={`mb-4 rounded-xl border p-4 ${
-              result.ok
-                ? "border-emerald-200 bg-emerald-50"
-                : "border-red-200 bg-red-50"
+              !result.ok
+                ? "border-2 border-red-400 bg-red-50"
+                : getScanFeedbackKind(result, mode) === "warning"
+                  ? "border-amber-300 bg-amber-50"
+                  : "border-emerald-200 bg-emerald-50"
             }`}
           >
             <p
               className={`font-extrabold ${
-                result.ok ? "text-emerald-700" : "text-red-700"
+                result.ok ? "text-emerald-700" : "text-lg text-red-700"
               }`}
             >
               {result.message}
             </p>
+            {getScanFeedbackKind(result, mode) === "warning" && (
+              <p className="mt-1 text-sm font-bold text-amber-800">{MISSING_CHECK_IN_WARNING}</p>
+            )}
             {result.ok && (
               <div className="mt-2 text-sm text-emerald-800">
                 <p>
@@ -268,8 +283,8 @@ export function QrAttendanceScanner({
         )}
 
         {/* Scan Error */}
-        {error && !result?.ok && (
-          <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-bold text-red-700">
+        {error && !result && (
+          <div className="mb-4 rounded-xl border-2 border-red-400 bg-red-50 p-3 text-sm font-bold text-red-700">
             {error}
           </div>
         )}

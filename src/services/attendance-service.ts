@@ -1441,7 +1441,50 @@ export async function getStudentComputedAbsences(
     toDate: toLocalDateTimeInputString(lastDay),
   });
 
-  return records.filter((record) => record.isComputedAbsence === true);
+  const computedAbsences = records.filter((record) => record.isComputedAbsence === true);
+
+  // Today is not over yet: a student who hasn't scanned is "not registered
+  // yet", not absent, until the school's standard checkout time (Baghdad time).
+  const { checkoutWarningTime } = await getSchoolSettings();
+  const baghdadNow = getBaghdadNow(now);
+  if (baghdadNow.minutes >= parseClockMinutes(checkoutWarningTime)) {
+    return computedAbsences;
+  }
+
+  return computedAbsences.map((record) =>
+    formatDateKey(record.date) === baghdadNow.dateKey
+      ? {
+          ...record,
+          status: "pending",
+          statusLabel: "لم يُسجَّل الحضور بعد",
+          notes: "اليوم لم ينتهِ بعد — لا يوجد تسجيل حضور حتى الآن",
+        }
+      : record,
+  );
+}
+
+/** Current date key (YYYY-MM-DD) and minutes since midnight in Baghdad time. */
+function getBaghdadNow(now: Date) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Baghdad",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(now);
+  const get = (type: string) => parts.find((part) => part.type === type)?.value ?? "00";
+  return {
+    dateKey: `${get("year")}-${get("month")}-${get("day")}`,
+    minutes: Number(get("hour")) * 60 + Number(get("minute")),
+  };
+}
+
+/** "HH:mm" → minutes since midnight (falls back to 12:00 when invalid). */
+function parseClockMinutes(value: string) {
+  const [hour, minute] = value.split(":").map(Number);
+  return Number.isFinite(hour) && Number.isFinite(minute) ? hour * 60 + minute : 12 * 60;
 }
 
 /**

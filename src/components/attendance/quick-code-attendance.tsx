@@ -13,9 +13,18 @@ import {
   Search,
   User,
   UserPlus,
+  AlertTriangle,
+  RotateCcw,
 } from "lucide-react";
 import type { AttendanceScanResult } from "@/types/attendance";
 import { getLocalTimeISO, formatAttendanceTime } from "@/types/attendance";
+import {
+  getScanFeedbackKind,
+  MISSING_CHECK_IN_WARNING,
+  playScanFeedbackSound,
+  readScanResponse,
+  type ScanFeedbackKind,
+} from "./scan-feedback";
 
 export type AttendanceStudentPlacementGroup = {
   classId: string;
@@ -46,12 +55,25 @@ type StudentSearchResult = {
   status: string;
 };
 
+type ScanRequest = {
+  studentId?: string;
+  studentCode?: string;
+  source: "manual-name" | "manual-code";
+};
+
 type ScanHistoryEntry = {
   id: number;
-  result: AttendanceScanResult;
+  label: string;
+  code: string | null;
   mode: "check-in" | "check-out";
   timestamp: Date;
+  kind: ScanFeedbackKind;
+  message: string;
+  /** Kept only when the request never reached the server, so it can be retried. */
+  retryRequest: ScanRequest | null;
 };
+
+const CONNECTION_FAILED_MESSAGE = "تعذر الاتصال بالخادم — لم يُسجَّل. أعد المحاولة.";
 
 export function QuickCodeAttendance({
   qrAvailable,
@@ -68,6 +90,7 @@ export function QuickCodeAttendance({
   const [loading, setLoading] = useState(false);
   const [searching, setSearching] = useState(false);
   const [result, setResult] = useState<AttendanceScanResult | null>(null);
+  const [resultKind, setResultKind] = useState<ScanFeedbackKind>("success");
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<ScanHistoryEntry[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -194,6 +217,75 @@ export function QuickCodeAttendance({
     return window.confirm(`هل أنت متأكد أن الطالب سينصرف قبل الوقت المحدد للانصراف (${checkoutWarningTime})؟`);
   }, [checkoutWarningTime, mode]);
 
+  /**
+   * Sends one check-in/check-out and reports the outcome. Every outcome goes
+   * into the history list: failures stay visible in red (with a beep) so a
+   * missed check-in is noticed instead of silently lost during the rush.
+   */
+  const submitScan = useCallback(
+    async (request: ScanRequest, label: string): Promise<boolean> => {
+      setLoading(true);
+      setResult(null);
+      setError(null);
+
+      let data: AttendanceScanResult | null = null;
+      try {
+        const res = await fetch("/api/attendance/scan", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...request, mode, clientTime: getLocalTimeISO() }),
+        });
+        data = await readScanResponse(res);
+      } catch {
+        data = null;
+      }
+
+      const scanResult: AttendanceScanResult = data ?? {
+        ok: false,
+        studentId: request.studentId ?? "",
+        studentName: label,
+        studentCode: request.studentCode ?? "",
+        status: "",
+        checkInAt: null,
+        checkOutAt: null,
+        message: CONNECTION_FAILED_MESSAGE,
+      };
+      const kind = getScanFeedbackKind(scanResult, mode);
+
+      setResult(scanResult);
+      setResultKind(kind);
+      setError(scanResult.ok ? null : scanResult.message);
+      playScanFeedbackSound(kind);
+
+      historyIdRef.current += 1;
+      setHistory((prev) => [
+        {
+          id: historyIdRef.current,
+          label: scanResult.studentName || label,
+          code: scanResult.studentCode || request.studentCode || null,
+          mode,
+          timestamp: new Date(),
+          kind,
+          message: kind === "warning" ? MISSING_CHECK_IN_WARNING : scanResult.message,
+          retryRequest: data ? null : request,
+        },
+        ...prev.slice(0, 9),
+      ]);
+
+      if (scanResult.ok) {
+        setSearchQuery("");
+        setSelectedStudent(null);
+        setSearchResults([]);
+        startRefreshTransition(() => router.refresh());
+      }
+
+      setLoading(false);
+      inputRef.current?.focus();
+      return scanResult.ok;
+    },
+    [mode, router, startRefreshTransition],
+  );
+
   // Handle student selection from dropdown — immediately register attendance
   const handleStudentSelect = useCallback(
     async (student: StudentSearchResult) => {
@@ -202,149 +294,39 @@ export function QuickCodeAttendance({
       setSelectedStudent(student);
       setSearchQuery(student.fullName);
       setShowDropdown(false);
-      setResult(null);
-      setError(null);
 
-      // Immediately submit attendance for the selected student
-      setLoading(true);
-      try {
-        const res = await fetch("/api/attendance/scan", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            studentId: student.id,
-            mode,
-            source: "manual-name",
-            clientTime: getLocalTimeISO(),
-          }),
-        });
-
-        const data: AttendanceScanResult = await res.json();
-        setResult(data);
-
-        if (!data.ok) {
-          setError(data.message);
-        } else {
-          historyIdRef.current += 1;
-          setHistory((prev) => [
-            {
-              id: historyIdRef.current,
-              result: data,
-              mode,
-              timestamp: new Date(),
-            },
-            ...prev.slice(0, 9),
-          ]);
-          // Reset for next entry
-          setSearchQuery("");
-          setSelectedStudent(null);
-          setSearchResults([]);
-          startRefreshTransition(() => router.refresh());
-        }
-      } catch {
-        setError("حدث خطأ في الاتصال بالخادم.");
-      } finally {
-        setLoading(false);
-        inputRef.current?.focus();
-      }
+      await submitScan({ studentId: student.id, source: "manual-name" }, student.fullName);
     },
-    [confirmEarlyCheckout, mode, router, startRefreshTransition],
+    [confirmEarlyCheckout, submitScan],
   );
 
-  // Submit attendance for direct code entry
+  // Submit attendance for direct code entry (or the student picked from the list)
   const handleSubmit = useCallback(
     async (e?: FormEvent) => {
       if (e) e.preventDefault();
       if (!confirmEarlyCheckout()) return;
 
-      setResult(null);
-      setError(null);
-
-      // If a student is selected from dropdown, submit by ID
       if (selectedStudent) {
-        setLoading(true);
-        try {
-          const res = await fetch("/api/attendance/scan", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              studentId: selectedStudent.id,
-              mode,
-              source: "manual-name",
-              clientTime: getLocalTimeISO(),
-            }),
-          });
+        await submitScan({ studentId: selectedStudent.id, source: "manual-name" }, selectedStudent.fullName);
+        return;
+      }
 
-          const data: AttendanceScanResult = await res.json();
-          setResult(data);
+      const code = searchQuery.trim();
+      if (!code) return;
+      await submitScan({ studentCode: code, source: "manual-code" }, code);
+    },
+    [searchQuery, selectedStudent, confirmEarlyCheckout, submitScan],
+  );
 
-          if (!data.ok) {
-            setError(data.message);
-          } else {
-            historyIdRef.current += 1;
-            setHistory((prev) => [
-              {
-                id: historyIdRef.current,
-                result: data,
-                mode,
-                timestamp: new Date(),
-              },
-              ...prev.slice(0, 9),
-            ]);
-            setSearchQuery("");
-            setSelectedStudent(null);
-            setSearchResults([]);
-            startRefreshTransition(() => router.refresh());
-          }
-        } catch {
-          setError("حدث خطأ في الاتصال بالخادم.");
-        } finally {
-          setLoading(false);
-          inputRef.current?.focus();
-        }
-      } else {
-        // Submit by student code (direct code entry)
-        const code = searchQuery.trim();
-        if (!code) return;
-
-        setLoading(true);
-        try {
-          const res = await fetch("/api/attendance/scan", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ studentCode: code, mode, source: "manual-code", clientTime: getLocalTimeISO() }),
-          });
-
-          const data: AttendanceScanResult = await res.json();
-          setResult(data);
-
-          if (!data.ok) {
-            setError(data.message);
-          } else {
-            historyIdRef.current += 1;
-            setHistory((prev) => [
-              {
-                id: historyIdRef.current,
-                result: data,
-                mode,
-                timestamp: new Date(),
-              },
-              ...prev.slice(0, 9),
-            ]);
-            setSearchQuery("");
-            setSelectedStudent(null);
-            setSearchResults([]);
-            startRefreshTransition(() => router.refresh());
-          }
-        } catch {
-          setError("حدث خطأ في الاتصال بالخادم.");
-        } finally {
-          setLoading(false);
-          inputRef.current?.focus();
-        }
+  const handleRetry = useCallback(
+    async (entry: ScanHistoryEntry) => {
+      if (!entry.retryRequest || entry.mode !== mode) return;
+      const ok = await submitScan(entry.retryRequest, entry.label);
+      if (ok) {
+        setHistory((prev) => prev.filter((item) => item.id !== entry.id));
       }
     },
-    [searchQuery, selectedStudent, mode, router, confirmEarlyCheckout, startRefreshTransition],
+    [mode, submitScan],
   );
 
   const handleModeSwitch = useCallback((newMode: "check-in" | "check-out") => {
@@ -407,36 +389,15 @@ export function QuickCodeAttendance({
           return;
         }
 
-        const scanRes = await fetch("/api/attendance/scan", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            studentId: createData.data.id,
-            mode,
-            source: "manual-name",
-            clientTime: getLocalTimeISO(),
-          }),
-        });
+        const scanned = await submitScan(
+          { studentId: createData.data.id, source: "manual-name" },
+          manualStudent.fullName,
+        );
 
-        const scanData: AttendanceScanResult = await scanRes.json();
-        setResult(scanData);
-
-        if (!scanData.ok) {
-          setError(scanData.message);
+        if (!scanned) {
           setManualStudentMessage("تمت إضافة الطالب، لكن لم يكتمل تسجيل الحضور. جرّب تسجيله من البحث أعلاه.");
           return;
         }
-
-        historyIdRef.current += 1;
-        setHistory((prev) => [
-          {
-            id: historyIdRef.current,
-            result: scanData,
-            mode,
-            timestamp: new Date(),
-          },
-          ...prev.slice(0, 9),
-        ]);
 
         setManualStudent({
           fullName: "",
@@ -446,11 +407,7 @@ export function QuickCodeAttendance({
           birthDate: "",
           placementId: "",
         });
-        setSearchQuery("");
-        setSelectedStudent(null);
-        setSearchResults([]);
         setManualStudentMessage("تمت إضافة الطالب وتسجيل الحركة بنجاح.");
-        startRefreshTransition(() => router.refresh());
       } catch {
         setManualStudentMessage("حدث خطأ في الاتصال أثناء إضافة الطالب.");
       } finally {
@@ -458,14 +415,7 @@ export function QuickCodeAttendance({
         inputRef.current?.focus();
       }
     },
-    [
-      confirmEarlyCheckout,
-      hasPlacementOptions,
-      manualStudent,
-      mode,
-      router,
-      startRefreshTransition,
-    ],
+    [confirmEarlyCheckout, hasPlacementOptions, manualStudent, submitScan],
   );
 
   // Close dropdown on outside click
@@ -794,29 +744,49 @@ export function QuickCodeAttendance({
         {result && (
           <div
             className={`mb-5 rounded-xl border p-4 animate-rise ${
-              result.ok
+              resultKind === "success"
                 ? "border-emerald-200 bg-emerald-50"
-                : "border-red-200 bg-red-50"
+                : resultKind === "warning"
+                  ? "border-amber-300 bg-amber-50"
+                  : "border-2 border-red-400 bg-red-50"
             }`}
           >
             <div className="flex items-start gap-3">
               <div
                 className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
-                  result.ok
+                  resultKind === "success"
                     ? "bg-emerald-100 text-emerald-700"
-                    : "bg-red-100 text-red-700"
+                    : resultKind === "warning"
+                      ? "bg-amber-100 text-amber-700"
+                      : "bg-red-100 text-red-700"
                 }`}
               >
-                {result.ok ? <CheckCircle2 size={22} /> : <XCircle size={22} />}
+                {resultKind === "success" ? (
+                  <CheckCircle2 size={22} />
+                ) : resultKind === "warning" ? (
+                  <AlertTriangle size={22} />
+                ) : (
+                  <XCircle size={22} />
+                )}
               </div>
               <div className="flex-1">
                 <p
                   className={`font-extrabold ${
-                    result.ok ? "text-emerald-700" : "text-red-700"
+                    resultKind === "success"
+                      ? "text-emerald-700"
+                      : resultKind === "warning"
+                        ? "text-amber-800"
+                        : "text-lg text-red-700"
                   }`}
                 >
                   {result.message}
                 </p>
+                {resultKind === "warning" && (
+                  <p className="mt-1 text-sm font-bold text-amber-800">{MISSING_CHECK_IN_WARNING}</p>
+                )}
+                {!result.ok && result.studentName && (
+                  <p className="mt-1 text-sm font-bold text-red-700">الطالب: {result.studentName}</p>
+                )}
                 {result.ok && (
                   <div className="mt-2 grid gap-1 text-sm text-emerald-800">
                     <p>
@@ -854,7 +824,7 @@ export function QuickCodeAttendance({
         )}
 
         {/* Error Display (non-result errors) */}
-        {error && !result?.ok && (
+        {error && !result && (
           <div className="mb-5 rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-bold text-red-700 animate-rise">
             {error}
           </div>
@@ -871,16 +841,30 @@ export function QuickCodeAttendance({
               {history.map((entry) => (
                 <div
                   key={entry.id}
-                  className="flex items-center gap-3 border-b border-[var(--app-border-soft)] px-4 py-3 last:border-0"
+                  className={`flex items-center gap-3 border-b border-[var(--app-border-soft)] px-4 py-3 last:border-0 ${
+                    entry.kind === "error"
+                      ? "bg-red-50"
+                      : entry.kind === "warning"
+                        ? "bg-amber-50"
+                        : ""
+                  }`}
                 >
                   <div
                     className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs ${
-                      entry.mode === "check-in"
-                        ? "bg-emerald-100 text-emerald-700"
-                        : "bg-amber-100 text-amber-700"
+                      entry.kind === "error"
+                        ? "bg-red-100 text-red-700"
+                        : entry.kind === "warning"
+                          ? "bg-amber-100 text-amber-700"
+                          : entry.mode === "check-in"
+                            ? "bg-emerald-100 text-emerald-700"
+                            : "bg-amber-100 text-amber-700"
                     }`}
                   >
-                    {entry.mode === "check-in" ? (
+                    {entry.kind === "error" ? (
+                      <XCircle size={14} />
+                    ) : entry.kind === "warning" ? (
+                      <AlertTriangle size={14} />
+                    ) : entry.mode === "check-in" ? (
                       <UserCheck size={14} />
                     ) : (
                       <UserX size={14} />
@@ -888,16 +872,38 @@ export function QuickCodeAttendance({
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-bold text-[var(--app-text)]">
-                      {entry.result.studentName}
+                      {entry.label}
                     </p>
-                    <p className="text-xs text-[var(--app-text-soft)]" dir="ltr">
-                      {entry.result.studentCode}
-                    </p>
+                    {entry.code && entry.code !== entry.label ? (
+                      <p className="text-xs text-[var(--app-text-soft)]" dir="ltr">
+                        {entry.code}
+                      </p>
+                    ) : null}
+                    {entry.kind !== "success" ? (
+                      <p
+                        className={`text-xs font-bold ${
+                          entry.kind === "error" ? "text-red-700" : "text-amber-800"
+                        }`}
+                      >
+                        {entry.kind === "error" ? `لم يُسجَّل: ${entry.message}` : entry.message}
+                      </p>
+                    ) : null}
                   </div>
-                  <div className="text-left">
+                  <div className="flex shrink-0 flex-col items-end gap-1 text-left">
                     <p className="text-xs text-[var(--app-text-muted)]">
                       {entry.timestamp.toLocaleTimeString("ar-IQ-u-nu-latn")}
                     </p>
+                    {entry.retryRequest && entry.mode === mode ? (
+                      <button
+                        type="button"
+                        onClick={() => handleRetry(entry)}
+                        disabled={loading}
+                        className="btn btn-secondary px-2! py-1! text-xs"
+                      >
+                        <RotateCcw size={12} />
+                        إعادة المحاولة
+                      </button>
+                    ) : null}
                   </div>
                 </div>
               ))}
